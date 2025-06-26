@@ -43,7 +43,7 @@ RUN composer install --no-dev --optimize-autoloader
 # Expose port 10000 for Render
 EXPOSE 10000
 
-# Start the Laravel server and run migrations
-CMD php artisan migrate --force && php artisan serve --host 0.0.0.0 --port 10000
+# Start the Laravel server, run migrations, and seed the database
+CMD php artisan migrate --force && php artisan db:seed --force && php artisan serve --host 0.0.0.0 --port 10000
 
 RUN chmod -R 755 /app/public/build 
