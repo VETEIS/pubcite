@@ -29,6 +29,14 @@ WORKDIR /app
 # Copy existing application directory contents
 COPY . /app
 
+# Install Node.js (for Vite asset build)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Install NPM dependencies and build assets
+RUN npm install
+RUN npm run build
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
