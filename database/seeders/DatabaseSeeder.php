@@ -15,18 +15,22 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'user@usep.edu.ph',
-            'password' => bcrypt('userpassword'),
-            'role' => 'user',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'user@usep.edu.ph'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('userpassword'),
+                'role' => 'user',
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@usep.edu.ph',
-            'password' => bcrypt('adminpassword'),
-            'role' => 'admin',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@usep.edu.ph'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('adminpassword'),
+                'role' => 'admin',
+            ]
+        );
     }
 }
