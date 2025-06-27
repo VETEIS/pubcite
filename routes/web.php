@@ -30,6 +30,7 @@ Route::middleware([
     Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request');
     Route::post('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'store'])->name('publications.request.store');
     Route::patch('/admin/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');
+    Route::get('/admin/requests/{request}/pdf', [\App\Http\Controllers\PublicationsController::class, 'viewPDF'])->name('admin.requests.pdf');
 });
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');

@@ -15,6 +15,14 @@ class Request extends Model
         'type',
         'status',
         'requested_at',
+        'form_data',
+        'pdf_path',
+        'pdf_content',
+    ];
+
+    protected $casts = [
+        'form_data' => 'array',
+        'requested_at' => 'datetime',
     ];
 
     public $timestamps = false;
@@ -22,5 +30,13 @@ class Request extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getPDFContent()
+    {
+        if ($this->pdf_content) {
+            return base64_decode($this->pdf_content);
+        }
+        return null;
     }
 } 

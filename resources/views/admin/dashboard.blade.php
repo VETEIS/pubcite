@@ -3,7 +3,7 @@
         <div class="w-full max-w-7xl sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-8 rounded-lg relative">
                 @if(request('type') || request('period'))
-                    <a href="?" @click="open = false" class="fixed md:absolute top-6 right-8 z-30 inline-flex items-center gap-1 px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold shadow transition focus:outline-none" style="box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <a href="?" class="fixed md:absolute top-6 right-8 z-30 inline-flex items-center gap-1 px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold shadow transition focus:outline-none" style="box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         Clear Filter
                     </a>
@@ -13,18 +13,18 @@
                     <div class="flex flex-col bg-maroon-50 border border-maroon-200 rounded-lg px-4 py-2 shadow-sm min-w-0">
                         <div class="flex items-center gap-2 mb-2">
                             <svg class="h-5 w-5 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            <a href="?type=Publication" @click="open = false" class="font-semibold text-maroon-800 text-sm truncate hover:underline hover:text-maroon-600 transition {{ (request('type') == 'Publication' && !request('period')) ? 'underline' : '' }}">Publications</a>
+                            <a href="?type=Publication" class="font-semibold text-maroon-800 text-sm truncate hover:underline hover:text-maroon-600 transition {{ (request('type') == 'Publication' && !request('period')) ? 'underline' : '' }}">Publications</a>
                         </div>
                         <div class="grid grid-cols-3 gap-2 w-full">
-                            <a href="?type=Publication&period=today" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-maroon-100 hover:text-maroon-800 cursor-pointer {{ (request('type') == 'Publication' && request('period') == 'today') ? 'ring-2 ring-maroon-400' : '' }}">
-                                <span class="text-[11px] text-gray-500">Today</span>
+                            <a href="?type=Publication&period=today" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-maroon-100 hover:text-maroon-800 cursor-pointer {{ (request('type') == 'Publication' && request('period') == 'today') ? 'ring-2 ring-maroon-400' : '' }}">
+                                <span class="text-[11px] text-gray-500">Reqs Today</span>
                                 <span class="text-lg font-bold text-maroon-700">{{ $stats['publication']['today'] }}</span>
                             </a>
-                            <a href="?type=Publication&period=week" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-maroon-100 hover:text-maroon-800 cursor-pointer {{ (request('type') == 'Publication' && request('period') == 'week') ? 'ring-2 ring-maroon-400' : '' }}">
+                            <a href="?type=Publication&period=week" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-maroon-100 hover:text-maroon-800 cursor-pointer {{ (request('type') == 'Publication' && request('period') == 'week') ? 'ring-2 ring-maroon-400' : '' }}">
                                 <span class="text-[11px] text-gray-500">This Week</span>
                                 <span class="text-lg font-bold text-maroon-700">{{ $stats['publication']['week'] }}</span>
                             </a>
-                            <a href="?type=Publication&period=month" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-maroon-100 hover:text-maroon-800 cursor-pointer {{ (request('type') == 'Publication' && request('period') == 'month') ? 'ring-2 ring-maroon-400' : '' }}">
+                            <a href="?type=Publication&period=month" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-maroon-100 hover:text-maroon-800 cursor-pointer {{ (request('type') == 'Publication' && request('period') == 'month') ? 'ring-2 ring-maroon-400' : '' }}">
                                 <span class="text-[11px] text-gray-500">This Month</span>
                                 <span class="text-lg font-bold text-maroon-700">{{ $stats['publication']['month'] }}</span>
                             </a>
@@ -33,19 +33,19 @@
                     <div class="flex flex-col bg-burgundy-50 border border-burgundy-200 rounded-lg px-4 py-2 shadow-sm min-w-0">
                         <div class="flex items-center gap-2 mb-2">
                             <svg class="h-5 w-5 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            <a href="?type=Citation" @click="open = false" class="font-semibold text-burgundy-800 text-sm truncate hover:underline hover:text-burgundy-600 transition {{ (request('type') == 'Citation' && !request('period')) ? 'underline' : '' }}">Citations</a>
+                            <a href="?type=Citation" class="font-semibold text-burgundy-800 text-sm truncate hover:underline hover:text-burgundy-600 transition {{ (request('type') == 'Citation' && !request('period')) ? 'underline' : '' }}">Citations</a>
                         </div>
                         <div class="grid grid-cols-3 gap-2 w-full">
-                            <a href="?type=Citation&period=today" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'today') ? 'ring-2 ring-burgundy-400' : '' }}">
-                                <span class="text-[11px] text-gray-500">Today</span>
+                            <a href="?type=Citation&period=today" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'today') ? 'ring-2 ring-burgundy-400' : '' }}">
+                                <span class="text-[11px] text-gray-500">Reqs Today</span>
                                 <span class="text-lg font-bold text-burgundy-700">{{ $stats['citation']['today'] }}</span>
                             </a>
-                            <a href="?type=Citation&period=week" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'week') ? 'ring-2 ring-burgundy-400' : '' }}">
-                                <span class="text-[11px] text-gray-500">Week</span>
+                            <a href="?type=Citation&period=week" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'week') ? 'ring-2 ring-burgundy-400' : '' }}">
+                                <span class="text-[11px] text-gray-500">This Week</span>
                                 <span class="text-lg font-bold text-burgundy-700">{{ $stats['citation']['week'] }}</span>
                             </a>
-                            <a href="?type=Citation&period=month" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'month') ? 'ring-2 ring-burgundy-400' : '' }}">
-                                <span class="text-[11px] text-gray-500">Month</span>
+                            <a href="?type=Citation&period=month" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'month') ? 'ring-2 ring-burgundy-400' : '' }}">
+                                <span class="text-[11px] text-gray-500">This Month</span>
                                 <span class="text-lg font-bold text-burgundy-700">{{ $stats['citation']['month'] }}</span>
                             </a>
                         </div>
@@ -56,9 +56,9 @@
                     <!-- Filters and Search -->
                     <form method="GET" action="" class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                         <div class="flex gap-2 relative">
-                            <a href="?" @click="open = false" class="px-3 py-1 rounded {{ !request('status') ? 'bg-maroon-700 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-maroon-600 hover:text-white">All</a>
+                            <a href="?" class="px-3 py-1 rounded {{ !request('status') ? 'bg-maroon-700 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-maroon-600 hover:text-white">All</a>
                             <div class="relative">
-                                <a href="?status=pending{{ request('search') ? '&search='.request('search') : '' }}" @click="open = false" class="px-3 py-1 rounded {{ request('status')=='pending' ? 'bg-yellow-500 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-yellow-600 hover:text-white">Pending</a>
+                                <a href="?status=pending{{ request('search') ? '&search='.request('search') : '' }}" class="px-3 py-1 rounded {{ request('status')=='pending' ? 'bg-yellow-500 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-yellow-600 hover:text-white">Pending</a>
                                 @if(isset($filterCounts['pending']) && $filterCounts['pending'] > 0)
                                     <span class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center select-none">
                                         {{ $filterCounts['pending'] > 99 ? '99+' : $filterCounts['pending'] }}
@@ -66,7 +66,7 @@
                                 @endif
                             </div>
                             <div class="relative">
-                                <a href="?status=endorsed{{ request('search') ? '&search='.request('search') : '' }}" @click="open = false" class="px-3 py-1 rounded {{ request('status')=='endorsed' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-green-700 hover:text-white">Endorsed</a>
+                                <a href="?status=endorsed{{ request('search') ? '&search='.request('search') : '' }}" class="px-3 py-1 rounded {{ request('status')=='endorsed' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-green-700 hover:text-white">Endorsed</a>
                                 @if(isset($filterCounts['endorsed']) && $filterCounts['endorsed'] > 0)
                                     <span class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center select-none">
                                         {{ $filterCounts['endorsed'] > 99 ? '99+' : $filterCounts['endorsed'] }}
@@ -74,7 +74,7 @@
                                 @endif
                             </div>
                             <div class="relative">
-                                <a href="?status=rejected{{ request('search') ? '&search='.request('search') : '' }}" @click="open = false" class="px-3 py-1 rounded {{ request('status')=='rejected' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-red-700 hover:text-white">Rejected</a>
+                                <a href="?status=rejected{{ request('search') ? '&search='.request('search') : '' }}" class="px-3 py-1 rounded {{ request('status')=='rejected' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700' }} font-semibold text-xs transition hover:bg-red-700 hover:text-white">Rejected</a>
                                 @if(isset($filterCounts['rejected']) && $filterCounts['rejected'] > 0)
                                     <span class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center select-none">
                                         {{ $filterCounts['rejected'] > 99 ? '99+' : $filterCounts['rejected'] }}
@@ -121,33 +121,61 @@
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap">{{ \Carbon\Carbon::parse($request->requested_at)->format('M d, Y H:i') }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap min-w-[120px]">
-                                        <div x-data="{ open: false }" class="relative">
-                                            <button @click="open = true" class="bg-maroon-700 hover:bg-maroon-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow w-full">Change Status</button>
-                                            <div x-show="open" @click.away="open = false" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40">
-                                                <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs z-50">
-                                                    <h4 class="text-lg font-semibold mb-4 text-maroon-800">Update Status</h4>
-                                                    <form method="POST" action="{{ route('admin.requests.update', $request->id) }}" class="space-y-4">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <div class="flex flex-col gap-2">
-                                                            <label class="flex items-center gap-2 cursor-pointer">
-                                                                <input type="radio" name="status" value="pending" @if($request->status=='pending') checked @endif class="form-radio text-yellow-600">
-                                                                <span class="text-sm">Pending</span>
-                                                            </label>
-                                                            <label class="flex items-center gap-2 cursor-pointer">
-                                                                <input type="radio" name="status" value="endorsed" @if($request->status=='endorsed') checked @endif class="form-radio text-green-600">
-                                                                <span class="text-sm">Endorsed</span>
-                                                            </label>
-                                                            <label class="flex items-center gap-2 cursor-pointer">
-                                                                <input type="radio" name="status" value="rejected" @if($request->status=='rejected') checked @endif class="form-radio text-red-600">
-                                                                <span class="text-sm">Rejected</span>
-                                                            </label>
+                                        <div class="flex gap-2">
+                                            <!-- View PDF Button -->
+                                            <div x-data="{ pdfOpen: false }" class="relative">
+                                                <button @click="pdfOpen = true" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow">
+                                                    View PDF
+                                                </button>
+                                                <div x-show="pdfOpen" @click.away="pdfOpen = false" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                                    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl h-5/6 flex flex-col">
+                                                        <div class="flex justify-between items-center p-4 border-b">
+                                                            <h3 class="text-lg font-semibold text-maroon-800">Request PDF - {{ $request->request_code }}</h3>
+                                                            <div class="flex gap-2">
+                                                                <button @click="window.open('{{ route('admin.requests.pdf', $request) }}', '_blank')" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                                                                    Print
+                                                                </button>
+                                                                <button @click="pdfOpen = false" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
+                                                                    Close
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <div class="flex justify-end gap-2 mt-4">
-                                                            <button type="button" @click="open = false" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Cancel</button>
-                                                            <button type="submit" class="px-4 py-2 rounded-lg bg-maroon-700 text-white hover:bg-maroon-800 font-semibold">Update</button>
+                                                        <div class="flex-1 p-4">
+                                                            <iframe src="{{ route('admin.requests.pdf', $request) }}" class="w-full h-full border-0"></iframe>
                                                         </div>
-                                                    </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Change Status Button -->
+                                            <div x-data="{ open: false }" class="relative">
+                                                <button @click="open = true" class="bg-maroon-700 hover:bg-maroon-800 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow">Change Status</button>
+                                                <div x-show="open" @click.away="open = false" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40">
+                                                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs z-50">
+                                                        <h4 class="text-lg font-semibold mb-4 text-maroon-800">Update Status</h4>
+                                                        <form method="POST" action="{{ route('admin.requests.update', $request->id) }}" class="space-y-4">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <div class="flex flex-col gap-2">
+                                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                                    <input type="radio" name="status" value="pending" @if($request->status=='pending') checked @endif class="form-radio text-yellow-600">
+                                                                    <span class="text-sm">Pending</span>
+                                                                </label>
+                                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                                    <input type="radio" name="status" value="endorsed" @if($request->status=='endorsed') checked @endif class="form-radio text-green-600">
+                                                                    <span class="text-sm">Endorsed</span>
+                                                                </label>
+                                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                                    <input type="radio" name="status" value="rejected" @if($request->status=='rejected') checked @endif class="form-radio text-red-600">
+                                                                    <span class="text-sm">Rejected</span>
+                                                                </label>
+                                                            </div>
+                                                            <div class="flex justify-end gap-2 mt-4">
+                                                                <button type="button" @click="open = false" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Cancel</button>
+                                                                <button type="submit" class="px-4 py-2 rounded-lg bg-maroon-700 text-white hover:bg-maroon-800 font-semibold">Update</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -162,6 +190,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
-
-<x-footer /> 
+</x-app-layout> 
