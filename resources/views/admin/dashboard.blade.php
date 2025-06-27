@@ -41,11 +41,11 @@
                                 <span class="text-lg font-bold text-burgundy-700">{{ $stats['citation']['today'] }}</span>
                             </a>
                             <a href="?type=Citation&period=week" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'week') ? 'ring-2 ring-burgundy-400' : '' }}">
-                                <span class="text-[11px] text-gray-500">This Week</span>
+                                <span class="text-[11px] text-gray-500">Week</span>
                                 <span class="text-lg font-bold text-burgundy-700">{{ $stats['citation']['week'] }}</span>
                             </a>
                             <a href="?type=Citation&period=month" @click="open = false" class="bg-white rounded-lg px-2 py-1 text-center flex flex-col items-center transition hover:bg-burgundy-100 hover:text-burgundy-800 cursor-pointer {{ (request('type') == 'Citation' && request('period') == 'month') ? 'ring-2 ring-burgundy-400' : '' }}">
-                                <span class="text-[11px] text-gray-500">This Month</span>
+                                <span class="text-[11px] text-gray-500">Month</span>
                                 <span class="text-lg font-bold text-burgundy-700">{{ $stats['citation']['month'] }}</span>
                             </a>
                         </div>

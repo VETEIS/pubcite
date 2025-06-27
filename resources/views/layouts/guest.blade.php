@@ -4,6 +4,12 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        
+        <!-- Security: Force HTTPS and prevent mixed content -->
+        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+        <meta http-equiv="X-Content-Type-Options" content="nosniff">
+        <meta http-equiv="X-Frame-Options" content="DENY">
+        <meta http-equiv="X-XSS-Protection" content="1; mode=block">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
@@ -40,8 +46,14 @@
                     </div>
                 </div>
             </nav>
-            <div class="relative z-10 pt-16">
+            
+            <!-- Main Content Area - fills viewport, footer is below -->
+            <div class="relative z-10 pt-16 min-h-screen flex items-center justify-center py-6 sm:py-12">
                 {{ $slot }}
+            </div>
+            
+            <!-- Footer - positioned below viewport -->
+            <div class="relative z-10">
                 <x-footer />
             </div>
         </div>
