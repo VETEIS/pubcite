@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: pubcite
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: debug
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: CACHE_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: SESSION_DRIVER
+        value: file
+      - key: SESSION_LIFETIME
+        value: 120
+    buildCommand: echo "Build handled by Dockerfile"
+    startCommand: echo "Start handled by Dockerfile CMD" 

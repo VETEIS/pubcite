@@ -1,7 +1,7 @@
 # Use the official PHP image with required extensions
-FROM php:8.2-cli
+FROM php:8.2-fpm
 
-# Install system dependencies and PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -16,13 +16,21 @@ RUN apt-get update && apt-get install -y \
     libmcrypt-dev \
     fonts-liberation \
     libfontconfig1 \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-configure zip \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
+    libpq-dev
 
-# Install PostgreSQL extensions
-RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo_pgsql pgsql
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure zip \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        pdo_pgsql \
+        pgsql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -37,13 +45,13 @@ WORKDIR /app
 # Copy composer files first for better caching
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies with verbose output for debugging
-RUN composer install --no-dev --optimize-autoloader --no-interaction --verbose
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
 
-# Install NPM dependencies (including dev dependencies for build)
+# Install NPM dependencies
 RUN npm ci
 
 # Copy the rest of the application
