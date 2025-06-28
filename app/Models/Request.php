@@ -18,6 +18,7 @@ class Request extends Model
         'form_data',
         'pdf_path',
         'pdf_content',
+        'token',
     ];
 
     protected $casts = [

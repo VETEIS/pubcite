@@ -18,18 +18,18 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'user@usep.edu.ph'],
             [
-                'name' => 'Test User',
-                'password' => bcrypt('userpassword'),
-                'role' => 'user',
+            'name' => 'Test User',
+            'password' => bcrypt('userpassword'),
+            'role' => 'user',
             ]
         );
 
         User::updateOrCreate(
             ['email' => 'admin@usep.edu.ph'],
             [
-                'name' => 'Admin User',
-                'password' => bcrypt('adminpassword'),
-                'role' => 'admin',
+            'name' => 'Admin User',
+            'password' => bcrypt('adminpassword'),
+            'role' => 'admin',
             ]
         );
     }

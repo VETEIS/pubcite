@@ -120,4 +120,6 @@
 
         @livewireScripts
     </body>
-</html> 
+</html>
+
+<x-footer /> 

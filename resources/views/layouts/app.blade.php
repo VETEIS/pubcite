@@ -4,11 +4,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        
+
         <!-- Security: Force HTTPS and prevent mixed content -->
         <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
-        <meta http-equiv="X-Frame-Options" content="DENY">
         <meta http-equiv="X-XSS-Protection" content="1; mode=block">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
@@ -58,6 +57,7 @@
 
         @stack('modals')
 
+        <script>window.livewireScriptConfig = { alpine: true }</script>
         @livewireScripts
     </body>
 </html>

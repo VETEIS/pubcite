@@ -20,6 +20,10 @@ return new class extends Migration
             $table->string('type');
             $table->enum('status', ['pending', 'endorsed', 'rejected'])->default('pending');
             $table->dateTime('requested_at');
+            $table->string('token')->nullable()->unique();
+            $table->json('form_data')->nullable();
+            $table->string('pdf_path')->nullable();
+            $table->longText('pdf_content')->nullable();
         });
     }
 

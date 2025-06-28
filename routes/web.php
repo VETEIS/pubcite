@@ -28,9 +28,10 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request');
-    Route::post('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'store'])->name('publications.request.store');
+    Route::post('/publications/submit', [\App\Http\Controllers\PublicationsController::class, 'submitPublicationRequest'])->name('publications.submit');
     Route::patch('/admin/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');
-    Route::get('/admin/requests/{request}/pdf', [\App\Http\Controllers\PublicationsController::class, 'viewPDF'])->name('admin.requests.pdf');
+    Route::post('/publications/incentive-application/generate', [\App\Http\Controllers\PublicationsController::class, 'generateIncentiveDocx'])->name('publications.incentive.generate');
+    Route::delete('/admin/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
 });
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
