@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,29 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Create new table with correct status constraint
-        Schema::create('requests_new', function (Blueprint $table) {
+        // Drop the existing table if it exists (this will be a fresh start)
+        Schema::dropIfExists('requests');
+        
+        // Create the requests table with the correct structure
+        Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('request_code');
             $table->string('type');
-            $table->string('status'); // No enum, but we will enforce in app
+            $table->string('status')->default('pending'); // No enum constraint
             $table->dateTime('requested_at');
             $table->json('form_data')->nullable();
             $table->string('pdf_path')->nullable();
             $table->longText('pdf_content')->nullable();
             $table->string('token')->nullable()->unique();
+            
+            // Add indexes for better performance
+            $table->index(['user_id']);
+            $table->index(['request_code']);
+            $table->index(['status']);
+            $table->index(['requested_at']);
         });
-        // 2. Copy data
-        $columns = [
-            'id', 'user_id', 'request_code', 'type', 'status', 'requested_at', 'form_data', 'pdf_path', 'pdf_content', 'token'
-        ];
-        $columnsList = implode(',', $columns);
-        DB::statement("INSERT INTO requests_new ($columnsList) SELECT $columnsList FROM requests");
-        // 3. Drop old table
-        Schema::drop('requests');
-        // 4. Rename new table
-        Schema::rename('requests_new', 'requests');
     }
 
     /**
@@ -42,6 +40,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Not implemented: would require recreating the old enum/check constraint
+        Schema::dropIfExists('requests');
     }
-};
+}; 
