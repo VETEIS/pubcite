@@ -37,8 +37,8 @@ WORKDIR /app
 # Copy composer files first for better caching
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies with verbose output for debugging
-RUN composer install --no-dev --optimize-autoloader --no-interaction --verbose
+# Install PHP dependencies without running scripts
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
@@ -48,6 +48,9 @@ RUN npm ci
 
 # Copy the rest of the application
 COPY . .
+
+# Run composer scripts after the application is copied
+RUN composer run-script post-autoload-dump
 
 # Build assets
 RUN npm run build
