@@ -178,8 +178,8 @@ class PublicationsController extends Controller
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             // Set all relevant fields for recommendation letter (matching template)
-            $templateProcessor->setValue('collegeheader', $data['collegeheader'] ?? '');
-            $templateProcessor->setValue('date', now()->format('Y-m-d'));
+            $templateProcessor->setValue('collegeheader', $data['rec_collegeheader'] ?? '');
+            $templateProcessor->setValue('date', $data['rec_date'] ?? now()->format('Y-m-d'));
             $templateProcessor->setValue('facultyname', $data['facultyname'] ?? '');
             $templateProcessor->setValue('details', $data['details'] ?? '');
             $templateProcessor->setValue('indexing', $data['indexing'] ?? '');
@@ -408,7 +408,23 @@ class PublicationsController extends Controller
             'facultyname' => 'required|string',
             'centermanager' => 'nullable|string',
             'collegedean' => 'nullable|string',
-            
+            // Recommendation Letter fields
+            'rec_collegeheader' => 'required|string',
+            'rec_date' => 'required|string',
+            'details' => 'required|string',
+            'indexing' => 'required|string',
+            'dean' => 'required|string',
+            // Terminal Report fields
+            'title' => 'required|string',
+            'author' => 'required|string',
+            'duration' => 'required|string',
+            'abstract' => 'required|string',
+            'introduction' => 'required|string',
+            'methodology' => 'required|string',
+            'rnd' => 'required|string',
+            'car' => 'required|string',
+            'references' => 'required|string',
+            'appendices' => 'nullable|string',
             // File uploads
             'article_pdf' => 'required|file|mimes:pdf',
             'cover_pdf' => 'required|file|mimes:pdf',
@@ -437,20 +453,45 @@ class PublicationsController extends Controller
                 'uploadPath' => $uploadPath
             ]);
             
-        $attachments = [];
-        foreach ([
-            'article_pdf',
-            'cover_pdf',
-            'acceptance_pdf',
-            'peer_review_pdf',
-            'terminal_report_pdf'
-        ] as $field) {
-            $file = $request->file($field);
-            $attachments[$field] = [
-                    'path' => $file->store($uploadPath),
-                'original_name' => $file->getClientOriginalName(),
-            ];
-        }
+            $attachments = [];
+            foreach ([
+                'article_pdf',
+                'cover_pdf',
+                'acceptance_pdf',
+                'peer_review_pdf',
+                'terminal_report_pdf'
+            ] as $field) {
+                $file = $request->file($field);
+                
+                Log::info('Processing file upload', [
+                    'field' => $field,
+                    'file_exists' => $file ? 'YES' : 'NO',
+                    'original_name' => $file ? $file->getClientOriginalName() : 'N/A',
+                    'file_size' => $file ? $file->getSize() : 'N/A',
+                    'mime_type' => $file ? $file->getMimeType() : 'N/A'
+                ]);
+                
+                if (!$file) {
+                    Log::error('File upload failed - file is null', ['field' => $field]);
+                    throw new \Exception("File upload failed for field: {$field}");
+                }
+                
+                // Use the public disk instead of the default local disk
+                $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'public');
+                
+                Log::info('File stored successfully', [
+                    'field' => $field,
+                    'stored_path' => $storedPath,
+                    'full_path' => storage_path('app/' . $storedPath),
+                    'file_exists_after_store' => file_exists(storage_path('app/' . $storedPath)),
+                    'file_size_after_store' => file_exists(storage_path('app/' . $storedPath)) ? filesize(storage_path('app/' . $storedPath)) : 'N/A'
+                ]);
+                
+                $attachments[$field] = [
+                    'path' => $storedPath,
+                    'original_name' => $file->getClientOriginalName(),
+                ];
+            }
 
             // Generate DOCX files using HTML approach
             $docxPaths = [];
@@ -491,6 +532,367 @@ class PublicationsController extends Controller
             ]);
             
             return back()->with('error', 'Error submitting request. Please try again.');
+        }
+    }
+
+    /**
+     * Admin: Download any file (PDF or DOCX) for a request, with user name in filename.
+     */
+    public function adminDownloadFile(Request $httpRequest, \App\Models\Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->role !== 'admin') {
+                abort(403, 'Unauthorized');
+            }
+
+            $fileType = $httpRequest->query('type'); // 'pdf' or 'docx'
+            $fileKey = $httpRequest->query('key');   // e.g. 'article_pdf', 'incentive', etc.
+
+            if (!$fileType || !$fileKey) {
+                abort(400, 'Missing file type or key');
+            }
+
+            // Decode the pdf_path JSON
+            $pdfPath = $request->pdf_path;
+            if (!$pdfPath) {
+                abort(404, 'No file data found for this request');
+            }
+
+            $paths = json_decode($pdfPath, true);
+            if (!$paths) {
+                abort(404, 'Invalid file data format');
+            }
+
+            $storagePath = null;
+            $originalName = null;
+            $ext = null;
+
+            if ($fileType === 'pdf') {
+                if (!isset($paths['pdfs']) || !isset($paths['pdfs'][$fileKey])) {
+                    abort(404, 'PDF file not found: ' . $fileKey);
+                }
+
+                $fileInfo = $paths['pdfs'][$fileKey];
+                $storagePath = $fileInfo['path'] ?? null;
+                $originalName = $fileInfo['original_name'] ?? $fileKey . '.pdf';
+                $ext = 'pdf';
+
+            } elseif ($fileType === 'docx') {
+                if (!isset($paths['docxs']) || !isset($paths['docxs'][$fileKey])) {
+                    abort(404, 'DOCX file not found: ' . $fileKey);
+                }
+
+                $storagePath = $paths['docxs'][$fileKey];
+                $originalName = ucfirst($fileKey) . '_Form.docx';
+                $ext = 'docx';
+
+            } else {
+                abort(400, 'Invalid file type: ' . $fileType);
+            }
+
+            if (!$storagePath) {
+                abort(404, 'File path not found');
+            }
+
+            // Build the full file path
+            $fullPath = storage_path('app/public/' . $storagePath);
+
+            // Log for debugging
+            Log::info('Admin download attempt', [
+                'request_id' => $request->id,
+                'file_type' => $fileType,
+                'file_key' => $fileKey,
+                'storage_path' => $storagePath,
+                'full_path' => $fullPath,
+                'file_exists' => file_exists($fullPath),
+                'file_size' => file_exists($fullPath) ? filesize($fullPath) : 'N/A'
+            ]);
+
+            if (!file_exists($fullPath)) {
+                abort(404, 'File not found on disk: ' . $storagePath);
+            }
+
+            // Get user name for filename
+            $userName = $request->user->name ?? 'user';
+            $userNameSlug = Str::slug($userName, '_');
+            $downloadName = $userNameSlug . '_' . $originalName;
+
+            // Set proper MIME type
+            $mime = $ext === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+            // Return file download response
+            return response()->download($fullPath, $downloadName, [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'attachment; filename="' . $downloadName . '"'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Admin download error', [
+                'request_id' => $request->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            abort(500, 'Download failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Simple file serving method - alternative to adminDownloadFile
+     */
+    public function serveFile(Request $httpRequest, \App\Models\Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->role !== 'admin') {
+                abort(403, 'Unauthorized');
+            }
+
+            $fileType = $httpRequest->query('type');
+            $fileKey = $httpRequest->query('key');
+
+            if (!$fileType || !$fileKey) {
+                abort(400, 'Missing parameters');
+            }
+
+            // Get file data
+            $pdfPath = $request->pdf_path;
+            if (!$pdfPath) {
+                abort(404, 'No file data');
+            }
+
+            $paths = json_decode($pdfPath, true);
+            if (!$paths) {
+                abort(404, 'Invalid data format');
+            }
+
+            $filePath = null;
+            $fileName = null;
+
+            if ($fileType === 'pdf' && isset($paths['pdfs'][$fileKey])) {
+                $fileInfo = $paths['pdfs'][$fileKey];
+                $filePath = $fileInfo['path'];
+                $fileName = $fileInfo['original_name'] ?? $fileKey . '.pdf';
+            } elseif ($fileType === 'docx' && isset($paths['docxs'][$fileKey])) {
+                $filePath = $paths['docxs'][$fileKey];
+                $fileName = ucfirst($fileKey) . '_Form.docx';
+            } else {
+                abort(404, 'File not found');
+            }
+
+            // Check if file exists based on type
+            if ($fileType === 'pdf') {
+                if (!Storage::disk('public')->exists($filePath)) {
+                    abort(404, 'PDF file not found on disk');
+                }
+                $fullPath = storage_path('app/public/' . $filePath);
+            } else {
+                if (!file_exists(storage_path('app/' . $filePath))) {
+                    abort(404, 'DOCX file not found on disk');
+                }
+                $fullPath = storage_path('app/' . $filePath);
+            }
+
+            // Get user name for filename
+            $userName = $request->user->name ?? 'user';
+            $userNameSlug = Str::slug($userName, '_');
+            $downloadName = $userNameSlug . '_' . $fileName;
+
+            // Serve file using Storage facade
+            return response()->download($fullPath, $downloadName);
+
+        } catch (\Exception $e) {
+            Log::error('File serving error', [
+                'error' => $e->getMessage(),
+                'request_id' => $request->id ?? 'unknown'
+            ]);
+            abort(500, 'File serving failed');
+        }
+    }
+
+    /**
+     * Debug method to check file paths and storage
+     */
+    public function debugFilePaths(Request $httpRequest, \App\Models\Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'admin') {
+            abort(403, 'Unauthorized');
+        }
+
+        $pdfPath = $request->pdf_path;
+        $paths = json_decode($pdfPath, true);
+
+        $debug = [
+            'request_id' => $request->id,
+            'pdf_path_raw' => $pdfPath,
+            'pdf_path_decoded' => $paths,
+            'storage_base' => storage_path('app'),
+        ];
+
+        if ($paths) {
+            $debug['pdfs'] = [];
+            if (isset($paths['pdfs'])) {
+                foreach ($paths['pdfs'] as $key => $fileInfo) {
+                    $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                    $debug['pdfs'][$key] = [
+                        'path' => $fileInfo['path'],
+                        'full_path' => $fullPath,
+                        'exists' => file_exists($fullPath),
+                        'size' => file_exists($fullPath) ? filesize($fullPath) : 'N/A',
+                        'original_name' => $fileInfo['original_name'] ?? 'N/A'
+                    ];
+                }
+            }
+
+            $debug['docxs'] = [];
+            if (isset($paths['docxs'])) {
+                foreach ($paths['docxs'] as $key => $storagePath) {
+                    $fullPath = storage_path('app/' . $storagePath);
+                    $debug['docxs'][$key] = [
+                        'path' => $storagePath,
+                        'full_path' => $fullPath,
+                        'exists' => file_exists($fullPath),
+                        'size' => file_exists($fullPath) ? filesize($fullPath) : 'N/A'
+                    ];
+                }
+            }
+        }
+
+        return response()->json($debug);
+    }
+
+    /**
+     * Admin: Download all files for a request as a ZIP archive.
+     */
+    public function adminDownloadZip(Request $httpRequest, \App\Models\Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->role !== 'admin') {
+                abort(403, 'Unauthorized');
+            }
+
+            $pdfPath = $request->pdf_path;
+            $paths = json_decode($pdfPath, true);
+            
+            // Debug logging
+            Log::info('ZIP download attempt', [
+                'request_id' => $request->id,
+                'pdf_path_raw' => $pdfPath,
+                'paths_decoded' => $paths,
+                'pdfs_count' => isset($paths['pdfs']) ? count($paths['pdfs']) : 0,
+                'docxs_count' => isset($paths['docxs']) ? count($paths['docxs']) : 0
+            ]);
+            
+            if (!$paths) {
+                abort(404, 'No files found for this request');
+            }
+
+            $userName = $request->user->name ?? 'user';
+            $userNameSlug = Str::slug($userName, '_');
+            $zipName = $userNameSlug . '_request_files.zip';
+            
+            // Create a temporary ZIP file
+            $zipPath = storage_path('app/temp/' . $zipName);
+            $zipDir = dirname($zipPath);
+            if (!is_dir($zipDir)) {
+                mkdir($zipDir, 0777, true);
+            }
+
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE) !== TRUE) {
+                abort(500, 'Could not create ZIP file');
+            }
+
+            $addedFiles = [];
+            $missingFiles = [];
+
+            // Add PDF files
+            if (isset($paths['pdfs'])) {
+                foreach ($paths['pdfs'] as $key => $fileInfo) {
+                    $filePath = storage_path('app/public/' . $fileInfo['path']);
+                    $originalName = $fileInfo['original_name'] ?? $key . '.pdf';
+                    
+                    Log::info('Processing PDF file', [
+                        'key' => $key,
+                        'file_path' => $filePath,
+                        'exists' => file_exists($filePath),
+                        'original_name' => $originalName
+                    ]);
+                    
+                    if (file_exists($filePath)) {
+                        $zip->addFile($filePath, 'PDFs/' . $originalName);
+                        $addedFiles[] = 'PDFs/' . $originalName;
+                    } else {
+                        Log::warning('PDF file not found on disk', [
+                            'file_path' => $filePath,
+                            'key' => $key
+                        ]);
+                        $missingFiles[] = 'PDFs/' . $originalName;
+                    }
+                }
+            }
+
+            // Add DOCX files
+            if (isset($paths['docxs'])) {
+                foreach ($paths['docxs'] as $key => $storagePath) {
+                    $filePath = storage_path('app/' . $storagePath);
+                    $docxName = ucfirst($key) . '_Form.docx';
+                    
+                    Log::info('Processing DOCX file', [
+                        'key' => $key,
+                        'file_path' => $filePath,
+                        'exists' => file_exists($filePath),
+                        'docx_name' => $docxName
+                    ]);
+                    
+                    if (file_exists($filePath)) {
+                        $zip->addFile($filePath, 'DOCX/' . $docxName);
+                        $addedFiles[] = 'DOCX/' . $docxName;
+                    } else {
+                        Log::warning('DOCX file not found on disk', [
+                            'file_path' => $filePath,
+                            'key' => $key
+                        ]);
+                        $missingFiles[] = 'DOCX/' . $docxName;
+                    }
+                }
+            }
+
+            $zip->close();
+
+            Log::info('ZIP file created', [
+                'zip_path' => $zipPath,
+                'added_files' => $addedFiles,
+                'missing_files' => $missingFiles,
+                'total_files' => count($addedFiles)
+            ]);
+
+            // If no files were added, return an error
+            if (empty($addedFiles)) {
+                abort(404, 'No files found on disk for this request. Files may have been deleted or moved.');
+            }
+
+            // Return the ZIP file for download
+            return response()->download($zipPath, $zipName, [
+                'Content-Type' => 'application/zip',
+                'Content-Disposition' => 'attachment; filename="' . $zipName . '"'
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('ZIP download error', [
+                'request_id' => $request->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            abort(500, 'ZIP download failed: ' . $e->getMessage());
         }
     }
 } 

@@ -2,49 +2,49 @@
 
 require_once 'vendor/autoload.php';
 
+use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\TemplateProcessor;
 
-echo "Debugging TemplateProcessor...\n";
-
-try {
-    $templatePath = __DIR__ . '/storage/app/templates/Incentive_Application_Form.docx';
-    echo "Template path: $templatePath\n";
-    echo "Template exists: " . (file_exists($templatePath) ? 'Yes' : 'No') . "\n";
-    echo "Template size: " . filesize($templatePath) . " bytes\n\n";
-    
-    // Load template with TemplateProcessor
-    echo "Loading TemplateProcessor...\n";
-    $templateProcessor = new TemplateProcessor($templatePath);
-    echo "TemplateProcessor loaded successfully!\n\n";
-    
-    // Get all variables found in the template
-    echo "Getting variables...\n";
-    $variables = $templateProcessor->getVariables();
-    echo "Variables found in template:\n";
-    if (empty($variables)) {
-        echo "  NO VARIABLES FOUND!\n";
-    } else {
-        foreach ($variables as $variable) {
-            echo "  - $variable\n";
-        }
+// Function to extract placeholders from DOCX
+function extractPlaceholders($templatePath) {
+    if (!file_exists($templatePath)) {
+        echo "Template not found: $templatePath\n";
+        return [];
     }
     
-    echo "\nTotal variables found: " . count($variables) . "\n";
+    try {
+        $templateProcessor = new TemplateProcessor($templatePath);
+        $variables = $templateProcessor->getVariables();
+        return $variables;
+    } catch (Exception $e) {
+        echo "Error processing template: " . $e->getMessage() . "\n";
+        return [];
+    }
+}
+
+// Templates to check
+$templates = [
+    'Incentive_Application_Form.docx',
+    'Recommendation_Letter_Form.docx', 
+    'Terminal_Report_Form.docx'
+];
+
+echo "=== DOCX Template Placeholders Analysis ===\n\n";
+
+foreach ($templates as $template) {
+    $templatePath = __DIR__ . '/storage/app/templates/' . $template;
+    echo "📄 $template:\n";
     
-    // Try to set a test value
-    echo "\nTesting setValue...\n";
-    $templateProcessor->setValue('collegeheader', 'TEST COLLEGE');
-    echo "setValue completed\n";
+    $placeholders = extractPlaceholders($templatePath);
     
-    // Try to save
-    $testOutput = __DIR__ . '/test_output.docx';
-    echo "Saving to: $testOutput\n";
-    $templateProcessor->saveAs($testOutput);
-    echo "Save completed\n";
-    
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . "\n";
-    echo "Line: " . $e->getLine() . "\n";
-    echo "Trace:\n" . $e->getTraceAsString() . "\n";
-} 
+    if (empty($placeholders)) {
+        echo "   No placeholders found or error occurred\n";
+    } else {
+        foreach ($placeholders as $placeholder) {
+            echo "   - $placeholder\n";
+        }
+    }
+    echo "\n";
+}
+
+echo "=== End Analysis ===\n"; 

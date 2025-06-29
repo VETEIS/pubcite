@@ -52,11 +52,14 @@ COPY . .
 # Run composer scripts after the application is copied
 RUN composer run-script post-autoload-dump
 
-# Build assets
-RUN npm run build
+# Build assets with verbose output
+RUN echo "Building Vite assets..." && npm run build
+
+# Verify assets were built
+RUN ls -la public/build/ && echo "Assets built successfully!"
 
 # Set proper permissions
-RUN chmod -R 755 /app/storage /app/bootstrap/cache
+RUN chmod -R 755 /app/storage /app/bootstrap/cache /app/public/build
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 # Make deployment script executable

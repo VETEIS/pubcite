@@ -74,7 +74,7 @@
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                                     <!-- Article PDF Card -->
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                          x-data="{ fileName: '', displayName: '' }"
                                          @click="$refs.articlePdf.click()">
                                         <div class="text-center mb-3">
@@ -94,19 +94,19 @@
                                     </div>
 
                                     <!-- Cover Letter Card -->
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                          x-data="{ fileName: '', displayName: '' }"
                                          @click="$refs.coverPdf.click()">
                                         <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                                 </svg>
                                             </div>
                                             <h4 class="font-medium text-gray-800 text-sm">Cover Letter</h4>
                                         </div>
                                         <p class="text-xs text-gray-600 mb-3 text-center">Cover letter from the journal editor</p>
-                                        <div class="text-xs text-blue-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
                                         <input type="file" name="cover_pdf" accept=".pdf" class="hidden" x-ref="coverPdf" required
@@ -114,19 +114,19 @@
                                     </div>
 
                                     <!-- Acceptance Letter Card -->
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                          x-data="{ fileName: '', displayName: '' }"
                                          @click="$refs.acceptancePdf.click()">
                                         <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
                                             </div>
                                             <h4 class="font-medium text-gray-800 text-sm">Acceptance Letter</h4>
                                         </div>
                                         <p class="text-xs text-gray-600 mb-3 text-center">Official acceptance letter from the journal</p>
-                                        <div class="text-xs text-green-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
                                         <input type="file" name="acceptance_pdf" accept=".pdf" class="hidden" x-ref="acceptancePdf" required
@@ -134,19 +134,19 @@
                                     </div>
 
                                     <!-- Peer Review Card -->
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                          x-data="{ fileName: '', displayName: '' }"
                                          @click="$refs.peerReviewPdf.click()">
                                         <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                                 </svg>
                                             </div>
                                             <h4 class="font-medium text-gray-800 text-sm">Peer Review</h4>
                                         </div>
                                         <p class="text-xs text-gray-600 mb-3 text-center">Peer review comments and responses</p>
-                                        <div class="text-xs text-purple-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
                                         <input type="file" name="peer_review_pdf" accept=".pdf" class="hidden" x-ref="peerReviewPdf" required
@@ -154,19 +154,19 @@
                                     </div>
 
                                     <!-- Terminal Report Card -->
-                                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                          x-data="{ fileName: '', displayName: '' }"
                                          @click="$refs.terminalReportPdf.click()">
                                         <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                 </svg>
                                             </div>
                                             <h4 class="font-medium text-gray-800 text-sm">Terminal Report</h4>
                                         </div>
                                         <p class="text-xs text-gray-600 mb-3 text-center">Final terminal report document</p>
-                                        <div class="text-xs text-orange-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
                                         <input type="file" name="terminal_report_pdf" accept=".pdf" class="hidden" x-ref="terminalReportPdf" required
@@ -187,7 +187,7 @@
                                     <h4 class="font-medium text-maroon-700 mb-3">Uploaded Documents</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                                         <!-- Article PDF Review Card -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,10 +201,10 @@
                                         </div>
 
                                         <!-- Cover Letter Review Card -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
                                             <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                                     </svg>
                                                 </div>
@@ -215,10 +215,10 @@
                                         </div>
 
                                         <!-- Acceptance Letter Review Card -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
                                             <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
                                                 </div>
@@ -229,10 +229,10 @@
                                         </div>
 
                                         <!-- Peer Review Review Card -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
                                             <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                                     </svg>
                                                 </div>
@@ -243,10 +243,10 @@
                                         </div>
 
                                         <!-- Terminal Report Review Card -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
                                             <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                     </svg>
                                                 </div>
@@ -265,7 +265,7 @@
                                     
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <!-- Incentive Application DOCX -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
                                              @click="$store.tabNav.previewDocx('incentive')">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -279,31 +279,31 @@
                                         </div>
 
                                         <!-- Recommendation Letter DOCX -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
                                              @click="$store.tabNav.previewDocx('recommendation')">
                                             <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                                     </svg>
                                                 </div>
                                                 <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
                                             </div>
-                                            <div class="text-xs text-blue-600 text-center font-medium">Click to preview</div>
+                                            <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
                                         </div>
 
                                         <!-- Terminal Report DOCX -->
-                                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
                                              @click="$store.tabNav.previewDocx('terminal')">
                                             <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                     </svg>
                                                 </div>
                                                 <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
                                             </div>
-                                            <div class="text-xs text-green-600 text-center font-medium">Click to preview</div>
+                                            <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
                                         </div>
                                     </div>
                                 </div>
@@ -353,7 +353,7 @@
                     <button @click="showModal = false" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-maroon-600 text-base font-medium text-white hover:bg-maroon-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500 sm:ml-3 sm:w-auto sm:text-sm">
                         Close
                     </button>
-                    <button @click="downloadDocument()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button @click="downloadDocument()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Download
                     </button>
                 </div>
@@ -510,8 +510,8 @@ function tabNav() {
                     incomplete = element.value.trim() === '';
                 }
                 if (incomplete) {
-                    element.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
-                    setTimeout(() => element.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2'), 2000);
+                    element.classList.add('ring-2', 'ring-maroon-500', 'ring-offset-2');
+                    setTimeout(() => element.classList.remove('ring-2', 'ring-maroon-500', 'ring-offset-2'), 2000);
                 }
             });
         },

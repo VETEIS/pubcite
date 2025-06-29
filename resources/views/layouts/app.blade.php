@@ -5,8 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Security: Force HTTPS and prevent mixed content -->
-        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+        <!-- Security: Force HTTPS only in production -->
+        @if (app()->environment('production'))
+        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;">
+        @else
+            <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:; style-src 'self' 'unsafe-inline' http: https:; img-src 'self' data: http: https:;">
+        @endif
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
         <meta http-equiv="X-XSS-Protection" content="1; mode=block">
 
@@ -16,8 +20,43 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
+        <!-- Preload critical images to reduce flickering -->
+        <link rel="preload" as="image" href="/images/eagle.jpg" fetchpriority="high">
+        <link rel="preload" as="image" href="/images/spjrd.png" fetchpriority="high">
+
+        <!-- Scripts and Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- Fallback for when Vite assets are not available -->
+            <script>
+            // Check if Vite assets loaded, if not, load built assets
+                setTimeout(function() {
+                if (!window.Alpine && !document.querySelector('link[href*="app.css"]')) {
+                    console.log('Vite assets not loaded, loading built assets...');
+                        
+                    // Load built CSS
+                        var link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                    link.href = '/build/assets/app-Dw9KLaam.css';
+                        document.head.appendChild(link);
+                        
+                    // Load built JS
+                        var script = document.createElement('script');
+                    script.src = '/build/assets/app-DaBYqt0m.js';
+                        script.onload = function() {
+                        console.log('Built assets loaded successfully');
+                        if (window.Alpine) {
+                            window.Alpine.start();
+                        }
+                        };
+                        script.onerror = function() {
+                        console.error('Built assets failed to load');
+                        document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;"><h1>Application Loading Error</h1><p>The application assets failed to load. Please refresh the page or contact support.</p><p>Error: Assets not found</p><button onclick="location.reload()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh Page</button></div>';
+                        };
+                        document.head.appendChild(script);
+                    }
+            }, 2000);
+            </script>
 
         <!-- Styles -->
         @livewireStyles
@@ -26,7 +65,7 @@
         <!-- Eagle Main Background Overlay (only on white background) -->
         <div class="min-h-screen bg-white relative">
             <div class="pointer-events-none absolute inset-0 z-0 select-none">
-                <img src="/images/eagle.jpg" alt="Eagle" class="w-full h-full object-cover opacity-30" draggable="false" />
+                <img src="/images/eagle.jpg" alt="Eagle" class="w-full h-full object-cover opacity-30" draggable="false" loading="eager" fetchpriority="high" />
             </div>
 
             <x-banner />

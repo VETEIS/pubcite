@@ -5,34 +5,34 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
             <div>
                 <label class="block text-xs font-medium mb-0.5">College/Unit/Department:</label>
-                <input type="text" name="rec_collegeheader" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg" required>
+                <input type="text" name="rec_collegeheader" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg focus:border-maroon-700 focus:ring-maroon-700 placeholder-gray-400" required>
             </div>
             
             <div>
                 <label class="block text-xs font-medium mb-0.5">Date:</label>
-                <input type="date" name="rec_date" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg" required>
+                <input type="date" name="rec_date" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg focus:border-maroon-700 focus:ring-maroon-700 placeholder-gray-400" required>
             </div>
             
             <div>
                 <label class="block text-xs font-medium mb-0.5">Faculty Name:</label>
-                <input type="text" name="facultyname" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg" required>
+                <input type="text" name="facultyname" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg focus:border-maroon-700 focus:ring-maroon-700 placeholder-gray-400" required>
             </div>
             
             <div>
                 <label class="block text-xs font-medium mb-0.5">Indexing:</label>
-                <input type="text" name="indexing" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg" placeholder="Scopus/WoS/ACI" required>
+                <input type="text" name="indexing" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg focus:border-maroon-700 focus:ring-maroon-700 placeholder-gray-400" placeholder="Scopus/WoS/ACI" required>
             </div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
             <div>
                 <label class="block text-xs font-medium mb-0.5">Publication Details:</label>
-                <textarea name="details" class="border border-gray-300 w-full text-xs px-2 py-1 rounded" rows="2" placeholder="Author, Year, Title, Journal, Vol/Issue, DOI" required></textarea>
+                <textarea name="details" class="border border-gray-300 w-full text-xs px-2 py-1 rounded focus:border-maroon-700 focus:ring-maroon-700 placeholder-gray-400" rows="2" placeholder="Author, Year, Title, Journal, Vol/Issue, DOI" required></textarea>
             </div>
             
             <div>
                 <label class="block text-xs font-medium mb-0.5">Dean's Name:</label>
-                <input type="text" name="dean" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg" required>
+                <input type="text" name="dean" class="border border-gray-300 w-full text-xs px-2 py-1 rounded-lg focus:border-maroon-700 focus:ring-maroon-700 placeholder-gray-400" required>
             </div>
         </div>
     </div>
