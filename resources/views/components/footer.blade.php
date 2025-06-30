@@ -1,5 +1,5 @@
-<footer id="main-footer" class="bg-maroon-800 text-white w-full mt-auto text-center flex flex-col items-center">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+<footer id="main-footer" class="bg-maroon-800 text-white w-full text-center flex flex-col items-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 w-full">
         <div class="flex flex-col lg:flex-row lg:justify-between items-center gap-4 lg:gap-8">
             <!-- Left: USEP Info (desktop: left-aligned, mobile: centered) -->
             <div class="flex-1 text-sm text-center lg:text-left">
@@ -47,9 +47,11 @@
         </div>
     </div>
     <!-- Copyright -->
-    <div class="w-full border-t border-maroon-700 pt-2 pb-1 text-center bg-maroon-900">
-        <p class="text-maroon-200 text-xs">
-            © 2025 University of Southeastern Philippines. All Rights Reserved.
-        </p>
+    <div class="border-t border-maroon-700 bg-maroon-900 w-full">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1">
+            <p class="text-maroon-200 text-xs text-center">
+                © 2025 University of Southeastern Philippines. All Rights Reserved.
+            </p>
+        </div>
     </div>
 </footer> 

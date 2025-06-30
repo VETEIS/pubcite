@@ -61,8 +61,8 @@
         <!-- Styles -->
         @livewireStyles
     </head>
-    <body class="flex flex-col min-h-screen">
-        <div class="flex-1 min-h-0 bg-white relative font-sans text-gray-900 antialiased">
+    <body class="font-sans antialiased bg-white text-gray-900">
+        <div class="min-h-screen bg-white relative">
             <!-- Eagle Main Background Overlay (behind everything) -->
             <div class="pointer-events-none absolute inset-0 z-0 select-none">
                 <img src="/images/eagle.jpg" alt="Eagle" class="w-full h-full object-cover opacity-30" draggable="false" loading="eager" fetchpriority="high" />
@@ -84,14 +84,17 @@
                     </div>
                 </div>
             </nav>
-            
-            <!-- Main Content Area - fills viewport, footer is below -->
-            <div class="relative z-10 pt-16 flex-1 flex items-center justify-center py-6 sm:py-12">
-                {{ $slot }}
+
+            <div class="relative z-10 pt-16">
+                <main>
+                    <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+                        {{ $slot }}
+                    </div>
+                </main>
             </div>
-            
+
             <!-- Footer - positioned below viewport -->
-            <div class="relative z-10 w-full">
+            <div class="relative z-10">
                 <x-footer />
             </div>
         </div>
