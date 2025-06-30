@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicationsController;
+use App\Http\Controllers\CitationsController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -48,6 +49,10 @@ Route::middleware([
     Route::get('/admin/dashboard/data', [\App\Http\Controllers\DashboardController::class, 'getData'])->name('admin.dashboard.data');
     Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request');
     Route::post('/publications/submit', [\App\Http\Controllers\PublicationsController::class, 'submitPublicationRequest'])->name('publications.submit');
+    Route::get('/citations/request', [\App\Http\Controllers\CitationsController::class, 'create'])->name('citations.request');
+    Route::post('/citations/submit', [\App\Http\Controllers\CitationsController::class, 'submitCitationRequest'])->name('citations.submit');
+    Route::post('/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate');
+    Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success');
     Route::patch('/admin/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');
     Route::post('/publications/incentive-application/generate', [\App\Http\Controllers\PublicationsController::class, 'generateIncentiveDocx'])->name('publications.incentive.generate');
     Route::delete('/admin/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');

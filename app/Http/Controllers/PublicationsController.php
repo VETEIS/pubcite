@@ -685,7 +685,7 @@ class PublicationsController extends Controller
 
             // Check if file exists based on type
             if ($fileType === 'pdf') {
-                if (!Storage::disk('public')->exists($filePath)) {
+            if (!Storage::disk('public')->exists($filePath)) {
                     abort(404, 'PDF file not found on disk');
                 }
                 $fullPath = storage_path('app/public/' . $filePath);
