@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('requests', function (Blueprint $table) {
-            $table->json('form_data')->nullable()->after('status');
-            $table->string('pdf_path')->nullable()->after('form_data');
-            $table->text('pdf_content')->nullable()->after('pdf_path');
+            // $table->json('form_data')->nullable()->after('status'); // Already exists, do not add again
+            // $table->string('pdf_path')->nullable()->after('form_data'); // Already exists, do not add again
+            // $table->text('pdf_content')->nullable()->after('pdf_path'); // Already exists, do not add again
         });
     }
 

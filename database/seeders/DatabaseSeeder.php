@@ -8,22 +8,8 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::updateOrCreate(
-            ['email' => 'nbmendoza00217@usep.edu.ph'],
-            [
-            'name' => 'Norlan Mendoza',
-            'password' => bcrypt('userpassword'),
-            'role' => 'user',
-            ]
-        );
-
         User::updateOrCreate(
             ['email' => 'vetescoton@usep.edu.ph'],
             [
