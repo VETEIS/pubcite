@@ -15,6 +15,8 @@ class DashboardController extends Controller
             $search = request('search');
             $type = request('type');
             $period = request('period');
+            $now = now();
+            $rangeDescription = '';
             if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
                 $query->where('status', $status);
             }
@@ -31,59 +33,56 @@ class DashboardController extends Controller
                 $query->where('type', $type);
             }
             if ($period) {
-                $now = now();
-                if ($period === 'today') {
-                    $query->whereDate('requested_at', $now->toDateString());
-                } elseif ($period === 'week') {
-                    $query->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                if ($period === 'week') {
+                    $start = $now->copy()->startOfWeek();
+                    $end = $now->copy()->endOfWeek();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This week: ' . $start->format('M j') . ' – ' . $end->format('M j');
                 } elseif ($period === 'month') {
-                    $query->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year);
+                    $start = $now->copy()->startOfMonth();
+                    $end = $now->copy()->endOfMonth();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This month: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'quarter') {
+                    $start = $now->copy()->startOfQuarter();
+                    $end = $now->copy()->endOfQuarter();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This quarter: ' . $start->format('M j') . ' – ' . $end->format('M j');
                 }
             }
             $allRequests = $query->get();
-            $now = now();
             $stats = [
                 'publication' => [
-                    'today' => \App\Models\Request::where('type', 'Publication')->whereDate('requested_at', $now->toDateString())->count(),
-                    'yesterday' => \App\Models\Request::where('type', 'Publication')->whereDate('requested_at', $now->copy()->subDay()->toDateString())->count(),
                     'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
-                    'month' => \App\Models\Request::where('type', 'Publication')->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year)->count(),
-                    'year' => \App\Models\Request::where('type', 'Publication')->whereYear('requested_at', $now->year)->count(),
+                    'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                    'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
                 ],
                 'citation' => [
-                    'today' => \App\Models\Request::where('type', 'Citation')->whereDate('requested_at', $now->toDateString())->count(),
-                    'yesterday' => \App\Models\Request::where('type', 'Citation')->whereDate('requested_at', $now->copy()->subDay()->toDateString())->count(),
                     'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
-                    'month' => \App\Models\Request::where('type', 'Citation')->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year)->count(),
-                    'year' => \App\Models\Request::where('type', 'Citation')->whereYear('requested_at', $now->year)->count(),
+                    'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                    'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
                 ],
             ];
-            
             // Calculate status counts based on current filters
             $statusQuery = \App\Models\Request::query();
-            
-            // Apply type filter if set
             if ($type && in_array($type, ['Publication', 'Citation'])) {
                 $statusQuery->where('type', $type);
             }
-            
-            // Apply period filter if set
             if ($period) {
-                if ($period === 'today') {
-                    $statusQuery->whereDate('requested_at', $now->toDateString());
-                } elseif ($period === 'week') {
+                if ($period === 'week') {
                     $statusQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
                 } elseif ($period === 'month') {
-                    $statusQuery->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year);
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
                 }
             }
-            
             $filterCounts = [
                 'pending' => $statusQuery->where('status', 'pending')->count(),
                 'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
                 'rejected' => $statusQuery->where('status', 'rejected')->count(),
             ];
-            return view('admin.dashboard', compact('allRequests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period'));
+            return view('admin.dashboard', compact('allRequests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription'));
         }
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
         return view('dashboard', compact('requests'));
@@ -95,13 +94,12 @@ class DashboardController extends Controller
         if ($user->role !== 'admin') {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-
         $query = \App\Models\Request::with('user')->orderByDesc('requested_at');
         $status = request('status');
         $search = request('search');
         $type = request('type');
         $period = request('period');
-        
+        $now = now();
         if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
             $query->where('status', $status);
         }
@@ -118,60 +116,45 @@ class DashboardController extends Controller
             $query->where('type', $type);
         }
         if ($period) {
-            $now = now();
-            if ($period === 'today') {
-                $query->whereDate('requested_at', $now->toDateString());
-            } elseif ($period === 'week') {
+            if ($period === 'week') {
                 $query->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
             } elseif ($period === 'month') {
-                $query->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year);
+                $query->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+            } elseif ($period === 'quarter') {
+                $query->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
             }
         }
-        
         $allRequests = $query->get();
-        $now = now();
         $stats = [
             'publication' => [
-                'today' => \App\Models\Request::where('type', 'Publication')->whereDate('requested_at', $now->toDateString())->count(),
-                'yesterday' => \App\Models\Request::where('type', 'Publication')->whereDate('requested_at', $now->copy()->subDay()->toDateString())->count(),
                 'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
-                'month' => \App\Models\Request::where('type', 'Publication')->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year)->count(),
-                'year' => \App\Models\Request::where('type', 'Publication')->whereYear('requested_at', $now->year)->count(),
+                'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
             ],
             'citation' => [
-                'today' => \App\Models\Request::where('type', 'Citation')->whereDate('requested_at', $now->toDateString())->count(),
-                'yesterday' => \App\Models\Request::where('type', 'Citation')->whereDate('requested_at', $now->copy()->subDay()->toDateString())->count(),
                 'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
-                'month' => \App\Models\Request::where('type', 'Citation')->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year)->count(),
-                'year' => \App\Models\Request::where('type', 'Citation')->whereYear('requested_at', $now->year)->count(),
+                'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
             ],
         ];
-        
-        // Calculate status counts based on current filters
         $statusQuery = \App\Models\Request::query();
-        
-        // Apply type filter if set
         if ($type && in_array($type, ['Publication', 'Citation'])) {
             $statusQuery->where('type', $type);
         }
-        
-        // Apply period filter if set
         if ($period) {
-            if ($period === 'today') {
-                $statusQuery->whereDate('requested_at', $now->toDateString());
-            } elseif ($period === 'week') {
+            if ($period === 'week') {
                 $statusQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
             } elseif ($period === 'month') {
-                $statusQuery->whereMonth('requested_at', $now->month)->whereYear('requested_at', $now->year);
+                $statusQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+            } elseif ($period === 'quarter') {
+                $statusQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
             }
         }
-        
         $filterCounts = [
             'pending' => $statusQuery->where('status', 'pending')->count(),
             'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
             'rejected' => $statusQuery->where('status', 'rejected')->count(),
         ];
-        
         return response()->json([
             'requests' => $allRequests,
             'stats' => $stats,

@@ -11,7 +11,7 @@
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Faculty Name</label>
-            <input type="text" name="facultyname" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required>
+            <input type="text" name="rec_facultyname" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Indexing</label>

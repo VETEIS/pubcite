@@ -21,16 +21,16 @@
                         </div>
                         <div class="flex flex-1 justify-end gap-6">
                             <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Publication', 'today')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'today' ? 'underline' : ''" x-text="stats.publication.today"></button>
-                                <button @click="filterRequests('Publication', 'today')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'today' ? 'text-maroon-600 font-medium' : ''">Today</button>
-                            </div>
-                            <div class="flex flex-col items-center min-w-[60px]">
                                 <button @click="filterRequests('Publication', 'week')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.publication.week"></button>
                                 <button @click="filterRequests('Publication', 'week')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'text-maroon-600 font-medium' : ''">This Week</button>
                             </div>
                             <div class="flex flex-col items-center min-w-[60px]">
                                 <button @click="filterRequests('Publication', 'month')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.publication.month"></button>
                                 <button @click="filterRequests('Publication', 'month')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'text-maroon-600 font-medium' : ''">This Month</button>
+                            </div>
+                            <div class="flex flex-col items-center min-w-[60px]">
+                                <button @click="filterRequests('Publication', 'quarter')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.publication.quarter"></button>
+                                <button @click="filterRequests('Publication', 'quarter')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'text-maroon-600 font-medium' : ''">This Quarter</button>
                             </div>
                         </div>
                     </div>
@@ -44,10 +44,6 @@
                         </div>
                         <div class="flex flex-1 justify-end gap-6">
                             <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Citation', 'today')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'today' ? 'underline' : ''" x-text="stats.citation.today"></button>
-                                <button @click="filterRequests('Citation', 'today')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'today' ? 'text-burgundy-600 font-medium' : ''">Today</button>
-                            </div>
-                            <div class="flex flex-col items-center min-w-[60px]">
                                 <button @click="filterRequests('Citation', 'week')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.citation.week"></button>
                                 <button @click="filterRequests('Citation', 'week')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'text-burgundy-600 font-medium' : ''">This Week</button>
                             </div>
@@ -55,8 +51,16 @@
                                 <button @click="filterRequests('Citation', 'month')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.citation.month"></button>
                                 <button @click="filterRequests('Citation', 'month')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'text-burgundy-600 font-medium' : ''">This Month</button>
                             </div>
+                            <div class="flex flex-col items-center min-w-[60px]">
+                                <button @click="filterRequests('Citation', 'quarter')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.citation.quarter"></button>
+                                <button @click="filterRequests('Citation', 'quarter')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'text-burgundy-600 font-medium' : ''">This Quarter</button>
+                            </div>
                         </div>
                     </div>
+                </div>
+                <!-- Range Description -->
+                <div class="w-full text-center mb-4">
+                    <span class="text-xs text-gray-500">{{ $rangeDescription ?? '' }}</span>
                 </div>
                 
                 <div class="mt-8">
@@ -65,18 +69,36 @@
                     <!-- Filters and Search -->
                     <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                         <div class="flex gap-2 relative">
-                            <button @click="filterByStatus('')" class="px-3 py-1 rounded font-semibold text-xs transition" :class="activeStatus === '' ? 'bg-maroon-700 text-white' : 'bg-gray-100 text-gray-700 hover:bg-maroon-600 hover:text-white'">All</button>
-                            <div class="relative">
-                                <button @click="filterByStatus('pending')" class="px-3 py-1 rounded font-semibold text-xs transition" :class="activeStatus === 'pending' ? 'bg-yellow-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-yellow-600 hover:text-white'">Pending</button>
-                                <span x-show="filterCounts.pending > 0" x-text="filterCounts.pending > 99 ? '99+' : filterCounts.pending" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center select-none"></span>
-                            </div>
-                            <div class="relative">
-                                <button @click="filterByStatus('endorsed')" class="px-3 py-1 rounded font-semibold text-xs transition" :class="activeStatus === 'endorsed' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-green-700 hover:text-white'">Endorsed</button>
-                                <span x-show="filterCounts.endorsed > 0" x-text="filterCounts.endorsed > 99 ? '99+' : filterCounts.endorsed" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center select-none"></span>
-                            </div>
-                            <div class="relative">
-                                <button @click="filterByStatus('rejected')" class="px-3 py-1 rounded font-semibold text-xs transition" :class="activeStatus === 'rejected' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-red-700 hover:text-white'">Rejected</button>
-                                <span x-show="filterCounts.rejected > 0" x-text="filterCounts.rejected > 99 ? '99+' : filterCounts.rejected" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center select-none"></span>
+                            <div class="flex bg-gray-100 rounded-full p-1 gap-1">
+                                <button @click="filterByStatus('')"
+                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
+                                    :class="activeStatus === '' ? 'bg-maroon-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-maroon-600 hover:text-white border border-gray-200'">
+                                    All
+                                </button>
+                                <button @click="filterByStatus('pending')"
+                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
+                                    :class="activeStatus === 'pending' ? 'bg-yellow-500 text-white shadow' : 'bg-white text-gray-700 hover:bg-yellow-600 hover:text-white border border-gray-200'">
+                                    Pending
+                                    <span x-show="filterCounts.pending > 0"
+                                        class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-yellow-500 text-white absolute -top-2 -right-2 border-2 border-white"
+                                        x-text="filterCounts.pending"></span>
+                                </button>
+                                <button @click="filterByStatus('endorsed')"
+                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
+                                    :class="activeStatus === 'endorsed' ? 'bg-green-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-green-700 hover:text-white border border-gray-200'">
+                                    Endorsed
+                                    <span x-show="filterCounts.endorsed > 0"
+                                        class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-green-600 text-white absolute -top-2 -right-2 border-2 border-white"
+                                        x-text="filterCounts.endorsed"></span>
+                                </button>
+                                <button @click="filterByStatus('rejected')"
+                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
+                                    :class="activeStatus === 'rejected' ? 'bg-red-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-red-700 hover:text-white border border-gray-200'">
+                                    Rejected
+                                    <span x-show="filterCounts.rejected > 0"
+                                        class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-red-600 text-white absolute -top-2 -right-2 border-2 border-white"
+                                        x-text="filterCounts.rejected"></span>
+                                </button>
                             </div>
                         </div>
                         <div class="flex-1 flex justify-end">

@@ -14,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
+use App\Mail\SubmissionNotification;
+use App\Mail\StatusChangeNotification;
 
 class PublicationsController extends Controller
 {
@@ -28,8 +31,16 @@ class PublicationsController extends Controller
         $httpRequest->validate([
             'status' => 'required|in:pending,endorsed,rejected',
         ]);
+        $oldStatus = $request->status;
         $request->status = $httpRequest->input('status');
         $request->save();
+
+        // Send status change email if status changed
+        if ($oldStatus !== $request->status) {
+            $adminComment = $httpRequest->input('admin_comment', null);
+            \Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
+        }
+
         return back()->with('success', 'Request status updated successfully.');
     }
 
@@ -180,7 +191,7 @@ class PublicationsController extends Controller
             // Set all relevant fields for recommendation letter (matching template)
             $templateProcessor->setValue('collegeheader', $data['rec_collegeheader'] ?? '');
             $templateProcessor->setValue('date', $data['rec_date'] ?? now()->format('Y-m-d'));
-            $templateProcessor->setValue('facultyname', $data['facultyname'] ?? '');
+            $templateProcessor->setValue('facultyname', $data['rec_facultyname'] ?? '');
             $templateProcessor->setValue('details', $data['details'] ?? '');
             $templateProcessor->setValue('indexing', $data['indexing'] ?? '');
             $templateProcessor->setValue('dean', $data['dean'] ?? '');
@@ -296,6 +307,7 @@ class PublicationsController extends Controller
         
         // Replace all placeholders with actual data
         $replacements = [
+            '{{collegeheader}}' => $data['collegeheader'] ?? '',
             '{{name}}' => $data['name'] ?? '',
             '{{academicrank}}' => $data['academicrank'] ?? '',
             '{{employmentstatus}}' => $data['employmentstatus'] ?? '',
@@ -320,6 +332,7 @@ class PublicationsController extends Controller
             // Recommendation letter placeholders
             '{{rec_collegeheader}}' => $data['rec_collegeheader'] ?? '',
             '{{rec_date}}' => $data['rec_date'] ?? now()->format('Y-m-d'),
+            '{{rec_facultyname}}' => $data['rec_facultyname'] ?? '',
             '{{details}}' => $data['details'] ?? '',
             '{{indexing}}' => $data['indexing'] ?? '',
             '{{dean}}' => $data['dean'] ?? '',
@@ -364,13 +377,22 @@ class PublicationsController extends Controller
     {
         $user = Auth::user();
         if (!$user || $user->role !== 'admin') {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'Unauthorized.'], 403);
+            }
             return redirect()->back()->with('error', 'Unauthorized.');
         }
         $request = \App\Models\Request::find($id);
         if (!$request) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'Request not found.'], 404);
+            }
             return redirect()->back()->with('error', 'Request not found.');
         }
         $request->delete();
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Request deleted successfully.']);
+        }
         return redirect()->back()->with('success', 'Request deleted successfully.');
     }
 
@@ -411,6 +433,7 @@ class PublicationsController extends Controller
             // Recommendation Letter fields
             'rec_collegeheader' => 'required|string',
             'rec_date' => 'required|string',
+            'rec_facultyname' => 'required|string',
             'details' => 'required|string',
             'indexing' => 'required|string',
             'dean' => 'required|string',
@@ -522,6 +545,27 @@ class PublicationsController extends Controller
                 'requestId' => $userRequest->id,
                 'requestCode' => $requestCode
             ]);
+
+            // Send email notifications
+            try {
+                // Send notification to user
+                Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
+                
+                // Send notification to admin
+                $adminUser = \App\Models\User::where('role', 'admin')->first();
+                if ($adminUser) {
+                    Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+                }
+                
+                Log::info('Email notifications sent successfully', [
+                    'requestId' => $userRequest->id,
+                    'userEmail' => $userRequest->user->email,
+                    'adminEmail' => $adminUser->email ?? 'No admin found'
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error sending email notifications: ' . $e->getMessage());
+                // Don't fail the request if email fails
+            }
 
             return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
 

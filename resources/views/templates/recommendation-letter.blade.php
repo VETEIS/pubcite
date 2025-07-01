@@ -52,7 +52,7 @@
     <div class="content">
         <p><strong>To Whom It May Concern,</strong></p>
         
-        <p>This is to certify that {{ $facultyname }} is a faculty member of our institution.</p>
+        <p>This is to certify that {{ $rec_facultyname }} is a faculty member of our institution.</p>
         
         <p><strong>Details:</strong> {{ $details }}</p>
         

@@ -187,7 +187,7 @@
                                     <h4 class="font-medium text-maroon-700 mb-3">Uploaded Documents</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                                         <!-- Article PDF Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,12 +196,17 @@
                                                 </div>
                                                 <h5 class="font-medium text-gray-800 text-sm">Article PDF</h5>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2" id="review-article">No file uploaded</div>
-                                            
+                                            <div class="flex-1 flex flex-col justify-end">
+                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-article">No file uploaded</div>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('article-pdf-review').click()">Change File</button>
+                                                    <input type="file" id="article-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('article-pdf', this)">
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Cover Letter Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,12 +215,17 @@
                                                 </div>
                                                 <h5 class="font-medium text-gray-800 text-sm">Cover Letter</h5>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2" id="review-cover">No file uploaded</div>
-                                            
+                                            <div class="flex-1 flex flex-col justify-end">
+                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-cover">No file uploaded</div>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('cover-pdf-review').click()">Change File</button>
+                                                    <input type="file" id="cover-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cover-pdf', this)">
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Acceptance Letter Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,26 +234,36 @@
                                                 </div>
                                                 <h5 class="font-medium text-gray-800 text-sm">Acceptance Letter</h5>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2" id="review-acceptance">No file uploaded</div>
-                                            
+                                            <div class="flex-1 flex flex-col justify-end">
+                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-acceptance">No file uploaded</div>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('acceptance-pdf-review').click()">Change File</button>
+                                                    <input type="file" id="acceptance-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('acceptance-pdf', this)">
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Peer Review Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                                     </svg>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Peer Review</h5>
+                                                <h5 class="text-medium text-gray-800 text-sm">Peer Review</h5>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2" id="review-peer">No file uploaded</div>
-                                            
+                                            <div class="flex-1 flex flex-col justify-end">
+                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-peer">No file uploaded</div>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('peer-review-pdf-review').click()">Change File</button>
+                                                    <input type="file" id="peer-review-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('peer-review-pdf', this)">
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Terminal Report Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm">
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,8 +272,13 @@
                                                 </div>
                                                 <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2" id="review-terminal">No file uploaded</div>
-                                            
+                                            <div class="flex-1 flex flex-col justify-end">
+                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-terminal">No file uploaded</div>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('terminal-report-pdf-review').click()">Change File</button>
+                                                    <input type="file" id="terminal-report-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal-report-pdf', this)">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -422,6 +447,38 @@ function publicationForm() {
     }
 }
 
+function updateReviewFile(type, input) {
+    const fileName = input.files.length > 0 ? input.files[0].name : 'No file uploaded';
+    
+    // Apply the same truncation logic as the upload tab
+    const displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;
+    
+    // Map the review field names to the correct review element IDs
+    const fieldMapping = {
+        'article-pdf': 'review-article',
+        'cover-pdf': 'review-cover',
+        'acceptance-pdf': 'review-acceptance',
+        'peer-review-pdf': 'review-peer',
+        'terminal-report-pdf': 'review-terminal'
+    };
+    
+    const reviewElementId = fieldMapping[type];
+    if (reviewElementId) {
+        const element = document.getElementById(reviewElementId);
+        if (element) {
+            element.textContent = displayName;
+            element.title = fileName; // Show full filename on hover
+        }
+    }
+    
+    // Update the original file input
+    const originalFieldName = type.replace('-', '_');
+    const originalInput = document.querySelector(`[name="${originalFieldName}"]`);
+    if (originalInput && input.files.length > 0) {
+        originalInput.files = input.files;
+    }
+}
+
 // Tab navigation and validation logic
 function tabNav() {
     return {
@@ -483,13 +540,13 @@ function tabNav() {
         // Highlight incomplete fields for a given tab
         highlightIncompleteFieldsForTab(tab) {
             let fields = [];
-            if (tab === 'incentive') {
-                fields = [
-                    'collegeheader', 'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
-                    'papertitle', 'journaltitle', 'version', 'publisher', 'type', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
-                ];
-            } else if (tab === 'recommendation') {
-                fields = ['rec_collegeheader', 'rec_date', 'facultyname', 'details', 'indexing', 'dean'];
+                            if (tab === 'incentive') {
+                    fields = [
+                        'collegeheader', 'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
+                        'papertitle', 'journaltitle', 'version', 'publisher', 'type', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
+                    ];
+                            } else if (tab === 'recommendation') {
+                    fields = ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
             } else if (tab === 'terminal') {
                 fields = ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'];
             } else if (tab === 'upload') {
@@ -592,7 +649,7 @@ function tabNav() {
 
             // Check recommendation tab completion
             const recommendationFields = [
-                'rec_collegeheader', 'rec_date', 'facultyname', 'details', 'indexing', 'dean'
+                'rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'
             ];
             this.tabCompletion.recommendation = recommendationFields.every(field => {
                 const element = document.querySelector(`[name="${field}"]`);
@@ -671,7 +728,7 @@ function tabNav() {
                 titleEl.textContent = titleInput ? titleInput.value || '-' : '-';
             }
 
-            // Update file names with correct mapping
+            // Update file names with correct mapping and truncation
             const fileFields = [
                 { field: 'article_pdf', id: 'review-article' },
                 { field: 'cover_pdf', id: 'review-cover' },
@@ -683,9 +740,13 @@ function tabNav() {
                 const element = document.getElementById(id);
                 const fileInput = document.querySelector(`[name="${field}"]`);
                 if (element && fileInput && fileInput.files && fileInput.files.length > 0) {
-                    element.textContent = fileInput.files[0].name;
+                    const fileName = fileInput.files[0].name;
+                    const displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;
+                    element.textContent = displayName;
+                    element.title = fileName; // Show full filename on hover
                 } else if (element) {
                     element.textContent = 'No file uploaded';
+                    element.title = '';
                 }
             });
         },
@@ -700,7 +761,7 @@ function tabNav() {
                 'collegeheader', 'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
                 'papertitle', 'coauthors', 'journaltitle', 'version', 'pissn', 'eissn', 'doi', 'publisher', 'type', 'citescore', 'particulars',
                 'facultyname', 'centermanager', 'collegedean', 'indexed_in',
-                'rec_collegeheader', 'rec_date', 'details', 'indexing', 'dean',
+                'rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean',
                 'title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'
             ];
             
@@ -722,6 +783,11 @@ function tabNav() {
             // Add document type
             formData.append('docx_type', type);
             
+            // Get user name for filename (same as citations)
+            const applicantName = document.querySelector('[name="name"]')?.value || 'User';
+            const sanitizedName = applicantName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+            const timestamp = new Date().toISOString().slice(0, 10);
+            
             // Generate DOCX via AJAX
             fetch('/publications/incentive-application/generate', {
                 method: 'POST',
@@ -734,17 +800,15 @@ function tabNav() {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                // Get the filename from the Content-Disposition header
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = type === 'incentive' ? 'Incentive_Application_Form.docx' : 
-                              type === 'recommendation' ? 'Recommendation_Letter_Form.docx' : 
-                              'Terminal_Report_Form.docx';
                 
-                if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-                    if (filenameMatch) {
-                        filename = filenameMatch[1];
-                    }
+                // Create filename following citations pattern
+                let filename;
+                if (type === 'incentive') {
+                    filename = `${sanitizedName}_Publication_Incentive_Application_${timestamp}.docx`;
+                } else if (type === 'recommendation') {
+                    filename = `${sanitizedName}_Publication_Recommendation_Letter_${timestamp}.docx`;
+                } else {
+                    filename = `${sanitizedName}_Publication_Terminal_Report_${timestamp}.docx`;
                 }
                 
                 return response.blob().then(blob => ({ blob, filename }));

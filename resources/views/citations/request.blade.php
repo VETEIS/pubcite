@@ -3,6 +3,13 @@
     <div class="w-full max-w-4xl mx-auto">
         <!-- Main Form Card - Fixed Height for Consistency -->
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 relative" style="min-height: 600px;">
+            @if(session('error'))
+                <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">{{ session('error') }}</div>
+            @endif
+            @if(session('success'))
+                <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm">{{ session('success') }}</div>
+            @endif
+            
             <div class="flex flex-col items-center text-center mb-4">
                 <x-application-logo class="h-10 w-10 mb-2" />
                 <h2 class="text-xl font-bold text-burgundy-800 mb-1">Citation Request</h2>

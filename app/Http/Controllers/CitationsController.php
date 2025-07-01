@@ -14,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
+use App\Mail\SubmissionNotification;
+use App\Mail\StatusChangeNotification;
 
 class CitationsController extends Controller
 {
@@ -28,8 +31,16 @@ class CitationsController extends Controller
         $httpRequest->validate([
             'status' => 'required|in:pending,endorsed,rejected',
         ]);
+        $oldStatus = $request->status;
         $request->status = $httpRequest->input('status');
         $request->save();
+
+        // Send status change email if status changed
+        if ($oldStatus !== $request->status) {
+            $adminComment = $httpRequest->input('admin_comment', null);
+            Mail::to($request->user->email)->send(new StatusChangeNotification($request, $request->user, $request->status, $adminComment));
+        }
+
         return back()->with('success', 'Request status updated successfully.');
     }
 
@@ -213,16 +224,18 @@ class CitationsController extends Controller
         try {
             // Validate the request
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
+                'applicant_name' => 'required|string|max:255',
                 'college' => 'required|string|max:255',
-                'papertitle' => 'required|string|max:500',
-                'journaltitle' => 'required|string|max:255',
-                'facultyname' => 'required|string|max:255',
-                'collegedean' => 'required|string|max:255',
-                'dean' => 'required|string|max:255',
-                'article_pdf' => 'required|file|mimes:pdf|max:10240',
-                'citation_report_pdf' => 'required|file|mimes:pdf|max:10240',
-                'impact_factor_pdf' => 'required|file|mimes:pdf|max:10240',
+                'citing_title' => 'required|string|max:500',
+                'citing_journal' => 'required|string|max:255',
+                'cited_title' => 'required|string|max:500',
+                'faculty_name' => 'required|string|max:255',
+                'dean_name' => 'required|string|max:255',
+                'recommendation_letter' => 'required|file|mimes:pdf|max:10240',
+                'citing_article' => 'required|file|mimes:pdf|max:10240',
+                'citing_journal_cover' => 'required|file|mimes:pdf|max:10240',
+                'cited_article' => 'required|file|mimes:pdf|max:10240',
+                'cited_journal_cover' => 'required|file|mimes:pdf|max:10240',
             ]);
 
             if ($validator->fails()) {
@@ -230,35 +243,53 @@ class CitationsController extends Controller
             }
 
             // Generate unique request code
-            $requestCode = 'CITE-' . date('Y') . '-' . strtoupper(Str::random(8));
+            $requestCode = 'CITE-' . date('Ymd') . '-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
 
             // Store PDF files
             $pdfPaths = [];
             
-            // Article PDF
-            if ($request->hasFile('article_pdf')) {
-                $articlePath = $request->file('article_pdf')->store('publications', 'public');
-                $pdfPaths['article'] = [
-                    'path' => $articlePath,
-                    'original_name' => $request->file('article_pdf')->getClientOriginalName()
+            // Recommendation Letter PDF
+            if ($request->hasFile('recommendation_letter')) {
+                $recommendationPath = $request->file('recommendation_letter')->store('citations', 'public');
+                $pdfPaths['recommendation_letter'] = [
+                    'path' => $recommendationPath,
+                    'original_name' => $request->file('recommendation_letter')->getClientOriginalName()
                 ];
             }
 
-            // Citation Report PDF
-            if ($request->hasFile('citation_report_pdf')) {
-                $citationReportPath = $request->file('citation_report_pdf')->store('publications', 'public');
-                $pdfPaths['citation_report'] = [
-                    'path' => $citationReportPath,
-                    'original_name' => $request->file('citation_report_pdf')->getClientOriginalName()
+            // Citing Article PDF
+            if ($request->hasFile('citing_article')) {
+                $citingArticlePath = $request->file('citing_article')->store('citations', 'public');
+                $pdfPaths['citing_article'] = [
+                    'path' => $citingArticlePath,
+                    'original_name' => $request->file('citing_article')->getClientOriginalName()
                 ];
             }
 
-            // Impact Factor PDF
-            if ($request->hasFile('impact_factor_pdf')) {
-                $impactFactorPath = $request->file('impact_factor_pdf')->store('publications', 'public');
-                $pdfPaths['impact_factor'] = [
-                    'path' => $impactFactorPath,
-                    'original_name' => $request->file('impact_factor_pdf')->getClientOriginalName()
+            // Citing Journal Cover PDF
+            if ($request->hasFile('citing_journal_cover')) {
+                $citingJournalCoverPath = $request->file('citing_journal_cover')->store('citations', 'public');
+                $pdfPaths['citing_journal_cover'] = [
+                    'path' => $citingJournalCoverPath,
+                    'original_name' => $request->file('citing_journal_cover')->getClientOriginalName()
+                ];
+            }
+
+            // Cited Article PDF
+            if ($request->hasFile('cited_article')) {
+                $citedArticlePath = $request->file('cited_article')->store('citations', 'public');
+                $pdfPaths['cited_article'] = [
+                    'path' => $citedArticlePath,
+                    'original_name' => $request->file('cited_article')->getClientOriginalName()
+                ];
+            }
+
+            // Cited Journal Cover PDF
+            if ($request->hasFile('cited_journal_cover')) {
+                $citedJournalCoverPath = $request->file('cited_journal_cover')->store('citations', 'public');
+                $pdfPaths['cited_journal_cover'] = [
+                    'path' => $citedJournalCoverPath,
+                    'original_name' => $request->file('cited_journal_cover')->getClientOriginalName()
                 ];
             }
 
@@ -289,7 +320,7 @@ class CitationsController extends Controller
             $userRequest->status = 'pending';
             $userRequest->requested_at = now();
             $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths]);
-            $userRequest->form_data = json_encode($request->except(['_token', 'article_pdf', 'citation_report_pdf', 'impact_factor_pdf']));
+            $userRequest->form_data = json_encode($request->except(['_token', 'recommendation_letter', 'citing_article', 'citing_journal_cover', 'cited_article', 'cited_journal_cover']));
             
             // Store DOCX paths if generated
             if (!empty($docxPaths)) {
@@ -305,7 +336,28 @@ class CitationsController extends Controller
                 'docx_count' => count($docxPaths)
             ]);
 
-            return redirect()->route('citations.success')->with('request_code', $requestCode);
+            // Send email notifications
+            try {
+                // Send notification to user
+                Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
+                
+                // Send notification to admin
+                $adminUser = \App\Models\User::where('role', 'admin')->first();
+                if ($adminUser) {
+                    Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+                }
+                
+                Log::info('Email notifications sent successfully', [
+                    'requestId' => $userRequest->id,
+                    'userEmail' => $userRequest->user->email,
+                    'adminEmail' => $adminUser->email ?? 'No admin found'
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error sending email notifications: ' . $e->getMessage());
+                // Don't fail the request if email fails
+            }
+
+            return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
 
         } catch (\Exception $e) {
             Log::error('Error submitting citation request: ' . $e->getMessage());
