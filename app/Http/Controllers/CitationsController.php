@@ -52,34 +52,50 @@ class CitationsController extends Controller
             
             Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data]);
             
-            // Generate the DOCX file based on type
+            // Generate a unique hash for the request data and docx type
+            $hashSource = json_encode([
+                'type' => $docxType,
+                'data' => $data
+            ]);
+            $uniqueHash = substr(hash('sha256', $hashSource), 0, 16); // 16 chars is enough
             $uploadPath = 'generated';
-            $outputPath = null;
             $filename = null;
+            $outputPath = null;
             
             switch ($docxType) {
                 case 'incentive':
-                    $outputPath = $this->generateCitationIncentiveDocxFromHtml($data, $uploadPath);
-                    $filename = 'Cite_Incentive_Application.docx';
+                    $filename = "Cite_Incentive_Application_{$uniqueHash}.docx";
+                    $outputPath = "$uploadPath/$filename";
                     break;
                     
                 case 'recommendation':
-                    $outputPath = $this->generateCitationRecommendationDocxFromHtml($data, $uploadPath);
-                    $filename = 'Cite_Recommendation_Letter.docx';
+                    $filename = "Cite_Recommendation_Letter_{$uniqueHash}.docx";
+                    $outputPath = "$uploadPath/$filename";
                     break;
                     
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
             
-            // Get the full path for download
             $fullPath = storage_path('app/' . $outputPath);
+            
+            // If file does not exist, generate it
+            if (!file_exists($fullPath)) {
+                switch ($docxType) {
+                    case 'incentive':
+                        $this->generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename);
+                        break;
+                    case 'recommendation':
+                        $this->generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename);
+                        break;
+                }
+            }
             
             if (!file_exists($fullPath)) {
                 throw new \Exception('Generated file not found');
             }
             
-            Log::info('Citation DOCX generated successfully', ['type' => $docxType, 'path' => $fullPath]);
+            Log::info('Citation DOCX generated or cached successfully', ['type' => $docxType, 'path' => $fullPath]);
             
             // Return the file for download
             return response()->download($fullPath, $filename, [
@@ -96,7 +112,7 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath)
+    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename = 'Cite_Incentive_Application.docx')
     {
         try {
             Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
@@ -107,9 +123,8 @@ class CitationsController extends Controller
                 Log::info('Created directory', ['path' => $fullPath]);
             }
             
-            // Use TemplateProcessor for citation incentive template
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
-            $outputPath = $uploadPath . '/Cite_Incentive_Application.docx';
+            $outputPath = $uploadPath . '/' . $filename;
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             
@@ -168,7 +183,7 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationRecommendationDocxFromHtml($data, $uploadPath)
+    private function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Cite_Recommendation_Letter.docx')
     {
         try {
             $fullPath = storage_path('app/' . $uploadPath);
@@ -176,7 +191,7 @@ class CitationsController extends Controller
                 mkdir($fullPath, 0777, true);
             }
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
-            $outputPath = $uploadPath . '/Cite_Recommendation_Letter.docx';
+            $outputPath = $uploadPath . '/' . $filename;
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             
@@ -324,7 +339,7 @@ class CitationsController extends Controller
             
             // Store DOCX paths if generated
             if (!empty($docxPaths)) {
-                $userRequest->docx_path = json_encode(['docxs' => $docxPaths]);
+                $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $docxPaths]);
             }
 
             $userRequest->save();
@@ -432,7 +447,7 @@ class CitationsController extends Controller
                 return response()->file($fullPath);
                 
             } elseif ($type === 'docx') {
-                $docxData = is_array($request->docx_path) ? $request->docx_path : json_decode($request->docx_path, true);
+                $docxData = is_array($request->pdf_path) ? $request->pdf_path : json_decode($request->pdf_path, true);
                 
                 if (!isset($docxData['docxs'][$key])) {
                     return response()->json(['error' => 'File not found'], 404);
@@ -464,7 +479,6 @@ class CitationsController extends Controller
                 'request_code' => $request->request_code,
                 'type' => $request->type,
                 'pdf_path' => $request->pdf_path,
-                'docx_path' => $request->docx_path,
                 'form_data' => $request->form_data,
             ];
             
@@ -487,8 +501,8 @@ class CitationsController extends Controller
             }
             
             // Check DOCX files
-            if ($request->docx_path) {
-                $docxData = is_array($request->docx_path) ? $request->docx_path : json_decode($request->docx_path, true);
+            if ($request->pdf_path) {
+                $docxData = is_array($request->pdf_path) ? $request->pdf_path : json_decode($request->pdf_path, true);
                 $debugInfo['docx_files'] = [];
                 
                 if (isset($docxData['docxs'])) {
@@ -542,8 +556,8 @@ class CitationsController extends Controller
             }
             
             // Add DOCX files
-            if ($request->docx_path) {
-                $docxData = is_array($request->docx_path) ? $request->docx_path : json_decode($request->docx_path, true);
+            if ($request->pdf_path) {
+                $docxData = is_array($request->pdf_path) ? $request->pdf_path : json_decode($request->pdf_path, true);
                 
                 if (isset($docxData['docxs'])) {
                     foreach ($docxData['docxs'] as $key => $docx) {

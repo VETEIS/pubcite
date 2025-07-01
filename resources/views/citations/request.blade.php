@@ -371,6 +371,16 @@
     </div>
 </div>
 
+<div id="docx-spinner" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center">
+        <svg class="animate-spin h-8 w-8 text-burgundy-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        <span class="text-burgundy-700 font-medium">Generating document…</span>
+    </div>
+</div>
+
 <script>
     function citationForm() {
         return {
@@ -397,11 +407,15 @@
         const form = document.getElementById('citation-request-form');
         const formData = new FormData(form);
         formData.append('docx_type', type);
-        
+
+        // Show spinner
+        const spinner = document.getElementById('docx-spinner');
+        if (spinner) spinner.classList.remove('hidden');
+
         // Get user name for filename
         const applicantName = document.querySelector('[name="applicant_name"]')?.value || 'User';
         const sanitizedName = applicantName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-        
+
         fetch('{{ route("citations.generate") }}', {
             method: 'POST',
             body: formData,
@@ -431,6 +445,10 @@
         .catch(error => {
             console.error('Error:', error);
             alert('Error generating document. Please try again.');
+        })
+        .finally(() => {
+            // Hide spinner
+            if (spinner) spinner.classList.add('hidden');
         });
     }
 
