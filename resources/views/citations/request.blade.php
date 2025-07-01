@@ -69,7 +69,7 @@
                                 <h3 class="font-semibold text-burgundy-800 mb-3">Required Documents</h3>
                                 <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
                                 
-                                <div class="grid grid-cols-5 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                     <!-- Recommendation Letter Card -->
                                     <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                          x-data="{ fileName: '', displayName: '' }"

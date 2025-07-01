@@ -84,15 +84,15 @@
                     </div>
                 </div>
             </nav>
-
+            
             <div class="relative z-10 pt-16">
                 <main>
                     <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-                        {{ $slot }}
+                {{ $slot }}
                     </div>
                 </main>
             </div>
-
+            
             <!-- Footer - positioned below viewport -->
             <div class="relative z-10">
                 <x-footer />

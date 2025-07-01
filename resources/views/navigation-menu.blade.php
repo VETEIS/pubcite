@@ -13,7 +13,7 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')" class="text-white hover:text-maroon-200">
-                        {{ Auth::user() && Auth::user()->isAdmin() ? __('Admin Dashboard') : __('User Dashboard') }}
+                        {{ Auth::user() && Auth::user()->isAdmin() ? __('Manage Requests') : __('User Dashboard') }}
                     </x-nav-link>
                     @if(Auth::user() && Auth::user()->role === 'admin')
                         <x-nav-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.*')" class="text-white hover:text-maroon-200">

@@ -149,7 +149,7 @@ class PublicationsController extends Controller
             $templateProcessor->setValue('pissn', $data['pissn'] ?? '');
             $templateProcessor->setValue('eissn', $data['eissn'] ?? '');
             $templateProcessor->setValue('doi', $data['doi'] ?? '');
-            $templateProcessor->setValue('published', $data['publisher'] ?? '');
+            $templateProcessor->setValue('publisher', $data['publisher'] ?? '');
             $templateProcessor->setValue('citescore', $data['citescore'] ?? '');
             $templateProcessor->setValue('particulars', $data['particulars'] ?? '');
             $templateProcessor->setValue('facultyname', $data['facultyname'] ?? '');
@@ -471,7 +471,7 @@ class PublicationsController extends Controller
         try {
             // Store uploaded files
             $userId = Auth::id();
-            $requestCode = 'REQ-' . now()->format('Ymd-His');
+            $requestCode = 'PUB-' . now()->format('Ymd-His');
             $uploadPath = "requests/{$userId}/{$requestCode}";
             
             Log::info('Processing file uploads', [

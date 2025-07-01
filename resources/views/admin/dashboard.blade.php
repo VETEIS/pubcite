@@ -139,7 +139,7 @@
                                     <template x-for="request in requests" :key="request.id">
                                             <tr class="hover:bg-gray-50 transition-colors">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" :title="request.user ? request.user.name : 'N/A'" x-text="request.user ? request.user.name : 'N/A'"></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell" x-text="request.user ? request.user.email : 'N/A'"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell max-w-[180px] truncate" :title="request.user ? request.user.email : 'N/A'" x-text="request.user ? request.user.email : 'N/A'"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" x-text="request.request_code"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="request.type"></td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -495,12 +495,26 @@
                                         <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                             <h6 class="font-semibold text-gray-700 mb-2 text-base">Recommendation Letter</h6>
                                             <div class="space-y-2 text-sm">
-                                        @foreach(['facultyname', 'dean', 'indexing'] as $field)
+                                                @foreach(['rec_collegeheader', 'rec_faculty_name', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name', 'facultyname', 'dean', 'indexing'] as $field)
                                             @if(isset($formData[$field]))
                                                         <div class="flex flex-col">
                                                             <span class="font-medium text-gray-600 text-sm">
-                                                                @if($field === 'facultyname')
+                                                                @if($field === 'rec_collegeheader')
+                                                                    College
+                                                                @elseif($field === 'rec_faculty_name')
                                                                     Faculty Name
+                                                                @elseif($field === 'rec_citing_details')
+                                                                    Citing Details
+                                                                @elseif($field === 'rec_indexing_details')
+                                                                    Indexing Details
+                                                                @elseif($field === 'rec_dean_name')
+                                                                    Dean Name
+                                                                @elseif($field === 'facultyname')
+                                                                    Faculty Name
+                                                                @elseif($field === 'dean')
+                                                                    Dean Name
+                                                                @elseif($field === 'indexing')
+                                                                    Indexing
                                                                 @else
                                                                     {{ ucfirst($field) }}
                                                                 @endif
@@ -512,7 +526,8 @@
                                     </div>
                                 </div>
 
-                                        <!-- Terminal Report -->
+                                        <!-- Terminal Report (only for Publication) -->
+                                        @if($selectedRequest && strtolower($selectedRequest->type) === 'publication')
                                         <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                             <h6 class="font-semibold text-gray-700 mb-2 text-base">Terminal Report</h6>
                                             <div class="space-y-2 text-sm">
@@ -521,17 +536,14 @@
                                                         <div class="flex flex-col">
                                                             <span class="font-medium text-gray-600 text-sm">{{ ucfirst($field) }}</span>
                                                             <span class="text-gray-800 truncate text-sm" title="{{ $formData[$field] }}">
-                                                                @if($field === 'title')
-                                                                    {{ $formData[$field] }}
-                                                                @else
-                                                                    {{ $formData[$field] }}
-                                                                @endif
+                                                                {{ $formData[$field] }}
                                                             </span>
                                                         </div>
                                             @endif
                                         @endforeach
                                             </div>
                                         </div>
+                                        @endif
                                     </div>
                                 </div>
                             @else

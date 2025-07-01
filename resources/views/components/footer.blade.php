@@ -50,8 +50,8 @@
     <div class="border-t border-maroon-700 bg-maroon-900 w-full">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1">
             <p class="text-maroon-200 text-xs text-center">
-                © 2025 University of Southeastern Philippines. All Rights Reserved.
-            </p>
+            © 2025 University of Southeastern Philippines. All Rights Reserved.
+        </p>
         </div>
     </div>
 </footer> 
