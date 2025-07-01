@@ -87,9 +87,12 @@ class PublicationsController extends Controller
             Log::info('DOCX generated successfully', ['type' => $docxType, 'path' => $fullPath]);
             
             // Return the file for download
+            $userAgent = request()->header('User-Agent');
+            $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+            $contentDisposition = $isIOS ? 'inline' : 'attachment';
             return response()->download($fullPath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
             
         } catch (\Exception $e) {
@@ -666,9 +669,12 @@ class PublicationsController extends Controller
             $mime = $ext === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
             // Return file download response
+            $userAgent = request()->header('User-Agent');
+            $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+            $contentDisposition = $isIOS ? 'inline' : 'attachment';
             return response()->download($fullPath, $downloadName, [
                 'Content-Type' => $mime,
-                'Content-Disposition' => 'attachment; filename="' . $downloadName . '"'
+                'Content-Disposition' => $contentDisposition . '; filename="' . $downloadName . '"'
             ]);
 
         } catch (\Exception $e) {
