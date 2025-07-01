@@ -231,11 +231,11 @@ class CitationsController extends Controller
                 'cited_title' => 'required|string|max:500',
                 'faculty_name' => 'required|string|max:255',
                 'dean_name' => 'required|string|max:255',
-                'recommendation_letter' => 'required|file|mimes:pdf|max:10240',
-                'citing_article' => 'required|file|mimes:pdf|max:10240',
-                'citing_journal_cover' => 'required|file|mimes:pdf|max:10240',
-                'cited_article' => 'required|file|mimes:pdf|max:10240',
-                'cited_journal_cover' => 'required|file|mimes:pdf|max:10240',
+                'recommendation_letter' => 'required|file|mimes:pdf|max:20480',
+                'citing_article' => 'required|file|mimes:pdf|max:20480',
+                'citing_journal_cover' => 'required|file|mimes:pdf|max:20480',
+                'cited_article' => 'required|file|mimes:pdf|max:20480',
+                'cited_journal_cover' => 'required|file|mimes:pdf|max:20480',
             ]);
 
             if ($validator->fails()) {

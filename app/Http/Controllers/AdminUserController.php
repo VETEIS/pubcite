@@ -9,10 +9,23 @@ use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::orderBy('created_at', 'desc')->paginate(15);
-        return view('admin.users', compact('users'));
+        $query = User::query();
+        if ($request->filled('role') && in_array($request->role, ['user', 'admin'])) {
+            $query->where('role', $request->role);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%") ;
+            });
+        }
+        $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        $currentRole = $request->role;
+        $currentSearch = $request->search;
+        return view('admin.users', compact('users', 'currentRole', 'currentSearch'));
     }
 
     public function create()

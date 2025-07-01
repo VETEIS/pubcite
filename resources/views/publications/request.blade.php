@@ -89,6 +89,7 @@
                                         <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
+                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
                                         <input type="file" name="article_pdf" accept=".pdf" class="hidden" x-ref="articlePdf" required
                                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                     </div>
@@ -109,6 +110,7 @@
                                         <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
+                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
                                         <input type="file" name="cover_pdf" accept=".pdf" class="hidden" x-ref="coverPdf" required
                                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                     </div>
@@ -129,6 +131,7 @@
                                         <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
+                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
                                         <input type="file" name="acceptance_pdf" accept=".pdf" class="hidden" x-ref="acceptancePdf" required
                                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                     </div>
@@ -149,6 +152,7 @@
                                         <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
+                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
                                         <input type="file" name="peer_review_pdf" accept=".pdf" class="hidden" x-ref="peerReviewPdf" required
                                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                     </div>
@@ -169,6 +173,7 @@
                                         <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
                                              :title="fileName"
                                              x-text="displayName || 'Click to upload'"></div>
+                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
                                         <input type="file" name="terminal_report_pdf" accept=".pdf" class="hidden" x-ref="terminalReportPdf" required
                                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                     </div>
@@ -895,6 +900,17 @@ function tabNav() {
         }
     }
 }
+
+function validateFileSize(input) {
+    if (input.files && input.files[0] && input.files[0].size > 20 * 1024 * 1024) {
+        alert('File is too large! Maximum allowed size is 20MB.');
+        input.value = '';
+    }
+}
+
+document.querySelectorAll('input[type="file"]').forEach(function(input) {
+    input.addEventListener('change', function() { validateFileSize(this); });
+});
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('stickyProgressBar', () => ({

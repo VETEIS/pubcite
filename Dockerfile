@@ -69,4 +69,7 @@ RUN chmod +x /app/deploy.sh
 EXPOSE 10000
 
 # Start the deployment script
-CMD ["/app/deploy.sh"] 
+CMD ["/app/deploy.sh"]
+
+# Increase PHP upload and post size limits
+RUN echo "upload_max_filesize=20M\npost_max_size=20M" > /usr/local/etc/php/conf.d/uploads.ini 

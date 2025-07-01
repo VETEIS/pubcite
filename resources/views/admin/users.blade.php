@@ -8,6 +8,21 @@
                     + Add User
                 </a>
             </div>
+            <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col sm:flex-row gap-2 mb-4 w-full">
+                <div>
+                    <select name="role" class="border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500">
+                        <option value="">All Roles</option>
+                        <option value="user" {{ (isset($currentRole) && $currentRole === 'user') ? 'selected' : '' }}>User</option>
+                        <option value="admin" {{ (isset($currentRole) && $currentRole === 'admin') ? 'selected' : '' }}>Admin</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <input type="text" name="search" value="{{ $currentSearch ?? '' }}" placeholder="Search name or email" class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" />
+                </div>
+                <div>
+                    <button type="submit" class="px-4 py-2 bg-maroon-700 text-white rounded-lg shadow hover:bg-maroon-800 transition font-semibold text-sm">Filter</button>
+                </div>
+            </form>
             @if(session('success'))
                 <div class="mb-4 text-green-700 bg-green-100 border border-green-200 rounded p-3">{{ session('success') }}</div>
             @endif

@@ -449,11 +449,11 @@ class PublicationsController extends Controller
             'references' => 'required|string',
             'appendices' => 'nullable|string',
             // File uploads
-            'article_pdf' => 'required|file|mimes:pdf',
-            'cover_pdf' => 'required|file|mimes:pdf',
-            'acceptance_pdf' => 'required|file|mimes:pdf',
-            'peer_review_pdf' => 'required|file|mimes:pdf',
-            'terminal_report_pdf' => 'required|file|mimes:pdf',
+            'article_pdf' => 'required|file|mimes:pdf|max:20480',
+            'cover_pdf' => 'required|file|mimes:pdf|max:20480',
+            'acceptance_pdf' => 'required|file|mimes:pdf|max:20480',
+            'peer_review_pdf' => 'required|file|mimes:pdf|max:20480',
+            'terminal_report_pdf' => 'required|file|mimes:pdf|max:20480',
         ]);
 
         if ($validator->fails()) {
