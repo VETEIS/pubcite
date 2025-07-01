@@ -10,49 +10,49 @@
                 </div>
                 
                 <!-- Full-width Graphical Counter Tracker -->
-                <div class="w-full flex flex-col sm:flex-row gap-4 mb-6">
+                <div class="w-full flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
                     <!-- Publication Requests Card -->
-                    <div class="flex-1 bg-white rounded-xl shadow border p-4 flex items-center gap-4">
-                        <div class="flex items-center gap-2 min-w-[120px]">
-                            <div class="w-10 h-10 rounded-full bg-maroon-100 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <div class="flex-1 bg-white rounded-xl shadow border p-2 sm:p-4 flex items-center gap-2 sm:gap-4 min-w-0">
+                        <div class="flex items-center gap-1 sm:gap-2 min-w-0">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-maroon-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             </div>
-                            <button @click="filterRequests('Publication')" class="font-semibold text-maroon-800 text-base truncate hover:underline hover:text-maroon-600 transition text-left" :class="activeType === 'Publication' && !activePeriod ? 'underline text-maroon-700' : ''">Publication Requests</button>
+                            <button @click="filterRequests('Publication')" class="font-semibold text-maroon-800 text-sm sm:text-base truncate hover:underline hover:text-maroon-600 transition text-left" :class="activeType === 'Publication' && !activePeriod ? 'underline text-maroon-700' : ''">Publication Requests</button>
                         </div>
-                        <div class="flex flex-1 justify-end gap-6">
-                            <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Publication', 'week')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.publication.week"></button>
+                        <div class="flex flex-1 justify-end gap-2 sm:gap-6 min-w-0">
+                            <div class="flex flex-col items-center min-w-0">
+                                <button @click="filterRequests('Publication', 'week')" class="text-base sm:text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.publication.week"></button>
                                 <button @click="filterRequests('Publication', 'week')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'text-maroon-600 font-medium' : ''">This Week</button>
                             </div>
-                            <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Publication', 'month')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.publication.month"></button>
+                            <div class="flex flex-col items-center min-w-0">
+                                <button @click="filterRequests('Publication', 'month')" class="text-base sm:text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.publication.month"></button>
                                 <button @click="filterRequests('Publication', 'month')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'text-maroon-600 font-medium' : ''">This Month</button>
                             </div>
-                            <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Publication', 'quarter')" class="text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.publication.quarter"></button>
+                            <div class="flex flex-col items-center min-w-0">
+                                <button @click="filterRequests('Publication', 'quarter')" class="text-base sm:text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.publication.quarter"></button>
                                 <button @click="filterRequests('Publication', 'quarter')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'text-maroon-600 font-medium' : ''">This Quarter</button>
                             </div>
                         </div>
                     </div>
                     <!-- Citation Requests Card -->
-                    <div class="flex-1 bg-white rounded-xl shadow border p-4 flex items-center gap-4">
-                        <div class="flex items-center gap-2 min-w-[120px]">
-                            <div class="w-10 h-10 rounded-full bg-burgundy-100 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <div class="flex-1 bg-white rounded-xl shadow border p-2 sm:p-4 flex items-center gap-2 sm:gap-4 min-w-0">
+                        <div class="flex items-center gap-1 sm:gap-2 min-w-0">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-burgundy-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             </div>
-                            <button @click="filterRequests('Citation')" class="font-semibold text-burgundy-800 text-base truncate hover:underline hover:text-burgundy-600 transition text-left" :class="activeType === 'Citation' && !activePeriod ? 'underline text-burgundy-700' : ''">Citation Requests</button>
+                            <button @click="filterRequests('Citation')" class="font-semibold text-burgundy-800 text-sm sm:text-base truncate hover:underline hover:text-burgundy-600 transition text-left" :class="activeType === 'Citation' && !activePeriod ? 'underline text-burgundy-700' : ''">Citation Requests</button>
                         </div>
-                        <div class="flex flex-1 justify-end gap-6">
-                            <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Citation', 'week')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.citation.week"></button>
+                        <div class="flex flex-1 justify-end gap-2 sm:gap-6 min-w-0">
+                            <div class="flex flex-col items-center min-w-0">
+                                <button @click="filterRequests('Citation', 'week')" class="text-base sm:text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.citation.week"></button>
                                 <button @click="filterRequests('Citation', 'week')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'text-burgundy-600 font-medium' : ''">This Week</button>
                             </div>
-                            <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Citation', 'month')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.citation.month"></button>
+                            <div class="flex flex-col items-center min-w-0">
+                                <button @click="filterRequests('Citation', 'month')" class="text-base sm:text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.citation.month"></button>
                                 <button @click="filterRequests('Citation', 'month')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'text-burgundy-600 font-medium' : ''">This Month</button>
                             </div>
-                            <div class="flex flex-col items-center min-w-[60px]">
-                                <button @click="filterRequests('Citation', 'quarter')" class="text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.citation.quarter"></button>
+                            <div class="flex flex-col items-center min-w-0">
+                                <button @click="filterRequests('Citation', 'quarter')" class="text-base sm:text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.citation.quarter"></button>
                                 <button @click="filterRequests('Citation', 'quarter')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'text-burgundy-600 font-medium' : ''">This Quarter</button>
                             </div>
                         </div>
