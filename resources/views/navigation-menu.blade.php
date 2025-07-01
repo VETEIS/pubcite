@@ -15,6 +15,11 @@
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')" class="text-white hover:text-maroon-200">
                         {{ Auth::user() && Auth::user()->isAdmin() ? __('Admin Dashboard') : __('User Dashboard') }}
                     </x-nav-link>
+                    @if(Auth::user() && Auth::user()->role === 'admin')
+                        <x-nav-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.*')" class="text-white hover:text-maroon-200">
+                            Manage Users
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -142,6 +147,11 @@
             <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')" class="text-white hover:text-maroon-200">
                 {{ Auth::user() && Auth::user()->isAdmin() ? __('Admin Dashboard') : __('User Dashboard') }}
             </x-responsive-nav-link>
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <x-responsive-nav-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.*')" class="text-white hover:text-maroon-200">
+                    Manage Users
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

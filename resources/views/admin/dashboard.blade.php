@@ -138,7 +138,7 @@
                                     <tbody class="bg-white divide-y divide-gray-200">
                                     <template x-for="request in requests" :key="request.id">
                                             <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="request.user ? request.user.name : 'N/A'"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" :title="request.user ? request.user.name : 'N/A'" x-text="request.user ? request.user.name : 'N/A'"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell" x-text="request.user ? request.user.email : 'N/A'"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" x-text="request.request_code"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="request.type"></td>
