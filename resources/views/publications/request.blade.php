@@ -9,339 +9,350 @@
                 <p class="text-sm text-gray-600">Fill out all required forms and upload documents to submit your publication request</p>
             </div>
 
-            <form 
-                id="publication-request-form"
-                method="POST" 
-                action="{{ route('publications.submit') }}" 
-                enctype="multipart/form-data" 
-                class="space-y-3 h-full"
-                x-data="publicationForm()"
-                @input="checkFilled()"
-                @change="checkFilled()"
-                x-init="checkFilled()"
-                autocomplete="on"
-            >
-                @csrf
-                <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="h-full flex flex-col">
-                    <div class="flex w-full border-b mb-3">
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="$store.tabNav.tab === 'incentive' ? 'border-maroon-700 text-maroon-700' : 'border-transparent text-gray-500'"
-                            @click="$store.tabNav.tab = 'incentive'"
-                        >Incentive Application</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="$store.tabNav.tab === 'recommendation' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.incentive ? $store.tabNav.tab = 'recommendation' : null"
-                            :disabled="!$store.tabNav.tabCompletion.incentive"
-                        >Recommendation</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="$store.tabNav.tab === 'terminal' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.recommendation ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.recommendation ? $store.tabNav.tab = 'terminal' : null"
-                            :disabled="!$store.tabNav.tabCompletion.recommendation"
-                        >Terminal Report</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="$store.tabNav.tab === 'upload' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.terminal ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.terminal ? $store.tabNav.tab = 'upload' : null"
-                            :disabled="!$store.tabNav.tabCompletion.terminal"
-                        >Upload Documents</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="$store.tabNav.tab === 'review' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.upload ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.upload ? $store.tabNav.tab = 'review' : null"
-                            :disabled="!$store.tabNav.tabCompletion.upload"
-                        >Review & Submit</button>
+            <div x-data="{ showError: false, errorMsg: '' }" x-ref="errorBanner" class="relative">
+                <template x-if="showError">
+                    <div class="absolute top-0 left-0 w-full z-20">
+                        <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between shadow mb-4 animate-fade-in">
+                            <span x-text="errorMsg"></span>
+                            <button @click="showError = false" class="ml-4 text-red-600 hover:text-red-800 font-bold text-lg">&times;</button>
+                        </div>
                     </div>
-
-                    <div class="flex-1 overflow-y-auto">
-                        <!-- Incentive Application Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'incentive'" class="space-y-4">
-                            @include('publications.incentive-application')
+                </template>
+                <form 
+                    id="publication-request-form"
+                    method="POST" 
+                    action="{{ route('publications.submit') }}" 
+                    enctype="multipart/form-data" 
+                    class="space-y-3 h-full"
+                    x-data="publicationForm()"
+                    @input="checkFilled()"
+                    @change="checkFilled()"
+                    x-init="checkFilled()"
+                    @submit.prevent="if (validateAllTabs()) { $el.submit(); }"
+                    autocomplete="on"
+                >
+                    @csrf
+                    <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="h-full flex flex-col">
+                        <div class="flex w-full border-b mb-3">
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[$store.tabNav.tab === 'incentive' ? 'border-maroon-700 text-maroon-700' : 'border-transparent text-gray-500', !$store.tabNav.tabCompletion.incentive && $store.tabNav.tab !== 'incentive' ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                @click="$store.tabNav.tab = 'incentive'"
+                            >Incentive Application</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[$store.tabNav.tab === 'recommendation' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500'), !$store.tabNav.tabCompletion.recommendation && $store.tabNav.tab !== 'recommendation' && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                @click="$store.tabNav.tabCompletion.incentive ? $store.tabNav.tab = 'recommendation' : null"
+                                :disabled="!$store.tabNav.tabCompletion.incentive"
+                            >Recommendation</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[$store.tabNav.tab === 'terminal' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.recommendation ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500'), !$store.tabNav.tabCompletion.terminal && $store.tabNav.tab !== 'terminal' && $store.tabNav.tabCompletion.recommendation ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                @click="$store.tabNav.tabCompletion.recommendation ? $store.tabNav.tab = 'terminal' : null"
+                                :disabled="!$store.tabNav.tabCompletion.recommendation"
+                            >Terminal Report</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[$store.tabNav.tab === 'upload' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.terminal ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500'), !$store.tabNav.tabCompletion.upload && $store.tabNav.tab !== 'upload' && $store.tabNav.tabCompletion.terminal ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                @click="$store.tabNav.tabCompletion.terminal ? $store.tabNav.tab = 'upload' : null"
+                                :disabled="!$store.tabNav.tabCompletion.terminal"
+                            >Upload Documents</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[$store.tabNav.tab === 'review' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.upload ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')]"
+                                @click="$store.tabNav.tabCompletion.upload ? $store.tabNav.tab = 'review' : null"
+                                :disabled="!$store.tabNav.tabCompletion.upload"
+                            >Review & Submit</button>
                         </div>
 
-                        <!-- Recommendation Letter Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'recommendation'" class="space-y-4">
-                            @include('publications.recommendation-letter')
-                        </div>
-
-                        <!-- Terminal Report Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'terminal'" class="space-y-4">
-                            @include('publications.terminal-report')
-                        </div>
-
-                        <!-- File Upload Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'upload'" class="space-y-4">
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <h3 class="font-semibold text-maroon-800 mb-3">Required Documents</h3>
-                                <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                    <!-- Article PDF Card -->
-                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.articlePdf.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Article PDF</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Your published research article in PDF format</p>
-                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="article_pdf" accept=".pdf" class="hidden" x-ref="articlePdf" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
-
-                                    <!-- Cover Letter Card -->
-                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.coverPdf.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Cover Letter</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Cover letter from the journal editor</p>
-                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="cover_pdf" accept=".pdf" class="hidden" x-ref="coverPdf" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
-
-                                    <!-- Acceptance Letter Card -->
-                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.acceptancePdf.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Acceptance Letter</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Official acceptance letter from the journal</p>
-                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="acceptance_pdf" accept=".pdf" class="hidden" x-ref="acceptancePdf" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
-
-                                    <!-- Peer Review Card -->
-                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.peerReviewPdf.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Peer Review</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Peer review comments and responses</p>
-                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="peer_review_pdf" accept=".pdf" class="hidden" x-ref="peerReviewPdf" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
-
-                                    <!-- Terminal Report Card -->
-                                    <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.terminalReportPdf.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Terminal Report</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Final terminal report document</p>
-                                        <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="terminal_report_pdf" accept=".pdf" class="hidden" x-ref="terminalReportPdf" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
-                                </div>
+                        <div class="flex-1 overflow-y-auto">
+                            <!-- Incentive Application Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'incentive'" class="space-y-4">
+                                @include('publications.incentive-application')
                             </div>
-                        </div>
 
-                        <!-- Review & Submit Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'review'" class="space-y-4">
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <h3 class="font-semibold text-maroon-800 mb-3">Review Your Submission</h3>
-                                <p class="text-sm text-gray-600 mb-4">Review all uploaded files and generated documents before submitting.</p>
-                                
-                                <!-- Uploaded Files Section -->
-                                <div class="mb-6">
-                                    <h4 class="font-medium text-maroon-700 mb-3">Uploaded Documents</h4>
+                            <!-- Recommendation Letter Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'recommendation'" class="space-y-4">
+                                @include('publications.recommendation-letter')
+                            </div>
+
+                            <!-- Terminal Report Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'terminal'" class="space-y-4">
+                                @include('publications.terminal-report')
+                            </div>
+
+                            <!-- File Upload Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'upload'" class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-lg">
+                                    <h3 class="font-semibold text-maroon-800 mb-3">Required Documents</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
+                                    
                                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                        <!-- Article PDF Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                        <!-- Article PDF Card -->
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.articlePdf.click()">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                     </svg>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Article PDF</h5>
+                                                <h4 class="font-medium text-gray-800 text-sm">Article PDF</h4>
                                             </div>
-                                            <div class="flex-1 flex flex-col justify-end">
-                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-article">No file uploaded</div>
-                                                <div class="text-center">
-                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('article-pdf-review').click()">Change File</button>
-                                                    <input type="file" id="article-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('article-pdf', this)">
-                                                </div>
-                                            </div>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Your published research article in PDF format</p>
+                                            <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="article_pdf" accept=".pdf" class="hidden" x-ref="articlePdf" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
 
-                                        <!-- Cover Letter Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                        <!-- Cover Letter Card -->
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.coverPdf.click()">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                                     </svg>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Cover Letter</h5>
+                                                <h4 class="font-medium text-gray-800 text-sm">Cover Letter</h4>
                                             </div>
-                                            <div class="flex-1 flex flex-col justify-end">
-                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-cover">No file uploaded</div>
-                                                <div class="text-center">
-                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('cover-pdf-review').click()">Change File</button>
-                                                    <input type="file" id="cover-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cover-pdf', this)">
-                                                </div>
-                                            </div>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Cover letter from the journal editor</p>
+                                            <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="cover_pdf" accept=".pdf" class="hidden" x-ref="coverPdf" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
 
-                                        <!-- Acceptance Letter Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                        <!-- Acceptance Letter Card -->
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.acceptancePdf.click()">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Acceptance Letter</h5>
+                                                <h4 class="font-medium text-gray-800 text-sm">Acceptance Letter</h4>
                                             </div>
-                                            <div class="flex-1 flex flex-col justify-end">
-                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-acceptance">No file uploaded</div>
-                                                <div class="text-center">
-                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('acceptance-pdf-review').click()">Change File</button>
-                                                    <input type="file" id="acceptance-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('acceptance-pdf', this)">
-                                                </div>
-                                            </div>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Official acceptance letter from the journal</p>
+                                            <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="acceptance_pdf" accept=".pdf" class="hidden" x-ref="acceptancePdf" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
 
-                                        <!-- Peer Review Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                        <!-- Peer Review Card -->
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.peerReviewPdf.click()">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                                     </svg>
                                                 </div>
-                                                <h5 class="text-medium text-gray-800 text-sm">Peer Review</h5>
+                                                <h4 class="font-medium text-gray-800 text-sm">Peer Review</h4>
                                             </div>
-                                            <div class="flex-1 flex flex-col justify-end">
-                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-peer">No file uploaded</div>
-                                                <div class="text-center">
-                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('peer-review-pdf-review').click()">Change File</button>
-                                                    <input type="file" id="peer-review-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('peer-review-pdf', this)">
-                                                </div>
-                                            </div>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Peer review comments and responses</p>
+                                            <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="peer_review_pdf" accept=".pdf" class="hidden" x-ref="peerReviewPdf" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
 
-                                        <!-- Terminal Report Review Card -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                        <!-- Terminal Report Card -->
+                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.terminalReportPdf.click()">
                                             <div class="text-center mb-3">
                                                 <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                                     <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                     </svg>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
+                                                <h4 class="font-medium text-gray-800 text-sm">Terminal Report</h4>
                                             </div>
-                                            <div class="flex-1 flex flex-col justify-end">
-                                                <div class="text-xs text-gray-600 text-center mb-2" id="review-terminal">No file uploaded</div>
-                                                <div class="text-center">
-                                                    <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('terminal-report-pdf-review').click()">Change File</button>
-                                                    <input type="file" id="terminal-report-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal-report-pdf', this)">
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Final terminal report document</p>
+                                            <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="terminal_report_pdf" accept=".pdf" class="hidden" x-ref="terminalReportPdf" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Review & Submit Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'review'" class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-lg">
+                                    <h3 class="font-semibold text-maroon-800 mb-3">Review Your Submission</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Review all uploaded files and generated documents before submitting.</p>
+                                    
+                                    <!-- Uploaded Files Section -->
+                                    <div class="mb-6">
+                                        <h4 class="font-medium text-maroon-700 mb-3">Uploaded Documents</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                            <!-- Article PDF Review Card -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Article PDF</h5>
+                                                </div>
+                                                <div class="flex-1 flex flex-col justify-end">
+                                                    <div class="text-xs text-gray-600 text-center mb-2" id="review-article">No file uploaded</div>
+                                                    <div class="text-center">
+                                                        <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('article-pdf-review').click()">Change File</button>
+                                                        <input type="file" id="article-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('article-pdf', this)">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Cover Letter Review Card -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Cover Letter</h5>
+                                                </div>
+                                                <div class="flex-1 flex flex-col justify-end">
+                                                    <div class="text-xs text-gray-600 text-center mb-2" id="review-cover">No file uploaded</div>
+                                                    <div class="text-center">
+                                                        <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('cover-pdf-review').click()">Change File</button>
+                                                        <input type="file" id="cover-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cover-pdf', this)">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Acceptance Letter Review Card -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Acceptance Letter</h5>
+                                                </div>
+                                                <div class="flex-1 flex flex-col justify-end">
+                                                    <div class="text-xs text-gray-600 text-center mb-2" id="review-acceptance">No file uploaded</div>
+                                                    <div class="text-center">
+                                                        <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('acceptance-pdf-review').click()">Change File</button>
+                                                        <input type="file" id="acceptance-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('acceptance-pdf', this)">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Peer Review Review Card -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="text-medium text-gray-800 text-sm">Peer Review</h5>
+                                                </div>
+                                                <div class="flex-1 flex flex-col justify-end">
+                                                    <div class="text-xs text-gray-600 text-center mb-2" id="review-peer">No file uploaded</div>
+                                                    <div class="text-center">
+                                                        <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('peer-review-pdf-review').click()">Change File</button>
+                                                        <input type="file" id="peer-review-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('peer-review-pdf', this)">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Terminal Report Review Card -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
+                                                </div>
+                                                <div class="flex-1 flex flex-col justify-end">
+                                                    <div class="text-xs text-gray-600 text-center mb-2" id="review-terminal">No file uploaded</div>
+                                                    <div class="text-center">
+                                                        <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('terminal-report-pdf-review').click()">Change File</button>
+                                                        <input type="file" id="terminal-report-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal-report-pdf', this)">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Generated Documents Section -->
-                                <div class="border-t pt-4">
-                                    <h4 class="font-medium text-maroon-700 mb-3">Generated Documents</h4>
-                                    <p class="text-sm text-gray-600 mb-3">Your documents have been automatically generated. Click to preview:</p>
-                                    
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <!-- Incentive Application DOCX -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                                             @click="$store.tabNav.previewDocx('incentive')">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
+                                    <!-- Generated Documents Section -->
+                                    <div class="border-t pt-4">
+                                        <h4 class="font-medium text-maroon-700 mb-3">Generated Documents</h4>
+                                        <p class="text-sm text-gray-600 mb-3">Your documents have been automatically generated. Click to preview:</p>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <!-- Incentive Application DOCX -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                                                 @click="$store.tabNav.previewDocx('incentive')">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Incentive Application</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Incentive Application</h5>
+                                                <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
                                             </div>
-                                            <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
-                                        </div>
 
-                                        <!-- Recommendation Letter DOCX -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                                             @click="$store.tabNav.previewDocx('recommendation')">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                                    </svg>
+                                            <!-- Recommendation Letter DOCX -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                                                 @click="$store.tabNav.previewDocx('recommendation')">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
+                                                <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
                                             </div>
-                                            <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
-                                        </div>
 
-                                        <!-- Terminal Report DOCX -->
-                                        <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                                             @click="$store.tabNav.previewDocx('terminal')">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
+                                            <!-- Terminal Report DOCX -->
+                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                                                 @click="$store.tabNav.previewDocx('terminal')">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
+                                                <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
                                             </div>
-                                            <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -448,6 +459,25 @@ function publicationForm() {
     return {
         checkFilled() {
             // No-op, logic moved to tabNav
+        },
+        validateAllTabs() {
+            const tabNav = Alpine.store('tabNav');
+            if (!tabNav) return false;
+            tabNav.checkTabs();
+            if (!tabNav.allComplete) {
+                ['incentive', 'recommendation', 'terminal', 'upload'].forEach(tab => {
+                    tabNav.highlightIncompleteFieldsForTab(tab);
+                });
+                // Show error banner
+                this.showError = true;
+                this.errorMsg = 'Please complete all required fields before submitting.';
+                // Scroll to top to show the error
+                this.$nextTick(() => {
+                    this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+                return false;
+            }
+            return true;
         }
     }
 }
@@ -521,14 +551,30 @@ function tabNav() {
         nextTab() {
             const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
             const currentIndex = tabs.indexOf(this.tab);
-            
             // If current tab is incomplete, highlight incomplete fields and shake button
             if (!this.currentTabComplete) {
                 this.highlightIncompleteFieldsForTab(this.tab);
                 this.shakeNextButton();
                 return;
             }
-            
+            // If moving to review tab, validate all tabs
+            if (tabs[currentIndex + 1] === 'review') {
+                this.checkTabs();
+                if (!this.allComplete) {
+                    ['incentive', 'recommendation', 'terminal', 'upload'].forEach(tab => {
+                        this.highlightIncompleteFieldsForTab(tab);
+                    });
+                    // Show error banner
+                    if (typeof this.showError !== 'undefined') {
+                        this.showError = true;
+                        this.errorMsg = 'Please complete all required fields before reviewing.';
+                        this.$nextTick(() => {
+                            this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                    }
+                    return;
+                }
+            }
             // Find the next available tab that is complete
             for (let i = currentIndex + 1; i < tabs.length; i++) {
                 if (this.tabCompletion[tabs[i]]) {
@@ -536,7 +582,6 @@ function tabNav() {
                     return;
                 }
             }
-            
             // If no next tab is complete, go to the next tab in sequence
             if (currentIndex < tabs.length - 1) {
                 this.tab = tabs[currentIndex + 1];

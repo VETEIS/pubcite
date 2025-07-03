@@ -64,7 +64,7 @@
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-1">Paper Title</label>
             <textarea name="papertitle" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter the title of the paper"></textarea>
-        </div>
+            </div>
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-1">Co-authors</label>
             <input type="text" name="coauthors" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter co-authors (if any)">
@@ -136,8 +136,8 @@
         <h4 class="text-lg font-semibold text-burgundy-800 mb-4 border-b-2 border-burgundy-200 pb-2">IV. Declaration</h4>
         <div class="bg-gray-50 p-6 rounded-lg mb-6">
             <p class="text-sm text-gray-700 leading-relaxed">
-                I hereby declare that all the details in this application form are accurate. I have not hidden any relevant information as must necessarily brought to the attention of the University. I will satisfy all the terms and conditions prescribed in the guidelines of the University for research paper publication.
-            </p>
+            I hereby declare that all the details in this application form are accurate. I have not hidden any relevant information as must necessarily brought to the attention of the University. I will satisfy all the terms and conditions prescribed in the guidelines of the University for research paper publication.
+        </p>
         </div>
         <!-- Signature Section -->
         <div class="space-y-8">
@@ -151,7 +151,7 @@
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Signature over Printed Name of the Faculty</p>
                     </div>
-                    <div>
+            <div>
                         <div class="h-5"></div>
                         <p class="text-sm text-gray-600 text-center">{{ date('F d, Y') }}</p>
                         <input type="hidden" name="date" value="{{ date('F d, Y') }}">
@@ -179,8 +179,8 @@
                         <input type="text" name="collegedean" class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent" placeholder="Enter dean name">
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">College Dean</p>
-                    </div>
-                    <div>
+            </div>
+            <div>
                         <div class="border-b-2 border-gray-400 h-12 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Date</p>
                     </div>
@@ -205,8 +205,8 @@
                         <p class="text-sm text-gray-700 text-center">MERLINA H. JURUENA, PhD</p>
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Director, Research and Development Division</p>
-                    </div>
-                    <div>
+            </div>
+            <div>
                         <div class="border-b-2 border-gray-400 h-8 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Date</p>
                     </div>

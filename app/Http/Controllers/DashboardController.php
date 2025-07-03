@@ -20,23 +20,6 @@ class DashboardController extends Controller
             if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
                 $query->where('status', $status);
             }
-            if ($search) {
-                $query->where(function($q) use ($search) {
-                    if (config('database.default') === 'pgsql') {
-                        $q->where('request_code', 'ilike', "%$search%")
-                          ->orWhereHas('user', function($uq) use ($search) {
-                              $uq->where('name', 'ilike', "%$search%")
-                                 ->orWhere('email', 'ilike', "%$search%") ;
-                          });
-                    } else {
-                        $q->where('request_code', 'like', "%$search%")
-                          ->orWhereHas('user', function($uq) use ($search) {
-                              $uq->where('name', 'like', "%$search%")
-                                 ->orWhere('email', 'like', "%$search%") ;
-                          });
-                    }
-                });
-            }
             if ($type && in_array($type, ['Publication', 'Citation'])) {
                 $query->where('type', $type);
             }
@@ -57,6 +40,25 @@ class DashboardController extends Controller
                     $query->whereBetween('requested_at', [$start, $end]);
                     $rangeDescription = 'This quarter: ' . $start->format('M j') . ' – ' . $end->format('M j');
                 }
+            }
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    if (config('database.default') === 'pgsql') {
+                        $q->where('request_code', 'ilike', "%$search%")
+                          ->orWhere('type', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $q->where('request_code', 'like', "%$search%")
+                          ->orWhere('type', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
+                    }
+                });
             }
             $allRequests = $query->get();
             $stats = [
@@ -111,23 +113,6 @@ class DashboardController extends Controller
         if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
             $query->where('status', $status);
         }
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                if (config('database.default') === 'pgsql') {
-                    $q->where('request_code', 'ilike', "%$search%")
-                      ->orWhereHas('user', function($uq) use ($search) {
-                          $uq->where('name', 'ilike', "%$search%")
-                             ->orWhere('email', 'ilike', "%$search%") ;
-                      });
-                } else {
-                    $q->where('request_code', 'like', "%$search%")
-                      ->orWhereHas('user', function($uq) use ($search) {
-                          $uq->where('name', 'like', "%$search%")
-                             ->orWhere('email', 'like', "%$search%") ;
-                      });
-                }
-            });
-        }
         if ($type && in_array($type, ['Publication', 'Citation'])) {
             $query->where('type', $type);
         }
@@ -139,6 +124,25 @@ class DashboardController extends Controller
             } elseif ($period === 'quarter') {
                 $query->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
             }
+        }
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                if (config('database.default') === 'pgsql') {
+                    $q->where('request_code', 'ilike', "%$search%")
+                      ->orWhere('type', 'ilike', "%$search%")
+                      ->orWhereHas('user', function($uq) use ($search) {
+                          $uq->where('name', 'ilike', "%$search%")
+                             ->orWhere('email', 'ilike', "%$search%") ;
+                      });
+                } else {
+                    $q->where('request_code', 'like', "%$search%")
+                      ->orWhere('type', 'like', "%$search%")
+                      ->orWhereHas('user', function($uq) use ($search) {
+                          $uq->where('name', 'like', "%$search%")
+                             ->orWhere('email', 'like', "%$search%") ;
+                      });
+                }
+            });
         }
         $allRequests = $query->get();
         $stats = [

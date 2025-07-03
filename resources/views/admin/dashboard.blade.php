@@ -96,25 +96,16 @@
                                     class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
                                     :class="activeStatus === 'pending' ? 'bg-yellow-500 text-white shadow' : 'bg-white text-gray-700 hover:bg-yellow-600 hover:text-white border border-gray-200'">
                                     Pending
-                                    <span x-show="filterCounts.pending > 0"
-                                        class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-yellow-500 text-white absolute -top-2 -right-2 border-2 border-white"
-                                        x-text="filterCounts.pending"></span>
                                 </button>
                                 <button @click="filterByStatus('endorsed')"
                                     class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
                                     :class="activeStatus === 'endorsed' ? 'bg-green-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-green-700 hover:text-white border border-gray-200'">
                                     Endorsed
-                                    <span x-show="filterCounts.endorsed > 0"
-                                        class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-green-600 text-white absolute -top-2 -right-2 border-2 border-white"
-                                        x-text="filterCounts.endorsed"></span>
                                 </button>
                                 <button @click="filterByStatus('rejected')"
                                     class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
                                     :class="activeStatus === 'rejected' ? 'bg-red-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-red-700 hover:text-white border border-gray-200'">
                                     Rejected
-                                    <span x-show="filterCounts.rejected > 0"
-                                        class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-red-600 text-white absolute -top-2 -right-2 border-2 border-white"
-                                        x-text="filterCounts.rejected"></span>
                                 </button>
                             </div>
                         </div>
