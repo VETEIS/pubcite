@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class AdminUserController extends Controller
 {
@@ -18,8 +19,13 @@ class AdminUserController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%") ;
+                if (config('database.default') === 'pgsql') {
+                    $q->where('name', 'ilike', "%$search%")
+                      ->orWhere('email', 'ilike', "%$search%") ;
+                } else {
+                    $q->where('name', 'like', "%$search%")
+                      ->orWhere('email', 'like', "%$search%") ;
+                }
             });
         }
         $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
@@ -52,7 +58,8 @@ class AdminUserController extends Controller
 
     public function edit(User $user)
     {
-        if (auth()->id() === $user->id) {
+        $userAuth = \Auth::user();
+        if ($userAuth && $userAuth->id === $user->id) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot edit your own role.');
         }
         return view('admin.user-edit', compact('user'));
@@ -60,7 +67,8 @@ class AdminUserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        if (auth()->id() === $user->id) {
+        $userAuth = \Auth::user();
+        if ($userAuth && $userAuth->id === $user->id) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot change your own role.');
         }
         $validated = $request->validate([
@@ -81,7 +89,8 @@ class AdminUserController extends Controller
 
     public function destroy(User $user)
     {
-        if (auth()->id() === $user->id) {
+        $userAuth = \Auth::user();
+        if ($userAuth && $userAuth->id === $user->id) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account.');
         }
         $user->delete();

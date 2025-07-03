@@ -64,7 +64,24 @@
                 </div>
                 
                 <div class="mt-8">
-                    <h3 class="text-2xl font-semibold text-maroon-800 mb-4">All User Requests</h3>
+                    <h3 class="text-2xl font-semibold text-maroon-800 mb-4">
+                        <template x-if="!activeStatus && !activeType && !activePeriod && !searchQuery">
+                            <span>All User Requests</span>
+                        </template>
+                        <template x-if="activeStatus || activeType || activePeriod || searchQuery">
+                            <span>
+                                <span x-text="
+                                    (activeStatus ? (activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1)) + ' ' : '') +
+                                    (activeType ? activeType + ' ' : '') +
+                                    'Requests' +
+                                    (activePeriod ? ' (' + (activePeriod.charAt(0).toUpperCase() + activePeriod.slice(1)) + ')' : '')
+                                "></span>
+                                <template x-if="searchQuery">
+                                    <span class="text-base text-gray-500 font-normal">for "<span x-text="searchQuery"></span>"</span>
+                                </template>
+                            </span>
+                        </template>
+                    </h3>
                     
                     <!-- Filters and Search -->
                     <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
@@ -580,7 +597,7 @@
                 // Data states
                 requests: @json($allRequests),
                 stats: @json($stats),
-                filterCounts: @json($filterCounts),
+                filterCounts: Object.assign({pending: 0, endorsed: 0, rejected: 0}, @json($filterCounts)),
                 loading: false,
                 
                 // Computed properties

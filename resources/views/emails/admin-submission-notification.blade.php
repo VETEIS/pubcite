@@ -7,64 +7,100 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            line-height: 1.5;
             color: #333;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
+            background: #f5f5f5;
         }
         .header {
             background-color: #8B2635;
             color: white;
-            padding: 20px;
+            padding: 18px 20px 12px 20px;
             text-align: center;
             border-radius: 8px 8px 0 0;
         }
         .content {
-            background-color: #f9f9f9;
-            padding: 30px;
+            background-color: #fff;
+            padding: 18px 20px 16px 20px;
             border-radius: 0 0 8px 8px;
+        }
+        .main-message {
+            font-size: 1.08em;
+            font-weight: bold;
+            color: #8B2635;
+            margin-bottom: 10px;
+            text-align: center;
         }
         .request-code {
             background-color: #8B2635;
             color: white;
-            padding: 15px;
+            padding: 10px;
             border-radius: 6px;
             text-align: center;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 10px 0 12px 0;
+            letter-spacing: 1px;
         }
-        .details {
-            background-color: white;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            border-left: 4px solid #8B2635;
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
         }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-            font-size: 14px;
+        .details-table td {
+            padding: 6px 8px 6px 0;
+            font-size: 15px;
+            vertical-align: top;
+        }
+        .details-table .label {
+            font-weight: bold;
+            color: #8B2635;
+            width: 90px;
+        }
+        .details-table .value {
+            color: #222;
         }
         .btn {
             display: inline-block;
             background-color: #8B2635;
             color: white !important;
-            padding: 12px 24px;
+            padding: 10px 22px;
             text-decoration: none;
             border-radius: 6px;
-            margin: 10px 0;
+            margin: 10px 0 0 0;
+            font-size: 15px;
         }
-        .urgent {
-            background-color: #fef3c7;
-            border: 1px solid #f59e0b;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 20px 0;
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 13px;
+        }
+        @media (min-width: 480px) {
+            .details-table {
+                margin-bottom: 0;
+            }
+            .details-table tr {
+                display: flex;
+            }
+            .details-table td {
+                flex: 1 1 50%;
+                padding-right: 16px;
+                padding-bottom: 0;
+            }
+            .details-table .label {
+                width: auto;
+                min-width: 90px;
+            }
+        }
+        @media (max-width: 600px) {
+            .header, .content { padding-left: 6px; padding-right: 6px; }
+            .btn { width: 100%; box-sizing: border-box; }
+            .details-table td { padding-right: 0; }
         }
     </style>
 </head>
@@ -74,12 +110,22 @@
         <div style="font-size: 1em; margin-top: 2px;">New {{ $request->type }} Request</div>
     </div>
     <div class="content">
-        <div class="request-code">Request Code: {{ $request->request_code }}</div>
-        <div class="details">
-            <div><strong>Status:</strong> <span class="status">Pending Review</span></div>
-            <div><strong>Submitted:</strong> {{ $request->requested_at->format('M d, Y g:i A') }}</div>
-            <div><strong>User:</strong> {{ $user->name }} ({{ $user->email }})</div>
+        <div class="main-message">
+            New {{ strtolower($request->type) }} request received.
         </div>
+        <div class="request-code">Request Code: {{ $request->request_code }}</div>
+        <table class="details-table">
+            <tr>
+                <td class="label">Status:</td>
+                <td class="value">Pending Review</td>
+                <td class="label">Submitted:</td>
+                <td class="value">{{ $request->requested_at->format('M d, Y g:i A') }}</td>
+            </tr>
+            <tr>
+                <td class="label">User:</td>
+                <td class="value" colspan="3">{{ $user->name }} ({{ $user->email }})</td>
+            </tr>
+        </table>
         <a href="{{ route('dashboard') }}" class="btn">Review Request</a>
         <div style="margin-top:10px; font-size:13px; color:#555;">
             Please review this request in the admin dashboard.

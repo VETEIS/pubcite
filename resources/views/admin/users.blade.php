@@ -8,21 +8,38 @@
                     + Add User
                 </a>
             </div>
-            <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col sm:flex-row gap-2 mb-4 w-full">
-                <div>
-                    <select name="role" class="border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500">
-                        <option value="">All Roles</option>
+            <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col sm:flex-row gap-2 mb-4 w-full" id="user-search-form">
+                <div class="relative w-32">
+                    <select name="role" class="border rounded-lg px-3 pr-8 py-2 focus:border-maroon-500 focus:ring-maroon-500 w-full" onchange="document.getElementById('user-search-form').submit()">
+                        <option value="">All</option>
                         <option value="user" {{ (isset($currentRole) && $currentRole === 'user') ? 'selected' : '' }}>User</option>
                         <option value="admin" {{ (isset($currentRole) && $currentRole === 'admin') ? 'selected' : '' }}>Admin</option>
                     </select>
                 </div>
                 <div class="flex-1">
-                    <input type="text" name="search" value="{{ $currentSearch ?? '' }}" placeholder="Search name or email" class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" />
+                    <input type="text" name="search" value="{{ $currentSearch ?? '' }}" placeholder="Search name or email" class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" id="user-search-input" autocomplete="on" />
                 </div>
                 <div>
                     <button type="submit" class="px-4 py-2 bg-maroon-700 text-white rounded-lg shadow hover:bg-maroon-800 transition font-semibold text-sm">Filter</button>
                 </div>
             </form>
+            <script>
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+            const searchInput = document.getElementById('user-search-input');
+            const searchForm = document.getElementById('user-search-form');
+            if (searchInput && searchForm) {
+                searchInput.addEventListener('input', debounce(function() {
+                    searchForm.submit();
+                }, 400));
+            }
+            </script>
             @if(session('success'))
                 <div class="mb-4 text-green-700 bg-green-100 border border-green-200 rounded p-3">{{ session('success') }}</div>
             @endif

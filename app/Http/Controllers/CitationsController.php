@@ -356,16 +356,16 @@ class CitationsController extends Controller
                 // Send notification to user
                 Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
                 
-                // Send notification to admin
-                $adminUser = \App\Models\User::where('role', 'admin')->first();
-                if ($adminUser) {
+                // Send notification to all admins
+                $adminUsers = \App\Models\User::where('role', 'admin')->get();
+                foreach ($adminUsers as $adminUser) {
                     Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
                 }
                 
                 Log::info('Email notifications sent successfully', [
                     'requestId' => $userRequest->id,
                     'userEmail' => $userRequest->user->email,
-                    'adminEmail' => $adminUser->email ?? 'No admin found'
+                    'adminEmails' => $adminUsers->pluck('email')->toArray()
                 ]);
             } catch (\Exception $e) {
                 Log::error('Error sending email notifications: ' . $e->getMessage());

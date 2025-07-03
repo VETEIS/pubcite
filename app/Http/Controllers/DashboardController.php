@@ -22,11 +22,19 @@ class DashboardController extends Controller
             }
             if ($search) {
                 $query->where(function($q) use ($search) {
-                    $q->where('request_code', 'like', "%$search%")
-                      ->orWhereHas('user', function($uq) use ($search) {
-                          $uq->where('name', 'like', "%$search%")
-                             ->orWhere('email', 'like', "%$search%") ;
-                      });
+                    if (config('database.default') === 'pgsql') {
+                        $q->where('request_code', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $q->where('request_code', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
+                    }
                 });
             }
             if ($type && in_array($type, ['Publication', 'Citation'])) {
@@ -105,11 +113,19 @@ class DashboardController extends Controller
         }
         if ($search) {
             $query->where(function($q) use ($search) {
-                $q->where('request_code', 'like', "%$search%")
-                  ->orWhereHas('user', function($uq) use ($search) {
-                      $uq->where('name', 'like', "%$search%")
-                         ->orWhere('email', 'like', "%$search%") ;
-                  });
+                if (config('database.default') === 'pgsql') {
+                    $q->where('request_code', 'ilike', "%$search%")
+                      ->orWhereHas('user', function($uq) use ($search) {
+                          $uq->where('name', 'ilike', "%$search%")
+                             ->orWhere('email', 'ilike', "%$search%") ;
+                      });
+                } else {
+                    $q->where('request_code', 'like', "%$search%")
+                      ->orWhereHas('user', function($uq) use ($search) {
+                          $uq->where('name', 'like', "%$search%")
+                             ->orWhere('email', 'like', "%$search%") ;
+                      });
+                }
             });
         }
         if ($type && in_array($type, ['Publication', 'Citation'])) {
