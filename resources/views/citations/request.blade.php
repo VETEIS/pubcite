@@ -33,21 +33,21 @@
                     <div class="flex w-full border-b mb-3">
                         <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                             :class="$store.tabNav.tab === 'incentive' ? 'border-burgundy-700 text-burgundy-700' : 'border-transparent text-gray-500'"
-                            @click="$store.tabNav.tab = 'incentive'"
+                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'incentive' }"
                         >Incentive Application</button>
                         <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                             :class="$store.tabNav.tab === 'recommendation' ? 'border-burgundy-700 text-burgundy-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.incentive ? $store.tabNav.tab = 'recommendation' : null"
+                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
                             :disabled="!$store.tabNav.tabCompletion.incentive"
                         >Recommendation</button>
                         <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                             :class="$store.tabNav.tab === 'upload' ? 'border-burgundy-700 text-burgundy-700' : (!$store.tabNav.tabCompletion.recommendation ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.recommendation ? $store.tabNav.tab = 'upload' : null"
+                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
                             :disabled="!$store.tabNav.tabCompletion.recommendation"
                         >Upload Documents</button>
                         <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                             :class="$store.tabNav.tab === 'review' ? 'border-burgundy-700 text-burgundy-700' : (!$store.tabNav.tabCompletion.upload ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')"
-                            @click="$store.tabNav.tabCompletion.upload ? $store.tabNav.tab = 'review' : null"
+                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
                             :disabled="!$store.tabNav.tabCompletion.upload"
                         >Review & Submit</button>
                     </div>
@@ -613,6 +613,21 @@
                     review: this.tabCompletion.review,
                     allComplete: this.allComplete
                 });
+            },
+            validateCurrentTab() {
+                this.checkTabs();
+                if (!this.currentTabComplete) {
+                    this.highlightIncompleteFieldsForTab(this.tab);
+                    if (typeof this.showError !== 'undefined') {
+                        this.showError = true;
+                        this.errorMsg = 'Please complete all required fields in this section before continuing.';
+                        this.$nextTick(() => {
+                            this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                    }
+                    return false;
+                }
+                return true;
             }
         }
     }
