@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Security: Force HTTPS only in production -->
+        <!-- Force HTTPS -->
         @if (app()->environment('production'))
             <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;">
         @else
@@ -20,14 +20,14 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Preload critical images to reduce flickering -->
+        <!-- Preload -->
         <link rel="preload" as="image" href="/images/eagle.jpg" fetchpriority="high">
         <link rel="preload" as="image" href="/images/spjrd.png" fetchpriority="high">
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <!-- Fallback for when Vite assets are not available -->
+        <!-- Fallback when Vite assets are not available -->
         <script>
             // Check if Vite assets loaded, if not, load built assets
             setTimeout(function() {

@@ -225,7 +225,7 @@
 
         <!-- Review Modal -->
         <div x-show="reviewModalOpen" x-cloak @click.away="closeReviewModal()" @keydown.escape.window="closeReviewModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-2" style="backdrop-filter: blur(2px);" @click="closeReviewModal()">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden" @click.stop>
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden admin-review-modal-content" @click.stop>
                 <!-- Header -->
                 <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 flex-shrink-0 bg-gray-50 rounded-t-xl">
                     <div class="flex flex-col gap-0.5">
@@ -235,7 +235,7 @@
                 </div>
                 
                 <!-- Content -->
-                <div class="p-6 flex-1 overflow-hidden">
+                <div class="p-6 flex-1 overflow-hidden admin-review-modal-scroll">
                     @php
                         $selectedRequest = $allRequests->firstWhere('id', (int) (isset($currentRequestId) ? $currentRequestId : null));
                         if (!$selectedRequest && isset($allRequests) && $allRequests->count() > 0) {
@@ -243,9 +243,9 @@
                         }
                     @endphp
                     
-                    <div class="flex gap-3 h-full">
+                    <div class="flex gap-3 h-full flex-col sm:flex-row sm:gap-3 gap-2">
                         <!-- Left Column: Files -->
-                        <div class="w-1/4 flex flex-col">
+                        <div class="w-full sm:w-1/4 flex flex-col mb-2 sm:mb-0">
                             <!-- Files Section -->
                             <div class="bg-white border border-gray-200 rounded-lg p-2 flex flex-col h-full">
                                 <div class="flex items-center justify-between mb-2 flex-shrink-0">
@@ -295,7 +295,7 @@
                                 
                                 @if($fileData)
                                     <div class="space-y-2 flex-1 overflow-y-auto min-h-0">
-                                    <!-- PDF Files -->
+                                        <!-- PDF Files -->
                                         <div class="bg-gray-50 rounded-lg p-2 border border-gray-200">
                                             <h6 class="font-medium text-gray-800 mb-2 text-base flex items-center gap-1">
                                                 <svg class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -379,6 +379,9 @@
                                                     </div>
                                                 @endforeach
                                                 </div>
++                                           <div class="mt-2 p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-xs rounded">
++                                               <strong>Disclaimer:</strong> For best results, please use <span class="font-semibold">Microsoft Word</span> to review DOCX files. The template and file design are optimized for Word and may not display correctly in other editors or viewers.
++                                           </div>
                                         </div>
                                     </div>
                                     
@@ -415,7 +418,7 @@
                         </div>
 
                         <!-- Right Column: Request Info & Form Data -->
-                        <div class="w-3/4 flex flex-col h-full">
+                        <div class="w-full sm:w-3/4 flex flex-col h-full">
                             <!-- Request Information Card -->
                             <div class="bg-white border border-gray-200 rounded-lg p-3 mb-3 flex-shrink-0">
                                 <div class="flex items-center gap-2 mb-2">
@@ -424,7 +427,7 @@
                                     </svg>
                                     <h5 class="font-semibold text-gray-900 text-base">Request Information</h5>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2 text-sm">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                                     <div class="flex flex-col">
                                         <span class="text-gray-500">Request Code:</span>
                                         <span class="font-mono font-medium text-gray-900" x-text="modalData.code"></span>
@@ -469,7 +472,7 @@
                                         </svg>
                                         <h5 class="font-semibold text-gray-900 text-base">Form Data</h5>
                                     </div>
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
+                                    <div class="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-4 flex-1">
                                         <!-- Incentive Application -->
                                         <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                             <h6 class="font-semibold text-gray-700 mb-2 text-base">Incentive Application</h6>

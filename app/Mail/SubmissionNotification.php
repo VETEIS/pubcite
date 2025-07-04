@@ -34,7 +34,7 @@ class SubmissionNotification extends Mailable
     public function envelope(): Envelope
     {
         $subject = $this->isAdminNotification 
-            ? 'New ' . strtolower($this->request->type) . ' request received'
+            ? 'New ' . strtolower($this->request->type) . ' Request Received'
             : "Your {$this->request->type} Request Submitted Successfully - {$this->request->request_code}";
 
         return new Envelope(

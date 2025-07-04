@@ -89,7 +89,7 @@
             </div>
             
             <!-- Footer - positioned below viewport -->
-            <div class="relative z-10">
+            <div class="relative">
                 <x-footer />
             </div>
         </div>

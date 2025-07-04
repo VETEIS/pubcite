@@ -5,3 +5,17 @@
 [x-cloak] {
     display: none;
 }
+
+/* Mobile-only scrollable modal content for admin review modal */
+@media (max-width: 640px) {
+  .admin-review-modal-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-review-modal-scroll {
+    max-height: 65vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

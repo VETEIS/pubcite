@@ -67,7 +67,6 @@
 <body>
     <div class="header">
         <div class="university-name">University of Southeastern Philippines</div>
-        <div class="college-header">{{ $collegeheader }}</div>
         <div class="form-title">Application Form for Research Publication Incentive</div>
     </div>
 

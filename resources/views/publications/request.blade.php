@@ -35,28 +35,42 @@
                     <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="h-full flex flex-col">
                         <div class="flex w-full border-b mb-3">
                             <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                :class="[$store.tabNav.tab === 'incentive' ? 'border-maroon-700 text-maroon-700' : 'border-transparent text-gray-500', !$store.tabNav.tabCompletion.incentive && $store.tabNav.tab !== 'incentive' ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                :class="[
+                                    $store.tabNav.tab === 'incentive' ? 'border-maroon-700 text-maroon-700' : 'border-transparent text-gray-500',
+                                    !$store.tabNav.tabCompletion.incentive && $store.tabNav.tab !== 'incentive' ? 'border-b-2 border-red-500 bg-red-50' : '',
+                                ]"
                                 @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'incentive' }"
                             >Incentive Application</button>
                             <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                :class="[$store.tabNav.tab === 'recommendation' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500'), !$store.tabNav.tabCompletion.recommendation && $store.tabNav.tab !== 'recommendation' && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                :class="[
+                                    $store.tabNav.tab === 'recommendation' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                    !$store.tabNav.tabCompletion.recommendation && $store.tabNav.tab !== 'recommendation' && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
+                                ]"
                                 @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
                                 :disabled="!$store.tabNav.tabCompletion.incentive"
                             >Recommendation</button>
                             <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                :class="[$store.tabNav.tab === 'terminal' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.recommendation ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500'), !$store.tabNav.tabCompletion.terminal && $store.tabNav.tab !== 'terminal' && $store.tabNav.tabCompletion.recommendation ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                :class="[
+                                    $store.tabNav.tab === 'terminal' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                    !$store.tabNav.tabCompletion.terminal && $store.tabNav.tab !== 'terminal' && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
+                                ]"
                                 @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'terminal' }"
-                                :disabled="!$store.tabNav.tabCompletion.recommendation"
+                                :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation)"
                             >Terminal Report</button>
                             <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                :class="[$store.tabNav.tab === 'upload' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.terminal ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500'), !$store.tabNav.tabCompletion.upload && $store.tabNav.tab !== 'upload' && $store.tabNav.tabCompletion.terminal ? 'border-b-2 border-red-500 bg-red-50' : '']"
+                                :class="[
+                                    $store.tabNav.tab === 'upload' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                    !$store.tabNav.tabCompletion.upload && $store.tabNav.tab !== 'upload' && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
+                                ]"
                                 @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
-                                :disabled="!$store.tabNav.tabCompletion.terminal"
+                                :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal)"
                             >Upload Documents</button>
                             <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                :class="[$store.tabNav.tab === 'review' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.upload ? 'border-transparent text-gray-400 cursor-not-allowed' : 'border-transparent text-gray-500')]"
+                                :class="[
+                                    $store.tabNav.tab === 'review' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.upload) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                ]"
                                 @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
-                                :disabled="!$store.tabNav.tabCompletion.upload"
+                                :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.upload)"
                             >Review & Submit</button>
                         </div>
 
@@ -388,6 +402,9 @@
                                 <p class="mt-2">Loading preview...</p>
                             </div>
                         </div>
+                        <div class="mt-3 p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-xs rounded">
+                            <strong>Disclaimer:</strong> For best results, please use <span class="font-semibold">Microsoft Word</span> to review DOCX files. The template and file design are optimized for Word and may not display correctly in other editors or viewers.
+                        </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -592,11 +609,11 @@ function tabNav() {
             let fields = [];
                             if (tab === 'incentive') {
                     fields = [
-                        'collegeheader', 'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
+                        'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
                         'papertitle', 'journaltitle', 'version', 'publisher', 'type', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
                     ];
                             } else if (tab === 'recommendation') {
-                    fields = ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
+                    fields = ['rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
             } else if (tab === 'terminal') {
                 fields = ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'];
             } else if (tab === 'upload') {
@@ -632,7 +649,7 @@ function tabNav() {
         checkTabs() {
             // Check incentive tab completion
             const incentiveFields = [
-                'collegeheader', 'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
+                'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
                 'papertitle', 'journaltitle', 'version', 'publisher', 'type', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
             ];
             
@@ -699,7 +716,7 @@ function tabNav() {
 
             // Check recommendation tab completion
             const recommendationFields = [
-                'rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'
+                'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'
             ];
             this.tabCompletion.recommendation = recommendationFields.every(field => {
                 const element = document.querySelector(`[name="${field}"]`);
@@ -808,10 +825,10 @@ function tabNav() {
             
             // Add all form fields
             const allFields = [
-                'collegeheader', 'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
+                'name', 'academicrank', 'employmentstatus', 'college', 'campus', 'field', 'years',
                 'papertitle', 'coauthors', 'journaltitle', 'version', 'pissn', 'eissn', 'doi', 'publisher', 'type', 'citescore', 'particulars',
                 'facultyname', 'centermanager', 'collegedean', 'indexed_in',
-                'rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean',
+                'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean',
                 'title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'
             ];
             
