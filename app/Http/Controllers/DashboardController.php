@@ -60,7 +60,7 @@ class DashboardController extends Controller
                     }
                 });
             }
-            $allRequests = $query->get();
+            $requests = $query->paginate(15)->withQueryString();
             $stats = [
                 'publication' => [
                     'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
@@ -92,7 +92,7 @@ class DashboardController extends Controller
                 'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
                 'rejected' => $statusQuery->where('status', 'rejected')->count(),
             ];
-            return view('admin.dashboard', compact('allRequests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription'));
+            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription'));
         }
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
         return view('dashboard', compact('requests'));

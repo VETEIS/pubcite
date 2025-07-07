@@ -2,11 +2,19 @@
     <div x-data="adminDashboard()" class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <div class="w-full max-w-7xl sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-8 rounded-lg relative">
+                <!-- Notification Area: absolutely positioned, overlay -->
+                <div class="absolute top-0 right-0 z-20 mt-2 mr-4">
+                    @if(session('success'))
+                        <div class="text-green-700 bg-green-100 border border-green-200 rounded px-3 py-1 text-xs font-medium shadow">{{ session('success') }}</div>
+                    @elseif(session('error'))
+                        <div class="text-red-700 bg-red-100 border border-red-200 rounded px-3 py-1 text-xs font-medium shadow">{{ session('error') }}</div>
+                    @endif
+                </div>
                 <div x-show="hasActiveFilters" x-cloak class="fixed md:absolute top-6 right-8 z-30">
-                    <button @click="clearAllFilters()" class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold shadow transition focus:outline-none" style="box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold shadow transition focus:outline-none" style="box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         Clear Filter
-                    </button>
+                    </a>
                 </div>
                 
                 <!-- Full-width Graphical Counter Tracker -->
@@ -17,20 +25,24 @@
                             <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-maroon-100 flex items-center justify-center">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             </div>
-                            <button @click="filterRequests('Publication')" class="font-semibold text-maroon-800 text-sm sm:text-base truncate hover:underline hover:text-maroon-600 transition text-left" :class="activeType === 'Publication' && !activePeriod ? 'underline text-maroon-700' : ''">Publication Requests</button>
+                            <a href="?type=Publication" class="font-semibold text-maroon-800 text-sm sm:text-base truncate hover:underline hover:text-maroon-600 transition text-left {{ (request('type') === 'Publication') ? 'underline text-maroon-700' : '' }}">
+                                Publication Requests
+                            </a>
                         </div>
                         <div class="flex flex-1 justify-end gap-2 sm:gap-6 min-w-0">
-                            <div class="flex flex-col items-center min-w-0">
-                                <button @click="filterRequests('Publication', 'week')" class="text-base sm:text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.publication.week"></button>
-                                <button @click="filterRequests('Publication', 'week')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'week' ? 'text-maroon-600 font-medium' : ''">This Week</button>
-                            </div>
-                            <div class="flex flex-col items-center min-w-0">
-                                <button @click="filterRequests('Publication', 'month')" class="text-base sm:text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.publication.month"></button>
-                                <button @click="filterRequests('Publication', 'month')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'month' ? 'text-maroon-600 font-medium' : ''">This Month</button>
-                            </div>
-                            <div class="flex flex-col items-center min-w-0">
-                                <button @click="filterRequests('Publication', 'quarter')" class="text-base sm:text-lg font-bold text-maroon-700 hover:text-maroon-600 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.publication.quarter"></button>
-                                <button @click="filterRequests('Publication', 'quarter')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Publication' && activePeriod === 'quarter' ? 'text-maroon-600 font-medium' : ''">This Quarter</button>
+                            <div class="flex flex-row gap-2 w-full justify-end">
+                                <a href="?type=Publication&period=week" class="flex flex-col items-center justify-center min-w-0 bg-maroon-50 border border-maroon-200 rounded-lg shadow-sm py-1.5 px-3 transition cursor-pointer hover:bg-maroon-100 focus:ring-2 focus:ring-maroon-300 {{ (request('type') === 'Publication' && request('period') === 'week') ? 'ring-2 ring-maroon-400' : '' }}">
+                                    <span class="text-base font-bold text-maroon-700">{{ $stats['publication']['week'] }}</span>
+                                    <span class="text-xs text-maroon-800 font-semibold tracking-wide {{ (request('type') === 'Publication' && request('period') === 'week') ? 'text-maroon-600 font-medium' : '' }}">This Week</span>
+                                </a>
+                                <a href="?type=Publication&period=month" class="flex flex-col items-center justify-center min-w-0 bg-maroon-50 border border-maroon-200 rounded-lg shadow-sm py-1.5 px-3 transition cursor-pointer hover:bg-maroon-100 focus:ring-2 focus:ring-maroon-300 {{ (request('type') === 'Publication' && request('period') === 'month') ? 'ring-2 ring-maroon-400' : '' }}">
+                                    <span class="text-base font-bold text-maroon-700">{{ $stats['publication']['month'] }}</span>
+                                    <span class="text-xs text-maroon-800 font-semibold tracking-wide {{ (request('type') === 'Publication' && request('period') === 'month') ? 'text-maroon-600 font-medium' : '' }}">This Month</span>
+                                </a>
+                                <a href="?type=Publication&period=quarter" class="flex flex-col items-center justify-center min-w-0 bg-maroon-50 border border-maroon-200 rounded-lg shadow-sm py-1.5 px-3 transition cursor-pointer hover:bg-maroon-100 focus:ring-2 focus:ring-maroon-300 {{ (request('type') === 'Publication' && request('period') === 'quarter') ? 'ring-2 ring-maroon-400' : '' }}">
+                                    <span class="text-base font-bold text-maroon-700">{{ $stats['publication']['quarter'] }}</span>
+                                    <span class="text-xs text-maroon-800 font-semibold tracking-wide {{ (request('type') === 'Publication' && request('period') === 'quarter') ? 'text-maroon-600 font-medium' : '' }}">This Quarter</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -40,154 +52,119 @@
                             <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-burgundy-100 flex items-center justify-center">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             </div>
-                            <button @click="filterRequests('Citation')" class="font-semibold text-burgundy-800 text-sm sm:text-base truncate hover:underline hover:text-burgundy-600 transition text-left" :class="activeType === 'Citation' && !activePeriod ? 'underline text-burgundy-700' : ''">Citation Requests</button>
+                            <a href="?type=Citation" class="font-semibold text-burgundy-800 text-sm sm:text-base truncate hover:underline hover:text-burgundy-600 transition text-left {{ (request('type') === 'Citation') ? 'underline text-burgundy-700' : '' }}">
+                                Citation Requests
+                            </a>
                         </div>
                         <div class="flex flex-1 justify-end gap-2 sm:gap-6 min-w-0">
-                            <div class="flex flex-col items-center min-w-0">
-                                <button @click="filterRequests('Citation', 'week')" class="text-base sm:text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'underline' : ''" x-text="stats.citation.week"></button>
-                                <button @click="filterRequests('Citation', 'week')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'week' ? 'text-burgundy-600 font-medium' : ''">This Week</button>
-                            </div>
-                            <div class="flex flex-col items-center min-w-0">
-                                <button @click="filterRequests('Citation', 'month')" class="text-base sm:text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'underline' : ''" x-text="stats.citation.month"></button>
-                                <button @click="filterRequests('Citation', 'month')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'month' ? 'text-burgundy-600 font-medium' : ''">This Month</button>
-                            </div>
-                            <div class="flex flex-col items-center min-w-0">
-                                <button @click="filterRequests('Citation', 'quarter')" class="text-base sm:text-lg font-bold text-burgundy-700 hover:text-burgundy-600 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'underline' : ''" x-text="stats.citation.quarter"></button>
-                                <button @click="filterRequests('Citation', 'quarter')" class="text-xs text-gray-500 hover:text-gray-700 transition" :class="activeType === 'Citation' && activePeriod === 'quarter' ? 'text-burgundy-600 font-medium' : ''">This Quarter</button>
+                            <div class="flex flex-row gap-2 w-full justify-end">
+                                <a href="?type=Citation&period=week" class="flex flex-col items-center justify-center min-w-0 bg-burgundy-50 border border-burgundy-200 rounded-lg shadow-sm py-1.5 px-3 transition cursor-pointer hover:bg-burgundy-100 focus:ring-2 focus:ring-burgundy-300 {{ (request('type') === 'Citation' && request('period') === 'week') ? 'ring-2 ring-burgundy-400' : '' }}">
+                                    <span class="text-base font-bold text-burgundy-700">{{ $stats['citation']['week'] }}</span>
+                                    <span class="text-xs text-burgundy-800 font-semibold tracking-wide {{ (request('type') === 'Citation' && request('period') === 'week') ? 'text-burgundy-600 font-medium' : '' }}">This Week</span>
+                                </a>
+                                <a href="?type=Citation&period=month" class="flex flex-col items-center justify-center min-w-0 bg-burgundy-50 border border-burgundy-200 rounded-lg shadow-sm py-1.5 px-3 transition cursor-pointer hover:bg-burgundy-100 focus:ring-2 focus:ring-burgundy-300 {{ (request('type') === 'Citation' && request('period') === 'month') ? 'ring-2 ring-burgundy-400' : '' }}">
+                                    <span class="text-base font-bold text-burgundy-700">{{ $stats['citation']['month'] }}</span>
+                                    <span class="text-xs text-burgundy-800 font-semibold tracking-wide {{ (request('type') === 'Citation' && request('period') === 'month') ? 'text-burgundy-600 font-medium' : '' }}">This Month</span>
+                                </a>
+                                <a href="?type=Citation&period=quarter" class="flex flex-col items-center justify-center min-w-0 bg-burgundy-50 border border-burgundy-200 rounded-lg shadow-sm py-1.5 px-3 transition cursor-pointer hover:bg-burgundy-100 focus:ring-2 focus:ring-burgundy-300 {{ (request('type') === 'Citation' && request('period') === 'quarter') ? 'ring-2 ring-burgundy-400' : '' }}">
+                                    <span class="text-base font-bold text-burgundy-700">{{ $stats['citation']['quarter'] }}</span>
+                                    <span class="text-xs text-burgundy-800 font-semibold tracking-wide {{ (request('type') === 'Citation' && request('period') === 'quarter') ? 'text-burgundy-600 font-medium' : '' }}">This Quarter</span>
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- Range Description -->
-                <div class="w-full text-center mb-4">
-                    <span class="text-xs text-gray-500">{{ $rangeDescription ?? '' }}</span>
-                </div>
                 
                 <div class="mt-8">
-                    <h3 class="text-2xl font-semibold text-maroon-800 mb-4">
-                        <template x-if="!activeStatus && !activeType && !activePeriod && !searchQuery">
-                            <span>All User Requests</span>
-                        </template>
-                        <template x-if="activeStatus || activeType || activePeriod || searchQuery">
-                            <span>
-                                <span x-text="
-                                    (activeStatus ? (activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1)) + ' ' : '') +
-                                    (activeType ? activeType + ' ' : '') +
-                                    'Requests' +
-                                    (activePeriod ? ' (' + (activePeriod.charAt(0).toUpperCase() + activePeriod.slice(1)) + ')' : '')
-                                "></span>
-                                <template x-if="searchQuery">
-                                    <span class="text-base text-gray-500 font-normal">for "<span x-text="searchQuery"></span>"</span>
-                                </template>
-                            </span>
-                        </template>
-                    </h3>
-                    
-                    <!-- Filters and Search -->
-                    <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                        <div class="flex gap-2 relative">
-                            <div class="flex bg-gray-100 rounded-full p-1 gap-1">
-                                <button @click="filterByStatus('')"
-                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
-                                    :class="activeStatus === '' ? 'bg-maroon-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-maroon-600 hover:text-white border border-gray-200'">
-                                    All
+                    <div class="flex gap-2 relative w-full mb-4">
+                        <div class="flex bg-gray-100 rounded-full p-1 gap-1">
+                            <a href="?{{ http_build_query(array_merge(request()->except(['status']), ['status' => ''])) }}" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none {{ !request('status') ? 'bg-maroon-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-maroon-600 hover:text-white border border-gray-200' }}">All</a>
+                            <a href="?{{ http_build_query(array_merge(request()->except(['status']), ['status' => 'pending'])) }}" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none {{ request('status') === 'pending' ? 'bg-yellow-500 text-white shadow' : 'bg-white text-gray-700 hover:bg-yellow-600 hover:text-white border border-gray-200' }}">Pending</a>
+                            <a href="?{{ http_build_query(array_merge(request()->except(['status']), ['status' => 'endorsed'])) }}" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none {{ request('status') === 'endorsed' ? 'bg-green-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-green-700 hover:text-white border border-gray-200' }}">Endorsed</a>
+                            <a href="?{{ http_build_query(array_merge(request()->except(['status']), ['status' => 'rejected'])) }}" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none {{ request('status') === 'rejected' ? 'bg-red-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-red-700 hover:text-white border border-gray-200' }}">Rejected</a>
+                            <form method="GET" action="" class="flex flex-row gap-2 items-center ml-2 w-auto" style="min-width:0;">
+                                @foreach(request()->except(['search', 'page']) as $key => $value)
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}" />
+                                @endforeach
+                                <input type="text" name="search" value="{{ request('search', '') }}" placeholder="Code or Name" class="border rounded-lg px-3 py-1 focus:border-maroon-500 focus:ring-maroon-500 text-sm h-8 w-32 md:w-40" />
+                                <button type="submit" class="ml-1 p-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors flex items-center justify-center h-8 w-8" title="Search">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
                                 </button>
-                                <button @click="filterByStatus('pending')"
-                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
-                                    :class="activeStatus === 'pending' ? 'bg-yellow-500 text-white shadow' : 'bg-white text-gray-700 hover:bg-yellow-600 hover:text-white border border-gray-200'">
-                                    Pending
-                                </button>
-                                <button @click="filterByStatus('endorsed')"
-                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
-                                    :class="activeStatus === 'endorsed' ? 'bg-green-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-green-700 hover:text-white border border-gray-200'">
-                                    Endorsed
-                                </button>
-                                <button @click="filterByStatus('rejected')"
-                                    class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none"
-                                    :class="activeStatus === 'rejected' ? 'bg-red-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-red-700 hover:text-white border border-gray-200'">
-                                    Rejected
-                                </button>
-                            </div>
+                            </form>
                         </div>
-                        <div class="flex-1 flex justify-end">
-                            <input type="text" x-model="searchQuery" @input.debounce.300ms="performSearch()" placeholder="Code or Name" class="border rounded-lg px-2 py-1 text-sm w-full md:w-48 focus:border-maroon-500 focus:ring-maroon-500" />
-                            <button @click="performSearch()" class="ml-2 p-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors" title="Search">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </button>
+                        <div class="flex-1 flex justify-end items-center min-w-0">
+                            @if(!empty($rangeDescription))
+                                <div class="text-xs text-gray-500 font-normal whitespace-nowrap">{{ $rangeDescription }}</div>
+                            @endif
                         </div>
                     </div>
                     
                     <div class="bg-white rounded-lg shadow p-0 max-h-[45vh] h-[45vh] overflow-y-auto">
-                        <div x-show="loading" class="p-8 text-center text-gray-500">
-                            <div class="inline-flex items-center gap-2">
-                                <svg class="animate-spin h-5 w-5 text-maroon-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Loading...
-                            </div>
-                        </div>
-                        <div x-show="!loading && requests.length === 0" class="p-8 text-center text-gray-500">No requests found for your current filter or search.</div>
-                        <div x-show="!loading && requests.length > 0" class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
                                 <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Email</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Date</th>
-                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">Action</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Date</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">Action</th>
                                 </tr>
                             </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                    <template x-for="request in requests" :key="request.id">
-                                            <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" :title="request.user ? request.user.name : 'N/A'" x-text="request.user ? request.user.name : 'N/A'"></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell max-w-[180px] truncate" :title="request.user ? request.user.email : 'N/A'" x-text="request.user ? request.user.email : 'N/A'"></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" x-text="request.request_code"></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="request.type"></td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-center">
-                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" 
-                                                      :class="{
-                                                          'bg-green-100 text-green-800': request.status === 'endorsed',
-                                                          'bg-red-100 text-red-800': request.status === 'rejected',
-                                                          'bg-yellow-100 text-yellow-800': request.status === 'pending'
-                                                      }" 
-                                                      x-text="request.status"></span>
-                                    </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell" x-text="new Date(request.requested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })"></td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                                <div class="flex flex-row gap-2 items-center justify-center">
-                                                    <!-- Review Button (Blue) -->
-                                                    <button @click="openReviewModal(request)" type="button" class="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors" title="Review">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                        </svg>
-                                                    </button>
-                                                    <!-- Change Status Button (Yellow) -->
-                                                    <button @click="openStatusModal(request)" type="button" class="p-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition-colors" title="Change Status">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                                                        </svg>
-                                                    </button>
-                                                    <!-- Delete Button (Red) -->
-                                                    <button @click="deleteRequest(request.id)" type="button" class="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors" title="Delete">
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse($requests as $request)
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" title="{{ $request->user ? $request->user->name : 'N/A' }}">{{ $request->user ? $request->user->name : 'N/A' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell max-w-[180px] truncate" title="{{ $request->user ? $request->user->email : 'N/A' }}">{{ $request->user ? $request->user->email : 'N/A' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">{{ $request->request_code }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $request->type }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                @if($request->status === 'endorsed') bg-green-100 text-green-800
+                                                @elseif($request->status === 'rejected') bg-red-100 text-red-800
+                                                @elseif($request->status === 'pending') bg-yellow-100 text-yellow-800
+                                                @endif
+                                            ">{{ $request->status }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ $request->requested_at ? \Carbon\Carbon::parse($request->requested_at)->format('M d, Y h:i A') : '' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                            <div class="flex flex-row gap-2 items-center justify-center">
+                                                <!-- Review Button (Blue) -->
+                                                <button @click="openReviewModal(@json($request))" type="button" class="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors" title="Review">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                </button>
+                                                <!-- Change Status Button (Yellow) -->
+                                                <button @click="openStatusModal(@json($request))" type="button" class="p-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition-colors" title="Change Status">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                                                    </svg>
+                                                </button>
+                                                <!-- Delete Button (Red) -->
+                                                <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this request?');" style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors" title="Delete">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                         </svg>
                                                     </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                    </template>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="p-8 text-center text-gray-500">No requests found for your current filter or search.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
-                            </div>
                     </div>
                 </div>
             </div>
@@ -237,9 +214,9 @@
                 <!-- Content -->
                 <div class="p-6 flex-1 overflow-hidden admin-review-modal-scroll">
                     @php
-                        $selectedRequest = $allRequests->firstWhere('id', (int) (isset($currentRequestId) ? $currentRequestId : null));
-                        if (!$selectedRequest && isset($allRequests) && $allRequests->count() > 0) {
-                            $selectedRequest = $allRequests->first();
+                        $selectedRequest = $requests->firstWhere('id', (int) (isset($currentRequestId) ? $currentRequestId : null));
+                        if (!$selectedRequest && isset($requests) && $requests->count() > 0) {
+                            $selectedRequest = $requests->first();
                         }
                     @endphp
                     
@@ -589,7 +566,7 @@
                 searchQuery: '{{ request('search', '') }}',
                 
                 // Data states
-                requests: @json($allRequests),
+                requests: @json($requests),
                 stats: @json($stats),
                 filterCounts: Object.assign({pending: 0, endorsed: 0, rejected: 0}, @json($filterCounts)),
                 loading: false,

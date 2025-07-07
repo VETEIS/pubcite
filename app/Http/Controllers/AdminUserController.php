@@ -31,7 +31,10 @@ class AdminUserController extends Controller
         $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $currentRole = $request->role;
         $currentSearch = $request->search;
-        return view('admin.users', compact('users', 'currentRole', 'currentSearch'));
+        $adminCount = User::where('role', 'admin')->count();
+        $userCount = User::where('role', 'user')->count();
+        $lastCreatedUser = User::orderBy('created_at', 'desc')->first();
+        return view('admin.users', compact('users', 'currentRole', 'currentSearch', 'adminCount', 'userCount', 'lastCreatedUser'));
     }
 
     public function create()

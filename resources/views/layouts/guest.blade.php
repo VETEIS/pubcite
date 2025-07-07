@@ -63,12 +63,12 @@
     </head>
     <body class="font-sans antialiased bg-white text-gray-900">
         <div class="min-h-screen bg-white relative">
-            <!-- Eagle Main Background Overlay (behind everything) -->
+            <!-- Eagle Main Background Overlay -->
             <div class="pointer-events-none absolute inset-0 z-0 select-none">
                 <img src="/images/eagle.jpg" alt="Eagle" class="w-full h-full object-cover opacity-30" draggable="false" loading="eager" fetchpriority="high" />
             </div>
 
-            <!-- Simple Maroon Navbar for Consistency (overlay is behind this) -->
+            <!-- Navbar -->
             <nav class="bg-maroon-800 border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
@@ -93,7 +93,7 @@
                 </main>
             </div>
             
-            <!-- Footer - positioned below viewport -->
+            <!-- Footer below viewport -->
             <div class="relative z-10">
                 <x-footer />
             </div>

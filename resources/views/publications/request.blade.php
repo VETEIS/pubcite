@@ -613,7 +613,7 @@ function tabNav() {
                         'papertitle', 'journaltitle', 'version', 'publisher', 'type', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
                     ];
                             } else if (tab === 'recommendation') {
-                    fields = ['rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
+                    fields = ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
             } else if (tab === 'terminal') {
                 fields = ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'];
             } else if (tab === 'upload') {
@@ -716,7 +716,7 @@ function tabNav() {
 
             // Check recommendation tab completion
             const recommendationFields = [
-                'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'
+                'rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'
             ];
             this.tabCompletion.recommendation = recommendationFields.every(field => {
                 const element = document.querySelector(`[name="${field}"]`);
