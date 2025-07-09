@@ -23,7 +23,10 @@ class PublicationsController extends Controller
 {
     public function create()
     {
-        return view('publications.request');
+        $request = new \stdClass();
+        $request->id = null;
+        $request->request_code = null;
+        return view('publications.request', compact('request'));
     }
 
     public function adminUpdate(Request $httpRequest, \App\Models\Request $request)
@@ -47,46 +50,47 @@ class PublicationsController extends Controller
     public function generateIncentiveDocx(Request $request)
     {
         try {
-            $data = $request->all();
+            $reqId = $request->input('request_id');
+            if (!$reqId) {
+                throw new \Exception('Missing request_id for DOCX path');
+            }
+            $userRequest = \App\Models\Request::find($reqId);
+            if (!$userRequest) {
+                throw new \Exception('Request not found for DOCX generation');
+            }
+            $reqCode = $userRequest->request_code;
+            $userId = $userRequest->user_id;
             $docxType = $request->input('docx_type', 'incentive');
-            
-            Log::info('DOCX generation - Received data:', ['type' => $docxType, 'data' => $data]);
-            
-            // Generate the DOCX file based on type
-            $uploadPath = 'generated';
+            $data = $request->all();
+            $uploadPath = "requests/{$userId}/{$reqCode}";
             $outputPath = null;
             $filename = null;
-            
             switch ($docxType) {
                 case 'incentive':
                     $outputPath = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
                     $filename = 'Incentive_Application_Form.docx';
                     break;
-                    
                 case 'recommendation':
                     $outputPath = $this->generateRecommendationDocxFromHtml($data, $uploadPath);
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
-                    
                 case 'terminal':
                     $outputPath = $this->generateTerminalDocxFromHtml($data, $uploadPath);
                     $filename = 'Terminal_Report_Form.docx';
                     break;
-                    
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
-            
-            // Get the full path for download
             $fullPath = storage_path('app/' . $outputPath);
-            
             if (!file_exists($fullPath)) {
                 throw new \Exception('Generated file not found');
             }
-            
-            Log::info('DOCX generated successfully', ['type' => $docxType, 'path' => $fullPath]);
-            
-            // Return the file for download
+            $pdfPath = $userRequest->pdf_path ? json_decode($userRequest->pdf_path, true) : [];
+            if (!isset($pdfPath['docxs'])) $pdfPath['docxs'] = [];
+            $pdfPath['docxs'][$docxType] = preg_replace('/^public\//', '', $outputPath);
+            $userRequest->pdf_path = json_encode($pdfPath);
+            $userRequest->save();
+            Log::info('Updated pdf_path for request', ['request_id' => $reqId, 'docxType' => $docxType, 'outputPath' => $outputPath]);
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';
@@ -94,7 +98,6 @@ class PublicationsController extends Controller
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
-            
         } catch (\Exception $e) {
             Log::error('Error generating DOCX: ' . $e->getMessage());
             return response()->json([
@@ -109,7 +112,8 @@ class PublicationsController extends Controller
         try {
             Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
             // Ensure directory exists
-            $fullPath = storage_path('app/' . $uploadPath);
+            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
+            $fullPath = storage_path('app/' . $publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
@@ -131,7 +135,7 @@ class PublicationsController extends Controller
             ];
             // Use TemplateProcessor
             $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
-            $outputPath = $uploadPath . '/Incentive_Application_Form.docx';
+            $outputPath = $publicUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             $templateProcessor->setValue('collegeheader', $data['collegeheader'] ?? '');
@@ -183,12 +187,13 @@ class PublicationsController extends Controller
     private function generateRecommendationDocxFromHtml($data, $uploadPath)
     {
         try {
-            $fullPath = storage_path('app/' . $uploadPath);
+            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
+            $fullPath = storage_path('app/' . $publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
             $templatePath = storage_path('app/templates/Recommendation_Letter_Form.docx');
-            $outputPath = $uploadPath . '/Recommendation_Letter_Form.docx';
+            $outputPath = $publicUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             // Set all relevant fields for recommendation letter (matching template)
@@ -209,12 +214,13 @@ class PublicationsController extends Controller
     private function generateTerminalDocxFromHtml($data, $uploadPath)
     {
         try {
-            $fullPath = storage_path('app/' . $uploadPath);
+            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
+            $fullPath = storage_path('app/' . $publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
             $templatePath = storage_path('app/templates/Terminal_Report_Form.docx');
-            $outputPath = $uploadPath . '/Terminal_Report_Form.docx';
+            $outputPath = $publicUploadPath . '/Terminal_Report_Form.docx';
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             // Set all relevant fields for terminal report (update these after running debug script)
@@ -258,7 +264,6 @@ class PublicationsController extends Controller
                 // Get all elements in the section
                 $elements = $section->getElements();
                 
-                // Process each element
                 foreach ($elements as $element) {
                     $this->replacePlaceholdersInElement($element, $data, $typeChecked, $indexedChecked);
                 }
@@ -392,11 +397,45 @@ class PublicationsController extends Controller
             }
             return redirect()->back()->with('error', 'Request not found.');
         }
+        // Delete all associated files from storage
+        $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
+        $allFiles = [];
+        if (isset($pdfPath['pdfs']) && is_array($pdfPath['pdfs'])) {
+            foreach ($pdfPath['pdfs'] as $file) {
+                if (isset($file['path'])) {
+                    $allFiles[] = $file['path'];
+                }
+            }
+        }
+        if (isset($pdfPath['docxs']) && is_array($pdfPath['docxs'])) {
+            foreach ($pdfPath['docxs'] as $docxPath) {
+                if ($docxPath) {
+                    $allFiles[] = $docxPath;
+                }
+            }
+        }
+        foreach ($allFiles as $filePath) {
+            \Storage::disk('public')->delete($filePath);
+        }
+        // Remove the per-request directory and all its contents
+        if (isset($request->user_id) && isset($request->request_code)) {
+            $dir = "requests/{$request->user_id}/{$request->request_code}";
+            $fullDir = storage_path('app/public/' . $dir);
+            if (is_dir($fullDir)) {
+                $files = glob($fullDir . '/*');
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+                rmdir($fullDir);
+            }
+        }
         $request->delete();
         if (request()->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Request deleted successfully.']);
+            return response()->json(['success' => true, 'message' => 'Request and files deleted successfully.']);
         }
-        return redirect()->back()->with('success', 'Request deleted successfully.');
+        return redirect()->back()->with('success', 'Request and files deleted successfully.');
     }
 
     // NEW SIMPLIFIED APPROACH - Single step submission
@@ -410,7 +449,7 @@ class PublicationsController extends Controller
         // Validate all form data
         $validator = Validator::make($request->all(), [
             // Incentive Application fields
-            'collegeheader' => 'required|string',
+            //'collegeheader' => 'required|string',
             'name' => 'required|string',
             'academicrank' => 'required|string',
             'employmentstatus' => 'required|string',
@@ -504,26 +543,19 @@ class PublicationsController extends Controller
                 
                 // Use the public disk instead of the default local disk
                 $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'public');
-                
-                Log::info('File stored successfully', [
-                    'field' => $field,
-                    'stored_path' => $storedPath,
-                    'full_path' => storage_path('app/' . $storedPath),
-                    'file_exists_after_store' => file_exists(storage_path('app/' . $storedPath)),
-                    'file_size_after_store' => file_exists(storage_path('app/' . $storedPath)) ? filesize(storage_path('app/' . $storedPath)) : 'N/A'
-                ]);
-                
+                // Remove leading 'public/' if present
+                $cleanPath = preg_replace('/^public\//', '', $storedPath);
                 $attachments[$field] = [
-                    'path' => $storedPath,
+                    'path' => $cleanPath,
                     'original_name' => $file->getClientOriginalName(),
                 ];
             }
 
             // Generate DOCX files using HTML approach
             $docxPaths = [];
-            $docxPaths['incentive'] = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
-            $docxPaths['recommendation'] = $this->generateRecommendationDocxFromHtml($data, $uploadPath);
-            $docxPaths['terminal'] = $this->generateTerminalDocxFromHtml($data, $uploadPath);
+            $docxPaths['incentive'] = preg_replace('/^public\//', '', $this->generateIncentiveDocxFromHtml($data, $uploadPath));
+            $docxPaths['recommendation'] = preg_replace('/^public\//', '', $this->generateRecommendationDocxFromHtml($data, $uploadPath));
+            $docxPaths['terminal'] = preg_replace('/^public\//', '', $this->generateTerminalDocxFromHtml($data, $uploadPath));
 
             Log::info('Creating database entry', [
                 'requestCode' => $requestCode,

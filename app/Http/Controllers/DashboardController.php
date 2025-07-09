@@ -92,7 +92,9 @@ class DashboardController extends Controller
                 'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
                 'rejected' => $statusQuery->where('status', 'rejected')->count(),
             ];
-            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription'));
+            // Fetch 5 most recent applications for sidebar
+            $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications'));
         }
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
         return view('dashboard', compact('requests'));
@@ -145,6 +147,42 @@ class DashboardController extends Controller
             });
         }
         $allRequests = $query->get();
+        // Add file/document data for each request
+        $requestsWithFiles = $allRequests->map(function($req) {
+            $files = [
+                'pdfs' => [],
+                'docx' => [],
+            ];
+            // Extract from pdf_path JSON if present
+            if (!empty($req->pdf_path)) {
+                $pdfPathData = json_decode($req->pdf_path, true);
+                // PDFs
+                if (!empty($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
+                    foreach ($pdfPathData['pdfs'] as $key => $file) {
+                        $files['pdfs'][] = [
+                            'name' => ucfirst(str_replace('_', ' ', $key)),
+                            'file_name' => $file['original_name'] ?? basename($file['path'] ?? ''),
+                            'path' => isset($file['path']) ? asset('storage/' . $file['path']) : null,
+                            'missing' => empty($file['path']),
+                        ];
+                    }
+                }
+                // DOCX
+                if (!empty($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
+                    foreach ($pdfPathData['docxs'] as $key => $path) {
+                        $files['docx'][] = [
+                            'name' => ucfirst($key),
+                            'file_name' => ucfirst($key) . '_Form.docx',
+                            'path' => $path ? asset('storage/' . $path) : null,
+                            'missing' => empty($path),
+                        ];
+                    }
+                }
+            }
+            $arr = $req->toArray();
+            $arr['files'] = $files;
+            return $arr;
+        });
         $stats = [
             'publication' => [
                 'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
@@ -176,7 +214,7 @@ class DashboardController extends Controller
             'rejected' => $statusQuery->where('status', 'rejected')->count(),
         ];
         return response()->json([
-            'requests' => $allRequests,
+            'requests' => $requestsWithFiles,
             'stats' => $stats,
             'filterCounts' => $filterCounts,
         ]);

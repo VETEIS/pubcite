@@ -28,10 +28,10 @@
                     @input="checkFilled()"
                     @change="checkFilled()"
                     x-init="checkFilled()"
-                    @submit.prevent="if (validateAllTabs()) { $el.submit(); }"
                     autocomplete="on"
                 >
                     @csrf
+                    <input type="hidden" id="request_id" name="request_id" value="{{ $request->id }}">
                     <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="h-full flex flex-col">
                         <div class="flex w-full border-b mb-3">
                             <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
@@ -456,10 +456,7 @@
                                 <button
                                     type="submit"
                                     form="publication-request-form"
-                                    :disabled="!$store.tabNav.allComplete"
-                                    :class="!$store.tabNav.allComplete
-                                        ? 'font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-maroon-50 opacity-90 cursor-not-allowed transition shadow-lg'
-                                        : 'font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition'"
+                                    class="font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition"
                                 >
                                     Submit Request
                                 </button>
@@ -475,26 +472,7 @@
 function publicationForm() {
     return {
         checkFilled() {
-            // No-op, logic moved to tabNav
-        },
-        validateAllTabs() {
-            const tabNav = Alpine.store('tabNav');
-            if (!tabNav) return false;
-            tabNav.checkTabs();
-            if (!tabNav.allComplete) {
-                ['incentive', 'recommendation', 'terminal', 'upload'].forEach(tab => {
-                    tabNav.highlightIncompleteFieldsForTab(tab);
-                });
-                // Show error banner
-                this.showError = true;
-                this.errorMsg = 'Please complete all required fields before submitting.';
-                // Scroll to top to show the error
-                this.$nextTick(() => {
-                    this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-                return false;
-            }
-            return true;
+            // No-op, logic moved to tabNav or not needed
         }
     }
 }
@@ -849,6 +827,9 @@ function tabNav() {
             
             // Add document type
             formData.append('docx_type', type);
+            
+            // Add request_id from hidden inputs
+            formData.append('request_id', document.getElementById('request_id').value);
             
             // Get user name for filename (same as citations)
             const applicantName = document.querySelector('[name="name"]')?.value || 'User';

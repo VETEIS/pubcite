@@ -49,6 +49,17 @@ class CitationsController extends Controller
         try {
             $data = $request->all();
             $docxType = $request->input('docx_type', 'incentive');
+            $reqId = $request->input('request_id');
+            if (!$reqId) {
+                throw new \Exception('Missing request_id for DOCX path');
+            }
+            $userRequest = \App\Models\Request::find($reqId);
+            if (!$userRequest) {
+                throw new \Exception('Request not found for DOCX generation');
+            }
+            $requestCode = $userRequest->request_code;
+            $userId = $userRequest->user_id;
+            $uploadPath = "requests/{$userId}/{$requestCode}";
             
             Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data]);
             
@@ -58,7 +69,6 @@ class CitationsController extends Controller
                 'data' => $data
             ]);
             $uniqueHash = substr(hash('sha256', $hashSource), 0, 16); // 16 chars is enough
-            $uploadPath = 'generated';
             $filename = null;
             $outputPath = null;
             
@@ -116,15 +126,15 @@ class CitationsController extends Controller
     {
         try {
             Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
-            // Ensure directory exists
-            $fullPath = storage_path('app/' . $uploadPath);
+            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
+            $fullPath = storage_path('app/' . $publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
             
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
-            $outputPath = $uploadPath . '/' . $filename;
+            $outputPath = $publicUploadPath . '/' . $filename;
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             
@@ -186,12 +196,13 @@ class CitationsController extends Controller
     private function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Cite_Recommendation_Letter.docx')
     {
         try {
-            $fullPath = storage_path('app/' . $uploadPath);
+            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
+            $fullPath = storage_path('app/' . $publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
-            $outputPath = $uploadPath . '/' . $filename;
+            $outputPath = $publicUploadPath . '/' . $filename;
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
             
@@ -215,19 +226,42 @@ class CitationsController extends Controller
     {
         try {
             $request = UserRequest::findOrFail($id);
-            
-            // Delete associated files
-            if ($request->pdf_path) {
-                $pdfData = is_array($request->pdf_path) ? $request->pdf_path : json_decode($request->pdf_path, true);
-                if (isset($pdfData['pdfs'])) {
-                    foreach ($pdfData['pdfs'] as $pdf) {
-                        Storage::disk('public')->delete($pdf['path']);
+            // Delete associated files (PDFs and DOCXs)
+            $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
+            $allFiles = [];
+            if (isset($pdfPath['pdfs']) && is_array($pdfPath['pdfs'])) {
+                foreach ($pdfPath['pdfs'] as $file) {
+                    if (isset($file['path'])) {
+                        $allFiles[] = $file['path'];
                     }
                 }
             }
-            
+            if (isset($pdfPath['docxs']) && is_array($pdfPath['docxs'])) {
+                foreach ($pdfPath['docxs'] as $docxPath) {
+                    if ($docxPath) {
+                        $allFiles[] = $docxPath;
+                    }
+                }
+            }
+            foreach ($allFiles as $filePath) {
+                \Storage::disk('public')->delete($filePath);
+            }
+            // Remove the per-request directory and all its contents
+            if (isset($request->user_id) && isset($request->request_code)) {
+                $dir = "requests/{$request->user_id}/{$request->request_code}";
+                $fullDir = storage_path('app/public/' . $dir);
+                if (is_dir($fullDir)) {
+                    $files = glob($fullDir . '/*');
+                    foreach ($files as $file) {
+                        if (is_file($file)) {
+                            unlink($file);
+                        }
+                    }
+                    rmdir($fullDir);
+                }
+            }
             $request->delete();
-            return back()->with('success', 'Request deleted successfully.');
+            return back()->with('success', 'Request and files deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Error deleting request: ' . $e->getMessage());
             return back()->with('error', 'Error deleting request.');
@@ -259,109 +293,71 @@ class CitationsController extends Controller
 
             // Generate unique request code
             $requestCode = 'CITE-' . date('Ymd') . '-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            $userId = Auth::id();
+            $uploadPath = "requests/{$userId}/{$requestCode}";
 
-            // Store PDF files
+            // Store PDF files in per-request folder
             $pdfPaths = [];
-            
-            // Recommendation Letter PDF
-            if ($request->hasFile('recommendation_letter')) {
-                $recommendationPath = $request->file('recommendation_letter')->store('citations', 'public');
-                $pdfPaths['recommendation_letter'] = [
-                    'path' => $recommendationPath,
-                    'original_name' => $request->file('recommendation_letter')->getClientOriginalName()
-                ];
-            }
-
-            // Citing Article PDF
-            if ($request->hasFile('citing_article')) {
-                $citingArticlePath = $request->file('citing_article')->store('citations', 'public');
-                $pdfPaths['citing_article'] = [
-                    'path' => $citingArticlePath,
-                    'original_name' => $request->file('citing_article')->getClientOriginalName()
-                ];
-            }
-
-            // Citing Journal Cover PDF
-            if ($request->hasFile('citing_journal_cover')) {
-                $citingJournalCoverPath = $request->file('citing_journal_cover')->store('citations', 'public');
-                $pdfPaths['citing_journal_cover'] = [
-                    'path' => $citingJournalCoverPath,
-                    'original_name' => $request->file('citing_journal_cover')->getClientOriginalName()
-                ];
-            }
-
-            // Cited Article PDF
-            if ($request->hasFile('cited_article')) {
-                $citedArticlePath = $request->file('cited_article')->store('citations', 'public');
-                $pdfPaths['cited_article'] = [
-                    'path' => $citedArticlePath,
-                    'original_name' => $request->file('cited_article')->getClientOriginalName()
-                ];
-            }
-
-            // Cited Journal Cover PDF
-            if ($request->hasFile('cited_journal_cover')) {
-                $citedJournalCoverPath = $request->file('cited_journal_cover')->store('citations', 'public');
-                $pdfPaths['cited_journal_cover'] = [
-                    'path' => $citedJournalCoverPath,
-                    'original_name' => $request->file('cited_journal_cover')->getClientOriginalName()
-                ];
+            $fields = [
+                'recommendation_letter',
+                'citing_article',
+                'citing_journal_cover',
+                'cited_article',
+                'cited_journal_cover',
+            ];
+            foreach ($fields as $field) {
+                if ($request->hasFile($field)) {
+                    $file = $request->file($field);
+                    $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'public');
+                    // Remove leading 'public/' if present
+                    $cleanPath = preg_replace('/^public\//', '', $storedPath);
+                    $pdfPaths[$field] = [
+                        'path' => $cleanPath,
+                        'original_name' => $file->getClientOriginalName()
+                    ];
+                }
             }
 
             // Generate DOCX files
             $docxPaths = [];
-            
-            // Generate Incentive Application DOCX
             try {
-                $incentivePath = $this->generateCitationIncentiveDocxFromHtml($request->all(), 'generated');
-                $docxPaths['incentive_application'] = $incentivePath;
+                $incentivePath = $this->generateCitationIncentiveDocxFromHtml($request->all(), $uploadPath);
+                $docxPaths['incentive_application'] = preg_replace('/^public\//', '', $incentivePath);
             } catch (\Exception $e) {
                 Log::error('Error generating incentive DOCX: ' . $e->getMessage());
             }
-
-            // Generate Recommendation Letter DOCX
             try {
-                $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($request->all(), 'generated');
-                $docxPaths['recommendation_letter'] = $recommendationPath;
+                $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($request->all(), $uploadPath);
+                $docxPaths['recommendation_letter'] = preg_replace('/^public\//', '', $recommendationPath);
             } catch (\Exception $e) {
                 Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
             }
 
             // Create the request record
             $userRequest = new UserRequest();
-            $userRequest->user_id = Auth::id();
+            $userRequest->user_id = $userId;
             $userRequest->request_code = $requestCode;
             $userRequest->type = 'Citation';
             $userRequest->status = 'pending';
             $userRequest->requested_at = now();
-            $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths]);
-            $userRequest->form_data = json_encode($request->except(['_token', 'recommendation_letter', 'citing_article', 'citing_journal_cover', 'cited_article', 'cited_journal_cover']));
-            
-            // Store DOCX paths if generated
-            if (!empty($docxPaths)) {
-                $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $docxPaths]);
-            }
-
+            $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $docxPaths]);
+            $userRequest->form_data = json_encode($request->except(['_token', ...$fields]));
             $userRequest->save();
 
             Log::info('Citation request submitted successfully', [
                 'request_code' => $requestCode,
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'pdf_count' => count($pdfPaths),
                 'docx_count' => count($docxPaths)
             ]);
 
-            // Send email notifications
+            // Send email notifications (unchanged)
             try {
-                // Send notification to user
                 Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
-                
-                // Send notification to all admins
                 $adminUsers = \App\Models\User::where('role', 'admin')->get();
                 foreach ($adminUsers as $adminUser) {
                     Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
                 }
-                
                 Log::info('Email notifications sent successfully', [
                     'requestId' => $userRequest->id,
                     'userEmail' => $userRequest->user->email,
@@ -369,11 +365,9 @@ class CitationsController extends Controller
                 ]);
             } catch (\Exception $e) {
                 Log::error('Error sending email notifications: ' . $e->getMessage());
-                // Don't fail the request if email fails
             }
 
             return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
-
         } catch (\Exception $e) {
             Log::error('Error submitting citation request: ' . $e->getMessage());
             return back()->with('error', 'An error occurred while submitting your request. Please try again.');
