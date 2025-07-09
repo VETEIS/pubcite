@@ -9,12 +9,13 @@ use App\Models\Request as UserRequest;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
@@ -38,8 +39,21 @@ class PublicationsController extends Controller
         $request->status = $httpRequest->input('status');
         $request->save();
 
-        // Send status change email if status changed
+        // Activity log for status change
         if ($oldStatus !== $request->status) {
+            \App\Models\ActivityLog::create([
+                'user_id' => Auth::id(),
+                'request_id' => $request->id,
+                'action' => 'status_changed',
+                'details' => [
+                    'old_status' => $oldStatus,
+                    'new_status' => $request->status,
+                    'request_code' => $request->request_code,
+                    'type' => $request->type,
+                    'changed_at' => now()->toDateTimeString(),
+                ],
+                'created_at' => now(),
+            ]);
             $adminComment = $httpRequest->input('admin_comment', null);
             \Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
         }
@@ -432,6 +446,19 @@ class PublicationsController extends Controller
             }
         }
         $request->delete();
+        // Activity log for deletion
+        \App\Models\ActivityLog::create([
+            'user_id' => $user->id,
+            'request_id' => $request->id,
+            'action' => 'deleted',
+            'details' => [
+                'request_code' => $request->request_code,
+                'type' => $request->type,
+                'status' => $request->status,
+                'deleted_at' => now()->toDateTimeString(),
+            ],
+            'created_at' => now(),
+        ]);
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Request and files deleted successfully.']);
         }
@@ -576,6 +603,19 @@ class PublicationsController extends Controller
                 ]),
             ]);
 
+            // Activity log for creation
+            \App\Models\ActivityLog::create([
+                'user_id' => $userId,
+                'request_id' => $userRequest->id,
+                'action' => 'created',
+                'details' => [
+                    'request_code' => $userRequest->request_code,
+                    'type' => $userRequest->type,
+                    'created_at' => now()->toDateTimeString(),
+                ],
+                'created_at' => now(),
+            ]);
+
             Log::info('Publication request submitted successfully', [
                 'requestId' => $userRequest->id,
                 'requestCode' => $requestCode
@@ -663,8 +703,24 @@ class PublicationsController extends Controller
                 }
 
                 $storagePath = $paths['docxs'][$fileKey];
-                $originalName = ucfirst($fileKey) . '_Form.docx';
+                // Get user name for filename
+                $userName = $request->user->name ?? 'User';
+                $sanitizedUserName = preg_replace('/[^a-zA-Z0-9\s]/', '', $userName);
+                $sanitizedUserName = preg_replace('/\s+/', '_', $sanitizedUserName);
+                $date = $request->requested_at ? \Carbon\Carbon::parse($request->requested_at)->format('Y-m-d') : date('Y-m-d');
+                $typeLabel = '';
+                if ($fileKey === 'incentive') {
+                    $typeLabel = 'Publication_Incentive_Application';
+                } elseif ($fileKey === 'recommendation') {
+                    $typeLabel = 'Publication_Recommendation_Letter';
+                } elseif ($fileKey === 'terminal') {
+                    $typeLabel = 'Publication_Terminal_Report';
+                } else {
+                    $typeLabel = ucfirst($fileKey);
+                }
+                $originalName = $sanitizedUserName . '_' . $typeLabel . '_' . $date . '.docx';
                 $ext = 'docx';
+                $downloadName = $originalName;
 
             } else {
                 abort(400, 'Invalid file type: ' . $fileType);

@@ -58,6 +58,19 @@
             }, 2000);
             </script>
 
+        <!-- Quicklink prefetch for instant navigation -->
+        <script src="https://unpkg.com/quicklink@2.2.0/dist/quicklink.umd.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            quicklink.listen({
+              ignores: [
+                url => url.includes('logout'),
+                url => url.startsWith('mailto:')
+              ]
+            });
+          });
+        </script>
+
         <!-- Styles -->
         @livewireStyles
     </head>

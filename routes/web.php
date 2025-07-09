@@ -55,6 +55,7 @@ Route::middleware([
     Route::post('/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate');
     Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success');
     Route::patch('/admin/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');
+    Route::patch('/admin/requests/{request}/status', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.status');
     Route::post('/publications/incentive-application/generate', [\App\Http\Controllers\PublicationsController::class, 'generateIncentiveDocx'])->name('publications.incentive.generate');
     Route::delete('/admin/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
     Route::get('/admin/requests/{request}/download', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadFile'])->name('admin.requests.download');
