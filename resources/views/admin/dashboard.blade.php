@@ -38,9 +38,9 @@
                     </h1>
                     <!-- Centered Navigation Tabs -->
                     <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-2">
-                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page'), ['type' => 'Citation'])) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ request('type') === 'Citation' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">Citation</a>
-                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page'), ['type' => 'Publication'])) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ request('type') === 'Publication' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">Publication</a>
-                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page'))) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ !request('type') ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">View All</a>
+                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Citation'])) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ request('type') === 'Citation' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">Citation</a>
+                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Publication'])) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ request('type') === 'Publication' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">Publication</a>
+                        <a href="{{ route('dashboard') }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">View All</a>
                     </div>
                     <!-- Search Input Field -->
                     <div class="absolute right-0 flex items-center">
@@ -61,41 +61,40 @@
                         <!-- Stat Cards (Compact Row) -->
                         @php
                             $type = request('type');
-                            $weekStat = $type === 'Citation' ? ($stats['citation']['week'] ?? 0)
-                                : ($type === 'Publication' ? ($stats['publication']['week'] ?? 0)
-                                : (($stats['publication']['week'] ?? 0) + ($stats['citation']['week'] ?? 0)));
-                            $monthStat = $type === 'Citation' ? ($stats['citation']['month'] ?? 0)
-                                : ($type === 'Publication' ? ($stats['publication']['month'] ?? 0)
-                                : (($stats['publication']['month'] ?? 0) + ($stats['citation']['month'] ?? 0)));
-                            $quarterStat = $type === 'Citation' ? ($stats['citation']['quarter'] ?? 0)
-                                : ($type === 'Publication' ? ($stats['publication']['quarter'] ?? 0)
-                                : (($stats['publication']['quarter'] ?? 0) + ($stats['citation']['quarter'] ?? 0)));
+                            $periodStats = [
+                                'week' => $type === 'Citation' ? ($stats['citation']['week'] ?? 0)
+                                    : ($type === 'Publication' ? ($stats['publication']['week'] ?? 0)
+                                    : (($stats['publication']['week'] ?? 0) + ($stats['citation']['week'] ?? 0))),
+                                'month' => $type === 'Citation' ? ($stats['citation']['month'] ?? 0)
+                                    : ($type === 'Publication' ? ($stats['publication']['month'] ?? 0)
+                                    : (($stats['publication']['month'] ?? 0) + ($stats['citation']['month'] ?? 0))),
+                                'quarter' => $type === 'Citation' ? ($stats['citation']['quarter'] ?? 0)
+                                    : ($type === 'Publication' ? ($stats['publication']['quarter'] ?? 0)
+                                    : (($stats['publication']['quarter'] ?? 0) + ($stats['citation']['quarter'] ?? 0))),
+                            ];
+                        @endphp
+                        {{-- Period Filter Cards --}}
+                        @php
+                            $periods = ['week' => 'Weekly', 'month' => 'Monthly', 'quarter' => 'Quarterly'];
+                            $currentPeriod = request('period');
                         @endphp
                         <div class="flex flex-row gap-3 mb-2">
-                            <a href="{{ route('dashboard', array_merge(request()->except('period', 'page'), ['period' => 'week'])) }}" class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-yellow-100 transition cursor-pointer {{ request('period', 'week') === 'week' ? 'ring-2 ring-maroon-700' : 'hover:bg-yellow-200' }}">
-                                <div class="w-1.5 rounded-l-lg h-full bg-maroon-700"></div>
-                                <div class="pl-2 flex flex-col text-maroon-900">
-                                    <span class="text-lg font-bold mb-0.5">{{ $weekStat }}</span>
-                                    <span class="text-xs font-semibold mb-1">Weekly</span>
-                                </div>
-                            </a>
-                            <a href="{{ route('dashboard', array_merge(request()->except('period', 'page'), ['period' => 'month'])) }}" class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-yellow-100 transition cursor-pointer {{ request('period') === 'month' ? 'ring-2 ring-green-700' : 'hover:bg-yellow-200' }}">
-                                <div class="w-1.5 rounded-l-lg h-full bg-green-700"></div>
-                                <div class="pl-2 flex flex-col text-maroon-900">
-                                    <span class="text-lg font-bold mb-0.5">{{ $monthStat }}</span>
-                                    <span class="text-xs font-semibold mb-1">Monthly</span>
-                                </div>
-                            </a>
-                            <a href="{{ route('dashboard', array_merge(request()->except('period', 'page'), ['period' => 'quarter'])) }}" class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-yellow-100 transition cursor-pointer {{ request('period') === 'quarter' ? 'ring-2 ring-yellow-600' : 'hover:bg-yellow-200' }}">
-                                <div class="w-1.5 rounded-l-lg h-full bg-yellow-500"></div>
-                                <div class="pl-2 flex flex-col text-maroon-900">
-                                    <span class="text-lg font-bold mb-0.5">{{ $quarterStat }}</span>
-                                    <span class="text-xs font-semibold mb-1">Quarterly</span>
-                                </div>
-                            </a>
+                            @foreach($periods as $key => $label)
+                                <a href="{{ route('dashboard', array_merge(request()->except('page', 'period'), ['period' => $key])) }}"
+                                   class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-yellow-100 transition cursor-pointer {{ $currentPeriod === $key ? 'ring-2 ring-maroon-700' : 'hover:bg-yellow-200' }}">
+                                    <div class="w-1.5 rounded-l-lg h-full bg-maroon-700"></div>
+                                    <div class="pl-2 flex flex-col text-maroon-900">
+                                        <span class="text-lg font-bold mb-0.5">{{ $periodStats[$key] ?? 0 }}</span>
+                                        <span class="text-xs font-semibold mb-1">{{ $label }}</span>
+                                    </div>
+                                </a>
+                            @endforeach
                         </div>
+
+                        {{-- Status Filter Pills --}}
+                        {{-- Duplicate removed: Only keep the status filter above the table below --}}
                         <!-- Applications Table (Expanding) -->
-                        <div class="bg-yellow-100 rounded-xl shadow p-2 overflow-auto flex-1">
+                        <div class="bg-yellow-100 rounded-xl shadow p-2 overflow-auto flex-1 relative">
                             <div class="flex items-center justify-between mb-2">
                                 <h2 class="text-sm font-semibold pl-2 mb-0">List of Requests</h2>
                                 <div class="flex gap-2">
@@ -120,7 +119,7 @@
                                     <tbody class="bg-yellow-50 divide-y divide-maroon-100">
                                         @foreach($requests as $request)
                                         <tr>
-                                            <td class="px-2 py-1 text-maroon-900">{{ $request->requested_at ? \Carbon\Carbon::parse($request->requested_at)->format('M d, Y') : '' }}</td>
+                                            <td class="px-2 py-1 text-maroon-900">{{ $request->requested_at ? \Carbon\Carbon::parse($request->requested_at)->setTimezone('Asia/Manila')->format('M d, Y H:i') : '' }}</td>
                                             <td class="px-2 py-1 font-bold text-maroon-900">{{ $request->request_code }}</td>
                                             <td class="px-2 py-1 text-maroon-900">{{ $request->user ? $request->user->name : 'N/A' }}</td>
                                             <td class="px-2 py-1 text-center align-middle">
@@ -169,6 +168,35 @@
                         </table>
                                 <div class="mt-2">{{ $requests->links() }}</div>
                     </div>
+                            {{-- Floating Active Filters Bar (Inside Table Card) --}}
+                            @php
+                                $activeFilters = [];
+                                if (request('type')) $activeFilters['type'] = ucfirst(request('type'));
+                                if (request('period')) $activeFilters['period'] = ucfirst(request('period'));
+                                if (request('status')) $activeFilters['status'] = ucfirst(request('status'));
+                                if (request('search')) $activeFilters['search'] = 'Search: "' . request('search') . '"';
+                            @endphp
+                            @if(count($activeFilters))
+                                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-200 rounded-lg shadow-md border border-yellow-300 px-3 py-1">
+                                    <div class="flex items-center justify-center gap-2 whitespace-nowrap">
+                                        <span class="text-xs text-maroon-900 font-medium mr-1">Filters:</span>
+                                        @foreach($activeFilters as $key => $label)
+                                            <form method="GET" action="{{ route('dashboard') }}" class="inline">
+                                                @foreach(request()->except($key, 'page') as $k => $v)
+                                                    <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                                                @endforeach
+                                                <button type="submit" class="inline-flex items-center px-2 py-0.5 rounded-full bg-white text-maroon-900 text-xs font-semibold border border-yellow-400 hover:bg-yellow-50 transition">
+                                                    {{ $label }}
+                                                    <span class="ml-1 text-maroon-700 font-bold">&times;</span>
+                                                </button>
+                                            </form>
+                                        @endforeach
+                                        <form method="GET" action="{{ route('dashboard') }}" class="inline">
+                                            <button type="submit" class="ml-1 px-2 py-0.5 rounded-full bg-maroon-900 text-white text-xs font-semibold border border-maroon-700 hover:bg-maroon-800 transition">Clear All</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endif
                                     </div>
                                 </div>
                     <!-- Right Column: Recent Applications & Chart -->
@@ -178,7 +206,7 @@
                             <h2 class="text-sm font-semibold mb-2 pl-2">Activity Log</h2>
                             <ul class="space-y-1">
                                 @foreach($activityLogs as $log)
-                                    <li class="flex items-center gap-2 bg-yellow-50 rounded-lg p-1">
+                                    <li class="grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-yellow-50 rounded-lg p-1">
                                         @php
                                             $icon = match($log->action) {
                                                 'created' => 'plus-circle',
@@ -214,18 +242,36 @@
                                                 <svg class="w-5 h-5 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                                                                 @endif
                                                             </span>
-                                        <div class="flex-1 min-w-0">
-                                            <span class="text-xs text-maroon-900" style="font-weight:500;" >{!! $desc !!}</span>
-                                            <div class="text-xs text-gray-500">
-                                                @if($log->user)
-                                                    {{ $log->user->name }}
-                                                        @else
-                                                    System
-                                                        @endif
-                                                &middot;
-                                                <span title="{{ $log->created_at->toDayDateTimeString() }}">{{ $log->created_at->diffForHumans() }}</span>
-                                            </div>
-                                        </div>
+                                        <span class="min-w-0 text-xs text-maroon-900 font-medium truncate">
+                                            {!! $desc !!}
+                                                            </span>
+                                        <span class="text-xs text-right whitespace-nowrap min-w-[80px] pl-2 @if($log->user && $log->user->role === 'admin') text-maroon-900 font-bold @else text-gray-700 @endif">
+                                            @if($log->user)
+                                                @php
+                                                    $nameParts = preg_split('/\s+/', trim($log->user->name ?? ''));
+                                                    if (count($nameParts) === 1) {
+                                                        $shortName = $log->user->name;
+                                                    } else {
+                                                        $last = array_pop($nameParts);
+                                                        $initials = '';
+                                                        foreach ($nameParts as $p) {
+                                                            if ($p !== '') $initials .= mb_substr($p, 0, 1) . '.';
+                                                        }
+                                                        $shortName = $initials . $last;
+                                                    }
+                                    @endphp
+                                                {{ $shortName }}
+                                                @if($log->user->role === 'admin')
+                                                    <svg class="inline w-3 h-3 text-maroon-900 ml-1 align-baseline relative" style="top:1px;line-height:1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l7 4v5c0 5.25-3.5 9.25-7 11-3.5-1.75-7-5.75-7-11V7l7-4z" /><circle cx="12" cy="10" r="2" fill="currentColor"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17a3 3 0 00-6 0" /></svg>
+                                    @endif
+                                @else
+                                                System
+                                @endif
+                                        </span>
+                                        <span class="text-xs text-gray-400 text-center w-4 flex items-center justify-center">&middot;</span>
+                                        <span class="text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1">
+                                            <span title="{{ $log->created_at->setTimezone('Asia/Manila')->toDayDateTimeString() }}">{{ $log->created_at->setTimezone('Asia/Manila')->diffForHumans() }}</span>
+                                        </span>
                                     </li>
                                 @endforeach
                             </ul>
@@ -261,19 +307,457 @@
                                     </div>
                                     </div>
                                 </div>
+                                                        </div>
+                                            </div>
+                                        </div>
+                <!-- Review Modal (Compact, No-Scroll, Two-Column) -->
+                <div id="reviewModal" class="fixed inset-0 z-50 hidden">
+                    <div class="fixed inset-0 bg-black bg-opacity-50"></div>
+                    <div class="fixed inset-0 flex items-center justify-center p-2">
+                        <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl min-w-[700px] min-h-[400px]" style="max-width:900px;">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                                <h2 class="text-lg font-bold text-maroon-900">Request Review</h2>
+                                <button onclick="closeReviewModal()" class="text-gray-400 hover:text-maroon-900 text-2xl font-bold">&times;</button>
+                            </div>
+                            <!-- Loading State -->
+                            <div id="modalLoading" class="p-8 text-center">
+                                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-maroon-900 mx-auto"></div>
+                                <p class="mt-2 text-gray-600 text-sm">Loading request details...</p>
+                            </div>
+                            <!-- Content -->
+                            <div id="modalContent" class="hidden">
+                                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <!-- Left Column -->
+                                    <div class="flex flex-col gap-2">
+                                        <!-- Combined Request Summary & Applicant Card -->
+                                        <div class="bg-yellow-50 rounded-lg p-2 border border-yellow-200 text-xs">
+                                            <div class="font-semibold text-maroon-900 mb-1">Request & Applicant</div>
+                                            <div class="grid grid-cols-2 gap-x-2 gap-y-1">
+                                                <div><span class="text-gray-600">Code:</span> <span id="modalRequestCode" class="font-bold text-maroon-900">-</span></div>
+                                                <div><span class="text-gray-600">Type:</span> <span id="modalType" class="font-bold text-maroon-900">-</span></div>
+                                                <div><span class="text-gray-600">Status:</span> <span id="modalStatus" class="px-2 py-0.5 rounded-full text-xs font-semibold">-</span></div>
+                                                <div><span class="text-gray-600">Submitted:</span> <span id="modalDate" class="text-maroon-900">-</span></div>
+                                                <div><span class="text-gray-600">Applicant:</span> <span id="modalUserName" class="text-maroon-900">-</span></div>
+                                                <div><span class="text-gray-600">Email:</span> <span id="modalUserEmail" class="text-maroon-900">-</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Right Column -->
+                                    <div class="flex flex-col gap-2">
+                                        <!-- Files Section -->
+                                        <div class="bg-white rounded-lg p-2 border border-gray-200 text-xs">
+                                            <div class="font-semibold text-maroon-900 mb-1">Files</div>
+                                            <div id="modalFiles" class="space-y-1"></div>
+                                    </div>
+                                </div>
+                                    <!-- Full Width: Signatories -->
+                                    <div class="md:col-span-2 bg-white rounded-lg p-2 border border-gray-200 text-xs">
+                                        <div class="font-semibold text-maroon-900 mb-1">Signatories Required</div>
+                                        <div id="modalFormData" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Footer -->
+                            <div class="flex justify-end gap-2 p-4 border-t border-gray-200 bg-gray-50">
+                                <button onclick="closeReviewModal()" class="px-3 py-1 text-gray-600 hover:text-gray-800 font-medium text-xs">Close</button>
+                                <button onclick="closeReviewModal()" class="px-3 py-1 bg-maroon-900 text-white rounded-lg hover:bg-maroon-800 font-medium text-xs">Review Complete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Review Modal (Alpine.js for UI only, not data loading) -->
-                {{-- Keep Alpine.js for review modal interactivity if needed --}}
             </div>
         </div>
     </div>
 
 <script>
-        // Remove Alpine.js data state and AJAX/data-loading logic for dashboard content
-        // Only keep Alpine.js for review modal interactivity if needed
-        // (No adminDashboard() Alpine.js component for data)
+// Real-time dashboard updates using Server-Sent Events
+let eventSource;
+
+function initializeRealTimeUpdates() {
+    // Close existing connection if any
+    if (eventSource) {
+        eventSource.close();
+    }
+    
+    // Create new SSE connection
+    eventSource = new EventSource('{{ route("admin.dashboard.stream") }}');
+    
+    eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            updateDashboard(data);
+        } catch (error) {
+            console.error('Error parsing SSE data:', error);
+        }
+    };
+    
+    eventSource.onerror = function(error) {
+        console.error('SSE connection error:', error);
+        // Reconnect after 5 seconds
+        setTimeout(initializeRealTimeUpdates, 5000);
+    };
+    
+    eventSource.onopen = function() {
+        console.log('Real-time updates connected');
+    };
+}
+
+function updateDashboard(data) {
+    // Only update if there are actual changes
+    if (!data.hasChanges) return;
+    
+    // Update stats
+    if (data.stats) {
+        updatePeriodStats(data.stats);
+    }
+    
+    // Update activity logs
+    if (data.activityLogs) {
+        updateActivityLogs(data.activityLogs);
+    }
+    
+    // Show notification for new updates
+    showUpdateNotification();
+}
+
+function updatePeriodStats(stats) {
+    const type = '{{ request("type") }}';
+    const periodStats = {
+        'week': type === 'Citation' ? (stats.citation.week || 0)
+            : (type === 'Publication' ? (stats.publication.week || 0)
+            : ((stats.publication.week || 0) + (stats.citation.week || 0))),
+        'month': type === 'Citation' ? (stats.citation.month || 0)
+            : (type === 'Publication' ? (stats.publication.month || 0)
+            : ((stats.publication.month || 0) + (stats.citation.month || 0))),
+        'quarter': type === 'Citation' ? (stats.citation.quarter || 0)
+            : (type === 'Publication' ? (stats.publication.quarter || 0)
+            : ((stats.publication.quarter || 0) + (stats.citation.quarter || 0))),
+    };
+    
+    // Update period stat cards
+    Object.keys(periodStats).forEach(period => {
+        const statElement = document.querySelector(`[data-period="${period}"]`);
+        if (statElement) {
+            statElement.textContent = periodStats[period];
+        }
+    });
+}
+
+function updateActivityLogs(activityLogs) {
+    const activityLogContainer = document.querySelector('.activity-log-list');
+    if (!activityLogContainer) return;
+    
+    // Clear existing logs
+    activityLogContainer.innerHTML = '';
+    
+    // Add new logs
+    activityLogs.forEach(log => {
+        const logItem = createActivityLogItem(log);
+        activityLogContainer.appendChild(logItem);
+    });
+}
+
+function createActivityLogItem(log) {
+    const li = document.createElement('li');
+    li.className = 'grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-yellow-50 rounded-lg p-1';
+    
+    // Create icon
+    const icon = document.createElement('span');
+    icon.className = `flex items-center justify-center w-7 h-7 rounded-full bg-white border ${getIconColor(log.action)}`;
+    icon.innerHTML = getIconSvg(log.action);
+    
+    // Create description
+    const desc = document.createElement('span');
+    desc.className = 'min-w-0 text-xs text-maroon-900 font-medium truncate';
+    desc.innerHTML = getLogDescription(log);
+    
+    // Create username
+    const username = document.createElement('span');
+    username.className = `text-xs text-right whitespace-nowrap min-w-[80px] pl-2 ${log.user && log.user.role === 'admin' ? 'text-maroon-900 font-bold' : 'text-gray-700'}`;
+    username.textContent = log.user ? getShortName(log.user.name) : 'System';
+    
+    // Create separator
+    const separator = document.createElement('span');
+    separator.className = 'text-xs text-gray-400 text-center w-4 flex items-center justify-center';
+    separator.textContent = '·';
+    
+    // Create timestamp
+    const timestamp = document.createElement('span');
+    timestamp.className = 'text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1';
+    timestamp.innerHTML = `<span title="${new Date(log.created_at).toLocaleString()}">${getTimeAgo(log.created_at)}</span>`;
+    
+    li.appendChild(icon);
+    li.appendChild(desc);
+    li.appendChild(username);
+    li.appendChild(separator);
+    li.appendChild(timestamp);
+    
+    return li;
+}
+
+function getIconColor(action) {
+    switch(action) {
+        case 'created': return 'text-green-500';
+        case 'status_changed': return 'text-blue-500';
+        case 'deleted': return 'text-red-500';
+        default: return 'text-maroon-400';
+    }
+}
+
+function getIconSvg(action) {
+    switch(action) {
+        case 'created':
+            return '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+        case 'status_changed':
+            return '<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>';
+        case 'deleted':
+            return '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+        default:
+            return '<svg class="w-5 h-5 text-maroon-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+    }
+}
+
+function getLogDescription(log) {
+    switch(log.action) {
+        case 'created':
+            return `Request <b>${log.details?.request_code || ''}</b> submitted (${log.details?.type || ''})`;
+        case 'status_changed':
+            return `Status changed <b>${log.details?.old_status || ''}</b> → <b>${log.details?.new_status || ''}</b> for <b>${log.details?.request_code || ''}</b>`;
+        case 'deleted':
+            return `Request <b>${log.details?.request_code || ''}</b> deleted`;
+        default:
+            return log.action.charAt(0).toUpperCase() + log.action.slice(1);
+    }
+}
+
+function getShortName(name) {
+    const nameParts = name.trim().split(/\s+/);
+    if (nameParts.length === 1) {
+        return name;
+    }
+    const last = nameParts.pop();
+    const initials = nameParts.map(p => p.charAt(0) + '.').join('');
+    return initials + last;
+}
+
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    // Convert to Asia/Manila timezone
+    const manilaDate = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+    const manilaNow = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Manila"}));
+    
+    const diffInSeconds = Math.floor((manilaNow - manilaDate) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+}
+
+function showUpdateNotification() {
+    // Find the specific bell icon in the navbar using its ID
+    const bellButton = document.getElementById('notification-bell');
+    if (!bellButton) return;
+    
+    const bellRect = bellButton.getBoundingClientRect();
+    
+    // Create notification that animates from the bell
+    const notification = document.createElement('div');
+    notification.className = 'fixed z-50 bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium transform transition-all duration-500';
+    notification.textContent = 'Dashboard updated';
+    
+    // Start position: inside the bell (left side)
+    notification.style.left = (bellRect.left + bellRect.width/2) + 'px';
+    notification.style.top = (bellRect.top + bellRect.height/2) + 'px';
+    notification.style.transform = 'scale(0) translateX(0)';
+    notification.style.transformOrigin = 'center';
+    
+    document.body.appendChild(notification);
+    
+    // Animate out to the left (coming out of the bell)
+    setTimeout(() => {
+        notification.style.transform = 'scale(1) translateX(-60px)';
+        notification.style.left = (bellRect.left - 60) + 'px';
+        notification.style.top = (bellRect.top + bellRect.height/2 - 10) + 'px';
+    }, 100);
+    
+    // After 3 seconds, animate back to the right (going back into the bell)
+    setTimeout(() => {
+        notification.style.transform = 'scale(0) translateX(60px)';
+        notification.style.left = (bellRect.left + bellRect.width/2) + 'px';
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Initialize real-time updates when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeRealTimeUpdates();
+    
+    // Add data attributes to period stat cards for easy updating
+    document.querySelectorAll('[href*="period="]').forEach(link => {
+        const period = link.href.match(/period=([^&]+)/)?.[1];
+        if (period) {
+            const statElement = link.querySelector('.text-lg');
+            if (statElement) {
+                statElement.setAttribute('data-period', period);
+            }
+        }
+    });
+    
+    // Add class to activity log container
+    const activityLogContainer = document.querySelector('.bg-yellow-100.rounded-xl.shadow.p-2.overflow-auto.flex-1 ul');
+    if (activityLogContainer) {
+        activityLogContainer.classList.add('activity-log-list');
+    }
+});
+
+// Clean up connection when page unloads
+window.addEventListener('beforeunload', function() {
+    if (eventSource) {
+        eventSource.close();
+    }
+});
+
+// Simple and robust review modal functions
+function openReviewModal(requestId) {
+    if (!requestId) {
+        console.error('No request ID provided');
+        return;
+    }
+    
+    console.log('Opening modal for request ID:', requestId);
+    
+    // Show modal and loading state
+    document.getElementById('reviewModal').classList.remove('hidden');
+    document.getElementById('modalLoading').classList.remove('hidden');
+    document.getElementById('modalContent').classList.add('hidden');
+    
+    // Fetch request data
+    fetch(`/admin/requests/${requestId}/data`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load request data');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Request data loaded:', data);
+            populateModal(data);
+        })
+        .catch(error => {
+            console.error('Error loading request data:', error);
+            showError('Failed to load request data. Please try again.');
+        })
+        .finally(() => {
+            // Hide loading, show content
+            document.getElementById('modalLoading').classList.add('hidden');
+            document.getElementById('modalContent').classList.remove('hidden');
+        });
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModal').classList.add('hidden');
+    // Reset modal content
+    document.getElementById('modalRequestCode').textContent = '-';
+    document.getElementById('modalType').textContent = '-';
+    document.getElementById('modalStatus').textContent = '-';
+    document.getElementById('modalDate').textContent = '-';
+    document.getElementById('modalUserName').textContent = '-';
+    document.getElementById('modalUserEmail').textContent = '-';
+    document.getElementById('modalFormData').innerHTML = '';
+    document.getElementById('modalFiles').innerHTML = '';
+}
+
+function populateModal(data) {
+    // Populate basic info
+    document.getElementById('modalRequestCode').textContent = data.request_code || 'N/A';
+    document.getElementById('modalType').textContent = data.type || 'N/A';
+    document.getElementById('modalDate').textContent = formatDate(data.requested_at);
+    document.getElementById('modalUserName').textContent = data.user?.name || 'N/A';
+    document.getElementById('modalUserEmail').textContent = data.user?.email || 'N/A';
+    // Status
+    const statusElement = document.getElementById('modalStatus');
+    statusElement.textContent = data.status || 'N/A';
+    statusElement.className = 'px-2 py-0.5 rounded-full text-xs font-semibold';
+    if (data.status === 'pending') {
+        statusElement.classList.add('bg-yellow-400', 'text-maroon-900');
+    } else if (data.status === 'endorsed') {
+        statusElement.classList.add('bg-green-500', 'text-white');
+    } else if (data.status === 'rejected') {
+        statusElement.classList.add('bg-red-500', 'text-white');
+    }
+    // Form Data (compact grid) - Use server-side extracted signatories
+    const formDataContainer = document.getElementById('modalFormData');
+    formDataContainer.innerHTML = '';
+    
+    if (data.signatories && data.signatories.length > 0) {
+        data.signatories.forEach(signatory => {
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'flex flex-col';
+            fieldDiv.innerHTML = `<span class="font-medium text-gray-600 text-xs">${signatory.role}: ${signatory.field}</span><span class="text-maroon-900 text-xs font-semibold">${signatory.name}</span>`;
+            formDataContainer.appendChild(fieldDiv);
+        });
+    } else {
+        formDataContainer.innerHTML = '<div class="text-gray-500 text-xs">No signatories found in form data</div>';
+    }
+    // Files (compact)
+    const filesContainer = document.getElementById('modalFiles');
+    filesContainer.innerHTML = '';
+    if (data.files && data.files.length > 0) {
+        data.files.forEach(file => {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'flex items-center justify-between bg-gray-50 rounded p-1 mb-1';
+            fileDiv.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-700">${file.name}</span>
+                    <span class="text-xs text-gray-400">(${file.size})</span>
+                </div>
+                <div class="flex gap-1">
+                    <a href="/storage/${file.path}" target="_blank" class="px-2 py-0.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">View</a>
+                    <a href="/storage/${file.path}" download="${file.name}" class="px-2 py-0.5 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors">Download</a>
+                </div>
+            `;
+            filesContainer.appendChild(fileDiv);
+        });
+    } else {
+        filesContainer.innerHTML = '<div class="text-gray-500 text-xs">No files uploaded for this request</div>';
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatFieldName(key) {
+    if (typeof key !== 'string') return 'Unknown Field';
+    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function showError(message) {
+    const contentDiv = document.getElementById('modalContent');
+    contentDiv.innerHTML = `
+        <div class="p-8 text-center">
+            <div class="text-red-500 text-lg font-semibold mb-2">Error</div>
+            <p class="text-gray-600">${message}</p>
+        </div>
+    `;
+    contentDiv.classList.remove('hidden');
+}
 </script>
 
 <!-- Chart.js CDN -->

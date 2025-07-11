@@ -416,6 +416,17 @@
         const formData = new FormData(form);
         formData.append('docx_type', type);
 
+        // Check if this is a preview (before submission) or post-submission
+        // If the form has a request_id hidden field with a value, it's post-submission
+        const requestIdField = document.querySelector('input[name="request_id"]');
+        const isPreview = !requestIdField || !requestIdField.value;
+        
+        if (!isPreview) {
+            // Post-submission: include request_id
+            formData.append('request_id', requestIdField.value);
+        }
+        // Preview mode: don't include request_id (will use temp directory)
+
         // Show spinner
         const spinner = document.getElementById('docx-spinner');
         if (spinner) spinner.classList.remove('hidden');

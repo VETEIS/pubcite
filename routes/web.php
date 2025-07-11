@@ -48,6 +48,7 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/admin/dashboard/data', [\App\Http\Controllers\DashboardController::class, 'getData'])->name('admin.dashboard.data');
+    Route::get('/admin/dashboard/stream', [\App\Http\Controllers\DashboardController::class, 'streamUpdates'])->name('admin.dashboard.stream');
     Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request');
     Route::post('/publications/submit', [\App\Http\Controllers\PublicationsController::class, 'submitPublicationRequest'])->name('publications.submit');
     Route::get('/citations/request', [\App\Http\Controllers\CitationsController::class, 'create'])->name('citations.request');
@@ -75,4 +76,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
     Route::get('/requests/manage', [\App\Http\Controllers\AdminRequestController::class, 'index'])->name('admin.requests.manage');
+    Route::get('/requests/{request}/data', [\App\Http\Controllers\AdminRequestController::class, 'getRequestData'])->name('admin.requests.data');
+    Route::get('/requests/{request}/download-zip', [\App\Http\Controllers\AdminRequestController::class, 'downloadZip'])->name('admin.requests.download-zip');
 });

@@ -828,8 +828,16 @@ function tabNav() {
             // Add document type
             formData.append('docx_type', type);
             
-            // Add request_id from hidden inputs
-            formData.append('request_id', document.getElementById('request_id').value);
+            // Check if this is a preview (before submission) or post-submission
+            // If the form has a request_id hidden field with a value, it's post-submission
+            const requestIdField = document.getElementById('request_id');
+            const isPreview = !requestIdField || !requestIdField.value;
+            
+            if (!isPreview) {
+                // Post-submission: include request_id
+                formData.append('request_id', requestIdField.value);
+            }
+            // Preview mode: don't include request_id (will use temp directory)
             
             // Get user name for filename (same as citations)
             const applicantName = document.querySelector('[name="name"]')?.value || 'User';

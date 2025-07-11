@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\ActivityLog;
 
 class DashboardController extends Controller
 {
@@ -155,7 +158,7 @@ class DashboardController extends Controller
             // Fetch 5 most recent applications for sidebar
             $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
             // Fetch latest 10 activity logs for Activity Log card
-            $activityLogs = \App\Models\ActivityLog::with(['user', 'request'])->orderByDesc('created_at')->limit(10)->get();
+            $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
             return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
         }
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
@@ -280,5 +283,98 @@ class DashboardController extends Controller
             'stats' => $stats,
             'filterCounts' => $filterCounts,
         ]);
+    }
+
+    public function streamUpdates()
+    {
+        $user = Auth::user();
+        if ($user->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Set headers for Server-Sent Events
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no'); // Disable nginx buffering
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: Cache-Control');
+
+        // Keep connection alive and send updates
+        $lastCheck = now();
+        $maxExecutionTime = 300; // 5 minutes max
+        $startTime = time();
+        $lastUpdateTime = null;
+        
+        while (true) {
+            // Check if we've exceeded max execution time
+            if (time() - $startTime > $maxExecutionTime) {
+                echo "data: " . json_encode(['type' => 'timeout']) . "\n\n";
+                break;
+            }
+            
+            // Check for new requests or status changes
+            try {
+                $newRequests = \App\Models\Request::where('created_at', '>', $lastCheck)->count();
+                $statusChanges = \App\Models\ActivityLog::where('created_at', '>', $lastCheck)
+                    ->whereIn('action', ['created', 'status_changed', 'deleted'])
+                    ->count();
+                
+                // Only send update if there are actual changes AND we haven't sent an update in the last 5 seconds
+                if (($newRequests > 0 || $statusChanges > 0) && 
+                    (!$lastUpdateTime || now()->diffInSeconds($lastUpdateTime) > 5)) {
+                    
+                    // Get updated data
+                    $now = now();
+                    $stats = [
+                        'publication' => [
+                            'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                            'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                            'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                        ],
+                        'citation' => [
+                            'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                            'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                            'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                        ],
+                    ];
+                    
+                    $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+                    $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
+                    
+                    $updateData = [
+                        'stats' => $stats,
+                        'recentApplications' => $recentApplications,
+                        'activityLogs' => $activityLogs,
+                        'timestamp' => now()->toISOString(),
+                        'hasChanges' => true,
+                    ];
+                    
+                    echo "data: " . json_encode($updateData) . "\n\n";
+                    ob_flush();
+                    flush();
+                    
+                    $lastUpdateTime = now();
+                }
+                
+                $lastCheck = now();
+                
+            } catch (\Exception $e) {
+                // Log error and send error message
+                \Illuminate\Support\Facades\Log::error('SSE Stream Error: ' . $e->getMessage());
+                echo "data: " . json_encode(['error' => 'Database error']) . "\n\n";
+                break;
+            }
+            
+            // Sleep for 2 seconds before next check
+            sleep(2);
+            
+            // Check if connection is still alive
+            if (connection_aborted()) {
+                break;
+            }
+        }
+        
+        exit();
     }
 } 

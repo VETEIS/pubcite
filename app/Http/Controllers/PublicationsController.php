@@ -65,20 +65,33 @@ class PublicationsController extends Controller
     {
         try {
             $reqId = $request->input('request_id');
-            if (!$reqId) {
-                throw new \Exception('Missing request_id for DOCX path');
-            }
-            $userRequest = \App\Models\Request::find($reqId);
-            if (!$userRequest) {
-                throw new \Exception('Request not found for DOCX generation');
-            }
-            $reqCode = $userRequest->request_code;
-            $userId = $userRequest->user_id;
             $docxType = $request->input('docx_type', 'incentive');
             $data = $request->all();
-            $uploadPath = "requests/{$userId}/{$reqCode}";
+            
+            // Determine if this is a preview (no request_id) or post-submission (with request_id)
+            $isPreview = !$reqId;
+            
+            if ($isPreview) {
+                // Preview mode: use temp directory
+                $userId = Auth::id();
+                $tempCode = 'preview_' . time() . '_' . Str::random(8);
+                $uploadPath = "temp/{$userId}/{$tempCode}";
+                Log::info('Generating DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
+            } else {
+                // Post-submission mode: use request directory
+                $userRequest = \App\Models\Request::find($reqId);
+                if (!$userRequest) {
+                    throw new \Exception('Request not found for DOCX generation');
+                }
+                $reqCode = $userRequest->request_code;
+                $userId = $userRequest->user_id;
+                $uploadPath = "requests/{$userId}/{$reqCode}";
+                Log::info('Generating DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
+            }
+            
             $outputPath = null;
             $filename = null;
+            
             switch ($docxType) {
                 case 'incentive':
                     $outputPath = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
@@ -95,19 +108,28 @@ class PublicationsController extends Controller
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
+            
             $fullPath = storage_path('app/' . $outputPath);
             if (!file_exists($fullPath)) {
                 throw new \Exception('Generated file not found');
             }
-            $pdfPath = $userRequest->pdf_path ? json_decode($userRequest->pdf_path, true) : [];
-            if (!isset($pdfPath['docxs'])) $pdfPath['docxs'] = [];
-            $pdfPath['docxs'][$docxType] = preg_replace('/^public\//', '', $outputPath);
-            $userRequest->pdf_path = json_encode($pdfPath);
-            $userRequest->save();
-            Log::info('Updated pdf_path for request', ['request_id' => $reqId, 'docxType' => $docxType, 'outputPath' => $outputPath]);
+            
+            // Only update database if this is not a preview (i.e., we have a valid request_id)
+            if (!$isPreview && $userRequest) {
+                $pdfPath = $userRequest->pdf_path ? json_decode($userRequest->pdf_path, true) : [];
+                if (!isset($pdfPath['docxs'])) $pdfPath['docxs'] = [];
+                $pdfPath['docxs'][$docxType] = preg_replace('/^public\//', '', $outputPath);
+                $userRequest->pdf_path = json_encode($pdfPath);
+                $userRequest->save();
+                Log::info('Updated pdf_path for request', ['request_id' => $reqId, 'docxType' => $docxType, 'outputPath' => $outputPath]);
+            } else {
+                Log::info('Skipping database update for preview mode', ['docxType' => $docxType, 'outputPath' => $outputPath]);
+            }
+            
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';
+            
             return response()->download($fullPath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
@@ -445,20 +467,30 @@ class PublicationsController extends Controller
                 rmdir($fullDir);
             }
         }
-        $request->delete();
-        // Activity log for deletion
+        // Store request details for permanent activity log record
+        $requestDetails = [
+            'request_code' => $request->request_code,
+            'type' => $request->type,
+            'status' => $request->status,
+            'user_name' => $request->user->name ?? 'Unknown User',
+            'user_email' => $request->user->email ?? 'Unknown Email',
+            'form_data' => is_string($request->form_data) ? json_decode($request->form_data, true) : $request->form_data,
+            'pdf_path' => is_string($request->pdf_path) ? json_decode($request->pdf_path, true) : $request->pdf_path,
+            'deleted_at' => now()->toDateTimeString(),
+            'deleted_by_admin' => $user->name,
+            'deleted_by_admin_id' => $user->id,
+        ];
+        
+        // Activity log for deletion (must be before delete)
         \App\Models\ActivityLog::create([
             'user_id' => $user->id,
             'request_id' => $request->id,
             'action' => 'deleted',
-            'details' => [
-                'request_code' => $request->request_code,
-                'type' => $request->type,
-                'status' => $request->status,
-                'deleted_at' => now()->toDateTimeString(),
-            ],
+            'details' => $requestDetails,
             'created_at' => now(),
         ]);
+        
+        $request->delete();
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Request and files deleted successfully.']);
         }

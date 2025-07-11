@@ -50,18 +50,29 @@ class CitationsController extends Controller
             $data = $request->all();
             $docxType = $request->input('docx_type', 'incentive');
             $reqId = $request->input('request_id');
-            if (!$reqId) {
-                throw new \Exception('Missing request_id for DOCX path');
-            }
-            $userRequest = \App\Models\Request::find($reqId);
-            if (!$userRequest) {
-                throw new \Exception('Request not found for DOCX generation');
-            }
-            $requestCode = $userRequest->request_code;
-            $userId = $userRequest->user_id;
-            $uploadPath = "requests/{$userId}/{$requestCode}";
             
-            Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data]);
+            // Determine if this is a preview (no request_id) or post-submission (with request_id)
+            $isPreview = !$reqId;
+            
+            if ($isPreview) {
+                // Preview mode: use temp directory
+                $userId = Auth::id();
+                $tempCode = 'preview_' . time() . '_' . Str::random(8);
+                $uploadPath = "temp/{$userId}/{$tempCode}";
+                Log::info('Generating Citation DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
+            } else {
+                // Post-submission mode: use request directory
+                $userRequest = \App\Models\Request::find($reqId);
+                if (!$userRequest) {
+                    throw new \Exception('Request not found for DOCX generation');
+                }
+                $requestCode = $userRequest->request_code;
+                $userId = $userRequest->user_id;
+                $uploadPath = "requests/{$userId}/{$requestCode}";
+                Log::info('Generating Citation DOCX for saved request', ['request_id' => $reqId, 'request_code' => $requestCode]);
+            }
+            
+            Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
             
             // Generate a unique hash for the request data and docx type
             $hashSource = json_encode([
@@ -105,7 +116,7 @@ class CitationsController extends Controller
                 throw new \Exception('Generated file not found');
             }
             
-            Log::info('Citation DOCX generated or cached successfully', ['type' => $docxType, 'path' => $fullPath]);
+            Log::info('Citation DOCX generated or cached successfully', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
             
             // Return the file for download
             return response()->download($fullPath, $filename, [
@@ -225,7 +236,13 @@ class CitationsController extends Controller
     public function destroy($id)
     {
         try {
+            $user = Auth::user();
+            if (!$user || $user->role !== 'admin') {
+                return back()->with('error', 'Unauthorized.');
+            }
+            
             $request = UserRequest::findOrFail($id);
+            
             // Delete associated files (PDFs and DOCXs)
             $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
             $allFiles = [];
@@ -246,6 +263,7 @@ class CitationsController extends Controller
             foreach ($allFiles as $filePath) {
                 \Storage::disk('public')->delete($filePath);
             }
+            
             // Remove the per-request directory and all its contents
             if (isset($request->user_id) && isset($request->request_code)) {
                 $dir = "requests/{$request->user_id}/{$request->request_code}";
@@ -260,6 +278,30 @@ class CitationsController extends Controller
                     rmdir($fullDir);
                 }
             }
+            
+            // Store request details for permanent activity log record
+            $requestDetails = [
+                'request_code' => $request->request_code,
+                'type' => $request->type,
+                'status' => $request->status,
+                'user_name' => $request->user->name ?? 'Unknown User',
+                'user_email' => $request->user->email ?? 'Unknown Email',
+                'form_data' => is_string($request->form_data) ? json_decode($request->form_data, true) : $request->form_data,
+                'pdf_path' => is_string($request->pdf_path) ? json_decode($request->pdf_path, true) : $request->pdf_path,
+                'deleted_at' => now()->toDateTimeString(),
+                'deleted_by_admin' => $user->name,
+                'deleted_by_admin_id' => $user->id,
+            ];
+            
+            // Activity log for deletion (must be before delete)
+            \App\Models\ActivityLog::create([
+                'user_id' => $user->id,
+                'request_id' => $request->id,
+                'action' => 'deleted',
+                'details' => $requestDetails,
+                'created_at' => now(),
+            ]);
+            
             $request->delete();
             return back()->with('success', 'Request and files deleted successfully.');
         } catch (\Exception $e) {
