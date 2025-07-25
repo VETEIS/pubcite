@@ -9,56 +9,22 @@
         <h4 class="text-lg font-semibold text-burgundy-800 mb-4 border-b-2 border-burgundy-200 pb-2">I. Personal Profile</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label for="applicant_name" class="block text-sm font-medium text-gray-700 mb-1">Name of the Applicant</label>
-                <input type="text" name="applicant_name" id="applicant_name" required 
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name of the Applicant</label>
+                <input type="text" name="name" id="name" required 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                        placeholder="Enter your full name">
             </div>
-            
             <div>
-                <label for="academic_rank" class="block text-sm font-medium text-gray-700 mb-1">Academic Rank</label>
-                <input type="text" name="academic_rank" id="academic_rank" 
+                <label for="rank" class="block text-sm font-medium text-gray-700 mb-1">Academic Rank</label>
+                <input type="text" name="rank" id="rank" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                        placeholder="e.g., Assistant Professor">
             </div>
-            
-            <div>
-                <label for="employment_status" class="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
-                <select name="employment_status" id="employment_status" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent">
-                    <option value="">Select employment status</option>
-                    <option value="Permanent">Permanent</option>
-                    <option value="Temporary">Temporary</option>
-                    <option value="Contractual">Contractual</option>
-                </select>
-            </div>
-            
             <div>
                 <label for="college" class="block text-sm font-medium text-gray-700 mb-1">College</label>
                 <input type="text" name="college" id="college" required 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                        placeholder="Enter your college">
-            </div>
-            
-            <div>
-                <label for="campus" class="block text-sm font-medium text-gray-700 mb-1">Campus</label>
-                <input type="text" name="campus" id="campus" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                       placeholder="Enter your campus">
-            </div>
-            
-            <div>
-                <label for="field_specialization" class="block text-sm font-medium text-gray-700 mb-1">Field of Specialization</label>
-                <input type="text" name="field_specialization" id="field_specialization" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                       placeholder="Enter your field of specialization">
-            </div>
-            
-            <div>
-                <label for="years_university" class="block text-sm font-medium text-gray-700 mb-1">No. of Years in the University</label>
-                <input type="number" name="years_university" id="years_university" min="0" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                       placeholder="Enter number of years">
             </div>
         </div>
     </div>
@@ -72,88 +38,61 @@
             <h5 class="text-md font-semibold text-burgundy-700 mb-3">Citing Paper</h5>
             <div class="space-y-4">
                 <div>
-                    <label for="citing_title" class="block text-sm font-medium text-gray-700 mb-1">Title of the citing paper</label>
-                    <textarea name="citing_title" id="citing_title" rows="2" required 
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title of the citing paper</label>
+                    <textarea name="title" id="title" rows="2" required 
                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                               placeholder="Enter the title of the citing paper"></textarea>
                 </div>
-                
                 <div>
-                    <label for="citing_authors" class="block text-sm font-medium text-gray-700 mb-1">Authors</label>
-                    <input type="text" name="citing_authors" id="citing_authors" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="Enter authors of the citing paper">
+                    <label for="bibentry" class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry (APA Format)</label>
+                    <textarea name="bibentry" id="bibentry" rows="2" required 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                              placeholder="Enter the bibliographic entry"></textarea>
                 </div>
-                
                 <div>
-                    <label for="citing_journal" class="block text-sm font-medium text-gray-700 mb-1">Title of the Journal</label>
-                    <input type="text" name="citing_journal" id="citing_journal" required 
+                    <label for="journal" class="block text-sm font-medium text-gray-700 mb-1">Title of the Journal</label>
+                    <input type="text" name="journal" id="journal" required 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                            placeholder="Enter the journal title">
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="citing_volume" class="block text-sm font-medium text-gray-700 mb-1">Vol./Issue No./Year</label>
-                        <input type="text" name="citing_volume" id="citing_volume" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                               placeholder="e.g., Vol. 1, Issue 1, 2024">
-                    </div>
-                    
-                    <div>
-                        <label for="citing_pissn" class="block text-sm font-medium text-gray-700 mb-1">P-ISSN</label>
-                        <input type="text" name="citing_pissn" id="citing_pissn" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                               placeholder="Enter P-ISSN">
-                    </div>
-                    
-                    <div>
-                        <label for="citing_eissn" class="block text-sm font-medium text-gray-700 mb-1">E-ISSN</label>
-                        <input type="text" name="citing_eissn" id="citing_eissn" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                               placeholder="Enter E-ISSN">
-                    </div>
-                </div>
-                
                 <div>
-                    <label for="citing_doi" class="block text-sm font-medium text-gray-700 mb-1">DOI (for e-journal)</label>
-                    <input type="text" name="citing_doi" id="citing_doi" 
+                    <label for="issn" class="block text-sm font-medium text-gray-700 mb-1">P-ISSN/E-ISSN</label>
+                    <input type="text" name="issn" id="issn" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                           placeholder="Enter ISSN">
+                </div>
+                <div>
+                    <label for="doi" class="block text-sm font-medium text-gray-700 mb-1">DOI (for e-journal)</label>
+                    <input type="text" name="doi" id="doi" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                            placeholder="Enter DOI">
                 </div>
-                
                 <div>
-                    <label for="citing_publisher" class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
-                    <input type="text" name="citing_publisher" id="citing_publisher" 
+                    <label for="publisher" class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
+                    <input type="text" name="publisher" id="publisher" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                            placeholder="Enter publisher name">
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Indexed in</label>
                     <div class="flex flex-wrap gap-4">
                         <label class="flex items-center">
-                            <input type="checkbox" name="indexed_scopus" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
+                            <input type="checkbox" name="scopus" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
                             <span class="text-sm text-gray-700">Scopus</span>
                         </label>
                         <label class="flex items-center">
-                            <input type="checkbox" name="indexed_wos" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
+                            <input type="checkbox" name="wos" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
                             <span class="text-sm text-gray-700">Web of Science</span>
                         </label>
                         <label class="flex items-center">
-                            <input type="checkbox" name="indexed_aci" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
+                            <input type="checkbox" name="aci" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
                             <span class="text-sm text-gray-700">ACI</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" name="indexed_pubmed" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
-                            <span class="text-sm text-gray-700">PubMed</span>
                         </label>
                     </div>
                 </div>
-                
                 <div>
-                    <label for="citing_citescore" class="block text-sm font-medium text-gray-700 mb-1">Scopus CiteScore (if applicable)</label>
-                    <input type="text" name="citing_citescore" id="citing_citescore" 
+                    <label for="citescore" class="block text-sm font-medium text-gray-700 mb-1">Scopus CiteScore (if applicable)</label>
+                    <input type="text" name="citescore" id="citescore" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                            placeholder="Enter CiteScore">
                 </div>
@@ -165,31 +104,22 @@
             <h5 class="text-md font-semibold text-burgundy-700 mb-3">Cited Paper</h5>
             <div class="space-y-4">
                 <div>
-                    <label for="cited_title" class="block text-sm font-medium text-gray-700 mb-1">Title of the cited paper</label>
-                    <textarea name="cited_title" id="cited_title" rows="2" required 
+                    <label for="citedtitle" class="block text-sm font-medium text-gray-700 mb-1">Title of the cited paper</label>
+                    <textarea name="citedtitle" id="citedtitle" rows="2" required 
                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                               placeholder="Enter the title of the cited paper"></textarea>
                 </div>
-                
                 <div>
-                    <label for="cited_coauthors" class="block text-sm font-medium text-gray-700 mb-1">Co-authors (if any)</label>
-                    <input type="text" name="cited_coauthors" id="cited_coauthors" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="Enter co-authors of the cited paper">
+                    <label for="citedbibentry" class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry</label>
+                    <textarea name="citedbibentry" id="citedbibentry" rows="2" required 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                              placeholder="Enter the bibliographic entry for the cited paper"></textarea>
                 </div>
-                
                 <div>
-                    <label for="cited_journal" class="block text-sm font-medium text-gray-700 mb-1">Title of the Journal</label>
-                    <input type="text" name="cited_journal" id="cited_journal" 
+                    <label for="citedjournal" class="block text-sm font-medium text-gray-700 mb-1">Title of the Journal</label>
+                    <input type="text" name="citedjournal" id="citedjournal" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                            placeholder="Enter the journal title of the cited paper">
-                </div>
-                
-                <div>
-                    <label for="cited_volume" class="block text-sm font-medium text-gray-700 mb-1">Vol./Issue No./Year</label>
-                    <input type="text" name="cited_volume" id="cited_volume" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="e.g., Vol. 1, Issue 1, 2024">
                 </div>
             </div>
         </div>

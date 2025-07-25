@@ -2,318 +2,241 @@
 <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 pb-20">
     <div class="w-full max-w-4xl mx-auto">
         <!-- Main Form Card - Fixed Height for Consistency -->
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 relative" style="min-height: 600px;">
+        <div class="bg-white/30 backdrop-blur-md border border-white/40 overflow-hidden shadow-xl sm:rounded-lg p-0 relative h-[calc(90vh-4rem)] flex flex-col">
             @if(session('error'))
                 <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">{{ session('error') }}</div>
             @endif
             @if(session('success'))
                 <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm">{{ session('success') }}</div>
             @endif
-            
-            <div class="flex flex-col items-center text-center mb-4">
-                <x-application-logo class="h-10 w-10 mb-2" />
+            <div class="flex flex-col items-center text-center p-6">
                 <h2 class="text-xl font-bold text-burgundy-800 mb-1">Citation Request</h2>
                 <p class="text-sm text-gray-600">Fill out all required forms and upload documents to submit your citation request</p>
             </div>
-
-            <form 
-                id="citation-request-form"
-                method="POST" 
-                action="{{ route('citations.submit') }}" 
-                enctype="multipart/form-data" 
-                class="space-y-3 h-full"
-                x-data="citationForm()"
-                @input="checkFilled()"
-                @change="checkFilled()"
-                x-init="checkFilled()"
-                autocomplete="on"
-            >
-                @csrf
-                <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="h-full flex flex-col">
-                    <div class="flex w-full border-b mb-3">
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="[
-                                $store.tabNav.tab === 'incentive' ? 'border-burgundy-700 text-burgundy-700' : 'border-transparent text-gray-500',
-                            ]"
-                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'incentive' }"
-                        >Incentive Application</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="[
-                                $store.tabNav.tab === 'recommendation' ? 'border-burgundy-700 text-burgundy-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                            ]"
-                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
-                            :disabled="!$store.tabNav.tabCompletion.incentive"
-                        >Recommendation</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="[
-                                $store.tabNav.tab === 'upload' ? 'border-burgundy-700 text-burgundy-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                            ]"
-                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
-                            :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation)"
-                        >Upload Documents</button>
-                        <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                            :class="[
-                                $store.tabNav.tab === 'review' ? 'border-burgundy-700 text-burgundy-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.upload) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                            ]"
-                            @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
-                            :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.upload)"
-                        >Review & Submit</button>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto">
-                        <!-- Incentive Application Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'incentive'" class="space-y-4">
-                            @include('citations.incentive-application')
+            <div class="flex-1 overflow-y-auto px-6 pb-6">
+                <form 
+                    id="citation-request-form"
+                    method="POST" 
+                    action="{{ route('citations.submit') }}" 
+                    enctype="multipart/form-data" 
+                    class="space-b-3"
+                    x-data="citationForm()"
+                    @input="checkFilled()"
+                    @change="checkFilled()"
+                    x-init="checkFilled()"
+                    autocomplete="on"
+                >
+                    @csrf
+                    <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="flex flex-col">
+                        <div class="flex w-full border-b mb-3 sticky top-0 z-20 bg-white/30 backdrop-blur">
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[
+                                    $store.tabNav.tab === 'incentive' ? 'border-burgundy-700 text-burgundy-700' : 'border-transparent text-gray-500',
+                                ]"
+                                @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'incentive' }"
+                            >Incentive Application</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[
+                                    $store.tabNav.tab === 'recommendation' ? 'border-burgundy-700 text-burgundy-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                ]"
+                                @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
+                                :disabled="!$store.tabNav.tabCompletion.incentive"
+                            >Recommendation</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[
+                                    $store.tabNav.tab === 'upload' ? 'border-burgundy-700 text-burgundy-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                ]"
+                                @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
+                                :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation)"
+                            >Upload Documents</button>
+                            <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
+                                :class="[
+                                    $store.tabNav.tab === 'review' ? 'border-burgundy-700 text-burgundy-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.upload) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
+                                ]"
+                                @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
+                                :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.upload)"
+                            >Review & Submit</button>
                         </div>
 
-                        <!-- Recommendation Letter Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'recommendation'" class="space-y-4">
-                            @include('citations.recommendation-letter')
-                        </div>
+                        <div class="flex-1 overflow-y-auto">
+                            <!-- Incentive Application Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'incentive'" class="space-y-4">
+                                @include('citations.incentive-application')
+                            </div>
 
-                        <!-- File Upload Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'upload'" class="space-y-4">
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <h3 class="font-semibold text-burgundy-800 mb-3">Required Documents</h3>
-                                <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
-                                
-                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                    <!-- Recommendation Letter Card -->
-                                    <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.recommendationLetter.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Recommendation Letter</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Recommendation Letter approved by the College Dean</p>
-                                        <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="recommendation_letter" accept=".pdf" class="hidden" x-ref="recommendationLetter" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
+                            <!-- Recommendation Letter Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'recommendation'" class="space-y-4">
+                                @include('citations.recommendation-letter')
+                            </div>
 
-                                    <!-- Citing Article Card -->
-                                    <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.citingArticle.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                </svg>
+                            <!-- File Upload Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'upload'" class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-lg">
+                                    <h3 class="font-semibold text-burgundy-800 mb-3">Required Documents</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                        <!-- Recommendation Letter Card -->
+                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.recommendationLetter.click()">
+                                            <div class="text-center mb-3">
+                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
+                                                </div>
+                                                <h4 class="font-medium text-gray-800 text-sm">Recommendation Letter</h4>
                                             </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Citing Article</h4>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Recommendation Letter approved by the College Dean</p>
+                                            <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="recommendation_letter" accept=".pdf" class="hidden" x-ref="recommendationLetter" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Copy of the citing article (PDF copy)</p>
-                                        <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="citing_article" accept=".pdf" class="hidden" x-ref="citingArticle" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
 
-                                    <!-- Citing Journal Cover Card -->
-                                    <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.citingJournalCover.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
+                                        <!-- Citing Article Card -->
+                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.citingArticle.click()">
+                                            <div class="text-center mb-3">
+                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
+                                                </div>
+                                                <h4 class="font-medium text-gray-800 text-sm">Citing Article</h4>
                                             </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Citing Journal Cover</h4>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Copy of the citing article (PDF copy)</p>
+                                            <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="citing_article" accept=".pdf" class="hidden" x-ref="citingArticle" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Cover and Table of Contents of the citing article's journal issue</p>
-                                        <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="citing_journal_cover" accept=".pdf" class="hidden" x-ref="citingJournalCover" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
 
-                                    <!-- Cited Article Card -->
-                                    <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.citedArticle.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                </svg>
+                                        <!-- Cited Article Card -->
+                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                                             x-data="{ fileName: '', displayName: '' }"
+                                             @click="$refs.citedArticle.click()">
+                                            <div class="text-center mb-3">
+                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
+                                                </div>
+                                                <h4 class="font-medium text-gray-800 text-sm">Cited Article</h4>
                                             </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Cited Article</h4>
+                                            <p class="text-xs text-gray-600 mb-3 text-center">Copy of the cited article (PDF copy)</p>
+                                            <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
+                                                 :title="fileName"
+                                                 x-text="displayName || 'Click to upload'"></div>
+                                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
+                                            <input type="file" name="cited_article" accept=".pdf" class="hidden" x-ref="citedArticle" required
+                                                @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                         </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Copy of the cited article (PDF copy)</p>
-                                        <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="cited_article" accept=".pdf" class="hidden" x-ref="citedArticle" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                    </div>
-
-                                    <!-- Cited Journal Cover Card -->
-                                    <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                         x-data="{ fileName: '', displayName: '' }"
-                                         @click="$refs.citedJournalCover.click()">
-                                        <div class="text-center mb-3">
-                                            <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h4 class="font-medium text-gray-800 text-sm">Cited Journal Cover</h4>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-3 text-center">Cover and Table of Contents of the cited article's journal issue</p>
-                                        <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                             :title="fileName"
-                                             x-text="displayName || 'Click to upload'"></div>
-                                        <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                        <input type="file" name="cited_journal_cover" accept=".pdf" class="hidden" x-ref="citedJournalCover" required
-                                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Review & Submit Tab -->
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'review'" class="space-y-4">
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <h3 class="font-semibold text-burgundy-800 mb-3">Review Your Submission</h3>
-                                <p class="text-sm text-gray-600 mb-4">Review all uploaded files and generated documents.</p>
-                                
-                                <!-- Uploaded Files Section -->
-                                <div class="mb-6">
-                                    <h4 class="font-medium text-burgundy-700 mb-3">Uploaded Documents</h4>
-                                    <div class="grid grid-cols-5 gap-4">
-                                        <!-- Recommendation Letter Review Card -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
+                            <!-- Review & Submit Tab -->
+                            <div x-show="$store.tabNav && $store.tabNav.tab === 'review'" class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-lg">
+                                    <h3 class="font-semibold text-burgundy-800 mb-3">Review Your Submission</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Review all uploaded files and generated documents.</p>
+                                    
+                                    <!-- Uploaded Files Section -->
+                                    <div class="mb-6">
+                                        <h4 class="font-medium text-burgundy-700 mb-3">Uploaded Documents</h4>
+                                        <div class="grid grid-cols-5 gap-4">
+                                            <!-- Recommendation Letter Review Card -->
+                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
+                                                <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-recommendation-letter">No file uploaded</div>
+                                                <div class="text-center mt-auto">
+                                                    <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('recommendation-letter-review').click()">Change File</button>
+                                                    <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation-letter', this)">
+                                                </div>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-recommendation-letter">No file uploaded</div>
-                                            <div class="text-center mt-auto">
-                                                <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('recommendation-letter-review').click()">Change File</button>
-                                                <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation-letter', this)">
-                                            </div>
-                                        </div>
 
-                                        <!-- Citing Article Review Card -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
+                                            <!-- Citing Article Review Card -->
+                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Citing Article</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Citing Article</h5>
+                                                <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-citing-article">No file uploaded</div>
+                                                <div class="text-center mt-auto">
+                                                    <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('citing-article-review').click()">Change File</button>
+                                                    <input type="file" id="citing-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('citing-article', this)">
+                                                </div>
                                             </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-citing-article">No file uploaded</div>
-                                            <div class="text-center mt-auto">
-                                                <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('citing-article-review').click()">Change File</button>
-                                                <input type="file" id="citing-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('citing-article', this)">
-                                            </div>
-                                        </div>
 
-                                        <!-- Citing Journal Cover Review Card -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                    </svg>
+                                            <!-- Cited Article Review Card -->
+                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Cited Article</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Citing Journal Cover</h5>
-                                            </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-citing-journal-cover">No file uploaded</div>
-                                            <div class="text-center mt-auto">
-                                                <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('citing-journal-cover-review').click()">Change File</button>
-                                                <input type="file" id="citing-journal-cover-review" class="hidden" accept=".pdf" onchange="updateReviewFile('citing-journal-cover', this)">
-                                            </div>
-                                        </div>
-
-                                        <!-- Cited Article Review Card -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
+                                                <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-cited-article">No file uploaded</div>
+                                                <div class="text-center mt-auto">
+                                                    <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('cited-article-review').click()">Change File</button>
+                                                    <input type="file" id="cited-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited-article', this)">
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Cited Article</h5>
-                                            </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-cited-article">No file uploaded</div>
-                                            <div class="text-center mt-auto">
-                                                <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('cited-article-review').click()">Change File</button>
-                                                <input type="file" id="cited-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited-article', this)">
-                                            </div>
-                                        </div>
-
-                                        <!-- Cited Journal Cover Review Card -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                    </svg>
-                                                </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Cited Journal Cover</h5>
-                                            </div>
-                                            <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-cited-journal-cover">No file uploaded</div>
-                                            <div class="text-center mt-auto">
-                                                <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('cited-journal-cover-review').click()">Change File</button>
-                                                <input type="file" id="cited-journal-cover-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited-journal-cover', this)">
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Generated Documents Section -->
-                                <div class="mb-6">
-                                    <h4 class="font-medium text-burgundy-700 mb-3">Generated Documents</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <!-- Incentive Application Review -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
+                                    <!-- Generated Documents Section -->
+                                    <div class="mb-6">
+                                        <h4 class="font-medium text-burgundy-700 mb-3">Generated Documents</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <!-- Incentive Application Review -->
+                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Incentive Application</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Incentive Application</h5>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs bg-burgundy-600 text-white px-3 py-1 rounded hover:bg-burgundy-700 transition-colors" onclick="generateDocx('incentive')">Generate DOCX</button>
+                                                </div>
                                             </div>
-                                            <div class="text-center">
-                                                <button type="button" class="text-xs bg-burgundy-600 text-white px-3 py-1 rounded hover:bg-burgundy-700 transition-colors" onclick="generateDocx('incentive')">Generate DOCX</button>
-                                            </div>
-                                        </div>
 
-                                        <!-- Recommendation Letter Review -->
-                                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm">
-                                            <div class="text-center mb-3">
-                                                <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                                    </svg>
+                                            <!-- Recommendation Letter Review -->
+                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm">
+                                                <div class="text-center mb-3">
+                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
                                                 </div>
-                                                <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
-                                            </div>
-                                            <div class="text-center">
-                                                <button type="button" class="text-xs bg-burgundy-600 text-white px-3 py-1 rounded hover:bg-burgundy-700 transition-colors" onclick="generateDocx('recommendation')">Generate DOCX</button>
+                                                <div class="text-center">
+                                                    <button type="button" class="text-xs bg-burgundy-600 text-white px-3 py-1 rounded hover:bg-burgundy-700 transition-colors" onclick="generateDocx('recommendation')">Generate DOCX</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -321,8 +244,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -475,9 +398,7 @@
         const fileFields = [
             'recommendation_letter',
             'citing_article', 
-            'citing_journal_cover',
-            'cited_article',
-            'cited_journal_cover'
+            'cited_article'
         ];
         
         fileFields.forEach(field => {
@@ -541,12 +462,13 @@
                 let fields = [];
                 if (tab === 'incentive') {
                     fields = [
-                        'applicant_name', 'college', 'citing_title', 'citing_journal', 'cited_title', 'faculty_name', 'dean_name'
-                    ];
+                        'name', 'rank', 'college', 'title', 'bibentry', 'journal', 'issn', 'publisher',
+                        'citedtitle', 'citedbibentry', 'citedjournal', 'faculty_name', 'dean_name'
+                    ]; // 'citescore' and 'doi' are optional
                 } else if (tab === 'recommendation') {
                     fields = ['rec_faculty_name', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name'];
                 } else if (tab === 'upload') {
-                    fields = ['recommendation_letter', 'citing_article', 'citing_journal_cover', 'cited_article', 'cited_journal_cover'];
+                    fields = ['recommendation_letter', 'citing_article', 'cited_article'];
                 }
                 fields.forEach(field => {
                     const element = this.getFieldElement(field);
@@ -583,8 +505,9 @@
             checkTabs() {
                 // Check incentive tab completion
                 const incentiveFields = [
-                    'applicant_name', 'college', 'citing_title', 'citing_journal', 'cited_title', 'faculty_name', 'dean_name'
-                ];
+                    'name', 'rank', 'college', 'title', 'bibentry', 'journal', 'issn', 'publisher',
+                    'citedtitle', 'citedbibentry', 'citedjournal', 'faculty_name', 'dean_name'
+                ]; // 'citescore' and 'doi' are optional
                 this.tabCompletion.incentive = incentiveFields.every(field => {
                     const element = document.querySelector(`[name="${field}"]`);
                     return element && element.value.trim() !== '';
@@ -611,7 +534,7 @@
                 
                 // Check upload tab completion
                 const uploadFields = [
-                    'recommendation_letter', 'citing_article', 'citing_journal_cover', 'cited_article', 'cited_journal_cover'
+                    'recommendation_letter', 'citing_article', 'cited_article'
                 ];
                 this.tabCompletion.upload = uploadFields.every(fileName => {
                     const element = document.querySelector(`[name="${fileName}"]`);

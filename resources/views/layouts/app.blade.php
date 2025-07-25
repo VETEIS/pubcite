@@ -77,8 +77,8 @@
     <body class="font-sans antialiased">
         <!-- Eagle Main Background Overlay (only on white background) -->
         <div class="min-h-screen bg-white relative">
-            <div class="pointer-events-none absolute inset-0 z-0 select-none hidden sm:block">
-                <img src="/images/eagle.jpg" alt="Eagle" class="w-full h-full object-cover opacity-30" draggable="false" loading="eager" fetchpriority="high" />
+            <div class="pointer-events-none absolute inset-0 z-0 select-none bg-white">
+                <img src="/images/waves.png" alt="Waves" class="w-full h-full object-contain mx-auto my-auto" style="position:absolute; top:0; left:0; right:0; bottom:0; margin:auto;" draggable="false" loading="eager" fetchpriority="high" />
             </div>
 
             <x-banner />

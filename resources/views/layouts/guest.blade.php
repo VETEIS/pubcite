@@ -63,23 +63,28 @@
     </head>
     <body class="font-sans antialiased bg-white text-gray-900">
         <div class="min-h-screen bg-white relative">
-            <!-- Eagle Main Background Overlay -->
-            <div class="pointer-events-none absolute inset-0 z-0 select-none">
-                <img src="/images/eagle.jpg" alt="Eagle" class="w-full h-full object-cover opacity-30" draggable="false" loading="eager" fetchpriority="high" />
+            <!-- Waves Main Background Overlay -->
+            <div class="pointer-events-none absolute inset-0 z-0 select-none bg-white">
+                <img src="/images/waves.png" alt="Waves" class="w-full h-full object-contain mx-auto my-auto" style="position:absolute; top:0; left:0; right:0; bottom:0; margin:auto;" draggable="false" loading="eager" fetchpriority="high" />
             </div>
 
             <!-- Navbar -->
             <nav class="bg-maroon-800 border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="px-6">
                     <div class="flex justify-between h-16">
-                        <div class="flex items-center">
+                        <div class="flex items-center gap-3">
+                            <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-10 w-10 object-contain rounded-full" loading="eager" />
                             <a href="{{ url('/') }}" class="text-white text-lg font-semibold tracking-wide whitespace-nowrap hover:text-maroon-200 transition duration-150">
                                 USeP Publications Unit
                             </a>
+                            @if (View::exists('components.breadcrumbs'))
+                                <span class="flex items-center justify-center ml-6">
+                                    @include('components.breadcrumbs', ['crumbs' => $breadcrumbs ?? null, 'inline' => true])
+                                </span>
+                            @endif
                         </div>
                         <div class="flex items-center gap-2 sm:gap-4">
                             <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain" loading="eager" />
-                            <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-10 w-10 object-contain rounded-full" loading="eager" />
                         </div>
                     </div>
                 </div>

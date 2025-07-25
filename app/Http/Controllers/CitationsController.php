@@ -81,42 +81,32 @@ class CitationsController extends Controller
             ]);
             $uniqueHash = substr(hash('sha256', $hashSource), 0, 16); // 16 chars is enough
             $filename = null;
-            $outputPath = null;
+            $fullPath = null;
             
             switch ($docxType) {
                 case 'incentive':
+                    $filtered = $this->mapIncentiveFields($data);
+                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
                     $filename = "Cite_Incentive_Application_{$uniqueHash}.docx";
-                    $outputPath = "$uploadPath/$filename";
+                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, $filename);
                     break;
                     
                 case 'recommendation':
+                    $filtered = $this->mapRecommendationFields($data);
+                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
                     $filename = "Cite_Recommendation_Letter_{$uniqueHash}.docx";
-                    $outputPath = "$uploadPath/$filename";
+                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, $filename);
                     break;
                     
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
             
-            $fullPath = storage_path('app/' . $outputPath);
-            
-            // If file does not exist, generate it
-            if (!file_exists($fullPath)) {
-                switch ($docxType) {
-                    case 'incentive':
-                        $this->generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename);
-                        break;
-                    case 'recommendation':
-                        $this->generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename);
-                        break;
-                }
-            }
-            
             if (!file_exists($fullPath)) {
                 throw new \Exception('Generated file not found');
             }
             
-            Log::info('Citation DOCX generated or cached successfully', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
+            Log::info('Citation DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
             
             // Return the file for download
             return response()->download($fullPath, $filename, [
@@ -143,58 +133,31 @@ class CitationsController extends Controller
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
-            
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
             $outputPath = $publicUploadPath . '/' . $filename;
             $fullOutputPath = storage_path('app/' . $outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
-            
-            // Set values for citation incentive template using correct template variable names
-            $templateProcessor->setValue('collegeheader', $data['collegeheader'] ?? '');
-            $templateProcessor->setValue('name', $data['applicant_name'] ?? '');
-            $templateProcessor->setValue('employment', $data['employment_status'] ?? '');
-            $templateProcessor->setValue('rank', $data['academic_rank'] ?? '');
-            $templateProcessor->setValue('campus', $data['campus'] ?? '');
-            $templateProcessor->setValue('college', $data['college'] ?? '');
-            $templateProcessor->setValue('years', $data['years_university'] ?? '');
-            $templateProcessor->setValue('field', $data['field_specialization'] ?? '');
-            
-            // Citing paper details
-            $templateProcessor->setValue('title', $data['citing_title'] ?? '');
-            $templateProcessor->setValue('authors', $data['citing_authors'] ?? '');
-            $templateProcessor->setValue('journal', $data['citing_journal'] ?? '');
-            $templateProcessor->setValue('version', $data['citing_volume'] ?? '');
-            $templateProcessor->setValue('pissn', $data['citing_pissn'] ?? '');
-            $templateProcessor->setValue('eissn', $data['citing_eissn'] ?? '');
-            $templateProcessor->setValue('doi', $data['citing_doi'] ?? '');
-            $templateProcessor->setValue('citescore', $data['citing_citescore'] ?? '');
-            
-            // Indexing checkboxes
-            $scopus = isset($data['indexed_scopus']) ? '☒' : '☐';
-            $wos = isset($data['indexed_wos']) ? '☒' : '☐';
-            $aci = isset($data['indexed_aci']) ? '☒' : '☐';
-            $pubmed = isset($data['indexed_pubmed']) ? '☒' : '☐';
-            
-            $templateProcessor->setValue('scopus', $scopus);
-            $templateProcessor->setValue('wos', $wos);
-            $templateProcessor->setValue('aci', $aci);
-            $templateProcessor->setValue('pubmed', $pubmed);
-            
-            // Cited paper details
-            $templateProcessor->setValue('citedtitle', $data['cited_title'] ?? '');
-            $templateProcessor->setValue('coauthors', $data['cited_coauthors'] ?? '');
-            $templateProcessor->setValue('citedjournal', $data['cited_journal'] ?? '');
-            $templateProcessor->setValue('citedversion', $data['cited_volume'] ?? '');
-            
-            // Signature fields
-            $templateProcessor->setValue('facultyname', $data['faculty_name'] ?? '');
-            $templateProcessor->setValue('centermanager', $data['center_manager'] ?? '');
-            $templateProcessor->setValue('dean', $data['dean_name'] ?? '');
-            $templateProcessor->setValue('date', $data['date'] ?? now()->format('F d, Y'));
-            
-            $templateProcessor->saveAs($fullOutputPath);
-            Log::info('Citation DOCX creation completed', ['outputPath' => $fullOutputPath]);
-            return $outputPath;
+            // Use only the mapped fields
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
+            $fullOutputPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fullOutputPath);
+            $testFile = $fullOutputPath . '.test.txt';
+            file_put_contents($testFile, 'test');
+            Log::info('Test file created', [
+                'test_file' => $testFile,
+                'test_file_exists' => file_exists($testFile),
+                'dir_contents' => scandir(dirname($fullOutputPath))
+            ]);
+            try {
+                Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
+                $templateProcessor->saveAs($fullOutputPath);
+                Log::info('Tried to save DOCX', ['fullOutputPath' => $fullOutputPath]);
+            } catch (\Exception $e) {
+                Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
+                throw $e;
+            }
+            return $fullOutputPath; // Return the full path for the controller to use
         } catch (\Exception $e) {
             Log::error('Error in generateCitationIncentiveDocxFromHtml: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -204,31 +167,35 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Cite_Recommendation_Letter.docx')
+    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Cite_Recommendation_Letter.docx')
     {
         try {
+            Log::info('CITATION RECO: Raw data', $data);
+            // Hardcoded mapping for test
+            // $data = [
+            //     'collegeheader' => 'TEST COLLEGE HEADER',
+            //     'facultyname' => 'TEST FACULTY NAME',
+            //     'date' => '2025-07-22',
+            // ];
+            Log::info('CITATION RECO: Using mapped data', $data);
             $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
             $fullPath = storage_path('app/' . $publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
+                Log::info('Created directory', ['path' => $fullPath]);
             }
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
             $outputPath = $publicUploadPath . '/' . $filename;
             $fullOutputPath = storage_path('app/' . $outputPath);
-            $templateProcessor = new TemplateProcessor($templatePath);
-            
-            // Set all relevant fields for citation recommendation letter using correct template variable names
-            $templateProcessor->setValue('collegeheader', $data['rec_collegeheader'] ?? '');
-            $templateProcessor->setValue('date', $data['rec_date'] ?? now()->format('F d, Y'));
-            $templateProcessor->setValue('facultyname', $data['rec_faculty_name'] ?? '');
-            $templateProcessor->setValue('details', $data['rec_citing_details'] ?? '');
-            $templateProcessor->setValue('indexing', $data['rec_indexing_details'] ?? '');
-            $templateProcessor->setValue('dean', $data['rec_dean_name'] ?? '');
-            
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
             $templateProcessor->saveAs($fullOutputPath);
-            return $outputPath;
+            Log::info('CITATION RECO: Saved populated docx', ['output' => $fullOutputPath]);
+            return $fullOutputPath;
         } catch (\Exception $e) {
-            Log::error('Error in generateCitationRecommendationDocxFromHtml: ' . $e->getMessage());
+            Log::error('CITATION RECO: Error generating docx', ['error' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -315,18 +282,31 @@ class CitationsController extends Controller
         try {
             // Validate the request
             $validator = Validator::make($request->all(), [
-                'applicant_name' => 'required|string|max:255',
-                'college' => 'required|string|max:255',
-                'citing_title' => 'required|string|max:500',
-                'citing_journal' => 'required|string|max:255',
-                'cited_title' => 'required|string|max:500',
-                'faculty_name' => 'required|string|max:255',
-                'dean_name' => 'required|string|max:255',
-                'recommendation_letter' => 'required|file|mimes:pdf|max:20480',
-                'citing_article' => 'required|file|mimes:pdf|max:20480',
-                'citing_journal_cover' => 'required|file|mimes:pdf|max:20480',
-                'cited_article' => 'required|file|mimes:pdf|max:20480',
-                'cited_journal_cover' => 'required|file|mimes:pdf|max:20480',
+                // Personal Profile
+                'name' => 'required|string',
+                'rank' => 'required|string',
+                'college' => 'required|string',
+                // Citing Paper
+                'title' => 'required|string',
+                'bibentry' => 'required|string',
+                'journal' => 'required|string',
+                'issn' => 'required|string',
+                'doi' => 'nullable|string',
+                'publisher' => 'required|string',
+                'scopus' => 'nullable',
+                'wos' => 'nullable',
+                'aci' => 'nullable',
+                'citescore' => 'nullable|string',
+                // Cited Paper
+                'citedtitle' => 'required|string',
+                'citedbibentry' => 'required|string',
+                'citedjournal' => 'required|string',
+                // Signatures
+                'facultyname' => 'required|string',
+                'centermanager' => 'nullable|string',
+                'dean' => 'nullable|string',
+                // File uploads (if any)
+                'rec_collegeheader' => 'required|string',
             ]);
 
             if ($validator->fails()) {
@@ -343,9 +323,7 @@ class CitationsController extends Controller
             $fields = [
                 'recommendation_letter',
                 'citing_article',
-                'citing_journal_cover',
                 'cited_article',
-                'cited_journal_cover',
             ];
             foreach ($fields as $field) {
                 if ($request->hasFile($field)) {
@@ -613,5 +591,41 @@ class CitationsController extends Controller
             Log::error('Error creating ZIP file: ' . $e->getMessage());
             return response()->json(['error' => 'Error creating ZIP file'], 500);
         }
+    }
+
+    private function mapIncentiveFields($data) {
+        return [
+            'college' => $data['college'] ?? '',
+            'name' => $data['name'] ?? '',
+            'rank' => $data['rank'] ?? '',
+            'title' => $data['title'] ?? '',
+            'bibentry' => $data['bibentry'] ?? '',
+            'journal' => $data['journal'] ?? '',
+            'issn' => $data['issn'] ?? '',
+            'doi' => $data['doi'] ?? '',
+            'publisher' => $data['publisher'] ?? '',
+            'scopus' => isset($data['scopus']) ? '☑' : '☐',
+            'wos' => isset($data['wos']) ? '☑' : '☐',
+            'aci' => isset($data['aci']) ? '☑' : '☐',
+            'citescore' => $data['citescore'] ?? '',
+            'citedtitle' => $data['citedtitle'] ?? '',
+            'citedbibentry' => $data['citedbibentry'] ?? '',
+            'citedjournal' => $data['citedjournal'] ?? '',
+            'facultyname' => $data['faculty_name'] ?? '',
+            'centermanager' => $data['center_manager'] ?? '',
+            'dean' => $data['dean_name'] ?? '',
+            'date' => $data['date'] ?? now()->format('Y-m-d'),
+        ];
+    }
+
+    private function mapRecommendationFields($data) {
+        return [
+            'collegeheader' => $data['rec_collegeheader'] ?? '',
+            'facultyname' => $data['rec_faculty_name'] ?? '',
+            'details' => $data['rec_citing_details'] ?? '',
+            'indexing' => $data['rec_indexing_details'] ?? '',
+            'dean' => $data['rec_dean_name'] ?? '',
+            'date' => $data['date'] ?? now()->format('Y-m-d'),
+        ];
     }
 } 

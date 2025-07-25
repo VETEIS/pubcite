@@ -25,29 +25,8 @@
                 <input type="text" name="academicrank" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="e.g., Assistant Professor">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
-                <select name="employmentstatus" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent">
-                    <option value="">Select employment status</option>
-                    <option value="Permanent">Permanent</option>
-                    <option value="Temporary">Temporary</option>
-                    <option value="Contractual">Contractual</option>
-                </select>
-            </div>
-            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
                 <input type="text" name="college" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter your college">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Campus</label>
-                <input type="text" name="campus" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter your campus">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Field of Specialization</label>
-                <input type="text" name="field" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter your field of specialization">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">No. of Years in the University</label>
-                <input type="number" name="years" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter number of years">
             </div>
         </div>
     </div>
@@ -58,10 +37,10 @@
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-1">Paper Title</label>
             <textarea name="papertitle" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter the title of the paper"></textarea>
-            </div>
+        </div>
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Co-authors</label>
-            <input type="text" name="coauthors" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter co-authors (if any)">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry (APA Format)</label>
+            <textarea name="bibentry" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter the bibliographic entry"></textarea>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
@@ -69,16 +48,8 @@
                 <input type="text" name="journaltitle" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="Enter the journal title">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Vol/Issue/Year</label>
-                <input type="text" name="version" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="e.g., Vol. 1, Issue 1, 2024">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">P-ISSN</label>
-                <input type="text" name="pissn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter P-ISSN">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">E-ISSN</label>
-                <input type="text" name="eissn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter E-ISSN">
+                <label class="block text-sm font-medium text-gray-700 mb-1">ISSN (P-ISSN/E-ISSN)</label>
+                <input type="text" name="issn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="Enter ISSN">
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -91,7 +62,7 @@
                 <input type="text" name="publisher" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="Enter publisher name">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">CiteScore</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Scopus CiteScore (if applicable)</label>
                 <input type="text" name="citescore" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter CiteScore">
             </div>
         </div>
@@ -110,7 +81,6 @@
                     <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="Scopus" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Scopus</label>
                     <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="Web of Science" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Web of Science</label>
                     <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="ACI" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> ACI</label>
-                    <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="PubMed" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> PubMed</label>
                 </div>
             </div>
         </div>

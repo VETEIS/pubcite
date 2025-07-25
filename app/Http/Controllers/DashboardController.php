@@ -69,11 +69,13 @@ class DashboardController extends Controller
                     'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
                     'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
                     'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                    'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
                 ],
                 'citation' => [
                     'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
                     'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
                     'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                    'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
                 ],
             ];
             // Calculate status counts based on current filters
@@ -253,11 +255,13 @@ class DashboardController extends Controller
                 'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
                 'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
                 'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
             ],
             'citation' => [
                 'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
                 'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
                 'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
             ],
         ];
         $statusQuery = \App\Models\Request::query();
@@ -278,10 +282,69 @@ class DashboardController extends Controller
             'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
             'rejected' => $statusQuery->where('status', 'rejected')->count(),
         ];
+        // --- Real Chart Data Aggregation ---
+        // Only use type and period filters for chart data, ignore status
+        $chartType = $type;
+        $chartPeriod = $period;
+        $chartNow = $now;
+        $chartStartMonth = $chartNow->copy()->subMonths(11)->startOfMonth();
+        $chartEndMonth = $chartNow->copy()->endOfMonth();
+        $chartBaseQuery = \App\Models\Request::query();
+        if ($chartType && in_array($chartType, ['Publication', 'Citation'])) {
+            $chartBaseQuery->where('type', $chartType);
+        }
+        if ($chartPeriod) {
+            if ($chartPeriod === 'week') {
+                $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfWeek(), $chartNow->copy()->endOfWeek()]);
+            } elseif ($chartPeriod === 'month') {
+                $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfMonth(), $chartNow->copy()->endOfMonth()]);
+            } elseif ($chartPeriod === 'quarter') {
+                $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfQuarter(), $chartNow->copy()->endOfQuarter()]);
+            }
+        } else {
+            $chartBaseQuery->whereBetween('requested_at', [$chartStartMonth, $chartEndMonth]);
+        }
+        $driver = config('database.default');
+        if ($driver === 'pgsql') {
+            $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM')";
+        } else {
+            $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m')";
+        }
+        $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
+            ->whereBetween('requested_at', [$chartStartMonth, $chartEndMonth])
+            ->when($chartType && in_array($chartType, ['Publication', 'Citation']), function($q) use ($chartType) {
+                $q->where('type', $chartType);
+            })
+            ->groupBy('type', 'month')
+            ->orderBy('month')
+            ->get();
+        $months = [];
+        for ($i = 0; $i < 12; $i++) {
+            $months[] = $chartNow->copy()->subMonths(11 - $i)->format('Y-m');
+        }
+        $monthlyCounts = [
+            'Publication' => array_fill_keys($months, 0),
+            'Citation' => array_fill_keys($months, 0),
+        ];
+        foreach ($rawCounts as $row) {
+            $monthlyCounts[$row->type][$row->month] = $row->count;
+        }
+        // Status counts for current type/period filter (not status)
+        $statusCounts = [
+            'pending' => 0,
+            'endorsed' => 0,
+            'rejected' => 0,
+        ];
+        $statusRaw = $chartBaseQuery->selectRaw('status, COUNT(*) as count')->groupBy('status')->get();
+        foreach ($statusRaw as $row) {
+            $statusCounts[$row->status] = $row->count;
+        }
+        // --- End Real Chart Data Aggregation ---
         return response()->json([
-            'requests' => $requestsWithFiles,
-            'stats' => $stats,
-            'filterCounts' => $filterCounts,
+            'months' => $months,
+            'monthlyCounts' => $monthlyCounts,
+            'statusCounts' => $statusCounts,
+            'type' => $type,
         ]);
     }
 
@@ -331,11 +394,13 @@ class DashboardController extends Controller
                             'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
                             'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
                             'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                            'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
                         ],
                         'citation' => [
                             'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
                             'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
                             'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                            'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
                         ],
                     ];
                     

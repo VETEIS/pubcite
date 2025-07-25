@@ -1,50 +1,69 @@
 <x-app-layout>
     <!-- Removed extra custom header here -->
-    <div class="flex min-h-[calc(100vh-4rem)]">
+    <div class="flex h-[calc(100vh-4rem)] p-4 gap-x-6">
         <!-- Sidebar -->
-        <aside class="w-20 bg-gradient-to-b from-maroon-900 to-maroon-700 text-white flex flex-col items-center py-8 shadow-lg">
-            <nav class="flex flex-col gap-8 w-full items-center">
-                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Overview</span>
+        <aside class="w-20 h-full flex-shrink-0 bg-white/30 backdrop-blur border border-white/40 text-maroon-900 flex flex-col items-center shadow-lg rounded-full">
+            <nav class="flex flex-col gap-8 w-full items-center flex-1 justify-center">
+                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 group focus:outline-none {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? '' : 'hover:scale-110 hover:-translate-y-1 transition-all duration-200' }}">
+                    <svg class="w-7 h-7 {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? 'text-maroon-800 fill-maroon-800' : 'text-maroon-800' }} group-hover:text-maroon-800 transition" fill="{{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6" /></svg>
+                    <span class="text-xs mt-1 pl-2 {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? 'font-extrabold text-maroon-800' : 'font-bold' }} group-hover:text-maroon-800">Overview</span>
+                    @if(request()->routeIs('dashboard') && !request()->is('admin/users*'))
+                        <div class="h-0.5 bg-maroon-800 rounded-full w-8 mx-auto mt-1"></div>
+                    @endif
                 </a>
-                <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Users</span>
+                <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center gap-1 group focus:outline-none {{ request()->is('admin/users*') ? '' : 'hover:scale-110 hover:-translate-y-1 transition-all duration-200' }}">
+                    <svg class="w-7 h-7 {{ request()->is('admin/users*') ? 'text-maroon-800 fill-maroon-800' : 'text-maroon-800' }} group-hover:text-maroon-800 transition" fill="{{ request()->is('admin/users*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span class="text-xs mt-1 {{ request()->is('admin/users*') ? 'font-extrabold text-maroon-800' : 'font-bold' }} group-hover:text-maroon-800">Users</span>
+                    @if(request()->is('admin/users*'))
+                        <div class="h-0.5 bg-maroon-800 rounded-full w-8 mx-auto mt-1"></div>
+                    @endif
                 </a>
-                <button class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 018 0v2M9 17a4 4 0 01-8 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2z" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Reports</span>
+                <button class="flex flex-col items-center gap-1 group focus:outline-none hover:scale-110 hover:-translate-y-1 transition-all duration-200">
+                    <svg class="w-7 h-7 text-maroon-800 group-hover:text-maroon-800 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 018 0v2M9 17a4 4 0 01-8 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2z" /></svg>
+                    <span class="text-xs mt-1 font-bold group-hover:text-maroon-800">Archives</span>
                 </button>
-                <button class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Settings</span>
+                <button class="flex flex-col items-center gap-1 group focus:outline-none hover:scale-110 hover:-translate-y-1 transition-all duration-200">
+                    <svg class="w-7 h-7 text-maroon-800 group-hover:text-maroon-800 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    <span class="text-xs mt-1 font-bold group-hover:text-maroon-800">Settings</span>
                 </button>
             </nav>
         </aside>
         <!-- Main Content -->
-        <div class="flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)] p-4 m-0">
-            <div class="w-full h-full flex-1 rounded-2xl shadow-xl bg-gray-100 p-8 flex flex-col justify-center items-stretch overflow-auto">
+        <div class="flex-1 flex items-center justify-center h-full m-0">
+            <div class="w-full h-full flex-1 rounded-2xl shadow-xl bg-white/30 backdrop-blur border border-white/40 p-4 flex flex-col justify-center items-stretch">
                 <!-- Dashboard Header with Navigation Tabs -->
                 <div class="relative flex items-center mb-6">
-                    <h1 class="text-2xl font-bold text-maroon-900">
+                    <h1 class="text-2xl font-bold text-maroon-900 flex items-center gap-2">
                         @if(request('type') === 'Citation')
                             Citation
                         @elseif(request('type') === 'Publication')
                             Publication
                         @else
+                            <svg class="w-7 h-7 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" /></svg>
                             Overview
                         @endif
                     </h1>
                     <!-- Centered Navigation Tabs -->
-                    <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-2">
-                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Citation'])) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ request('type') === 'Citation' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">Citation</a>
-                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Publication'])) }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ request('type') === 'Publication' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">Publication</a>
-                        <a href="{{ route('dashboard') }}" class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}">View All</a>
+                    <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-2 dashboard-chart-filter">
+                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Citation'])) }}"
+                           class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ request('type') === 'Citation' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
+                            <svg class="w-5 h-5 inline-block mr-1 align-middle {{ request('type') === 'Citation' ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 3v4M7 3v4" /></svg>
+                            Citation
+                        </a>
+                        <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Publication'])) }}"
+                           class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ request('type') === 'Publication' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
+                            <svg class="w-5 h-5 inline-block mr-1 align-middle {{ request('type') === 'Publication' ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0H3m9 0h9" /></svg>
+                            Publication
+                        </a>
+                        <a href="{{ route('dashboard') }}"
+                           class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
+                            <svg class="w-5 h-5 inline-block mr-1 align-middle {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                            View All
+                        </a>
                     </div>
                     <!-- Search Input Field -->
                     <div class="absolute right-0 flex items-center">
-                        <form method="GET" action="{{ route('dashboard') }}" class="relative">
+                        <form method="GET" action="{{ route('dashboard') }}" class="relative dashboard-chart-search">
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..." class="pl-12 pr-4 py-2 border-2 border-maroon-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-900 shadow-sm w-56 bg-white text-maroon-900 placeholder-maroon-900" style="transition:background 0.2s;" autocomplete="on">
                             <button type="submit" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-maroon-900 text-white shadow focus:outline-none" tabindex="-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +76,7 @@
                 <!-- Stat Cards -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
                     <!-- Left/Main Column: Stat Cards + Table -->
-                    <div class="flex flex-col gap-3 h-full flex-1">
+                    <div class="flex flex-col gap-3 h-full flex-1 min-h-0">
                         <!-- Stat Cards (Compact Row) -->
                         @php
                             $type = request('type');
@@ -78,10 +97,10 @@
                             $periods = ['week' => 'Weekly', 'month' => 'Monthly', 'quarter' => 'Quarterly'];
                             $currentPeriod = request('period');
                         @endphp
-                        <div class="flex flex-row gap-3 mb-2">
+                        <div class="flex flex-row gap-3 mb-2 dashboard-chart-filter">
                             @foreach($periods as $key => $label)
                                 <a href="{{ route('dashboard', array_merge(request()->except('page', 'period'), ['period' => $key])) }}"
-                                   class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-yellow-100 transition cursor-pointer {{ $currentPeriod === $key ? 'ring-2 ring-maroon-700' : 'hover:bg-yellow-200' }}">
+                                   class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-white/30 backdrop-blur border border-white/40 transition cursor-pointer {{ $currentPeriod === $key ? 'ring-2 ring-maroon-700' : '' }} hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-gray-900/40 transition-all duration-200">
                                     <div class="w-1.5 rounded-l-lg h-full bg-maroon-700"></div>
                                     <div class="pl-2 flex flex-col text-maroon-900">
                                         <span class="text-lg font-bold mb-0.5">{{ $periodStats[$key] ?? 0 }}</span>
@@ -89,44 +108,81 @@
                                     </div>
                                 </a>
                             @endforeach
+                            <!-- Yearly Card -->
+                            <a href="{{ route('dashboard', array_merge(request()->except('page', 'period'), ['period' => 'year'])) }}"
+                               class="flex-1 rounded-lg p-2 flex flex-row items-start shadow min-w-0 bg-white/30 backdrop-blur border border-white/40 transition cursor-pointer {{ $currentPeriod === 'year' ? 'ring-2 ring-maroon-700' : '' }} hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-gray-900/40 transition-all duration-200">
+                                <div class="w-1.5 rounded-l-lg h-full bg-maroon-700"></div>
+                                <div class="pl-2 flex flex-col text-maroon-900">
+                                    <span class="text-lg font-bold mb-0.5">{{ $type === 'Citation' ? ($stats['citation']['year'] ?? 0)
+                                        : ($type === 'Publication' ? ($stats['publication']['year'] ?? 0)
+                                        : (($stats['publication']['year'] ?? 0) + ($stats['citation']['year'] ?? 0))) }}</span>
+                                    <span class="text-xs font-semibold mb-1">Yearly</span>
+                                </div>
+                            </a>
                         </div>
 
                         {{-- Status Filter Pills --}}
-                        {{-- Duplicate removed: Only keep the status filter above the table below --}}
-                        <!-- Applications Table (Expanding) -->
-                        <div class="bg-yellow-100 rounded-xl shadow p-2 overflow-auto flex-1 relative">
+                        <!-- Applications Table -->
+                        <div class="bg-white/30 backdrop-blur border border-white/40 rounded-xl shadow p-2 overflow-y-auto flex-1 min-h-0">
                             <div class="flex items-center justify-between mb-2">
                                 <h2 class="text-sm font-semibold pl-2 mb-0">List of Requests</h2>
-                                <div class="flex gap-2">
-                                    <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => null])) }}" class="px-3 py-1 rounded-full font-semibold text-xs transition {{ !request('status') ? 'bg-maroon-900 text-white shadow' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}" id="status-all-link">All</a>
-                                    <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => 'endorsed'])) }}" class="px-3 py-1 rounded-full font-semibold text-xs transition {{ request('status') === 'endorsed' ? 'bg-green-600 text-white shadow' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}" id="status-endorsed-link">Endorsed</a>
-                                    <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => 'pending'])) }}" class="px-3 py-1 rounded-full font-semibold text-xs transition {{ request('status') === 'pending' ? 'bg-yellow-400 text-maroon-900 shadow' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}" id="status-pending-link">Pending</a>
-                                    <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => 'rejected'])) }}" class="px-3 py-1 rounded-full font-semibold text-xs transition {{ request('status') === 'rejected' ? 'bg-red-500 text-white shadow' : 'bg-gray-100 text-maroon-900 hover:bg-gray-300' }}" id="status-rejected-link">Rejected</a>
+                                <div class="flex gap-2 flex-wrap mb-2 dashboard-chart-filter">
+                                    @php
+                                        $currentStatus = request('status');
+                                        $filters = [
+                                            ['label' => 'All', 'value' => null, 'icon' => 'list'],
+                                            ['label' => 'Pending', 'value' => 'pending', 'icon' => 'clock'],
+                                            ['label' => 'Endorsed', 'value' => 'endorsed', 'icon' => 'check'],
+                                            ['label' => 'Rejected', 'value' => 'rejected', 'icon' => 'x'],
+                                        ];
+                                    @endphp
+                                    @foreach($filters as $filter)
+                                        <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => $filter['value']])) }}"
+                                           class="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition
+                                           {{ ($currentStatus === $filter['value'] || ($filter['value'] === null && !$currentStatus))
+                                                ? 'bg-maroon-800 text-white shadow'
+                                                : ($filter['value'] === 'pending' ? 'bg-yellow-100 text-maroon-900 hover:bg-yellow-200'
+                                                : ($filter['value'] === 'endorsed' ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                : ($filter['value'] === 'rejected' ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                : 'bg-gray-100 text-maroon-900 hover:bg-gray-200'))) }}">
+                                            @if($filter['icon'] === 'list')
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                            @elseif($filter['icon'] === 'clock')
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
+                                            @elseif($filter['icon'] === 'check')
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            @elseif($filter['icon'] === 'x')
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            @endif
+                                            {{ $filter['label'] }}
+                                        </a>
+                                    @endforeach
                         </div>
                     </div>
                             <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-maroon-200 text-xs">
+                                <table class="min-w-full divide-y divide-maroon-200 text-xs border border-white/40 rounded-t-xl overflow-hidden">
                                     @if($requests->count())
-                                    <thead class="bg-yellow-200">
+                                    <thead class="bg-white/30 backdrop-blur border-b border-white/40 rounded-t-xl">
                                         <tr>
-                                            <th class="px-2 py-1 text-left font-bold text-maroon-900 uppercase tracking-wider">Date</th>
-                                            <th class="px-2 py-1 text-left font-bold text-maroon-900 uppercase tracking-wider">Request Code</th>
-                                            <th class="px-2 py-1 text-left font-bold text-maroon-900 uppercase tracking-wider">Name</th>
-                                            <th class="px-2 py-1 pl-9 text-left font-bold text-maroon-900 uppercase tracking-wider">Status</th>
-                                            <th class="px-2 py-1 text-center font-bold text-maroon-900 uppercase tracking-wider">Actions</th>
+                                            <th class="px-4 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Date</th>
+                                            <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Request Code</th>
+                                            <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Name</th>
+                                            <th class="px-2 py-2 pl-9 text-left font-bold text-maroon-900 uppercase tracking-wider">Status</th>
+                                            <th class="px-2 py-2 text-center font-bold text-maroon-900 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                                    <tbody class="bg-yellow-50 divide-y divide-maroon-100">
+                                    <tbody class="divide-y divide-maroon-100">
                                         @foreach($requests as $request)
-                                        <tr>
-                                            <td class="px-2 py-1 text-maroon-900">{{ $request->requested_at ? \Carbon\Carbon::parse($request->requested_at)->setTimezone('Asia/Manila')->format('M d, Y H:i') : '' }}</td>
+                                        <tr class="{{ $loop->even ? 'bg-white/30 backdrop-blur' : '' }} hover:bg-white/40 transition">
+                                            <td class="px-4 py-1 text-maroon-900 font-semibold">{{ $request->requested_at ? \Carbon\Carbon::parse($request->requested_at)->setTimezone('Asia/Manila')->format('M d, Y H:i') : '' }}</td>
                                             <td class="px-2 py-1 font-bold text-maroon-900">{{ $request->request_code }}</td>
-                                            <td class="px-2 py-1 text-maroon-900">{{ $request->user ? $request->user->name : 'N/A' }}</td>
+                                            <td class="px-2 py-1 text-maroon-900 font-semibold">{{ $request->user ? $request->user->name : 'N/A' }}</td>
                                             <td class="px-2 py-1 text-center align-middle">
                                                 <form action="{{ route('admin.requests.status', $request->id) }}" method="POST" class="inline-block w-full">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <select name="status" class="mx-auto block px-2 py-0.5 pr-4 min-w-[90px] rounded-full font-semibold text-xs leading-5 focus:outline-none focus:ring-2 focus:ring-maroon-400 transition bg-yellow-100 border border-yellow-300 text-maroon-900 appearance-none"
+                                                    <select name="status" class="mx-auto block px-2 py-0.5 pr-4 min-w-[90px] rounded-full font-semibold text-xs leading-5 border border-white/40 appearance-none transition
+    {{ $request->status === 'pending' ? 'bg-yellow-100 text-yellow-800 focus:ring-0' : ($request->status === 'endorsed' ? 'bg-green-100 text-green-800 focus:ring-0' : ($request->status === 'rejected' ? 'bg-red-100 text-red-800 focus:ring-2 focus:ring-red-500' : 'bg-white/30 backdrop-blur text-maroon-900 focus:ring-0')) }}"
                                                         style="background-position:right 0.5rem center; background-repeat:no-repeat; background-size:1.25em 1.25em;"
                                                         onchange="if(confirm('Change status?')) this.form.submit()"
                                                         >
@@ -177,7 +233,7 @@
                                 if (request('search')) $activeFilters['search'] = 'Search: "' . request('search') . '"';
                             @endphp
                             @if(count($activeFilters))
-                                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-200 rounded-lg shadow-md border border-yellow-300 px-3 py-1">
+                                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10 bg-white/30 backdrop-blur rounded-lg shadow-md border border-white/40 px-3 py-1">
                                     <div class="flex items-center justify-center gap-2 whitespace-nowrap">
                                         <span class="text-xs text-maroon-900 font-medium mr-1">Filters:</span>
                                         @foreach($activeFilters as $key => $label)
@@ -202,11 +258,14 @@
                     <!-- Right Column: Recent Applications & Chart -->
                     <div class="flex flex-col gap-3 h-full flex-1">
                         <!-- Activity Log Card -->
-                        <div class="bg-yellow-100 rounded-xl shadow p-2 overflow-auto flex-1">
-                            <h2 class="text-sm font-semibold mb-2 pl-2">Activity Log</h2>
+                        <div class="bg-white/30 backdrop-blur border border-white/40 rounded-xl shadow pb-2 px-2 overflow-visible flex-1 max-h-[45vh] h-[45vh] relative">
+                            <div class="bg-white sticky top-0 left-0 right-0 z-10 -mx-2 w-[calc(100%+1rem)] pt-4 pb-2 border-b border-white/40 rounded-t-xl">
+                                <h2 class="text-sm font-semibold pl-4">Activity Log</h2>
+                            </div>
+                            <div class="overflow-y-auto max-h-[calc(45vh-3rem)] activity-log-scroll">
                             <ul class="space-y-1">
                                 @foreach($activityLogs as $log)
-                                    <li class="grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-yellow-50 rounded-lg p-1">
+                                        <li class="grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-white/30 backdrop-blur rounded-lg p-1">
                                         @php
                                             $icon = match($log->action) {
                                                 'created' => 'plus-circle',
@@ -231,21 +290,26 @@
                                                 $desc = ucfirst($log->action);
                                     }
                                 @endphp
-                                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-white border {{ $iconColor }}">
-                                            @if($icon === 'plus-circle')
-                                                <svg class="w-5 h-5 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                            @elseif($icon === 'refresh-cw')
-                                                <svg class="w-5 h-5 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>
-                                            @elseif($icon === 'trash-2')
-                                                <svg class="w-5 h-5 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                                            @else
-                                                <svg class="w-5 h-5 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                                                                @endif
-                                                            </span>
-                                        <span class="min-w-0 text-xs text-maroon-900 font-medium truncate">
+                                        <span class="flex items-center justify-center w-7 h-7 rounded-full 
+    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication') bg-maroon-800 @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation') bg-maroon-800 @elseif($icon === 'plus-circle') bg-green-500 @elseif($icon === 'refresh-cw') bg-blue-500 @elseif($icon === 'trash-2') bg-red-500 @else bg-maroon-400 @endif border">
+    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0H3m9 0h9" /></svg>
+    @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 3v4M7 3v4" /></svg>
+    @elseif($icon === 'plus-circle')
+        <svg class="w-5 h-5" fill="white" stroke="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    @elseif($icon === 'refresh-cw')
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>
+    @elseif($icon === 'trash-2')
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    @else
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    @endif
+</span>
+                                        <span class="min-w-0 text-xs text-maroon-900 font-bold truncate">
                                             {!! $desc !!}
-                                                            </span>
-                                        <span class="text-xs text-right whitespace-nowrap min-w-[80px] pl-2 @if($log->user && $log->user->role === 'admin') text-maroon-900 font-bold @else text-gray-700 @endif">
+                                        </span>
+                                        <span class="text-xs text-right whitespace-nowrap min-w-[80px] pl-2 @if($log->user && $log->user->role === 'admin') text-maroon-900 font-extrabold @else text-gray-700 font-semibold @endif">
                                             @if($log->user)
                                                 @php
                                                     $nameParts = preg_split('/\s+/', trim($log->user->name ?? ''));
@@ -269,15 +333,16 @@
                                 @endif
                                         </span>
                                         <span class="text-xs text-gray-400 text-center w-4 flex items-center justify-center">&middot;</span>
-                                        <span class="text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1">
+                                        <span class="text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1 font-semibold">
                                             <span title="{{ $log->created_at->setTimezone('Asia/Manila')->toDayDateTimeString() }}">{{ $log->created_at->setTimezone('Asia/Manila')->diffForHumans() }}</span>
                                         </span>
                                     </li>
                                 @endforeach
                             </ul>
+                            </div>
                         </div>
                         <!-- Combined Chart Card: Request Stats + Status Breakdown -->
-                        <div class="bg-yellow-100 rounded-xl shadow p-2 flex flex-col md:flex-row items-stretch justify-center flex-1 overflow-hidden min-h-[220px] max-h-[260px] gap-2">
+                        <div class="bg-white/30 backdrop-blur border border-white/40 rounded-xl shadow p-2 flex flex-col md:flex-row items-stretch justify-center flex-1 overflow-y-auto min-h-[220px] max-h-[45vh] h-[45vh] gap-2">
                             <!-- Request Stats (Line Chart) -->
                             <div class="flex-[2_2_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden px-3">
                                 <h2 class="text-sm font-semibold mb-2 text-left w-full">Request Stats (Last 12 Months)</h2>
@@ -460,7 +525,7 @@ function updateActivityLogs(activityLogs) {
 
 function createActivityLogItem(log) {
     const li = document.createElement('li');
-    li.className = 'grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-yellow-50 rounded-lg p-1';
+    li.className = 'grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-white/30 backdrop-blur rounded-lg p-1';
     
     // Create icon
     const icon = document.createElement('span');
@@ -764,96 +829,158 @@ function showError(message) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Monthly Bar/Line Chart
-        const monthlyChartElement = document.getElementById('monthlyChart');
-        if (monthlyChartElement) {
-            const months = @json($months);
-            const pubData = @json(array_values($monthlyCounts['Publication']));
-            const citData = @json(array_values($monthlyCounts['Citation']));
-            const typeFilter = @json($type);
-            let datasets = [];
-            if (!typeFilter || typeFilter === 'Publication') {
-                datasets.push({
-                    label: 'Publications',
-                    data: pubData,
-                    backgroundColor: 'rgba(139, 69, 19, 0.7)',
-                    borderColor: 'rgba(139, 69, 19, 1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                });
-            }
-            if (!typeFilter || typeFilter === 'Citation') {
-                datasets.push({
-                    label: 'Citations',
-                    data: citData,
-                    backgroundColor: 'rgba(128, 0, 32, 0.7)',
-                    borderColor: 'rgba(128, 0, 32, 1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                });
-            }
-            new Chart(monthlyChartElement.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: months.map(m => m.replace(/\d{4}-/, '')),
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { precision:0 } },
-                        x: { grid: { display: false } }
-                    }
-                }
+let monthlyChartInstance = null;
+let statusChartInstance = null;
+
+function updateChartsWithData(data) {
+    // Update Monthly Chart
+    const monthlyChartElement = document.getElementById('monthlyChart');
+    if (monthlyChartElement) {
+        if (monthlyChartInstance) monthlyChartInstance.destroy();
+        const months = data.months;
+        const pubData = Object.values(data.monthlyCounts.Publication);
+        const citData = Object.values(data.monthlyCounts.Citation);
+        const typeFilter = data.type;
+        let datasets = [];
+        if (!typeFilter || typeFilter === 'Publication') {
+            datasets.push({
+                label: 'Publications',
+                data: pubData,
+                backgroundColor: 'rgba(139, 69, 19, 0.7)',
+                borderColor: 'rgba(139, 69, 19, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
             });
         }
-        // Status Donut Chart
-        const statusChartElement = document.getElementById('statusChart');
-        if (statusChartElement) {
-            const statusCounts = @json(array_values($statusCounts));
-            new Chart(statusChartElement.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pending', 'Endorsed', 'Rejected'],
-                    datasets: [{
-                        data: statusCounts,
-                        backgroundColor: [
-                            'rgba(245, 158, 11, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(239, 68, 68, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(245, 158, 11, 1)',
-                            'rgba(34, 197, 94, 1)',
-                            'rgba(239, 68, 68, 1)'
-                        ],
-                        borderWidth: 2,
-                        hoverBackgroundColor: [
-                            'rgba(245, 158, 11, 1)',
-                            'rgba(34, 197, 94, 1)',
-                            'rgba(239, 68, 68, 1)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }, // Hide Chart.js legend
-                        tooltip: { enabled: true }
-                    }
-                }
+        if (!typeFilter || typeFilter === 'Citation') {
+            datasets.push({
+                label: 'Citations',
+                data: citData,
+                backgroundColor: 'rgba(128, 0, 32, 0.7)',
+                borderColor: 'rgba(128, 0, 32, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
             });
         }
-    });
+        monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: months.map(m => m.replace(/\d{4}-/, '')),
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision:0 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+    // Update Status Donut Chart
+    const statusChartElement = document.getElementById('statusChart');
+    if (statusChartElement) {
+        if (statusChartInstance) statusChartInstance.destroy();
+        const statusCounts = [data.statusCounts.pending, data.statusCounts.endorsed, data.statusCounts.rejected];
+        statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Endorsed', 'Rejected'],
+                datasets: [{
+                    data: statusCounts,
+                    backgroundColor: [
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 2,
+                    hoverBackgroundColor: [
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                }
+            }
+        });
+    }
+}
+
+function getCurrentFilters() {
+    const url = new URL(window.location.href);
+    return {
+        type: url.searchParams.get('type'),
+        period: url.searchParams.get('period'),
+        status: url.searchParams.get('status'),
+        search: url.searchParams.get('search')
+    };
+}
+
+function fetchAndUpdateCharts(filters) {
+    const params = new URLSearchParams(filters).toString();
+    fetch(`/admin/dashboard/data?${params}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.months || !data.monthlyCounts || !data.statusCounts) {
+                console.error('Chart data missing keys:', data);
+                alert('Chart data could not be loaded. Please try again or contact support.');
+                return;
+            }
+            updateChartsWithData({
+                months: data.months,
+                monthlyCounts: data.monthlyCounts,
+                statusCounts: data.statusCounts,
+                type: filters.type
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching chart data:', err);
+            alert('Failed to load chart data. Please check your connection or contact support.');
+        });
+}
+
+// Attach event listeners after DOM is ready
+// document.addEventListener('DOMContentLoaded', () => {
+//     fetchAndUpdateCharts(getCurrentFilters());
+// });
+document.addEventListener('turbo:render', () => {
+    fetchAndUpdateCharts(getCurrentFilters());
+});
+document.removeEventListener && document.removeEventListener('turbo:load', fetchAndUpdateCharts);
 </script>
 </x-app-layout>
+
+<style>
+/* Transparent scrollbar track, visible thumb for activity log */
+.activity-log-scroll::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+.activity-log-scroll::-webkit-scrollbar-thumb {
+    background: #b91c1c; /* Maroon-700 */
+    border-radius: 4px;
+}
+.activity-log-scroll {
+    scrollbar-color: #b91c1c transparent;
+}
+</style>
 

@@ -67,18 +67,13 @@ class PublicationsController extends Controller
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $data = $request->all();
-            
-            // Determine if this is a preview (no request_id) or post-submission (with request_id)
             $isPreview = !$reqId;
-            
             if ($isPreview) {
-                // Preview mode: use temp directory
                 $userId = Auth::id();
                 $tempCode = 'preview_' . time() . '_' . Str::random(8);
                 $uploadPath = "temp/{$userId}/{$tempCode}";
                 Log::info('Generating DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
             } else {
-                // Post-submission mode: use request directory
                 $userRequest = \App\Models\Request::find($reqId);
                 if (!$userRequest) {
                     throw new \Exception('Request not found for DOCX generation');
@@ -88,52 +83,41 @@ class PublicationsController extends Controller
                 $uploadPath = "requests/{$userId}/{$reqCode}";
                 Log::info('Generating DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
             }
-            
-            $outputPath = null;
             $filename = null;
-            
+            $fullPath = null;
             switch ($docxType) {
                 case 'incentive':
-                    $outputPath = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
+                    $filtered = $this->mapIncentiveFields($data);
+                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
+                    $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath);
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                 case 'recommendation':
-                    $outputPath = $this->generateRecommendationDocxFromHtml($data, $uploadPath);
+                    $filtered = $this->mapRecommendationFields($data);
+                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
+                    $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath);
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
                 case 'terminal':
-                    $outputPath = $this->generateTerminalDocxFromHtml($data, $uploadPath);
+                    $filtered = $this->mapTerminalFields($data);
+                    Log::info('Filtered data for terminal', ['filtered' => $filtered]);
+                    $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath);
                     $filename = 'Terminal_Report_Form.docx';
                     break;
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
-            
-            $fullPath = storage_path('app/' . $outputPath);
             if (!file_exists($fullPath)) {
                 throw new \Exception('Generated file not found');
             }
-            
-            // Only update database if this is not a preview (i.e., we have a valid request_id)
-            if (!$isPreview && $userRequest) {
-                $pdfPath = $userRequest->pdf_path ? json_decode($userRequest->pdf_path, true) : [];
-                if (!isset($pdfPath['docxs'])) $pdfPath['docxs'] = [];
-                $pdfPath['docxs'][$docxType] = preg_replace('/^public\//', '', $outputPath);
-                $userRequest->pdf_path = json_encode($pdfPath);
-                $userRequest->save();
-                Log::info('Updated pdf_path for request', ['request_id' => $reqId, 'docxType' => $docxType, 'outputPath' => $outputPath]);
-            } else {
-                Log::info('Skipping database update for preview mode', ['docxType' => $docxType, 'outputPath' => $outputPath]);
-            }
-            
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';
-            
             return response()->download($fullPath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
+            // The response is final. Do not add any code after this line.
         } catch (\Exception $e) {
             Log::error('Error generating DOCX: ' . $e->getMessage());
             return response()->json([
@@ -147,70 +131,36 @@ class PublicationsController extends Controller
     {
         try {
             Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
-            // Ensure directory exists
             $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = storage_path('app/' . $publicUploadPath);
+            $fullPath = Storage::disk('public')->path($publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
-            // Prepare checkboxes for type
-            $type = $data['type'] ?? '';
-            $typeChecked = [
-                'regional' => $type === 'Regional' ? '☑' : '☐',
-                'national' => $type === 'National' ? '☑' : '☐',
-                'international' => $type === 'International' ? '☑' : '☐',
-            ];
-            // Prepare checkboxes for indexed in
-            $selectedIndex = $data['indexed_in'] ?? '';
-            $indexedChecked = [
-                'scopus' => $selectedIndex === 'Scopus' ? '☑' : '☐',
-                'wos' => $selectedIndex === 'Web of Science' ? '☑' : '☐',
-                'aci' => $selectedIndex === 'ACI' ? '☑' : '☐',
-                'pubmed' => $selectedIndex === 'PubMed' ? '☑' : '☐',
-            ];
-            // Use TemplateProcessor
             $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
             $outputPath = $publicUploadPath . '/Incentive_Application_Form.docx';
-            $fullOutputPath = storage_path('app/' . $outputPath);
+            $fullOutputPath = Storage::disk('public')->path($outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
-            $templateProcessor->setValue('collegeheader', $data['collegeheader'] ?? '');
-            $templateProcessor->setValue('name', $data['name'] ?? '');
-            $templateProcessor->setValue('academicrank', $data['academicrank'] ?? '');
-            $templateProcessor->setValue('employment', $data['employmentstatus'] ?? '');
-            $templateProcessor->setValue('college', $data['college'] ?? '');
-            $templateProcessor->setValue('campus', $data['campus'] ?? '');
-            $templateProcessor->setValue('field', $data['field'] ?? '');
-            $templateProcessor->setValue('years', $data['years'] ?? '');
-            $templateProcessor->setValue('title', $data['papertitle'] ?? '');
-            $templateProcessor->setValue('coauthor', $data['coauthors'] ?? '');
-            $templateProcessor->setValue('journaltitle', $data['journaltitle'] ?? '');
-            $templateProcessor->setValue('version', $data['version'] ?? '');
-            $templateProcessor->setValue('pissn', $data['pissn'] ?? '');
-            $templateProcessor->setValue('eissn', $data['eissn'] ?? '');
-            $templateProcessor->setValue('doi', $data['doi'] ?? '');
-            $templateProcessor->setValue('publisher', $data['publisher'] ?? '');
-            $templateProcessor->setValue('citescore', $data['citescore'] ?? '');
-            $templateProcessor->setValue('particulars', $data['particulars'] ?? '');
-            $templateProcessor->setValue('facultyname', $data['facultyname'] ?? '');
-            $templateProcessor->setValue('centermanager', $data['centermanager'] ?? '');
-            $templateProcessor->setValue('collegedean', $data['collegedean'] ?? '');
-            $templateProcessor->setValue('regional', $typeChecked['regional']);
-            $templateProcessor->setValue('national', $typeChecked['national']);
-            $templateProcessor->setValue('international', $typeChecked['international']);
-            $templateProcessor->setValue('scopus', $indexedChecked['scopus']);
-            $templateProcessor->setValue('wos', $indexedChecked['wos']);
-            $templateProcessor->setValue('aci', $indexedChecked['aci']);
-            $templateProcessor->setValue('pubmed', $indexedChecked['pubmed']);
-            // Additional variables found in template
-            $templateProcessor->setValue('date', now()->format('Y-m-d'));
-            $templateProcessor->setValue('faculty', $data['facultyname'] ?? '');
-            $templateProcessor->setValue('dean', $data['collegedean'] ?? '');
-            $templateProcessor->setValue('references', '');
-            $templateProcessor->setValue('appendices', '');
-            $templateProcessor->saveAs($fullOutputPath);
-            Log::info('DOCX creation completed', ['outputPath' => $fullOutputPath]);
-            return $outputPath;
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
+            $fullOutputPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fullOutputPath);
+            $testFile = $fullOutputPath . '.test.txt';
+            file_put_contents($testFile, 'test');
+            Log::info('Test file created', [
+                'test_file' => $testFile,
+                'test_file_exists' => file_exists($testFile),
+                'dir_contents' => scandir(dirname($fullOutputPath))
+            ]);
+            try {
+                Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
+                $templateProcessor->saveAs($fullOutputPath);
+                Log::info('Tried to save DOCX', ['fullOutputPath' => $fullOutputPath]);
+            } catch (\Exception $e) {
+                Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
+                throw $e;
+            }
+            return $fullOutputPath; // Return the full path for the controller to use
         } catch (\Exception $e) {
             Log::error('Error in generateIncentiveDocxFromHtml: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -224,23 +174,19 @@ class PublicationsController extends Controller
     {
         try {
             $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = storage_path('app/' . $publicUploadPath);
+            $fullPath = Storage::disk('public')->path($publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
             $templatePath = storage_path('app/templates/Recommendation_Letter_Form.docx');
             $outputPath = $publicUploadPath . '/Recommendation_Letter_Form.docx';
-            $fullOutputPath = storage_path('app/' . $outputPath);
+            $fullOutputPath = Storage::disk('public')->path($outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
-            // Set all relevant fields for recommendation letter (matching template)
-            $templateProcessor->setValue('collegeheader', $data['rec_collegeheader'] ?? '');
-            $templateProcessor->setValue('date', $data['rec_date'] ?? now()->format('Y-m-d'));
-            $templateProcessor->setValue('facultyname', $data['rec_facultyname'] ?? '');
-            $templateProcessor->setValue('details', $data['details'] ?? '');
-            $templateProcessor->setValue('indexing', $data['indexing'] ?? '');
-            $templateProcessor->setValue('dean', $data['dean'] ?? '');
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
             $templateProcessor->saveAs($fullOutputPath);
-            return $outputPath;
+            return $fullOutputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateRecommendationDocxFromHtml: ' . $e->getMessage());
             throw $e;
@@ -251,27 +197,19 @@ class PublicationsController extends Controller
     {
         try {
             $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = storage_path('app/' . $publicUploadPath);
+            $fullPath = Storage::disk('public')->path($publicUploadPath);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
             $templatePath = storage_path('app/templates/Terminal_Report_Form.docx');
             $outputPath = $publicUploadPath . '/Terminal_Report_Form.docx';
-            $fullOutputPath = storage_path('app/' . $outputPath);
+            $fullOutputPath = Storage::disk('public')->path($outputPath);
             $templateProcessor = new TemplateProcessor($templatePath);
-            // Set all relevant fields for terminal report (update these after running debug script)
-            $templateProcessor->setValue('title', $data['title'] ?? '');
-            $templateProcessor->setValue('author', $data['author'] ?? '');
-            $templateProcessor->setValue('duration', $data['duration'] ?? '');
-            $templateProcessor->setValue('abstract', $data['abstract'] ?? '');
-            $templateProcessor->setValue('introduction', $data['introduction'] ?? '');
-            $templateProcessor->setValue('methodology', $data['methodology'] ?? '');
-            $templateProcessor->setValue('rnd', $data['rnd'] ?? '');
-            $templateProcessor->setValue('car', $data['car'] ?? '');
-            $templateProcessor->setValue('references', $data['references'] ?? '');
-            $templateProcessor->setValue('appendices', $data['appendices'] ?? '');
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
             $templateProcessor->saveAs($fullOutputPath);
-            return $outputPath;
+            return $fullOutputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateTerminalDocxFromHtml: ' . $e->getMessage());
             throw $e;
@@ -282,7 +220,7 @@ class PublicationsController extends Controller
     {
         try {
             // Load the template
-            $templatePath = storage_path('app/templates/' . $templateName);
+            $templatePath = Storage::disk('public')->path('templates/' . $templateName);
             
             if (!file_exists($templatePath)) {
                 throw new \Exception("Template file not found: {$templatePath}");
@@ -451,12 +389,12 @@ class PublicationsController extends Controller
             }
         }
         foreach ($allFiles as $filePath) {
-            \Storage::disk('public')->delete($filePath);
+            Storage::disk('public')->delete($filePath);
         }
         // Remove the per-request directory and all its contents
         if (isset($request->user_id) && isset($request->request_code)) {
             $dir = "requests/{$request->user_id}/{$request->request_code}";
-            $fullDir = storage_path('app/public/' . $dir);
+            $fullDir = Storage::disk('public')->path($dir);
             if (is_dir($fullDir)) {
                 $files = glob($fullDir . '/*');
                 foreach ($files as $file) {
@@ -508,20 +446,13 @@ class PublicationsController extends Controller
         // Validate all form data
         $validator = Validator::make($request->all(), [
             // Incentive Application fields
-            //'collegeheader' => 'required|string',
             'name' => 'required|string',
             'academicrank' => 'required|string',
-            'employmentstatus' => 'required|string',
             'college' => 'required|string',
-            'campus' => 'required|string',
-            'field' => 'required|string',
-            'years' => 'required|numeric',
             'papertitle' => 'required|string',
-            'coauthors' => 'nullable|string',
+            'bibentry' => 'required|string',
             'journaltitle' => 'required|string',
-            'version' => 'required|string',
-            'pissn' => 'nullable|string',
-            'eissn' => 'nullable|string',
+            'issn' => 'required|string',
             'doi' => 'nullable|string',
             'publisher' => 'required|string',
             'type' => 'required|string',
@@ -551,7 +482,6 @@ class PublicationsController extends Controller
             'appendices' => 'nullable|string',
             // File uploads
             'article_pdf' => 'required|file|mimes:pdf|max:20480',
-            'cover_pdf' => 'required|file|mimes:pdf|max:20480',
             'acceptance_pdf' => 'required|file|mimes:pdf|max:20480',
             'peer_review_pdf' => 'required|file|mimes:pdf|max:20480',
             'terminal_report_pdf' => 'required|file|mimes:pdf|max:20480',
@@ -580,7 +510,6 @@ class PublicationsController extends Controller
             $attachments = [];
             foreach ([
                 'article_pdf',
-                'cover_pdf',
                 'acceptance_pdf',
                 'peer_review_pdf',
                 'terminal_report_pdf'
@@ -763,7 +692,7 @@ class PublicationsController extends Controller
             }
 
             // Build the full file path
-            $fullPath = storage_path('app/public/' . $storagePath);
+            $fullPath = Storage::disk('public')->path($storagePath);
 
             // Log for debugging
             Log::info('Admin download attempt', [
@@ -858,12 +787,12 @@ class PublicationsController extends Controller
             if (!Storage::disk('public')->exists($filePath)) {
                     abort(404, 'PDF file not found on disk');
                 }
-                $fullPath = storage_path('app/public/' . $filePath);
+                $fullPath = Storage::disk('public')->path($filePath);
             } else {
-                if (!file_exists(storage_path('app/' . $filePath))) {
+                if (!file_exists(Storage::disk('public')->path($filePath))) {
                     abort(404, 'DOCX file not found on disk');
                 }
-                $fullPath = storage_path('app/' . $filePath);
+                $fullPath = Storage::disk('public')->path($filePath);
             }
 
             // Get user name for filename
@@ -900,14 +829,14 @@ class PublicationsController extends Controller
             'request_id' => $request->id,
             'pdf_path_raw' => $pdfPath,
             'pdf_path_decoded' => $paths,
-            'storage_base' => storage_path('app'),
+            'storage_base' => Storage::disk('public')->path(''),
         ];
 
         if ($paths) {
             $debug['pdfs'] = [];
             if (isset($paths['pdfs'])) {
                 foreach ($paths['pdfs'] as $key => $fileInfo) {
-                    $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                    $fullPath = Storage::disk('public')->path($fileInfo['path']);
                     $debug['pdfs'][$key] = [
                         'path' => $fileInfo['path'],
                         'full_path' => $fullPath,
@@ -921,7 +850,7 @@ class PublicationsController extends Controller
             $debug['docxs'] = [];
             if (isset($paths['docxs'])) {
                 foreach ($paths['docxs'] as $key => $storagePath) {
-                    $fullPath = storage_path('app/' . $storagePath);
+                    $fullPath = Storage::disk('public')->path($storagePath);
                     $debug['docxs'][$key] = [
                         'path' => $storagePath,
                         'full_path' => $fullPath,
@@ -967,7 +896,7 @@ class PublicationsController extends Controller
             $zipName = $userNameSlug . '_request_files.zip';
             
             // Create a temporary ZIP file
-            $zipPath = storage_path('app/temp/' . $zipName);
+            $zipPath = Storage::disk('public')->path('temp/' . $zipName);
             $zipDir = dirname($zipPath);
             if (!is_dir($zipDir)) {
                 mkdir($zipDir, 0777, true);
@@ -984,7 +913,7 @@ class PublicationsController extends Controller
             // Add PDF files
             if (isset($paths['pdfs'])) {
                 foreach ($paths['pdfs'] as $key => $fileInfo) {
-                    $filePath = storage_path('app/public/' . $fileInfo['path']);
+                    $filePath = Storage::disk('public')->path($fileInfo['path']);
                     $originalName = $fileInfo['original_name'] ?? $key . '.pdf';
                     
                     Log::info('Processing PDF file', [
@@ -1010,7 +939,7 @@ class PublicationsController extends Controller
             // Add DOCX files
             if (isset($paths['docxs'])) {
                 foreach ($paths['docxs'] as $key => $storagePath) {
-                    $filePath = storage_path('app/' . $storagePath);
+                    $filePath = Storage::disk('public')->path($storagePath);
                     $docxName = ucfirst($key) . '_Form.docx';
                     
                     Log::info('Processing DOCX file', [
@@ -1063,6 +992,136 @@ class PublicationsController extends Controller
             ]);
             
             abort(500, 'ZIP download failed: ' . $e->getMessage());
+        }
+    }
+
+    private function mapIncentiveFields($data) {
+        return [
+            'college' => $data['college'] ?? '',
+            'name' => $data['name'] ?? '',
+            'academicrank' => $data['academicrank'] ?? '',
+            'papertitle' => $data['papertitle'] ?? '',
+            'bibentry' => $data['bibentry'] ?? '',
+            'journaltitle' => $data['journaltitle'] ?? '',
+            'issn' => $data['issn'] ?? '',
+            'doi' => $data['doi'] ?? '',
+            'publisher' => $data['publisher'] ?? '',
+            'scopus' => (isset($data['indexed_in']) && $data['indexed_in'] === 'Scopus') ? '☑' : '☐',
+            'wos' => (isset($data['indexed_in']) && $data['indexed_in'] === 'Web of Science') ? '☑' : '☐',
+            'aci' => (isset($data['indexed_in']) && $data['indexed_in'] === 'ACI') ? '☑' : '☐',
+            'regional' => (isset($data['type']) && $data['type'] === 'Regional') ? '☑' : '☐',
+            'national' => (isset($data['type']) && $data['type'] === 'National') ? '☑' : '☐',
+            'international' => (isset($data['type']) && $data['type'] === 'International') ? '☑' : '☐',
+            'citescore' => $data['citescore'] ?? '',
+            'particulars' => $data['particulars'] ?? '',
+            'faculty' => $data['facultyname'] ?? '',
+            'centermanager' => $data['centermanager'] ?? '',
+            'dean' => $data['collegedean'] ?? '',
+            'date' => $data['date'] ?? now()->format('Y-m-d'),
+        ];
+    }
+    private function mapRecommendationFields($data) {
+        // Forcefully extract the value for rec_collegeheader
+        $collegeheader = '';
+        if (isset($data['rec_collegeheader'])) {
+            if (is_array($data['rec_collegeheader'])) {
+                $collegeheader = end($data['rec_collegeheader']);
+            } else {
+                $collegeheader = $data['rec_collegeheader'];
+            }
+        } else if (request()->has('rec_collegeheader')) {
+            $collegeheader = request()->input('rec_collegeheader');
+        } else if (isset($_POST['rec_collegeheader'])) {
+            $collegeheader = $_POST['rec_collegeheader'];
+        }
+        Log::info('FORCED rec_collegeheader VALUE', ['value' => $collegeheader, 'raw' => $data['rec_collegeheader'] ?? null, 'request_input' => request()->input('rec_collegeheader'), 'post' => $_POST['rec_collegeheader'] ?? null]);
+        return [
+            'collegeheader' => $collegeheader,
+            'facultyname' => $data['rec_facultyname'] ?? '',
+            'details' => $data['details'] ?? '',
+            'indexing' => $data['indexing'] ?? '',
+            'dean' => $data['dean'] ?? '',
+            'date' => $data['rec_date'] ?? now()->format('Y-m-d'),
+        ];
+    }
+    private function mapTerminalFields($data) {
+        return [
+            'title' => $data['title'] ?? '',
+            'author' => $data['author'] ?? '',
+            'duration' => $data['duration'] ?? '',
+            'abstract' => $data['abstract'] ?? '',
+            'introduction' => $data['introduction'] ?? '',
+            'methodology' => $data['methodology'] ?? '',
+            'rnd' => $data['rnd'] ?? '',
+            'car' => $data['car'] ?? '',
+            'references' => $data['references'] ?? '',
+            'appendices' => $data['appendices'] ?? '',
+        ];
+    }
+    public function generateDocx(Request $request)
+    {
+        Log::info('RAW REQUEST DATA', $request->all());
+        try {
+            $reqId = $request->input('request_id');
+            $docxType = $request->input('docx_type', 'incentive');
+            $data = $request->all();
+            $isPreview = !$reqId;
+            if ($isPreview) {
+                $userId = Auth::id();
+                $tempCode = 'preview_' . time() . '_' . Str::random(8);
+                $uploadPath = "temp/{$userId}/{$tempCode}";
+                Log::info('Generating DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
+            } else {
+                $userRequest = \App\Models\Request::find($reqId);
+                if (!$userRequest) {
+                    throw new \Exception('Request not found for DOCX generation');
+                }
+                $reqCode = $userRequest->request_code;
+                $userId = $userRequest->user_id;
+                $uploadPath = "requests/{$userId}/{$reqCode}";
+                Log::info('Generating DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
+            }
+            $filename = null;
+            $fullPath = null;
+            switch ($docxType) {
+                case 'incentive':
+                    $filtered = $this->mapIncentiveFields($data);
+                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
+                    $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath);
+                    $filename = 'Incentive_Application_Form.docx';
+                    break;
+                case 'recommendation':
+                    $filtered = $this->mapRecommendationFields($data);
+                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
+                    $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath);
+                    $filename = 'Recommendation_Letter_Form.docx';
+                    break;
+                case 'terminal':
+                    $filtered = $this->mapTerminalFields($data);
+                    Log::info('Filtered data for terminal', ['filtered' => $filtered]);
+                    $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath);
+                    $filename = 'Terminal_Report_Form.docx';
+                    break;
+                default:
+                    throw new \Exception('Invalid document type: ' . $docxType);
+            }
+            if (!file_exists($fullPath)) {
+                throw new \Exception('Generated file not found');
+            }
+            $userAgent = request()->header('User-Agent');
+            $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+            $contentDisposition = $isIOS ? 'inline' : 'attachment';
+            return response()->download($fullPath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
+            ]);
+            // The response is final. Do not add any code after this line.
+        } catch (\Exception $e) {
+            Log::error('Error generating DOCX: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating document: ' . $e->getMessage()
+            ], 500);
         }
     }
 } 

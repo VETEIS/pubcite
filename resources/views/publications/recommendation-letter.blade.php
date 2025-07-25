@@ -2,8 +2,8 @@
     <h3 class="text-lg font-semibold text-burgundy-800 mb-4 border-b-2 border-burgundy-200 pb-2">Recommendation Letter from the Dean</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">College/Unit/Department</label>
-            <input type="text" name="rec_collegeheader" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="rec_collegeheader">College/Unit/Department</label>
+            <input type="text" name="rec_collegeheader" id="rec_collegeheader" autocomplete="organization" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required>
             </div>
             <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>

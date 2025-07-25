@@ -19,3 +19,24 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Autofill styles for glassmorphism and contrast */
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: #1a202c !important; /* Tailwind gray-900 */
+    font-weight: 500 !important; /* font-medium */
+    font-size: 1rem !important;  /* text-base */
+    background-color: transparent !important;
+    box-shadow: 0 0 0 1000px rgba(255,255,255,0.3) inset !important; /* glass effect */
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+@keyframes arrow-bounce-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-8px); }
+}
+.group:hover .arrow-animate-x {
+  animation: arrow-bounce-x 0.6s infinite;
+}

@@ -57,7 +57,10 @@ Route::middleware([
     Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success');
     Route::patch('/admin/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');
     Route::patch('/admin/requests/{request}/status', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.status');
-    Route::post('/publications/incentive-application/generate', [\App\Http\Controllers\PublicationsController::class, 'generateIncentiveDocx'])->name('publications.incentive.generate');
+    // Add a single endpoint for all publication DOCX generations
+    Route::post('/publications/generate-docx', [\App\Http\Controllers\PublicationsController::class, 'generateDocx'])->name('publications.generateDocx');
+    // Optionally, comment out the old incentive-application/generate route
+    // Route::post('/publications/incentive-application/generate', ...);
     Route::delete('/admin/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
     Route::get('/admin/requests/{request}/download', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadFile'])->name('admin.requests.download');
     Route::get('/admin/requests/{request}/download-zip', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadZip'])->name('admin.requests.download-zip');
