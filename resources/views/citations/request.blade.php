@@ -462,8 +462,7 @@
                 let fields = [];
                 if (tab === 'incentive') {
                     fields = [
-                        'name', 'rank', 'college', 'title', 'bibentry', 'journal', 'issn', 'publisher',
-                        'citedtitle', 'citedbibentry', 'citedjournal', 'faculty_name', 'dean_name'
+                        'name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'dean_name'
                     ]; // 'citescore' and 'doi' are optional
                 } else if (tab === 'recommendation') {
                     fields = ['rec_faculty_name', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name'];
@@ -505,8 +504,7 @@
             checkTabs() {
                 // Check incentive tab completion
                 const incentiveFields = [
-                    'name', 'rank', 'college', 'title', 'bibentry', 'journal', 'issn', 'publisher',
-                    'citedtitle', 'citedbibentry', 'citedjournal', 'faculty_name', 'dean_name'
+                    'name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'dean_name'
                 ]; // 'citescore' and 'doi' are optional
                 this.tabCompletion.incentive = incentiveFields.every(field => {
                     const element = document.querySelector(`[name="${field}"]`);

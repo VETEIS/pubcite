@@ -74,7 +74,7 @@
 </head>
 <body>
     <div class="header">
-        <h2 style="margin:0; font-size: 1.2em;">USEP Publications</h2>
+        <h2 style="margin:0; font-size: 1.2em;">USEP Publication</h2>
         <div style="font-size: 1em; margin-top: 2px;">{{ $request->type }} Request Submitted</div>
     </div>
     <div class="content">
@@ -88,7 +88,7 @@
             Please save your request code for future reference.
         </div>
         <div style="margin-top:10px; font-size:12px; color:#888;">
-            Your request will be reviewed by the Publications Unit. You will receive updates on the status of your request.
+            Your request will be reviewed by the Publication Unit. You will receive updates on the status of your request.
         </div>
         <div class="footer">
             <p>This is an automated message. Please do not reply to this email.</p>

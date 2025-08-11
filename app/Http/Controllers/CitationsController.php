@@ -228,7 +228,7 @@ class CitationsController extends Controller
                 }
             }
             foreach ($allFiles as $filePath) {
-                \Storage::disk('public')->delete($filePath);
+                Storage::disk('public')->delete($filePath);
             }
             
             // Remove the per-request directory and all its contents
@@ -286,25 +286,17 @@ class CitationsController extends Controller
                 'name' => 'required|string',
                 'rank' => 'required|string',
                 'college' => 'required|string',
-                // Citing Paper
-                'title' => 'required|string',
+                // Citation Details (simplified)
                 'bibentry' => 'required|string',
-                'journal' => 'required|string',
                 'issn' => 'required|string',
                 'doi' => 'nullable|string',
-                'publisher' => 'required|string',
                 'scopus' => 'nullable',
                 'wos' => 'nullable',
                 'aci' => 'nullable',
-                'citescore' => 'nullable|string',
-                // Cited Paper
-                'citedtitle' => 'required|string',
-                'citedbibentry' => 'required|string',
-                'citedjournal' => 'required|string',
                 // Signatures
-                'facultyname' => 'required|string',
-                'centermanager' => 'nullable|string',
-                'dean' => 'nullable|string',
+                'faculty_name' => 'required|string',
+                'center_manager' => 'nullable|string',
+                'dean_name' => 'required|string',
                 // File uploads (if any)
                 'rec_collegeheader' => 'required|string',
             ]);
@@ -598,19 +590,20 @@ class CitationsController extends Controller
             'college' => $data['college'] ?? '',
             'name' => $data['name'] ?? '',
             'rank' => $data['rank'] ?? '',
-            'title' => $data['title'] ?? '',
             'bibentry' => $data['bibentry'] ?? '',
-            'journal' => $data['journal'] ?? '',
             'issn' => $data['issn'] ?? '',
             'doi' => $data['doi'] ?? '',
-            'publisher' => $data['publisher'] ?? '',
             'scopus' => isset($data['scopus']) ? '☑' : '☐',
             'wos' => isset($data['wos']) ? '☑' : '☐',
             'aci' => isset($data['aci']) ? '☑' : '☐',
-            'citescore' => $data['citescore'] ?? '',
-            'citedtitle' => $data['citedtitle'] ?? '',
-            'citedbibentry' => $data['citedbibentry'] ?? '',
-            'citedjournal' => $data['citedjournal'] ?? '',
+            // Placeholders kept for template compatibility (set blank)
+            'title' => '',
+            'journal' => '',
+            'publisher' => '',
+            'citescore' => '',
+            'citedtitle' => '',
+            'citedbibentry' => '',
+            'citedjournal' => '',
             'facultyname' => $data['faculty_name'] ?? '',
             'centermanager' => $data['center_manager'] ?? '',
             'dean' => $data['dean_name'] ?? '',

@@ -106,7 +106,7 @@
 </head>
 <body>
     <div class="header">
-        <h2 style="margin:0; font-size: 1.2em;">USEP Publications</h2>
+        <h2 style="margin:0; font-size: 1.2em;">USEP Publication</h2>
         <div style="font-size: 1em; margin-top: 2px;">New {{ $request->type }} Request</div>
     </div>
     <div class="content">
@@ -131,7 +131,7 @@
             Please review this request in the admin dashboard.
         </div>
         <div class="footer">
-            <p>This is an automated notification from the Publications Unit system.</p>
+            <p>This is an automated notification from the Publication Unit system.</p>
             <p>Please do not reply to this email.</p>
         </div>
     </div>

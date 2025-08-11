@@ -21,7 +21,6 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Preload -->
-        <link rel="preload" as="image" href="/images/eagle.jpg" fetchpriority="high">
         <link rel="preload" as="image" href="/images/spjrd.png" fetchpriority="high">
 
         <!-- Scripts -->
@@ -75,7 +74,7 @@
                         <div class="flex items-center gap-3">
                             <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-10 w-10 object-contain rounded-full" loading="eager" />
                             <a href="{{ url('/') }}" class="text-white text-lg font-semibold tracking-wide whitespace-nowrap hover:text-maroon-200 transition duration-150">
-                                USeP Publications Unit
+                                USeP Publication Unit
                             </a>
                             @if (View::exists('components.breadcrumbs'))
                                 <span class="flex items-center justify-center ml-6">

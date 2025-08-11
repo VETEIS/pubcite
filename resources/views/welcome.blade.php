@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'USeP Publications Unit') }}</title>
+        <title>{{ config('app.name', 'USeP Publication Unit') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -30,7 +30,7 @@
                     <div class="flex justify-between h-16">
                         <div class="flex items-center gap-3">
                             <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-10 w-10 object-contain rounded-full" />
-                            <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">USeP Publications Unit</span>
+                            <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">USeP Publication Unit</span>
                             @if (View::exists('components.breadcrumbs'))
                                 <span class="flex items-center justify-center ml-6">
                                     @include('components.breadcrumbs', ['crumbs' => $breadcrumbs ?? null, 'inline' => true])
@@ -53,14 +53,19 @@
                             <div class="w-64 h-full flex flex-col justify-center">
                                 <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center">
                                     <!-- Icon -->
-                                    <div class="mb-2 flex items-center justify-center">
-                                        <svg class="w-10 h-10 text-maroon-800 drop-shadow-lg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0 0V4" />
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <svg class="w-8 h-8 text-maroon-800 drop-shadow-lg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-1a4 4 0 00-4-4H7" />
                                         </svg>
+                                        <h2 class="text-xl font-bold text-maroon-800">Quick Links</h2>
                                     </div>
-                                    <h2 class="text-xl font-bold text-maroon-800 mb-1">Total Indexed Journals</h2>
-                                    <div class="text-5xl font-extrabold text-maroon-700 mb-4 drop-shadow transition-transform duration-300 group-hover:scale-110">27</div>
                                     <div class="flex flex-col gap-2 w-full flex-1 justify-center">
+                                        <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
+                                            <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
+                                            <span class="font-semibold text-maroon-800">SPJRD</span>
+                                            <span class="ml-auto text-xs text-gray-700 font-bold">12</span>
+                                        </div>
                                         <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
                                             <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
                                             <span class="font-semibold text-maroon-800">Scopus</span>
@@ -125,7 +130,7 @@
                                              <svg class="w-5 h-5 text-maroon-800 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                                              <div class="flex flex-col w-full">
                                                  <span class="text-maroon-800 text-xs font-semibold leading-tight">Jul 01</span>
-                                                 <span class="text-xs text-gray-700 leading-snug line-clamp-3">Welcome to the new Publications Portal.</span>
+                                                 <span class="text-xs text-gray-700 leading-snug line-clamp-3">Welcome to the new Publication Portal.</span>
                                              </div>
                                          </div>
                                     </div>
@@ -141,12 +146,9 @@
                     <!-- Welcome Header -->
                     <div class="text-center mb-6">
                         <div class="flex justify-center mb-4">
-                            <img src="/images/spjrd.png" alt="SPJRD Logo" class="rounded-full object-cover" style="width: 60px; height: 60px;">
+                            <img src="/images/usep.png" alt="USeP Logo" class="rounded-full object-cover" style="width: 60px; height: 60px;">
                         </div>
-                        <h1 class="text-3xl font-extrabold text-maroon-900 mb-2">Welcome to USeP Publications Unit</h1>
-                        <p class="text-lg text-maroon-900 font-semibold mb-3 drop-shadow-sm">
-                            Southeastern Philippines Journal of Research and Development
-                        </p>
+                        <h1 class="text-3xl font-extrabold text-maroon-900 mb-2">Welcome to USeP Publication Unit</h1>
                         <div class="w-40 h-1 bg-maroon-800 mx-auto"></div>
                     </div>
 
@@ -176,6 +178,20 @@
                     <!-- Features Grid - More Compact -->
                     <div class="grid md:grid-cols-3 gap-4 mb-6">
                         <div>
+                            <a href="{{ route('login') }}" class="block text-center p-4 bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl
+                                hover:bg-white/40 hover:backdrop-blur-lg hover:scale-105 hover:shadow-2xl hover:-translate-y-2 transition-all duration-200 group">
+                                <div class="w-10 h-10 bg-maroon-800 rounded-full flex items-center justify-center mx-auto mb-3
+                                    group-hover:-translate-y-1 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 9c-2.21 0-4-1.79-4-4h2a2 2 0 104 0h2c0 2.21-1.79 4-4 4zm0-16C6.477 1 2 5.477 2 11c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10z" />
+                                </svg>
+                            </div>
+                                <h3 class="text-base font-semibold text-maroon-800 mb-1">Application for Incentives</h3>
+                                <p class="text-gray-600 text-xs">Apply for incentives and track your application status.</p>
+                            </a>
+                        </div>
+
+                        <div>
                             <a href="#" class="block text-center p-4 bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl
                                 hover:bg-white/40 hover:backdrop-blur-lg hover:scale-105 hover:shadow-2xl hover:-translate-y-2 transition-all duration-200 group">
                                 <div class="w-10 h-10 bg-maroon-800 rounded-full flex items-center justify-center mx-auto mb-3
@@ -184,7 +200,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
                             </div>
-                                <h3 class="text-base font-semibold text-maroon-800 mb-1">Service 1</h3>
+                                <h3 class="text-base font-semibold text-maroon-800 mb-1">List of Suggested Journals</h3>
                                 <p class="text-gray-600 text-xs">Description of Service 1 Lorem ipsum dolor sit amet</p>
                             </a>
                         </div>
@@ -198,22 +214,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                                 </svg>
                             </div>
-                                <h3 class="text-base font-semibold text-maroon-800 mb-1">List of Researchers</h3>
+                                <h3 class="text-base font-semibold text-maroon-800 mb-1">USeP Researchers</h3>
                                 <p class="text-gray-600 text-xs">Description of Service 2 Lorem ipsum dolor sit amet</p>
-                            </a>
-                        </div>
-
-                        <div>
-                            <a href="{{ route('login') }}" class="block text-center p-4 bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl
-                                hover:bg-white/40 hover:backdrop-blur-lg hover:scale-105 hover:shadow-2xl hover:-translate-y-2 transition-all duration-200 group">
-                                <div class="w-10 h-10 bg-maroon-800 rounded-full flex items-center justify-center mx-auto mb-3
-                                    group-hover:-translate-y-1 group-hover:scale-110 transition-transform duration-200">
-                                    <svg class="w-5 h-5 text-white group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 9c-2.21 0-4-1.79-4-4h2a2 2 0 104 0h2c0 2.21-1.79 4-4 4zm0-16C6.477 1 2 5.477 2 11c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10z" />
-                                </svg>
-                            </div>
-                                <h3 class="text-base font-semibold text-maroon-800 mb-1">Application Portal</h3>
-                                <p class="text-gray-600 text-xs">Apply for incentives and track your application status.</p>
                             </a>
                         </div>
                     </div>

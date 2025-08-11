@@ -35,53 +35,25 @@
     <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
         <h4 class="text-lg font-semibold text-burgundy-800 mb-4 border-b-2 border-burgundy-200 pb-2">II. Publication Details</h4>
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Paper Title</label>
-            <textarea name="papertitle" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter the title of the paper"></textarea>
-        </div>
-        <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry (APA Format)</label>
             <textarea name="bibentry" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter the bibliographic entry"></textarea>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Journal Title</label>
-                <input type="text" name="journaltitle" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="Enter the journal title">
-            </div>
-            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">ISSN (P-ISSN/E-ISSN)</label>
                 <input type="text" name="issn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="Enter ISSN">
             </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">DOI</label>
                 <input type="text" name="doi" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter DOI">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
-                <input type="text" name="publisher" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" required placeholder="Enter publisher name">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Scopus CiteScore (if applicable)</label>
-                <input type="text" name="citescore" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent" placeholder="Enter CiteScore">
-            </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Publication Type</label>
-                <div class="flex flex-wrap gap-4 mt-1">
-                    <label class="flex items-center text-sm"><input type="radio" name="type" value="Regional" required class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Regional</label>
-                    <label class="flex items-center text-sm"><input type="radio" name="type" value="National" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> National</label>
-                    <label class="flex items-center text-sm"><input type="radio" name="type" value="International" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> International</label>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Indexed in</label>
-                <div class="flex flex-wrap gap-4 mt-1">
-                    <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="Scopus" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Scopus</label>
-                    <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="Web of Science" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Web of Science</label>
-                    <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="ACI" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> ACI</label>
-                </div>
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Indexed in</label>
+            <div class="flex flex-wrap gap-4 mt-1">
+                <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="Scopus" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Scopus</label>
+                <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="Web of Science" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> Web of Science</label>
+                <label class="flex items-center text-sm"><input type="radio" name="indexed_in" value="ACI" class="mr-2 focus:ring-burgundy-500 text-burgundy-600"> ACI</label>
             </div>
         </div>
     </div>

@@ -26,7 +26,7 @@
                 <ul class="text-sm text-gray-600 space-y-2">
                     <li class="flex items-start">
                         <span class="w-2 h-2 bg-burgundy-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                        <span>Your request will be reviewed by the Publications Unit</span>
+                        <span>Your request will be reviewed by the Publication Unit</span>
                     </li>
                     <li class="flex items-start">
                         <span class="w-2 h-2 bg-burgundy-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>

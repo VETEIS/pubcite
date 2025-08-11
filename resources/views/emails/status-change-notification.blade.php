@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="header">
-        <h2 style="margin:0; font-size: 1.2em;">USEP Publications</h2>
+        <h2 style="margin:0; font-size: 1.2em;">USEP Publication</h2>
         <div style="font-size: 1em; margin-top: 2px;">Request Status Update</div>
     </div>
     <div class="content">

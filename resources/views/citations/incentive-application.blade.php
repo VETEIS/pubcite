@@ -32,29 +32,14 @@
     <!-- II. Details of the Citation -->
     <div class="mb-8">
         <h4 class="text-lg font-semibold text-burgundy-800 mb-4 border-b-2 border-burgundy-200 pb-2">II. Details of the Citation</h4>
-        
-        <!-- Citing Paper Section -->
-        <div class="mb-6">
-            <h5 class="text-md font-semibold text-burgundy-700 mb-3">Citing Paper</h5>
-            <div class="space-y-4">
-                <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title of the citing paper</label>
-                    <textarea name="title" id="title" rows="2" required 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                              placeholder="Enter the title of the citing paper"></textarea>
-                </div>
-                <div>
-                    <label for="bibentry" class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry (APA Format)</label>
-                    <textarea name="bibentry" id="bibentry" rows="2" required 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                              placeholder="Enter the bibliographic entry"></textarea>
-                </div>
-                <div>
-                    <label for="journal" class="block text-sm font-medium text-gray-700 mb-1">Title of the Journal</label>
-                    <input type="text" name="journal" id="journal" required 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="Enter the journal title">
-                </div>
+        <div class="space-y-4">
+            <div>
+                <label for="bibentry" class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry (APA Format)</label>
+                <textarea name="bibentry" id="bibentry" rows="2" required 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                          placeholder="Enter the bibliographic entry"></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label for="issn" class="block text-sm font-medium text-gray-700 mb-1">P-ISSN/E-ISSN</label>
                     <input type="text" name="issn" id="issn" required 
@@ -67,59 +52,22 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
                            placeholder="Enter DOI">
                 </div>
-                <div>
-                    <label for="publisher" class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
-                    <input type="text" name="publisher" id="publisher" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="Enter publisher name">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Indexed in</label>
-                    <div class="flex flex-wrap gap-4">
-                        <label class="flex items-center">
-                            <input type="checkbox" name="scopus" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
-                            <span class="text-sm text-gray-700">Scopus</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" name="wos" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
-                            <span class="text-sm text-gray-700">Web of Science</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" name="aci" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
-                            <span class="text-sm text-gray-700">ACI</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label for="citescore" class="block text-sm font-medium text-gray-700 mb-1">Scopus CiteScore (if applicable)</label>
-                    <input type="text" name="citescore" id="citescore" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="Enter CiteScore">
-                </div>
             </div>
-        </div>
-        
-        <!-- Cited Paper Section -->
-        <div class="mb-6">
-            <h5 class="text-md font-semibold text-burgundy-700 mb-3">Cited Paper</h5>
-            <div class="space-y-4">
-                <div>
-                    <label for="citedtitle" class="block text-sm font-medium text-gray-700 mb-1">Title of the cited paper</label>
-                    <textarea name="citedtitle" id="citedtitle" rows="2" required 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                              placeholder="Enter the title of the cited paper"></textarea>
-                </div>
-                <div>
-                    <label for="citedbibentry" class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry</label>
-                    <textarea name="citedbibentry" id="citedbibentry" rows="2" required 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                              placeholder="Enter the bibliographic entry for the cited paper"></textarea>
-                </div>
-                <div>
-                    <label for="citedjournal" class="block text-sm font-medium text-gray-700 mb-1">Title of the Journal</label>
-                    <input type="text" name="citedjournal" id="citedjournal" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
-                           placeholder="Enter the journal title of the cited paper">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Indexed in</label>
+                <div class="flex flex-wrap gap-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="scopus" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
+                        <span class="text-sm text-gray-700">Scopus</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="wos" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
+                        <span class="text-sm text-gray-700">Web of Science</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="aci" class="mr-2 text-burgundy-600 focus:ring-burgundy-500">
+                        <span class="text-sm text-gray-700">ACI</span>
+                    </label>
                 </div>
             </div>
         </div>

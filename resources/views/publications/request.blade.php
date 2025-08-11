@@ -546,7 +546,7 @@ function tabNav() {
             let fields = [];
                             if (tab === 'incentive') {
                     fields = [
-                        'name', 'academicrank', 'college', 'papertitle', 'bibentry', 'journaltitle', 'issn', 'doi', 'publisher', 'type', 'citescore', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
+                        'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean'
                     ];
                             } else if (tab === 'recommendation') {
                     fields = ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
@@ -585,7 +585,7 @@ function tabNav() {
         checkTabs() {
             // Check incentive tab completion
             const incentiveFields = [
-                'name', 'academicrank', 'college', 'papertitle', 'bibentry', 'journaltitle', 'issn', 'doi', 'publisher', 'type', 'citescore', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in'
+                'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean'
             ];
             
             // Debug: Log field validation
@@ -726,8 +726,7 @@ function tabNav() {
             }
             
             if (titleEl) {
-                const titleInput = document.querySelector('[name="papertitle"]');
-                titleEl.textContent = titleInput ? titleInput.value || '-' : '-';
+                titleEl.textContent = '-';
             }
 
             // Update file names with correct mapping and truncation
@@ -759,7 +758,7 @@ function tabNav() {
             
             // Add all form fields
             const allFields = [
-                'name', 'academicrank', 'college', 'papertitle', 'bibentry', 'journaltitle', 'issn', 'doi', 'publisher', 'type', 'citescore', 'particulars', 'facultyname', 'centermanager', 'collegedean', 'indexed_in',
+                'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean',
                 'rec_collegeheader', // <-- ARANG RASON BANTOG PIRME WALA ANG BULLSEYE NGA COLLEGEHEADER
                 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean',
                 'title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'
