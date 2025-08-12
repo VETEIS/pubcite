@@ -2,32 +2,7 @@
     <!-- Removed extra custom header here -->
     <div class="flex h-[calc(100vh-4rem)] p-4 gap-x-6">
         <!-- Sidebar -->
-        <aside class="w-20 h-full flex-shrink-0 bg-white/30 backdrop-blur border border-white/40 text-maroon-900 flex flex-col items-center shadow-lg rounded-full">
-            <nav class="flex flex-col gap-8 w-full items-center flex-1 justify-center">
-                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 group focus:outline-none {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? '' : 'hover:scale-110 hover:-translate-y-1 transition-all duration-200' }}">
-                    <svg class="w-7 h-7 {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? 'text-maroon-800 fill-maroon-800' : 'text-maroon-800' }} group-hover:text-maroon-800 transition" fill="{{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6" /></svg>
-                    <span class="text-xs mt-1 pl-2 {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? 'font-extrabold text-maroon-800' : 'font-bold' }} group-hover:text-maroon-800">Overview</span>
-                    @if(request()->routeIs('dashboard') && !request()->is('admin/users*'))
-                        <div class="h-0.5 bg-maroon-800 rounded-full w-8 mx-auto mt-1"></div>
-                    @endif
-                </a>
-                <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center gap-1 group focus:outline-none {{ request()->is('admin/users*') ? '' : 'hover:scale-110 hover:-translate-y-1 transition-all duration-200' }}">
-                    <svg class="w-7 h-7 {{ request()->is('admin/users*') ? 'text-maroon-800 fill-maroon-800' : 'text-maroon-800' }} group-hover:text-maroon-800 transition" fill="{{ request()->is('admin/users*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span class="text-xs mt-1 {{ request()->is('admin/users*') ? 'font-extrabold text-maroon-800' : 'font-bold' }} group-hover:text-maroon-800">Users</span>
-                    @if(request()->is('admin/users*'))
-                        <div class="h-0.5 bg-maroon-800 rounded-full w-8 mx-auto mt-1"></div>
-                    @endif
-                </a>
-                <button class="flex flex-col items-center gap-1 group focus:outline-none hover:scale-110 hover:-translate-y-1 transition-all duration-200">
-                    <svg class="w-7 h-7 text-maroon-800 group-hover:text-maroon-800 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 018 0v2M9 17a4 4 0 01-8 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2z" /></svg>
-                    <span class="text-xs mt-1 font-bold group-hover:text-maroon-800">Archives</span>
-                </button>
-                <button class="flex flex-col items-center gap-1 group focus:outline-none hover:scale-110 hover:-translate-y-1 transition-all duration-200">
-                    <svg class="w-7 h-7 text-maroon-800 group-hover:text-maroon-800 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                    <span class="text-xs mt-1 font-bold group-hover:text-maroon-800">Settings</span>
-                </button>
-            </nav>
-        </aside>
+        @include('admin.partials.sidebar')
         <!-- Main Content -->
         <div class="flex-1 flex items-center justify-center h-full m-0">
             <div class="w-full h-full flex-1 rounded-2xl shadow-xl bg-white/30 backdrop-blur border border-white/40 p-4 flex flex-col justify-center items-stretch">
@@ -377,58 +352,87 @@
                                                         </div>
                                             </div>
                                         </div>
-                <!-- Review Modal (Compact, No-Scroll, Two-Column) -->
+                <!-- Review Modal (Glassmorphism, Two-Column, Actions) -->
                 <div id="reviewModal" class="fixed inset-0 z-50 hidden">
-                    <div class="fixed inset-0 bg-black bg-opacity-50"></div>
+                    <div class="fixed inset-0 bg-transparent"></div>
                     <div class="fixed inset-0 flex items-center justify-center p-2">
-                        <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl min-w-[700px] min-h-[400px]" style="max-width:900px;">
+                        <div class="w-full max-w-5xl rounded-2xl shadow-2xl bg-white border border-gray-200 overflow-hidden" style="max-width:980px;">
                             <!-- Header -->
-                            <div class="flex items-center justify-between p-4 border-b border-gray-200">
-                                <h2 class="text-lg font-bold text-maroon-900">Request Review</h2>
-                                <button onclick="closeReviewModal()" class="text-gray-400 hover:text-maroon-900 text-2xl font-bold">&times;</button>
+                            <div class="flex items-center justify-between p-4 border-b border-gray-200 rounded-t-2xl">
+                                <h2 class="text-lg font-extrabold text-maroon-900">Request Review</h2>
+                                <button onclick="closeReviewModal()" class="text-maroon-900 hover:text-maroon-700 text-2xl font-bold">&times;</button>
                             </div>
                             <!-- Loading State -->
                             <div id="modalLoading" class="p-8 text-center">
                                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-maroon-900 mx-auto"></div>
-                                <p class="mt-2 text-gray-600 text-sm">Loading request details...</p>
+                                <p class="mt-2 text-gray-700 text-sm">Loading request details...</p>
                             </div>
                             <!-- Content -->
                             <div id="modalContent" class="hidden">
                                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <!-- Left Column -->
                                     <div class="flex flex-col gap-2">
-                                        <!-- Combined Request Summary & Applicant Card -->
-                                        <div class="bg-yellow-50 rounded-lg p-2 border border-yellow-200 text-xs">
-                                            <div class="font-semibold text-maroon-900 mb-1">Request & Applicant</div>
+                                        <!-- Request & Applicant -->
+                                        <div class="bg-white/70 backdrop-blur-md border border-white/40 rounded-xl shadow p-3 text-xs">
+                                            <div class="font-bold text-maroon-900 mb-2">Request & Applicant</div>
                                             <div class="grid grid-cols-2 gap-x-2 gap-y-1">
-                                                <div><span class="text-gray-600">Code:</span> <span id="modalRequestCode" class="font-bold text-maroon-900">-</span></div>
-                                                <div><span class="text-gray-600">Type:</span> <span id="modalType" class="font-bold text-maroon-900">-</span></div>
+                                                <div><span class="text-gray-600">Code:</span> <span id="modalRequestCode" class="font-extrabold text-maroon-900">-</span></div>
+                                                <div><span class="text-gray-600">Type:</span> <span id="modalType" class="font-extrabold text-maroon-900">-</span></div>
                                                 <div><span class="text-gray-600">Status:</span> <span id="modalStatus" class="px-2 py-0.5 rounded-full text-xs font-semibold">-</span></div>
                                                 <div><span class="text-gray-600">Submitted:</span> <span id="modalDate" class="text-maroon-900">-</span></div>
                                                 <div><span class="text-gray-600">Applicant:</span> <span id="modalUserName" class="text-maroon-900">-</span></div>
                                                 <div><span class="text-gray-600">Email:</span> <span id="modalUserEmail" class="text-maroon-900">-</span></div>
                                             </div>
                                         </div>
+                                        <!-- Admin Comment -->
+                                        <div class="bg-white/70 backdrop-blur-md border border-white/40 rounded-xl shadow p-3 text-xs">
+                                            <label class="block text-maroon-900 font-bold mb-1" for="adminComment">Admin Comment</label>
+                                            <textarea id="adminComment" class="w-full border rounded-lg px-3 py-2 text-sm focus:border-maroon-500 focus:ring-maroon-500" rows="3" placeholder="Optional note to include with status update..."></textarea>
+                                        </div>
                                     </div>
                                     <!-- Right Column -->
                                     <div class="flex flex-col gap-2">
                                         <!-- Files Section -->
-                                        <div class="bg-white rounded-lg p-2 border border-gray-200 text-xs">
-                                            <div class="font-semibold text-maroon-900 mb-1">Files</div>
+                                        <div class="bg-white/70 backdrop-blur-md border border-white/40 rounded-xl shadow p-3 text-xs">
+                                            <div class="font-bold text-maroon-900 mb-2">Files</div>
                                             <div id="modalFiles" class="space-y-1"></div>
+                                            <div class="mt-2 flex justify-end">
+                                                <button id="downloadZipBtn" class="inline-flex items-center gap-2 px-3 py-1 bg-maroon-900 text-white rounded-lg hover:bg-maroon-800 text-xs">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                                    Download ZIP
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                    <!-- Full Width: Signatories -->
-                                    <div class="md:col-span-2 bg-white rounded-lg p-2 border border-gray-200 text-xs">
-                                        <div class="font-semibold text-maroon-900 mb-1">Signatories Required</div>
-                                        <div id="modalFormData" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1"></div>
+                                    <!-- Full Width: Signatories & Approvers -->
+                                     <div class="md:col-span-2 bg-white rounded-xl shadow p-3 text-xs border border-gray-200">
+                                        <div class="font-bold text-maroon-900 mb-2">Signatories & Approvers</div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div id="modalFormData" class="grid grid-cols-1 gap-1"></div>
+                                            <div class="grid grid-cols-1 gap-1">
+                                                <div class="flex flex-col">
+                                                    <span class="text-[10px] uppercase tracking-wide text-gray-500">Deputy Director</span>
+                                                    <span class="text-maroon-900 text-xs font-semibold">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</span>
+                                                    <span class="text-[11px] text-gray-600">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-[10px] uppercase tracking-wide text-gray-500">RDD Director</span>
+                                                    <span class="text-maroon-900 text-xs font-semibold">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</span>
+                                                    <span class="text-[11px] text-gray-600">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Footer -->
-                            <div class="flex justify-end gap-2 p-4 border-t border-gray-200 bg-gray-50">
-                                <button onclick="closeReviewModal()" class="px-3 py-1 text-gray-600 hover:text-gray-800 font-medium text-xs">Close</button>
-                                <button onclick="closeReviewModal()" class="px-3 py-1 bg-maroon-900 text-white rounded-lg hover:bg-maroon-800 font-medium text-xs">Review Complete</button>
+                            <!-- Footer Actions -->
+                            <div class="flex justify-between items-center gap-2 p-4 border-t border-gray-200 bg-white rounded-b-2xl">
+                                <div class="text-xs text-gray-600">Ensure all required files and signatories are present before endorsing.</div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="closeReviewModal()" class="px-3 py-1 text-gray-700 hover:text-gray-900 font-semibold text-xs">Close</button>
+                                    <button id="rejectBtn" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-xs">Reject</button>
+                                    <button id="endorseBtn" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-xs">Endorse</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -703,32 +707,31 @@ function openReviewModal(requestId) {
         console.error('No request ID provided');
         return;
     }
-    
-    console.log('Opening modal for request ID:', requestId);
-    
-    // Show modal and loading state
+    window.__currentReviewRequestId = requestId;
     document.getElementById('reviewModal').classList.remove('hidden');
     document.getElementById('modalLoading').classList.remove('hidden');
     document.getElementById('modalContent').classList.add('hidden');
-    
-    // Fetch request data
     fetch(`/admin/requests/${requestId}/data`)
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to load request data');
-            }
+            if (!response.ok) throw new Error('Failed to load request data');
             return response.json();
         })
         .then(data => {
-            console.log('Request data loaded:', data);
             populateModal(data);
+            const zipBtn = document.getElementById('downloadZipBtn');
+            if (zipBtn) zipBtn.onclick = () => { window.location.href = `/admin/requests/${requestId}/download-zip`; };
+            const endorseBtn = document.getElementById('endorseBtn');
+            const rejectBtn = document.getElementById('rejectBtn');
+            if (endorseBtn) endorseBtn.onclick = () => submitStatusUpdate(requestId, 'endorsed');
+            if (rejectBtn) rejectBtn.onclick = () => submitStatusUpdate(requestId, 'rejected');
+            // Gray out options based on current status
+            updateActionButtonsState(data.status);
         })
         .catch(error => {
             console.error('Error loading request data:', error);
             showError('Failed to load request data. Please try again.');
         })
         .finally(() => {
-            // Hide loading, show content
             document.getElementById('modalLoading').classList.add('hidden');
             document.getElementById('modalContent').classList.remove('hidden');
         });
@@ -759,41 +762,44 @@ function populateModal(data) {
     statusElement.textContent = data.status || 'N/A';
     statusElement.className = 'px-2 py-0.5 rounded-full text-xs font-semibold';
     if (data.status === 'pending') {
-        statusElement.classList.add('bg-yellow-400', 'text-maroon-900');
+        statusElement.classList.add('bg-yellow-100','text-yellow-800');
     } else if (data.status === 'endorsed') {
-        statusElement.classList.add('bg-green-500', 'text-white');
+        statusElement.classList.add('bg-green-100','text-green-800');
     } else if (data.status === 'rejected') {
-        statusElement.classList.add('bg-red-500', 'text-white');
+        statusElement.classList.add('bg-red-100','text-red-800');
     }
-    // Form Data (compact grid) - Use server-side extracted signatories
+    // Signatories
     const formDataContainer = document.getElementById('modalFormData');
     formDataContainer.innerHTML = '';
-    
     if (data.signatories && data.signatories.length > 0) {
         data.signatories.forEach(signatory => {
             const fieldDiv = document.createElement('div');
             fieldDiv.className = 'flex flex-col';
-            fieldDiv.innerHTML = `<span class="font-medium text-gray-600 text-xs">${signatory.role}: ${signatory.field}</span><span class="text-maroon-900 text-xs font-semibold">${signatory.name}</span>`;
+            const roleLabel = signatory.role ? `<span class="text-[10px] uppercase tracking-wide text-gray-500">${signatory.role}</span>` : '';
+            fieldDiv.innerHTML = `${roleLabel}<span class="text-maroon-900 text-xs font-semibold">${signatory.name}</span>`;
             formDataContainer.appendChild(fieldDiv);
         });
     } else {
         formDataContainer.innerHTML = '<div class="text-gray-500 text-xs">No signatories found in form data</div>';
     }
-    // Files (compact)
+    // Files
     const filesContainer = document.getElementById('modalFiles');
     filesContainer.innerHTML = '';
     if (data.files && data.files.length > 0) {
         data.files.forEach(file => {
             const fileDiv = document.createElement('div');
-            fileDiv.className = 'flex items-center justify-between bg-gray-50 rounded p-1 mb-1';
+            fileDiv.className = 'flex items-center justify-between bg-white/70 rounded border border-white/40 p-1';
+            const type = file.type === 'pdf' ? 'pdf' : 'docx';
+            const key = file.key;
+            const serveUrl = `/admin/requests/${data.id}/serve?type=${type}&key=${encodeURIComponent(key)}`;
             fileDiv.innerHTML = `
                 <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-700">${file.name}</span>
-                    <span class="text-xs text-gray-400">(${file.size})</span>
+                    <span class="text-xs text-maroon-900 font-semibold">${file.name}</span>
+                    <span class="text-[10px] text-gray-500">(${file.size})</span>
                 </div>
                 <div class="flex gap-1">
-                    <a href="/storage/${file.path}" target="_blank" class="px-2 py-0.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">View</a>
-                    <a href="/storage/${file.path}" download="${file.name}" class="px-2 py-0.5 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors">Download</a>
+                    <a href="${serveUrl}" target="_blank" class="px-2 py-0.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">View</a>
+                    <a href="${serveUrl}" download class="px-2 py-0.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>
                 </div>
             `;
             filesContainer.appendChild(fileDiv);
@@ -828,6 +834,52 @@ function showError(message) {
         </div>
     `;
     contentDiv.classList.remove('hidden');
+}
+
+function submitStatusUpdate(requestId, newStatus) {
+    const adminComment = document.getElementById('adminComment')?.value || '';
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    fetch(`/admin/requests/${requestId}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ status: newStatus, admin_comment: adminComment })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Failed to update status');
+        return res.text();
+    })
+    .then(() => {
+        closeReviewModal();
+        // Refresh page to reflect changes
+        window.location.reload();
+    })
+    .catch(err => {
+        console.error('Status update error:', err);
+        alert('Failed to update status. Please try again.');
+    });
+}
+
+function updateActionButtonsState(status) {
+    const endorseBtn = document.getElementById('endorseBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    // Reset state
+    [endorseBtn, rejectBtn].forEach(btn => {
+        if (!btn) return;
+        btn.disabled = false;
+        btn.classList.remove('opacity-50','cursor-not-allowed');
+    });
+    if (status === 'endorsed' && endorseBtn) {
+        endorseBtn.disabled = true;
+        endorseBtn.classList.add('opacity-50','cursor-not-allowed');
+    }
+    if (status === 'rejected' && rejectBtn) {
+        rejectBtn.disabled = true;
+        rejectBtn.classList.add('opacity-50','cursor-not-allowed');
+    }
 }
 </script>
 

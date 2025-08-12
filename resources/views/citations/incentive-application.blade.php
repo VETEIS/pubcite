@@ -167,9 +167,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <div class="h-1"></div>
-                            <input type="text" name="center_manager" id="center_manager" 
-                                   class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent"
-                                   placeholder="Enter center manager name">
+                            <x-signatory-select name="center_manager" type="center_manager" placeholder="Search center manager..." />
                             <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                             <p class="text-sm text-gray-600 text-center">Research Center Manager</p>
                         </div>
@@ -182,9 +180,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <div class="h-1"></div>
-                            <input type="text" name="dean_name" id="dean_name" required 
-                                   class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent"
-                                   placeholder="Enter dean name">
+                            <x-signatory-select name="dean_name" type="college_dean" placeholder="Search college dean..." />
                             <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                             <p class="text-sm text-gray-600 text-center">College Dean</p>
                         </div>
@@ -204,9 +200,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <div class="h-1"></div>
-                            <p class="text-sm text-gray-700 text-center">RANDY A. TUDY, PhD</p>
+                            <p class="text-sm text-gray-700 text-center">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</p>
                             <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
-                            <p class="text-sm text-gray-600 text-center">Deputy Director, Publication Unit</p>
+                            <p class="text-sm text-gray-600 text-center">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</p>
                         </div>
                         <div>
                             <div class="border-b-2 border-gray-400 h-8 mb-2"></div>
@@ -217,9 +213,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <div class="h-1"></div>
-                            <p class="text-sm text-gray-700 text-center">MERLINA H. JURUENA, PhD</p>
+                            <p class="text-sm text-gray-700 text-center">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</p>
                             <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
-                            <p class="text-sm text-gray-600 text-center">Director, Research and Development Division</p>
+                            <p class="text-sm text-gray-600 text-center">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</p>
                         </div>
                         <div>
                             <div class="border-b-2 border-gray-400 h-8 mb-2"></div>

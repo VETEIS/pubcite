@@ -1,31 +1,20 @@
 <x-app-layout>
-    <div class="flex min-h-[calc(100vh-4rem)]">
+    <div class="flex h-[calc(100vh-4rem)] p-4 gap-x-6">
         <!-- Sidebar -->
-        <aside class="w-20 bg-gradient-to-b from-maroon-900 to-maroon-700 text-white flex flex-col items-center py-8 shadow-lg">
-            <nav class="flex flex-col gap-8 w-full items-center">
-                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Dashboard</span>
-                </a>
-                <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Users</span>
-                </a>
-                <button class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 018 0v2M9 17a4 4 0 01-8 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2zm0 0v-2a4 4 0 018 0v2z" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Reports</span>
-                </button>
-                <button class="flex flex-col items-center gap-1 group focus:outline-none">
-                    <svg class="w-7 h-7 text-white group-hover:text-maroon-200 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                    <span class="text-xs mt-1 group-hover:text-maroon-200">Settings</span>
-                </button>
-            </nav>
-        </aside>
+        @include('admin.partials.sidebar')
+                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 group focus:outline-none {{ request()->routeIs('dashboard') && !request()->is('admin/users*') ? '' : 'hover:scale-110 hover:-translate-y-1 transition-all duration-200' }}">
+                                                 </a>
+
         <!-- Main Content -->
-        <div class="flex-1">
-            <div class="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center">
-                <div class="w-full max-w-7xl flex-1 flex flex-col justify-center items-center py-8 px-4 sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-8 rounded-lg relative w-full">
+        <div class="flex-1 flex items-center justify-center h-full m-0">
+            <div class="w-full h-full flex-1 rounded-2xl shadow-xl bg-white/30 backdrop-blur border border-white/40 p-4 flex flex-col items-stretch">
+                <div class="relative flex items-center mb-4">
+                    <h1 class="text-2xl font-bold text-maroon-900 flex items-center gap-2">
+                        <svg class="w-7 h-7 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        Accounts
+                    </h1>
+                </div>
+                <div class="relative w-full">
                         <div class="w-full flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6 relative">
                             <!-- Notification Area: absolutely positioned, overlay -->
                             <div class="absolute top-0 right-0 z-20 mt-2 mr-4">
@@ -36,7 +25,7 @@
                                 @endif
                             </div>
                             <!-- Users Card Header -->
-                            <div class="flex-1 bg-white rounded-xl shadow border p-2 sm:p-4 flex items-center gap-2 sm:gap-4 min-w-0 w-full">
+                            <div class="flex-1 bg-white/70 backdrop-blur-md border border-white/40 rounded-xl shadow-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-4 min-w-0 w-full">
                                 <div class="flex items-center gap-1 sm:gap-2 min-w-0">
                                     <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-maroon-100 flex items-center justify-center">
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -68,9 +57,9 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="mt-8">
-                            <!-- Filters and Search -->
-                            <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+                            <div class="mt-4">
+                                <!-- Filters and Search -->
+                                <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                                 <div class="flex gap-2 relative">
                                     <div class="flex bg-gray-100 rounded-full p-1 gap-1">
                                         <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-row gap-2 items-center w-full" id="user-search-form">
@@ -78,6 +67,7 @@
                                             <button type="submit" name="role" value="" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none border {{ empty($currentRole) ? 'bg-maroon-700 text-white border-maroon-700' : 'bg-white text-gray-700 hover:bg-maroon-600 hover:text-white border-gray-200' }}">All</button>
                                             <button type="submit" name="role" value="user" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none border {{ $currentRole === 'user' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white text-gray-700 hover:bg-yellow-600 hover:text-white border-gray-200' }}">User</button>
                                             <button type="submit" name="role" value="admin" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none border {{ $currentRole === 'admin' ? 'bg-maroon-700 text-white border-maroon-700' : 'bg-white text-gray-700 hover:bg-maroon-600 hover:text-white border-gray-200' }}">Admin</button>
+<button type="submit" name="role" value="signatory" class="px-4 py-1 rounded-full font-semibold text-xs transition relative flex items-center focus:outline-none border {{ $currentRole === 'signatory' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white text-gray-700 hover:bg-yellow-600 hover:text-white border-gray-200' }}">Signatory</button>
                                             <div class="flex-1 flex items-center ml-2">
                                                 <input type="text" name="search" value="{{ $currentSearch ?? '' }}" placeholder="Search name or email" class="w-full border rounded-lg px-3 py-1 focus:border-maroon-500 focus:ring-maroon-500 text-sm h-8" id="user-search-input" autocomplete="on" />
                                                 <button type="submit" class="ml-1 p-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors flex items-center justify-center h-8 w-8" title="Search">
@@ -90,34 +80,44 @@
                                     </div>
                                 </div>
                                 <div class="flex-1 flex justify-end">
-                                    <a href="{{ route('admin.users.create') }}" class="inline-flex items-center px-4 py-1 bg-maroon-700 text-white rounded-lg shadow hover:bg-maroon-800 transition font-semibold text-sm">
-                                        + Add User
+                                    <a href="{{ route('admin.users.create') }}" class="inline-flex items-center gap-2 px-4 py-1.5 bg-maroon-700 text-white rounded-xl shadow hover:bg-maroon-800 transition font-semibold text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                        Add User
                                     </a>
                                 </div>
                             </div>
-                            <div class="bg-white rounded-lg shadow p-0 max-h-[45vh] h-[45vh] overflow-y-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                            <div class="bg-white/30 backdrop-blur border border-white/40 rounded-xl shadow p-2 overflow-y-auto flex-1 min-h-0">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-maroon-200 text-xs border border-white/40 rounded-t-xl overflow-hidden">
+                                        <thead class="bg-white/30 backdrop-blur border-b border-white/40 rounded-t-xl sticky top-0 z-10">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Name</th>
+                                                <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Email</th>
+                                                <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Role</th>
+                                                <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Signatory Type</th>
+                                                <th class="px-2 py-2 text-center font-bold text-maroon-900 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-maroon-100">
                                         @foreach($users as $user)
                                             <tr>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" title="{{ $user->name }}">{{ $user->name }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-[180px] truncate" title="{{ $user->email }}">{{ $user->email }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $user->role === 'admin' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700' }}">
+                                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $user->role === 'admin' ? 'bg-maroon-100 text-maroon-800' : 'bg-gray-100 text-gray-700' }}">
                                                         {{ ucfirst($user->role) }}
                                                     </span>
                                                 </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                    @if($user->role === 'signatory')
+                                                        {{ str_replace('_',' ', ucfirst($user->signatory_type ?? '')) }}
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                                     <div class="flex flex-row gap-2 items-center justify-center">
-                                                        <a href="{{ route('admin.users.edit', $user) }}" class="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors" title="Edit">
+                                                        <a href="{{ route('admin.users.edit', $user) }}" class="p-2 rounded-lg bg-maroon-700 text-white hover:bg-maroon-800 transition-colors" title="Edit">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" /></svg>
                                                         </a>
                                                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
@@ -134,7 +134,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="mt-4">{{ $users->links() }}</div>
+                            <div class="mt-3">{{ $users->links() }}</div>
                         </div>
                     </div>
                 </div>

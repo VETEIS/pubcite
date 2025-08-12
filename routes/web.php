@@ -63,11 +63,15 @@ Route::middleware([
     // Route::post('/publications/incentive-application/generate', ...);
     Route::delete('/admin/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
     Route::get('/admin/requests/{request}/download', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadFile'])->name('admin.requests.download');
-    Route::get('/admin/requests/{request}/download-zip', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadZip'])->name('admin.requests.download-zip');
     Route::get('/admin/requests/{request}/debug', [\App\Http\Controllers\PublicationsController::class, 'debugFilePaths'])->name('admin.requests.debug');
     Route::get('/admin/requests/{request}/serve', [\App\Http\Controllers\PublicationsController::class, 'serveFile'])->name('admin.requests.serve');
     // Nudge a pending request (user action)
-    Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
+         Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
+     // Signing for signatories
+     Route::get('/signing', [\App\Http\Controllers\SigningController::class, 'index'])->name('signing.index');
+     Route::post('/signing/signature', [\App\Http\Controllers\SigningController::class, 'storeSignature'])->name('signing.signature');
+    // Public signatories lookup for authenticated users (non-admin)
+    Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('signatories.index');
     // Admin notifications endpoints
     Route::get('/admin/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');
     Route::post('/admin/notifications/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.read');
@@ -86,4 +90,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/requests/manage', [\App\Http\Controllers\AdminRequestController::class, 'index'])->name('admin.requests.manage');
     Route::get('/requests/{request}/data', [\App\Http\Controllers\AdminRequestController::class, 'getRequestData'])->name('admin.requests.data');
     Route::get('/requests/{request}/download-zip', [\App\Http\Controllers\AdminRequestController::class, 'downloadZip'])->name('admin.requests.download-zip');
+    // Settings
+    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
+    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
+    // Signatories API (admin-authenticated for now)
+    Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('admin.signatories');
 });

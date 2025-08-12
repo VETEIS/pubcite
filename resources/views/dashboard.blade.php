@@ -76,7 +76,7 @@
                                         <svg class="h-6 w-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <span class="text-base">Application for Publications</span>
+                                        <span class="text-base">Apply for Publications</span>
                                     </div>
                                     <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                                 </a>
@@ -85,9 +85,22 @@
                                         <svg class="h-6 w-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <span class="text-base">Application for Citations</span>
+                                        <span class="text-base">Apply for Citations</span>
                                     </div>
                                     <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                </a>
+                                @if(Auth::user() && Auth::user()->isSignatory())
+                                <a href="{{ route('signing.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-4 rounded-lg shadow transition flex flex-row items-center gap-2 justify-between group text-base">
+                                    <div class="flex flex-row items-center gap-2">
+                                        <svg class="h-6 w-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20v-6m0 0l-3 3m3-3l3 3M5 8l7-3 7 3-7 3-7-3z" />
+                                        </svg>
+                                        <span class="text-base">Signature Requests</span>
+                                    </div>
+                                    <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                </a>
+                                @endif
+                                    
                                 </a>
                                 <div class="flex flex-col gap-4 mt-2">
                                     <div class="flex items-start gap-2">
@@ -95,26 +108,8 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                         <div>
-                                            <p class="text-sm font-medium text-gray-900 pt-1">Incentive Application Form</p>
-                                            <p class="text-xs text-gray-500">Apply for publication or citation incentives</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <svg class="h-6 w-6 text-maroon-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900 pt-1">Recommendation Letter from the Dean</p>
-                                            <p class="text-xs text-gray-500">Required for all applications</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <svg class="h-6 w-6 text-maroon-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900 pt-1">Terminal Report Template</p>
-                                            <p class="text-xs text-gray-500">Template for terminal report submission</p>
+                                            <p class="text-sm font-medium text-gray-900 pt-1">Be Accurate</p>
+                                            <p class="text-xs text-gray-500">Review the forms and requirements carefully before submitting your request to avoid hassle and delay.</p>
                                         </div>
                                     </div>
                                 </div>

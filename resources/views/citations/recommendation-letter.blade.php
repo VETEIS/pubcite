@@ -15,15 +15,15 @@
             </div>
             
             <div class="mb-6">
-                <h3 class="text-lg font-semibold text-burgundy-800 mb-1">MERLINA H. JURUENA, PhD</h3>
-                <p class="text-sm text-gray-700">Director, Research and Development Division</p>
+                <h3 class="text-lg font-semibold text-burgundy-800 mb-1">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</h3>
+                <p class="text-sm text-gray-700">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</p>
                 <p class="text-sm text-gray-700">This University</p>
             </div>
             
             <div class="mb-6">
                 <p class="text-sm text-gray-700 mb-1"><strong>Thru:</strong></p>
-                <p class="text-sm text-gray-700 mb-1">RANDY A. TUDY, PhD</p>
-                <p class="text-sm text-gray-700">Deputy Director, Publication Unit</p>
+                <p class="text-sm text-gray-700 mb-1">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</p>
+                <p class="text-sm text-gray-700">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</p>
             </div>
         </div>
         
@@ -34,9 +34,7 @@
             <p class="text-sm text-gray-700 mb-4">
                 This is to endorse to your office the research citation of 
                 <span class="">
-                    <input type="text" name="rec_faculty_name" id="rec_faculty_name" required 
-                           class="w-48 px-1 py-1 border-none focus:outline-none focus:ring-0 text-center"
-                           placeholder="Faculty Name">
+                    <x-signatory-select name="rec_faculty_name" type="faculty" placeholder="Search faculty..." />
                 </span> 
                 for possible granting of citation incentives. The list of the cited paper/s and the corresponding citation/s is/are summarized below:
             </p>
@@ -88,9 +86,7 @@
             
             <div class="mb-4">
                 <div class="h-1"></div>
-                <input type="text" name="rec_dean_name" id="rec_dean_name" required 
-                       class="w-48 text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent mx-auto block"
-                       placeholder="Enter dean name">
+                <x-signatory-select name="rec_dean_name" type="college_dean" placeholder="Search college dean..." />
                 <div class="border-b-2 border-gray-400 w-48 h-2 mb-2 mx-auto"></div>
                 <p class="text-sm text-gray-700 text-center">Dean</p>
             </div>

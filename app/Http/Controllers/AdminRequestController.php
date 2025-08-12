@@ -176,30 +176,34 @@ class AdminRequestController extends Controller
             // Handle DOCX files
             if (isset($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
                 foreach ($pdfPathData['docxs'] as $key => $docxPath) {
-                    if ($docxPath && is_string($docxPath)) {
+                    if (!$docxPath || !is_string($docxPath)) continue;
+
+                    $fullPath = null;
+                    // Detect absolute path (Windows or POSIX) or already storage path
+                    $isAbsolute = preg_match('/^(?:[A-Za-z]:\\\\|\\\\\\\\|\/)/', $docxPath) === 1 || str_starts_with($docxPath, storage_path());
+
+                    if ($isAbsolute) {
+                        $fullPath = $docxPath;
+                    } else {
                         // Try both public and private disk locations
                         $fullPathPublic = storage_path('app/public/' . $docxPath);
                         $fullPathPrivate = storage_path('app/' . $docxPath);
-                        
                         if (file_exists($fullPathPublic) && is_readable($fullPathPublic)) {
-                            $files[] = [
-                                'name' => ucfirst(str_replace('_', ' ', $key)) . '_Form.docx',
-                                'path' => $docxPath,
-                                'type' => 'docx',
-                                'size' => $this->formatFileSize(filesize($fullPathPublic)),
-                                'full_path' => $fullPathPublic,
-                                'key' => $key
-                            ];
+                            $fullPath = $fullPathPublic;
                         } elseif (file_exists($fullPathPrivate) && is_readable($fullPathPrivate)) {
-                            $files[] = [
-                                'name' => ucfirst(str_replace('_', ' ', $key)) . '_Form.docx',
-                                'path' => $docxPath,
-                                'type' => 'docx',
-                                'size' => $this->formatFileSize(filesize($fullPathPrivate)),
-                                'full_path' => $fullPathPrivate,
-                                'key' => $key
-                            ];
+                            $fullPath = $fullPathPrivate;
                         }
+                    }
+
+                    if ($fullPath && file_exists($fullPath) && is_readable($fullPath)) {
+                        $files[] = [
+                            'name' => ucfirst(str_replace('_', ' ', (is_string($key) ? $key : 'document'))) . '.docx',
+                            'path' => $docxPath,
+                            'type' => 'docx',
+                            'size' => $this->formatFileSize(filesize($fullPath)),
+                            'full_path' => $fullPath,
+                            'key' => $key
+                        ];
                     }
                 }
             }
@@ -215,23 +219,49 @@ class AdminRequestController extends Controller
 
     private function extractSignatories($formData)
     {
+        // Normalize form data to array
+        if (is_string($formData)) {
+            $decoded = json_decode($formData, true);
+            $formData = is_array($decoded) ? $decoded : [];
+        }
         if (!$formData || !is_array($formData)) {
             return [];
         }
 
-        $exclude = ['applicant_name', 'user_name', 'submitted_by', 'requester_name'];
-        $signatories = [];
+        // Normalize keys to lowercase for consistent lookup
+        $normalized = [];
+        foreach ($formData as $k => $v) {
+            $normalized[strtolower($k)] = $v;
+        }
 
-        foreach ($formData as $key => $value) {
-            if (!$value || trim($value) === '') continue;
-            $lowerKey = strtolower($key);
-            if (strpos($lowerKey, 'name') !== false && !in_array($lowerKey, $exclude)) {
+        // Role to candidate fields mapping (ordered by priority)
+        $roleToFields = [
+            'Faculty' => ['facultyname', 'faculty_name', 'rec_facultyname'],
+            'Research Center Manager' => ['centermanager', 'center_manager', 'research_center_manager'],
+            'College Dean' => ['collegedean', 'college_dean', 'dean', 'dean_name', 'rec_dean_name'],
+        ];
+
+        $signatories = [];
+        $seenValues = [];
+
+        foreach ($roleToFields as $role => $candidates) {
+            $value = null;
+            foreach ($candidates as $field) {
+                if (isset($normalized[$field]) && trim((string)$normalized[$field]) !== '') {
+                    $value = trim((string)$normalized[$field]);
+                    break;
+                }
+            }
+            if ($value !== null && !isset($seenValues[mb_strtolower($value)])) {
                 $signatories[] = [
-                    'field' => $this->formatFieldName($key),
-                    'name' => trim($value)
+                    'role' => $role,
+                    'field' => $role,
+                    'name'  => $value,
                 ];
+                $seenValues[mb_strtolower($value)] = true;
             }
         }
+
         return $signatories;
     }
 

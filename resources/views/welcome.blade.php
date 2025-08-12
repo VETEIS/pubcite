@@ -51,7 +51,7 @@
                         <!-- Floating Side Cards (hidden on small screens) -->
                         <div class="hidden lg:block absolute left-0 z-20 pl-6" id="left-floating-card-container">
                             <div class="w-64 h-full flex flex-col justify-center">
-                                <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center">
+                                <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center opacity-0">
                                     <!-- Icon -->
                                     <div class="flex items-center gap-2 mb-2">
                                         <svg class="w-8 h-8 text-maroon-800 drop-shadow-lg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@
                         </div>
                         <div class="hidden lg:block absolute right-0 z-20 pr-6" id="right-floating-card-container">
                             <div class="w-64 h-full flex flex-col justify-center">
-                                <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col justify-between overflow-x-hidden overflow-visible">
+                                <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col justify-between overflow-x-hidden overflow-visible opacity-0">
                                     <div class="flex items-center gap-2 mb-2">
                                         <svg class="w-8 h-8 text-maroon-800 drop-shadow-lg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z" />
@@ -277,10 +277,31 @@ function syncSideCardHeightsAndPosition() {
     });
 }
 const debouncedSync = debounce(syncSideCardHeightsAndPosition, 30);
-// Use window.onload to ensure all content (images/fonts) is loaded
-window.addEventListener('load', syncSideCardHeightsAndPosition);
+
+function revealSideCards() {
+    syncSideCardHeightsAndPosition();
+    document.querySelectorAll('.side-floating-card').forEach(card => card.classList.remove('opacity-0'));
+}
+
+// Run early to reduce initial flash, and again when everything is fully loaded
+document.addEventListener('DOMContentLoaded', syncSideCardHeightsAndPosition);
+window.addEventListener('load', revealSideCards);
 window.addEventListener('resize', debouncedSync);
 window.addEventListener('scroll', debouncedSync);
-// Support Turbo.js navigation (Hotwire)
-document.addEventListener('turbo:load', syncSideCardHeightsAndPosition);
+
+// Turbo lifecycle support (Hotwire)
+document.addEventListener('turbo:render', syncSideCardHeightsAndPosition);
+document.addEventListener('turbo:load', revealSideCards);
+// Before Turbo caches the page, clear inline styles to avoid stale heights
+document.addEventListener('turbo:before-cache', () => {
+    const leftContainer = document.getElementById('left-floating-card-container');
+    const rightContainer = document.getElementById('right-floating-card-container');
+    const sideCards = document.querySelectorAll('.side-floating-card');
+    if (leftContainer) leftContainer.style.top = '';
+    if (rightContainer) rightContainer.style.top = '';
+    sideCards.forEach(card => {
+        card.style.height = '';
+        card.classList.add('opacity-0');
+    });
+});
 </script> 

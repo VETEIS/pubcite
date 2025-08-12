@@ -83,7 +83,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         
-                        <input type="text" name="facultyname" class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent" placeholder="Enter faculty name" required>
+                        <x-signatory-select name="facultyname" type="faculty" placeholder="Search faculty..." />
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Signature over Printed Name of the Faculty</p>
                     </div>
@@ -101,7 +101,7 @@
                 <h5 class="text-md font-semibold text-burgundy-700 mb-3">Noted by:</h5>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <input type="text" name="centermanager" class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent" placeholder="Enter center manager name">
+                        <x-signatory-select name="centermanager" type="center_manager" placeholder="Search center manager..." />
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Research Center Manager</p>
                     </div>
@@ -112,7 +112,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div>
-                        <input type="text" name="collegedean" class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent" placeholder="Enter dean name">
+                        <x-signatory-select name="collegedean" type="college_dean" placeholder="Search college dean..." />
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">College Dean</p>
             </div>
@@ -127,9 +127,9 @@
                 <h5 class="text-md font-semibold text-burgundy-700 mb-3">Approved by:</h5>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <p class="text-sm text-gray-700 text-center">RANDY A. TUDY, PhD</p>
+                        <p class="text-sm text-gray-700 text-center">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</p>
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
-                        <p class="text-sm text-gray-600 text-center">Deputy Director, Publication Unit</p>
+                        <p class="text-sm text-gray-600 text-center">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</p>
                     </div>
                     <div>
                         <div class="border-b-2 border-gray-400 h-8 mb-2"></div>
@@ -138,9 +138,9 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div>
-                        <p class="text-sm text-gray-700 text-center">MERLINA H. JURUENA, PhD</p>
+                        <p class="text-sm text-gray-700 text-center">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</p>
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
-                        <p class="text-sm text-gray-600 text-center">Director, Research and Development Division</p>
+                        <p class="text-sm text-gray-600 text-center">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</p>
             </div>
             <div>
                         <div class="border-b-2 border-gray-400 h-8 mb-2"></div>
