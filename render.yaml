@@ -18,11 +18,19 @@ services:
         value: pgsql
       - key: CACHE_DRIVER
         value: file
-      - key: QUEUE_CONNECTION
-        value: sync
+      - key: RESPONSE_CACHE_DRIVER
+        value: file
       - key: SESSION_DRIVER
         value: file
+      - key: VIEW_CACHE_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
       - key: SESSION_LIFETIME
         value: 120
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_NAME
+        value: PubCite
     buildCommand: echo "Build handled by Dockerfile"
     startCommand: echo "Start handled by Dockerfile CMD" 
