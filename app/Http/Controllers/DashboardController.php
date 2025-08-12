@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NudgeNotification;
 
 class DashboardController extends Controller
 {
@@ -165,6 +167,54 @@ class DashboardController extends Controller
         }
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
         return view('dashboard', compact('requests'));
+    }
+
+    public function nudge(\App\Models\Request $request)
+    {
+        $user = Auth::user();
+        if ($request->user_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        if ($request->status !== 'pending') {
+            return back()->with('error', 'Only pending requests can be nudged.');
+        }
+        // Log activity
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'request_id' => $request->id,
+            'action' => 'nudged',
+            'details' => [
+                'request_code' => $request->request_code,
+                'type' => $request->type,
+                'by_name' => $user->name,
+                'by_email' => $user->email,
+            ],
+            'created_at' => now(),
+        ]);
+        // Email all admins
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            // Add admin notification entry
+            \App\Models\AdminNotification::create([
+                'user_id' => $admin->id,
+                'request_id' => $request->id,
+                'type' => 'nudge',
+                'title' => 'Nudge: ' . $request->request_code,
+                'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
+                'data' => [
+                    'request_code' => $request->request_code,
+                    'type' => $request->type,
+                    'user_name' => $user->name,
+                    'user_email' => $user->email,
+                ],
+            ]);
+            try {
+                Mail::to($admin->email)->send(new NudgeNotification($request, $user));
+            } catch (\Exception $e) {
+                Log::error('Nudge email failed: ' . $e->getMessage());
+            }
+        }
+        return back()->with('success', 'Nudge sent to admins.');
     }
 
     public function getData()
@@ -380,7 +430,7 @@ class DashboardController extends Controller
             try {
                 $newRequests = \App\Models\Request::where('created_at', '>', $lastCheck)->count();
                 $statusChanges = \App\Models\ActivityLog::where('created_at', '>', $lastCheck)
-                    ->whereIn('action', ['created', 'status_changed', 'deleted'])
+                    ->whereIn('action', ['created', 'status_changed', 'deleted', 'nudged'])
                     ->count();
                 
                 // Only send update if there are actual changes AND we haven't sent an update in the last 5 seconds

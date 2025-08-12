@@ -1,5 +1,36 @@
 <x-app-layout>
-    <div class="h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6">
+    <div x-data="{ 
+        loading: false,
+        errorMessage: null,
+        errorTimer: null,
+        showError(message) {
+            this.errorMessage = message;
+            if (this.errorTimer) clearTimeout(this.errorTimer);
+            this.errorTimer = setTimeout(() => {
+                this.errorMessage = null;
+            }, 3000);
+        }
+    }" class="h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 relative">
+        @if(session('success'))
+            <div class="fixed top-20 right-4 z-[60] bg-green-600 text-white px-4 py-2 rounded shadow">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow">{{ session('error') }}</div>
+        @endif
+        <!-- Error message overlay -->
+        <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
+            <span x-text="errorMessage"></span>
+        </div>
+        <!-- Loading overlay -->
+        <div x-show="loading" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl px-6 py-5 flex items-center gap-3">
+                <svg class="animate-spin h-6 w-6 text-maroon-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                <span class="text-maroon-900 font-semibold">Processing…</span>
+            </div>
+        </div>
         <div class="w-full max-w-6xl h-[calc(90vh-4rem)] flex items-center justify-center">
             <div class="bg-white/30 backdrop-blur-md border border-white/40 overflow-hidden shadow-xl sm:rounded-lg p-0 relative h-full flex flex-col">
                 <div class="h-full flex flex-col md:flex-row">
@@ -45,7 +76,7 @@
                                         <svg class="h-6 w-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <span class="text-base">Publications</span>
+                                        <span class="text-base">Application for Publications</span>
                                     </div>
                                     <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                                 </a>
@@ -54,7 +85,7 @@
                                         <svg class="h-6 w-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <span class="text-base">Citations</span>
+                                        <span class="text-base">Application for Citations</span>
                                     </div>
                                     <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                                 </a>
@@ -179,12 +210,33 @@
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
                                                     @endif
                                                 </td>
-                                                <td class="px-4 py-2 truncate text-center w-20 text-xs">
-                                                    <button class="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-maroon-100 transition" title="View Details">
-                                                        <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    </button>
+                                                <td class="px-4 py-2 text-center text-xs">
+                                                    @if($request->status === 'pending')
+                                                        @php
+                                                            $recentNudge = \App\Models\ActivityLog::where('user_id', auth()->id())
+                                                                ->where('request_id', $request->id)
+                                                                ->where('action', 'nudged')
+                                                                ->where('created_at', '>=', now()->subDay())
+                                                                ->first();
+                                                            $canNudge = !$recentNudge;
+                                                        @endphp
+                                                        @if($canNudge)
+                                                            <form method="POST" action="{{ route('requests.nudge', $request) }}" class="inline" @submit="loading = true">
+                                                                @csrf
+                                                                <button type="submit" :disabled="loading" class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 hover:bg-yellow-200 disabled:opacity-60 disabled:cursor-not-allowed transition text-xs whitespace-nowrap" title="Nudge admin">
+                                                                    <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                                                    <span x-text="loading ? 'Nudging…' : 'Nudge'"></span>
+                                                                </button>
+                                                            </form>
+                                                        @else
+                                                            <button type="button" @click="showError('You can only nudge this request once per day.')" class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-500 cursor-not-allowed transition text-xs whitespace-nowrap" title="Already nudged today" disabled>
+                                                                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                                                <span>Nudge</span>
+                                                            </button>
+                                                        @endif
+                                                    @else
+                                                    <span class="text-gray-400">—</span>
+                                                    @endif
                                                 </td>
                                             </tr>
                                             @endforeach

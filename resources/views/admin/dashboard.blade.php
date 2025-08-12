@@ -45,6 +45,11 @@
                     </h1>
                     <!-- Centered Navigation Tabs -->
                     <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-2 dashboard-chart-filter">
+                        <a href="{{ route('dashboard') }}"
+                           class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
+                            <svg class="w-5 h-5 inline-block mr-1 align-middle {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                            View All
+                        </a>
                         <a href="{{ route('dashboard', array_merge(request()->except('type', 'page', 'period', 'status', 'search'), ['type' => 'Citation'])) }}"
                            class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ request('type') === 'Citation' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
                             <svg class="w-5 h-5 inline-block mr-1 align-middle {{ request('type') === 'Citation' ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 3v4M7 3v4" /></svg>
@@ -54,11 +59,6 @@
                            class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ request('type') === 'Publication' ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
                             <svg class="w-5 h-5 inline-block mr-1 align-middle {{ request('type') === 'Publication' ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0H3m9 0h9" /></svg>
                             Publication
-                        </a>
-                        <a href="{{ route('dashboard') }}"
-                           class="px-5 py-1.5 rounded-full font-semibold shadow border border-maroon-900 focus:outline-none transition-colors group {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'bg-maroon-900 text-white' : 'bg-gray-100 text-maroon-900 hover:bg-maroon-900 hover:text-white' }}">
-                            <svg class="w-5 h-5 inline-block mr-1 align-middle {{ !request('type') && !request('period') && !request('status') && !request('search') ? 'text-white' : 'text-maroon-800 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            View All
                         </a>
                     </div>
                     <!-- Search Input Field -->
@@ -286,6 +286,8 @@
                                                 $desc = 'Status changed <b>' . e($log->details['old_status'] ?? '') . '</b> → <b>' . e($log->details['new_status'] ?? '') . '</b> for <b>' . e($log->details['request_code'] ?? '') . '</b>';
                                             } elseif ($log->action === 'deleted') {
                                                 $desc = 'Request <b>' . e($log->details['request_code'] ?? '') . '</b> deleted';
+                                            } elseif ($log->action === 'nudged') {
+                                                $desc = 'Nudge for <b>' . e($log->details['request_code'] ?? '') . '</b> (' . e($log->details['type'] ?? '') . ') by <b>' . e($log->details['by_name'] ?? 'User') . '</b>';
                                             } else {
                                                 $desc = ucfirst($log->action);
                                     }
@@ -682,6 +684,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (activityLogContainer) {
         activityLogContainer.classList.add('activity-log-list');
     }
+    // Initial fetch for charts on first non-Turbo load
+    if (!window.Turbo) {
+        fetchAndUpdateCharts(getCurrentFilters());
+    }
 });
 
 // Clean up connection when page unloads
@@ -958,16 +964,30 @@ function fetchAndUpdateCharts(filters) {
         });
 }
 
-// Attach event listeners after DOM is ready
-// document.addEventListener('DOMContentLoaded', () => {
-//     fetchAndUpdateCharts(getCurrentFilters());
-// });
-document.addEventListener('turbo:render', () => {
-    fetchAndUpdateCharts(getCurrentFilters());
+// Turbo lifecycle integration for charts and SSE
+document.addEventListener('turbo:load', () => {
+    // Re-init SSE and charts on Turbo navigation
+    initializeRealTimeUpdates();
+    // Defer to allow layout to settle
+    setTimeout(() => fetchAndUpdateCharts(getCurrentFilters()), 0);
 });
-document.removeEventListener && document.removeEventListener('turbo:load', fetchAndUpdateCharts);
+
+document.addEventListener('turbo:before-cache', () => {
+    // Destroy charts before Turbo caches the page to avoid stale canvas state
+    if (monthlyChartInstance) {
+        monthlyChartInstance.destroy();
+        monthlyChartInstance = null;
+    }
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+        statusChartInstance = null;
+    }
+    if (eventSource) {
+        try { eventSource.close(); } catch(e) {}
+        eventSource = null;
+    }
+});
 </script>
-</x-app-layout>
 
 <style>
 /* Transparent scrollbar track, visible thumb for activity log */
@@ -983,4 +1003,6 @@ document.removeEventListener && document.removeEventListener('turbo:load', fetch
     scrollbar-color: #b91c1c transparent;
 }
 </style>
+ 
+</x-app-layout>
 

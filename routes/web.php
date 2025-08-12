@@ -66,6 +66,11 @@ Route::middleware([
     Route::get('/admin/requests/{request}/download-zip', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadZip'])->name('admin.requests.download-zip');
     Route::get('/admin/requests/{request}/debug', [\App\Http\Controllers\PublicationsController::class, 'debugFilePaths'])->name('admin.requests.debug');
     Route::get('/admin/requests/{request}/serve', [\App\Http\Controllers\PublicationsController::class, 'serveFile'])->name('admin.requests.serve');
+    // Nudge a pending request (user action)
+    Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
+    // Admin notifications endpoints
+    Route::get('/admin/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');
+    Route::post('/admin/notifications/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.read');
 });
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');

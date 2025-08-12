@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-maroon-800 border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
+<nav x-data="{ open: false, showNotif: false, notif: { items: [], unread: 0 }, async fetchNotifs() { try { const res = await fetch('{{ route('admin.notifications.list') }}'); if (!res.ok) return; const data = await res.json(); this.notif = data; } catch(e) {} }, async markRead() { try { await fetch('{{ route('admin.notifications.read') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content } }); this.notif.unread = 0; } catch(e) {} } }" class="bg-maroon-800 border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
     <!-- Primary Navigation Menu -->
     <div class="px-6">
         <div class="flex justify-between h-16">
@@ -17,10 +17,38 @@
                 </div>
             </div>
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
-                <!-- Notification Bell Icon -->
-                <button id="notification-bell" class="relative focus:outline-none">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                </button>
+                @if(Auth::user() && Auth::user()->role === 'admin')
+                <!-- Notification Bell Icon with dropdown -->
+                <div class="relative" @click.outside="showNotif = false">
+                    <button id="notification-bell" class="relative focus:outline-none" @click.prevent="showNotif = !showNotif; if (showNotif) { fetchNotifs(); markRead(); }">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                        <span x-show="notif.unread > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center text-[10px] font-bold text-white bg-red-600 rounded-full w-4 h-4" x-text="notif.unread"></span>
+                    </button>
+                    <!-- Dropdown -->
+                    <div x-show="showNotif" style="display:none;" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
+                        <div class="px-4 py-2 bg-gray-50 border-b">
+                            <span class="text-sm font-semibold text-gray-800">Notifications</span>
+                        </div>
+                        <div class="max-h-80 overflow-y-auto">
+                            <template x-if="notif.items.length === 0">
+                                <div class="p-4 text-sm text-gray-500">No notifications</div>
+                            </template>
+                            <template x-for="item in notif.items" :key="item.id">
+                                <a :href="item.data && item.data.request_code ? ('{{ url('/admin/requests/manage') }}') : '#'" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition">
+                                    <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-4 h-4 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-sm font-semibold text-gray-800" x-text="item.title"></div>
+                                        <div class="text-xs text-gray-600" x-text="item.message"></div>
+                                        <div class="text-[10px] text-gray-400 mt-0.5" x-text="new Date(item.created_at).toLocaleString()"></div>
+                                    </div>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                @endif
                 <!-- Teams Dropdown -->
                 @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
                     <div class="ms-3 relative">
