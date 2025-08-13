@@ -10,10 +10,14 @@
             <div class="flex-1 overflow-y-auto px-6 pb-6">
                 <div x-data="{ showError: false, errorMsg: '' }" x-ref="errorBanner" class="relative">
                     <template x-if="showError">
-                        <div class="absolute top-0 left-0 w-full z-20">
-                            <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between shadow mb-4 animate-fade-in">
-                                <span x-text="errorMsg"></span>
-                                <button @click="showError = false" class="ml-4 text-red-600 hover:text-red-800 font-bold text-lg">&times;</button>
+                        <div class="fixed inset-0 z-50 flex items-center justify-center">
+                            <div class="fixed inset-0 bg-black/30" @click="showError = false"></div>
+                            <div class="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-full max-w-md">
+                                <div class="text-base font-semibold text-gray-800 mb-1">Incomplete form</div>
+                                <div class="text-sm text-gray-600 mb-4" x-text="errorMsg"></div>
+                                <div class="text-right">
+                                    <button @click="showError = false" type="button" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-burgundy-600 text-white hover:bg-burgundy-700">OK</button>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -24,6 +28,7 @@
                         enctype="multipart/form-data" 
                         class="space-b-3 h-full"
                         x-data="publicationForm()"
+                        x-ref="publicationForm"
                         @input="checkFilled()"
                         @change="checkFilled()"
                         x-init="checkFilled()"
@@ -46,7 +51,7 @@
                                         !$store.tabNav.tabCompletion.recommendation && $store.tabNav.tab !== 'recommendation' && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
                                     ]"
                                     @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
-                                    :disabled="!$store.tabNav.tabCompletion.incentive"
+                                    :disabled="false"
                                 >Recommendation</button>
                                 <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                                     :class="[
@@ -54,7 +59,7 @@
                                         !$store.tabNav.tabCompletion.terminal && $store.tabNav.tab !== 'terminal' && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
                                     ]"
                                     @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'terminal' }"
-                                    :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation)"
+                                    :disabled="false"
                                 >Terminal Report</button>
                                 <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                                     :class="[
@@ -62,14 +67,14 @@
                                         !$store.tabNav.tabCompletion.upload && $store.tabNav.tab !== 'upload' && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
                                     ]"
                                     @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
-                                    :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal)"
+                                    :disabled="false"
                                 >Upload Documents</button>
                                 <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
                                     :class="[
                                         $store.tabNav.tab === 'review' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.upload) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
                                     ]"
                                     @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
-                                    :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.upload)"
+                                    :disabled="false"
                                 >Review & Submit</button>
                             </div>
 
@@ -379,6 +384,64 @@
         </div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div x-data="{ isLoading: false }" x-show="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center">
+            <svg class="animate-spin h-8 w-8 text-maroon-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span class="text-maroon-700 font-medium">Submitting request...</span>
+        </div>
+    </div>
+
+    <!-- Success/Error Notifications -->
+    <div x-data="{ 
+        showNotification: false, 
+        notificationType: 'success', 
+        notificationMessage: '',
+        init() {
+            // Check for Laravel session messages
+            @if(session('success'))
+                this.showNotification = true;
+                this.notificationType = 'success';
+                this.notificationMessage = '{{ session('success') }}';
+                setTimeout(() => this.showNotification = false, 5000);
+            @endif
+            @if(session('error'))
+                this.showNotification = true;
+                this.notificationType = 'error';
+                this.notificationMessage = '{{ session('error') }}';
+                setTimeout(() => this.showNotification = false, 5000);
+            @endif
+        }
+    }" 
+    x-show="showNotification" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 transform translate-y-2"
+    x-transition:enter-end="opacity-100 transform translate-y-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 transform translate-y-0"
+    x-transition:leave-end="opacity-0 transform translate-y-2"
+    class="fixed top-4 right-4 z-50">
+        <div :class="notificationType === 'success' ? 'bg-green-500' : 'bg-red-500'" class="text-white px-6 py-3 rounded-lg shadow-lg">
+            <div class="flex items-center">
+                <svg x-show="notificationType === 'success'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <svg x-show="notificationType === 'error'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+                <span x-text="notificationMessage"></span>
+                <button @click="showNotification = false" class="ml-4 text-white hover:text-gray-200">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L10 11.414l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
     <div
         x-data="stickyProgressBar"
@@ -404,7 +467,7 @@
                                 <button
                                     type="button"
                                     @click="$store.tabNav.nextTab()"
-                                    :disabled="!$store.tabNav.currentTabComplete"
+                                    :disabled="false"
                                     :class="!$store.tabNav.currentTabComplete
                                         ? 'font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-maroon-200 opacity-90 cursor-not-allowed transition shadow-lg'
                                         : 'font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition'"
@@ -414,8 +477,8 @@
                             </div>
                             <div x-show="$store.tabNav && $store.tabNav.tab === 'review'">
                                 <button
-                                    type="submit"
-                                    form="publication-request-form"
+                                    type="button"
+                                    onclick="submitPublicationForm()"
                                     class="font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition"
                                 >
                                     Submit Request
@@ -431,10 +494,52 @@
 <script>
 function publicationForm() {
     return {
+        isLoading: false,
         checkFilled() {
             // No-op, logic moved to tabNav or not needed
         }
     }
+}
+
+function submitPublicationForm() {
+    // Validate all tabs before submission
+    const tabNav = Alpine.store('tabNav');
+    if (!tabNav.allComplete) {
+        tabNav.checkTabs();
+        if (!tabNav.allComplete) {
+            // Show error notification
+            const notificationElement = document.querySelector('[x-data*="showNotification"]');
+            if (notificationElement && notificationElement.__x) {
+                const notification = notificationElement.__x.$data;
+                notification.showNotification = true;
+                notification.notificationType = 'error';
+                notification.notificationMessage = 'Please complete all required fields before submitting.';
+                setTimeout(() => notification.showNotification = false, 5000);
+            }
+            return false;
+        }
+    }
+    
+    // Show loading overlay
+    const loadingElement = document.querySelector('[x-data*="isLoading"]');
+    if (loadingElement && loadingElement.__x) {
+        loadingElement.__x.$data.isLoading = true;
+    }
+    
+    // Disable submit button to prevent double submission
+    const submitBtn = event.target;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    
+    // Submit the form
+    const form = document.getElementById('publication-request-form');
+    if (form) {
+        form.submit();
+    }
+    
+    return false; // Prevent default form submission
 }
 
 function updateReviewFile(type, input) {
@@ -514,20 +619,12 @@ function tabNav() {
             // If moving to review tab, validate all tabs
             if (tabs[currentIndex + 1] === 'review') {
                 this.checkTabs();
-                if (!this.allComplete) {
-                    ['incentive', 'recommendation', 'terminal', 'upload'].forEach(tab => {
-                        this.highlightIncompleteFieldsForTab(tab);
-                    });
-                    // Show error banner
-                    if (typeof this.showError !== 'undefined') {
-                        this.showError = true;
-                        this.errorMsg = 'Please complete all required fields before reviewing.';
-                        this.$nextTick(() => {
-                            this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    if (!this.allComplete) {
+                        ['incentive', 'recommendation', 'terminal', 'upload'].forEach(tab => {
+                            this.highlightIncompleteFieldsForTab(tab);
                         });
+                        return;
                     }
-                    return;
-                }
             }
             // Find the next available tab that is complete
             for (let i = currentIndex + 1; i < tabs.length; i++) {
@@ -555,6 +652,7 @@ function tabNav() {
             } else if (tab === 'upload') {
                 fields = ['article_pdf', 'acceptance_pdf', 'peer_review_pdf', 'terminal_report_pdf'];
             }
+            let firstIncompleteEl = null;
             fields.forEach(field => {
                 const element = this.getFieldElement(field);
                 if (!element) return;
@@ -571,9 +669,17 @@ function tabNav() {
                 }
                 if (incomplete) {
                     element.classList.add('ring-2', 'ring-maroon-500', 'ring-offset-2');
+                    if (!firstIncompleteEl) firstIncompleteEl = element;
                     setTimeout(() => element.classList.remove('ring-2', 'ring-maroon-500', 'ring-offset-2'), 2000);
                 }
             });
+            // Focus and scroll to first incomplete field
+            if (firstIncompleteEl) {
+                setTimeout(() => {
+                    firstIncompleteEl.focus();
+                    firstIncompleteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
         },
         // Shake the Next button for feedback
         shakeNextButton() {

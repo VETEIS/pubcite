@@ -143,9 +143,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <div class="h-1"></div>
-                        <input type="text" name="faculty_name" id="faculty_name" required 
-                        class="w-full text-sm text-gray-700 text-center border-none focus:outline-none focus:ring-0 bg-transparent"
-                        placeholder="Enter faculty name">
+                        <x-signatory-select name="faculty_name" type="faculty" placeholder="Search faculty..." />
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
                         <p class="text-sm text-gray-600 text-center">Signature over Printed Name of the Faculty</p>
                     </div>

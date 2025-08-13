@@ -30,12 +30,13 @@
         <!-- Letter Body -->
         <div class="mb-8">
             <p class="text-sm text-gray-700 mb-4">Greetings in the name of research advancement!</p>
-            
+            <div class="flex items-baseline gap-2 text-sm text-gray-700 mb-1">
+                <span>This is to endorse to your office the research citation of</span>
+                <div class="inline-block">
+                    <x-signatory-select name="rec_faculty_name" type="faculty" width="w-48" placeholder="Search faculty..." />
+                </div>
+            </div>
             <p class="text-sm text-gray-700 mb-4">
-                This is to endorse to your office the research citation of 
-                <span class="">
-                    <x-signatory-select name="rec_faculty_name" type="faculty" placeholder="Search faculty..." />
-                </span> 
                 for possible granting of citation incentives. The list of the cited paper/s and the corresponding citation/s is/are summarized below:
             </p>
             
