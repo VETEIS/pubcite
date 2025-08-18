@@ -2,11 +2,27 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto p-6 bg-white rounded shadow">
-    @if(session('error'))
-        <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">{{ session('error') }}</div>
-    @endif
+    <!-- Floating Notifications -->
     @if(session('success'))
-        <div class="mb-4 p-3 bg-green-100 text-green-700 rounded">{{ session('success') }}</div>
+    <div id="success-notification" class="fixed top-20 right-4 z-[60] bg-green-600 text-white px-4 py-2 rounded shadow-lg backdrop-blur border border-green-500/20 transform transition-all duration-300 opacity-100 translate-x-0">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ session('success') }}</span>
+        </div>
+    </div>
+    @endif
+    
+    @if(session('error'))
+    <div id="error-notification" class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow-lg backdrop-blur border border-red-500/20 transform transition-all duration-300 opacity-100 translate-x-0">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ session('error') }}</span>
+        </div>
+    </div>
     @endif
     <h2 class="text-xl font-bold text-center mb-4">Review Your Submission</h2>
     <div class="mb-6">
@@ -49,4 +65,34 @@
         </div>
     </form>
 </div>
+
+<script>
+    // Auto-hide notifications after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const successNotification = document.getElementById('success-notification');
+        const errorNotification = document.getElementById('error-notification');
+        
+        if (successNotification) {
+            setTimeout(() => {
+                successNotification.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => {
+                    if (document.body.contains(successNotification)) {
+                        document.body.removeChild(successNotification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        if (errorNotification) {
+            setTimeout(() => {
+                errorNotification.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => {
+                    if (document.body.contains(errorNotification)) {
+                        document.body.removeChild(errorNotification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+    });
+</script>
 @endsection 

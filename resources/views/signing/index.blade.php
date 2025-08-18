@@ -5,13 +5,33 @@
                 <div class="flex items-center justify-between mb-4">
                     <h1 class="text-2xl font-bold text-maroon-900">For Signing</h1>
                 </div>
+                
+                <!-- Floating Notifications -->
+                @if(session('success'))
+                <div id="success-notification" class="fixed top-20 right-4 z-[60] bg-green-600 text-white px-4 py-2 rounded shadow-lg backdrop-blur border border-green-500/20 transform transition-all duration-300 opacity-100 translate-x-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+                @endif
+                
+                @if(session('error'))
+                <div id="error-notification" class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow-lg backdrop-blur border border-red-500/20 transform transition-all duration-300 opacity-100 translate-x-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                </div>
+                @endif
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
                     <!-- Left: Signature upload -->
                     <div class="bg-white/70 backdrop-blur border border-white/40 rounded-xl shadow p-4">
                         <h2 class="text-sm font-bold text-maroon-900 mb-2">Digital Signature (PNG)</h2>
-                        @if(session('success'))
-                            <div class="mb-2 text-green-700 bg-green-100 border border-green-200 rounded px-3 py-1 text-xs font-medium">{{ session('success') }}</div>
-                        @endif
                         <div class="flex flex-col items-center gap-3">
                             @if($signatureUrl)
                                 <img src="{{ $signatureUrl }}" alt="Signature" class="max-h-24 object-contain border rounded bg-white p-2">
@@ -62,4 +82,34 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        // Auto-hide notifications after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const successNotification = document.getElementById('success-notification');
+            const errorNotification = document.getElementById('error-notification');
+            
+            if (successNotification) {
+                setTimeout(() => {
+                    successNotification.classList.add('opacity-0', 'translate-x-full');
+                    setTimeout(() => {
+                        if (document.body.contains(successNotification)) {
+                            document.body.removeChild(successNotification);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+            
+            if (errorNotification) {
+                setTimeout(() => {
+                    errorNotification.classList.add('opacity-0', 'translate-x-full');
+                    setTimeout(() => {
+                        if (document.body.contains(errorNotification)) {
+                            document.body.removeChild(errorNotification);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+        });
+    </script>
 </x-app-layout> 

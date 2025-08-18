@@ -29,7 +29,7 @@
                 <div class="px-6">
                     <div class="flex justify-between h-16">
                         <div class="flex items-center gap-3">
-                            <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-10 w-10 object-contain rounded-full" />
+                            <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain rounded-full" />
                             <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">USeP Publication Unit</span>
                             @if (View::exists('components.breadcrumbs'))
                                 <span class="flex items-center justify-center ml-6">
@@ -38,7 +38,7 @@
                             @endif
                         </div>
                         <div class="flex items-center gap-2 sm:gap-4">
-                            <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain" />
+                            <!-- <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain" /> -->
                         </div>
                     </div>
                 </div>
@@ -153,6 +153,7 @@
                     </div>
 
                     <!-- Indexing Logos Row -->
+                    <!--
                     <div class="w-full sm:max-w-4xl mx-auto">
                         <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl px-6 py-3 mb-8 mt-6 flex justify-center items-center gap-8">
                             <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center justify-center">
@@ -173,7 +174,7 @@
                             </a>
                         </div>
                     </div>
-
+                    -->
 
                     <!-- Features Grid - More Compact -->
                     <div class="grid md:grid-cols-3 gap-4 mb-6">

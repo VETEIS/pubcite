@@ -109,6 +109,9 @@
 
         @stack('modals')
 
+        <!-- Global Notification System -->
+        <x-global-notifications />
+
         <script>window.livewireScriptConfig = { alpine: true }</script>
         @livewireScripts
     </body>

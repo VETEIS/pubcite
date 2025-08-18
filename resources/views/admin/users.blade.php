@@ -14,49 +14,9 @@
                         Accounts
                     </h1>
                 </div>
+                
+                <!-- Notifications handled by global system via hidden placeholders at bottom -->
                 <div class="relative w-full">
-                        <div class="w-full flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6 relative">
-                            <!-- Notification Area: absolutely positioned, overlay -->
-                            <div class="absolute top-0 right-0 z-20 mt-2 mr-4">
-                                @if(session('success'))
-                                    <div class="text-green-700 bg-green-100 border border-green-200 rounded px-3 py-1 text-xs font-medium shadow">{{ session('success') }}</div>
-                                @elseif(session('error'))
-                                    <div class="text-red-700 bg-red-100 border border-red-200 rounded px-3 py-1 text-xs font-medium shadow">{{ session('error') }}</div>
-                                @endif
-                            </div>
-                            <!-- Users Card Header -->
-                            <div class="flex-1 bg-white/70 backdrop-blur-md border border-white/40 rounded-xl shadow-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-4 min-w-0 w-full">
-                                <div class="flex items-center gap-1 sm:gap-2 min-w-0">
-                                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-maroon-100 flex items-center justify-center">
-                                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    </div>
-                                    <span class="font-semibold text-maroon-800 text-sm sm:text-base truncate">Accounts</span>
-                                </div>
-                                <div class="flex flex-row gap-2 ml-auto items-center">
-                                    <div class="flex flex-col items-center justify-center min-w-0 flex-1 bg-maroon-50 border border-maroon-200 rounded-lg shadow-sm py-1.5 px-3">
-                                        <span class="text-base font-bold text-maroon-700">{{ ($adminCount ?? 0) + ($userCount ?? 0) }}</span>
-                                        <span class="text-xs text-maroon-800 font-semibold tracking-wide">Total</span>
-                                    </div>
-                                    <div class="flex flex-col items-center justify-center min-w-0 flex-1 bg-maroon-50 border border-maroon-200 rounded-lg shadow-sm py-1.5 px-3">
-                                        <span class="text-base font-bold text-maroon-700">{{ $adminCount ?? 0 }}</span>
-                                        <span class="text-xs text-maroon-800 font-semibold tracking-wide">Admins</span>
-                                    </div>
-                                    <div class="flex flex-col items-center justify-center min-w-0 flex-1 bg-maroon-50 border border-maroon-200 rounded-lg shadow-sm py-1.5 px-3">
-                                        <span class="text-base font-bold text-maroon-700">{{ $userCount ?? 0 }}</span>
-                                        <span class="text-xs text-maroon-800 font-semibold tracking-wide">Users</span>
-                                    </div>
-                                </div>
-                                @if($lastCreatedUser)
-                                <span class="hidden sm:inline-block mx-2 text-gray-300">|</span>
-                                <span class="text-xs text-gray-500 truncate flex-shrink-0 flex-grow-0" style="flex-basis:500px;max-width:500px;">
-                                    <span class="text-gray-400 uppercase tracking-wide">Last:</span>
-                                    <span class="font-semibold text-gray-700 truncate max-w-[200px] align-middle" title="{{ $lastCreatedUser->name }}">{{ $lastCreatedUser->name }}</span>
-                                    <span class="text-gray-400">&lt;</span><span class="truncate max-w-[200px] align-middle" title="{{ $lastCreatedUser->email }}">{{ $lastCreatedUser->email }}</span><span class="text-gray-400">&gt;</span>
-                                    <span class="text-gray-400 ml-1 align-middle">{{ $lastCreatedUser->created_at->format('M d, Y') }}</span>
-                                </span>
-                                @endif
-                            </div>
-                        </div>
                             <div class="mt-4">
                                 <!-- Filters and Search -->
                                 <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
@@ -88,34 +48,34 @@
                             </div>
                             <div class="bg-white/30 backdrop-blur border border-white/40 rounded-xl shadow p-2 overflow-y-auto flex-1 min-h-0">
                                 <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-maroon-200 text-xs border border-white/40 rounded-t-xl overflow-hidden">
+                                    <table class="min-w-full table-fixed divide-y divide-maroon-200 text-xs border border-white/40 rounded-t-xl overflow-hidden">
                                         <thead class="bg-white/30 backdrop-blur border-b border-white/40 rounded-t-xl sticky top-0 z-10">
                                             <tr>
                                                 <th class="px-4 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Name</th>
-                                                <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Email</th>
-                                                <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Role</th>
-                                                <th class="px-2 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Signatory Type</th>
-                                                <th class="px-2 py-2 text-center font-bold text-maroon-900 uppercase tracking-wider">Actions</th>
+                                                <th class="px-4 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Email</th>
+                                                <th class="px-4 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Role</th>
+                                                <th class="px-4 py-2 text-left font-bold text-maroon-900 uppercase tracking-wider">Signatory Type</th>
+                                                <th class="px-4 py-2 text-center font-bold text-maroon-900 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-maroon-100">
                                         @foreach($users as $user)
                                             <tr>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" title="{{ $user->name }}">{{ $user->name }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-[180px] truncate" title="{{ $user->email }}">{{ $user->email }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[160px] truncate" title="{{ $user->name }}">{{ $user->name }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 max-w-[180px] truncate" title="{{ $user->email }}">{{ $user->email }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap text-sm">
                                                     <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $user->role === 'admin' ? 'bg-maroon-100 text-maroon-800' : 'bg-gray-100 text-gray-700' }}">
                                                         {{ ucfirst($user->role) }}
                                                     </span>
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                                                     @if($user->role === 'signatory')
                                                         {{ str_replace('_',' ', ucfirst($user->signatory_type ?? '')) }}
                                                     @else
                                                         —
                                                     @endif
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                                <td class="px-4 py-2 whitespace-nowrap text-center">
                                                     <div class="flex flex-row gap-2 items-center justify-center">
                                                         <a href="{{ route('admin.users.edit', $user) }}" class="p-2 rounded-lg bg-maroon-700 text-white hover:bg-maroon-800 transition-colors" title="Edit">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" /></svg>
@@ -141,4 +101,11 @@
             </div>
         </div>
     </div>
+    
+    @if(session('success'))
+        <div id="success-notification" class="hidden">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div id="error-notification" class="hidden">{{ session('error') }}</div>
+    @endif
 </x-app-layout> 

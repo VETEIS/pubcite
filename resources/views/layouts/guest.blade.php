@@ -103,6 +103,9 @@
             </div>
         </div>
 
+        <!-- Global Notification System -->
+        <x-global-notifications />
+
         <script>window.livewireScriptConfig = { alpine: false }</script>
         @livewireScripts
     </body>

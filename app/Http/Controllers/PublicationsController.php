@@ -41,19 +41,37 @@ class PublicationsController extends Controller
 
         // Activity log for status change
         if ($oldStatus !== $request->status) {
-            \App\Models\ActivityLog::create([
-                'user_id' => Auth::id(),
-                'request_id' => $request->id,
-                'action' => 'status_changed',
-                'details' => [
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => Auth::id(),
+                    'request_id' => $request->id,
+                    'action' => 'status_changed',
+                    'details' => [
+                        'old_status' => $oldStatus,
+                        'new_status' => $request->status,
+                        'request_code' => $request->request_code,
+                        'type' => $request->type,
+                        'changed_at' => now()->toDateTimeString(),
+                    ],
+                    'created_at' => now(),
+                ]);
+                
+                Log::info('Activity log created successfully for status change', [
+                    'request_id' => $request->id,
+                    'request_code' => $request->request_code,
+                    'old_status' => $oldStatus,
+                    'new_status' => $request->status
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for status change: ' . $e->getMessage(), [
+                    'request_id' => $request->id,
+                    'request_code' => $request->request_code,
                     'old_status' => $oldStatus,
                     'new_status' => $request->status,
-                    'request_code' => $request->request_code,
-                    'type' => $request->type,
-                    'changed_at' => now()->toDateTimeString(),
-                ],
-                'created_at' => now(),
-            ]);
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the status change if activity logging fails
+            }
             $adminComment = $httpRequest->input('admin_comment', null);
             \Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
         }
@@ -560,17 +578,33 @@ class PublicationsController extends Controller
             ]);
 
             // Activity log for creation
-            \App\Models\ActivityLog::create([
-                'user_id' => $userId,
-                'request_id' => $userRequest->id,
-                'action' => 'created',
-                'details' => [
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => $userId,
+                    'request_id' => $userRequest->id,
+                    'action' => 'created',
+                    'details' => [
+                        'request_code' => $userRequest->request_code,
+                        'type' => $userRequest->type,
+                        'created_at' => now()->toDateTimeString(),
+                    ],
+                    'created_at' => now(),
+                ]);
+                
+                Log::info('Activity log created successfully for publication request', [
+                    'request_id' => $userRequest->id,
                     'request_code' => $userRequest->request_code,
-                    'type' => $userRequest->type,
-                    'created_at' => now()->toDateTimeString(),
-                ],
-                'created_at' => now(),
-            ]);
+                    'user_id' => $userId
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for publication request: ' . $e->getMessage(), [
+                    'request_id' => $userRequest->id,
+                    'request_code' => $userRequest->request_code,
+                    'user_id' => $userId,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the request if activity logging fails
+            }
 
             Log::info('Publication request submitted successfully', [
                 'requestId' => $userRequest->id,

@@ -80,6 +80,7 @@
                                     </div>
                                     <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                                 </a>
+                                @if($citations_request_enabled == '1')
                                 <a href="{{ route('citations.request') }}" data-turbo="false" class="bg-burgundy-700 hover:bg-burgundy-800 text-white font-semibold py-4 px-4 rounded-lg shadow transition flex flex-row items-center gap-2 justify-between group text-base">
                                     <div class="flex flex-row items-center gap-2">
                                         <svg class="h-6 w-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,6 +90,18 @@
                                     </div>
                                     <svg class="h-5 w-5 text-white flex-shrink-0 ml-2 arrow-animate-x transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                                 </a>
+                                @else
+                                <div class="bg-gray-400 text-gray-600 font-semibold py-4 px-4 rounded-lg shadow flex flex-row items-center gap-2 justify-between group text-base cursor-not-allowed relative" title="Citations requests are currently disabled by administrators">
+                                    <div class="flex flex-row items-center gap-2">
+                                        <svg class="h-6 w-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span class="text-base">Apply for Citations</span>
+                                        <span class="text-xs bg-red-500 text-white px-2 py-1 rounded-full">Disabled</span>
+                                    </div>
+                                    <svg class="h-5 w-5 text-gray-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                </div>
+                                @endif
                                 @if(Auth::user() && Auth::user()->isSignatory())
                                 <a href="{{ route('signing.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-4 rounded-lg shadow transition flex flex-row items-center gap-2 justify-between group text-base">
                                     <div class="flex flex-row items-center gap-2">

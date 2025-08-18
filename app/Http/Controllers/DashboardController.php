@@ -166,7 +166,8 @@ class DashboardController extends Controller
             return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
         }
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
-        return view('dashboard', compact('requests'));
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        return view('dashboard', compact('requests', 'citations_request_enabled'));
     }
 
     public function nudge(\App\Models\Request $request)
@@ -179,18 +180,34 @@ class DashboardController extends Controller
             return back()->with('error', 'Only pending requests can be nudged.');
         }
         // Log activity
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'request_id' => $request->id,
-            'action' => 'nudged',
-            'details' => [
+        try {
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'request_id' => $request->id,
+                'action' => 'nudged',
+                'details' => [
+                    'request_code' => $request->request_code,
+                    'type' => $request->type,
+                    'by_name' => $user->name,
+                    'by_email' => $user->email,
+                ],
+                'created_at' => now(),
+            ]);
+            
+            Log::info('Activity log created successfully for nudge', [
+                'request_id' => $request->id,
                 'request_code' => $request->request_code,
-                'type' => $request->type,
-                'by_name' => $user->name,
-                'by_email' => $user->email,
-            ],
-            'created_at' => now(),
-        ]);
+                'user_id' => $user->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create activity log for nudge: ' . $e->getMessage(), [
+                'request_id' => $request->id,
+                'request_code' => $request->request_code,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail the nudge if activity logging fails
+        }
         // Email all admins
         $admins = \App\Models\User::where('role', 'admin')->get();
         foreach ($admins as $admin) {

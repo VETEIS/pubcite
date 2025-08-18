@@ -395,52 +395,6 @@
         </div>
     </div>
 
-    <!-- Success/Error Notifications -->
-    <div x-data="{ 
-        showNotification: false, 
-        notificationType: 'success', 
-        notificationMessage: '',
-        init() {
-            // Check for Laravel session messages
-            @if(session('success'))
-                this.showNotification = true;
-                this.notificationType = 'success';
-                this.notificationMessage = '{{ session('success') }}';
-                setTimeout(() => this.showNotification = false, 5000);
-            @endif
-            @if(session('error'))
-                this.showNotification = true;
-                this.notificationType = 'error';
-                this.notificationMessage = '{{ session('error') }}';
-                setTimeout(() => this.showNotification = false, 5000);
-            @endif
-        }
-    }" 
-    x-show="showNotification" 
-    x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0 transform translate-y-2"
-    x-transition:enter-end="opacity-100 transform translate-y-0"
-    x-transition:leave="transition ease-in duration-200"
-    x-transition:leave-start="opacity-100 transform translate-y-0"
-    x-transition:leave-end="opacity-0 transform translate-y-2"
-    class="fixed top-4 right-4 z-50">
-        <div :class="notificationType === 'success' ? 'bg-green-500' : 'bg-red-500'" class="text-white px-6 py-3 rounded-lg shadow-lg">
-            <div class="flex items-center">
-                <svg x-show="notificationType === 'success'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <svg x-show="notificationType === 'error'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                </svg>
-                <span x-text="notificationMessage"></span>
-                <button @click="showNotification = false" class="ml-4 text-white hover:text-gray-200">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L10 11.414l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
     <div
@@ -478,7 +432,7 @@
                             <div x-show="$store.tabNav && $store.tabNav.tab === 'review'">
                                 <button
                                     type="button"
-                                    onclick="submitPublicationForm()"
+                                    onclick="submitPublicationForm(event)"
                                     class="font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition"
                                 >
                                     Submit Request
@@ -490,6 +444,12 @@
             </div>
         </div>
     </div>
+    @if(session('success'))
+        <div id="success-notification" class="hidden">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div id="error-notification" class="hidden">{{ session('error') }}</div>
+    @endif
 </div>
 <script>
 function publicationForm() {
@@ -501,20 +461,15 @@ function publicationForm() {
     }
 }
 
-function submitPublicationForm() {
+function submitPublicationForm(event) {
     // Validate all tabs before submission
     const tabNav = Alpine.store('tabNav');
     if (!tabNav.allComplete) {
         tabNav.checkTabs();
         if (!tabNav.allComplete) {
-            // Show error notification
-            const notificationElement = document.querySelector('[x-data*="showNotification"]');
-            if (notificationElement && notificationElement.__x) {
-                const notification = notificationElement.__x.$data;
-                notification.showNotification = true;
-                notification.notificationType = 'error';
-                notification.notificationMessage = 'Please complete all required fields before submitting.';
-                setTimeout(() => notification.showNotification = false, 5000);
+            // Show error via global notifications
+            if (window.notificationManager && typeof window.notificationManager.error === 'function') {
+                window.notificationManager.error('Please complete all required fields before submitting.');
             }
             return false;
         }
@@ -527,7 +482,7 @@ function submitPublicationForm() {
     }
     
     // Disable submit button to prevent double submission
-    const submitBtn = event.target;
+    const submitBtn = event && event.target ? event.target : null;
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -536,7 +491,12 @@ function submitPublicationForm() {
     // Submit the form
     const form = document.getElementById('publication-request-form');
     if (form) {
-        form.submit();
+        // Use a microtask tick so the overlay paints before navigation
+        if (window.queueMicrotask) {
+            queueMicrotask(() => form.submit());
+        } else {
+            Promise.resolve().then(() => form.submit());
+        }
     }
     
     return false; // Prevent default form submission

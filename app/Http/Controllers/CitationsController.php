@@ -23,6 +23,12 @@ class CitationsController extends Controller
 {
     public function create()
     {
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        
+        if ($citations_request_enabled !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Citations requests are currently disabled by administrators.');
+        }
+        
         return view('citations.request');
     }
 
@@ -46,6 +52,15 @@ class CitationsController extends Controller
 
     public function generateCitationDocx(Request $request)
     {
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        
+        if ($citations_request_enabled !== '1') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Citations requests are currently disabled by administrators.'
+            ], 403);
+        }
+        
         try {
             $data = $request->all();
             $docxType = $request->input('docx_type', 'incentive');
@@ -261,13 +276,29 @@ class CitationsController extends Controller
             ];
             
             // Activity log for deletion (must be before delete)
-            \App\Models\ActivityLog::create([
-                'user_id' => $user->id,
-                'request_id' => $request->id,
-                'action' => 'deleted',
-                'details' => $requestDetails,
-                'created_at' => now(),
-            ]);
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => $user->id,
+                    'request_id' => $request->id,
+                    'action' => 'deleted',
+                    'details' => $requestDetails,
+                    'created_at' => now(),
+                ]);
+                
+                Log::info('Activity log created successfully for request deletion', [
+                    'request_id' => $request->id,
+                    'request_code' => $request->request_code,
+                    'deleted_by_user_id' => $user->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for request deletion: ' . $e->getMessage(), [
+                    'request_id' => $request->id,
+                    'request_code' => $request->request_code,
+                    'deleted_by_user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the deletion if activity logging fails
+            }
             
             $request->delete();
             return back()->with('success', 'Request and files deleted successfully.');
@@ -279,6 +310,12 @@ class CitationsController extends Controller
 
     public function submitCitationRequest(Request $request)
     {
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        
+        if ($citations_request_enabled !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Citations requests are currently disabled by administrators.');
+        }
+        
         try {
             // Validate the request
             $validator = Validator::make($request->all(), [
@@ -355,6 +392,35 @@ class CitationsController extends Controller
             $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $docxPaths]);
             $userRequest->form_data = json_encode($request->except(['_token', ...$fields]));
             $userRequest->save();
+
+            // Activity log for creation
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => $userId,
+                    'request_id' => $userRequest->id,
+                    'action' => 'created',
+                    'details' => [
+                        'request_code' => $userRequest->request_code,
+                        'type' => $userRequest->type,
+                        'created_at' => now()->toDateTimeString(),
+                    ],
+                    'created_at' => now(),
+                ]);
+                
+                Log::info('Activity log created successfully for citation request', [
+                    'request_id' => $userRequest->id,
+                    'request_code' => $userRequest->request_code,
+                    'user_id' => $userId
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for citation request: ' . $e->getMessage(), [
+                    'request_id' => $userRequest->id,
+                    'request_code' => $userRequest->request_code,
+                    'user_id' => $userId,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the request if activity logging fails
+            }
 
             Log::info('Citation request submitted successfully', [
                 'request_code' => $requestCode,

@@ -3,12 +3,6 @@
     <div class="w-full max-w-4xl mx-auto">
         <!-- Main Form Card - Fixed Height for Consistency -->
         <div class="bg-white/30 backdrop-blur-md border border-white/40 overflow-hidden shadow-xl sm:rounded-lg p-0 relative h-[calc(90vh-4rem)] flex flex-col">
-            @if(session('error'))
-                <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">{{ session('error') }}</div>
-            @endif
-            @if(session('success'))
-                <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm">{{ session('success') }}</div>
-            @endif
             <div class="flex flex-col items-center text-center p-6">
                 <h2 class="text-xl font-bold text-burgundy-800 mb-1">Citation Request</h2>
                 <p class="text-sm text-gray-600">Fill out all required forms and upload documents to submit your citation request</p>
@@ -299,13 +293,13 @@
     }" 
     x-show="showNotification" 
     x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0 transform translate-y-2"
-    x-transition:enter-end="opacity-100 transform translate-y-0"
-    x-transition:leave="transition ease-in duration-200"
-    x-transition:leave-start="opacity-100 transform translate-y-0"
-    x-transition:leave-end="opacity-0 transform translate-y-2"
-    class="fixed top-4 right-4 z-50">
-        <div :class="notificationType === 'success' ? 'bg-green-500' : 'bg-red-500'" class="text-white px-6 py-3 rounded-lg shadow-lg">
+    x-transition:enter-start="opacity-0 transform translate-x-full"
+    x-transition:enter-end="opacity-100 transform translate-x-0"
+    x-transition:leave="transition ease-in duration-300"
+    x-transition:leave-start="opacity-100 transform translate-x-0"
+    x-transition:leave-end="opacity-0 transform translate-x-full"
+    class="fixed top-20 right-4 z-[60]">
+        <div :class="notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'" class="text-white px-4 py-2 rounded shadow-lg backdrop-blur border" :class="notificationType === 'success' ? 'border-green-500/20' : 'border-red-500/20'">
             <div class="flex items-center">
                 <svg x-show="notificationType === 'success'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -359,7 +353,7 @@
                         <div x-show="$store.tabNav && $store.tabNav.tab === 'review'">
                                                             <button
                                     type="button"
-                                    onclick="submitCitationForm()"
+                                    onclick="submitCitationForm(event)"
                                     :class="!$store.tabNav.allComplete
                                         ? 'font-semibold px-4 py-2 rounded-lg bg-burgundy-800 text-burgundy-50 opacity-90 cursor-not-allowed transition shadow-lg'
                                         : 'font-semibold px-4 py-2 rounded-lg bg-burgundy-800 text-white shadow-lg hover:bg-burgundy-900 hover:shadow-xl cursor-pointer transition'"
@@ -396,20 +390,15 @@
         }
     }
     
-    function submitCitationForm() {
+    function submitCitationForm(event) {
         // Validate all tabs before submission
         const tabNav = Alpine.store('tabNav');
         if (!tabNav.allComplete) {
             tabNav.checkTabs();
             if (!tabNav.allComplete) {
-                // Show error notification
-                const notificationElement = document.querySelector('[x-data*="showNotification"]');
-                if (notificationElement && notificationElement.__x) {
-                    const notification = notificationElement.__x.$data;
-                    notification.showNotification = true;
-                    notification.notificationType = 'error';
-                    notification.notificationMessage = 'Please complete all required fields before submitting.';
-                    setTimeout(() => notification.showNotification = false, 5000);
+                // Show error via global notifications
+                if (window.notificationManager) {
+                    window.notificationManager.error('Please complete all required fields before submitting.');
                 }
                 return false;
             }
@@ -422,16 +411,20 @@
         }
         
         // Disable submit button to prevent double submission
-        const submitBtn = event.target;
+        const submitBtn = event && event.target ? event.target : null;
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
         
-        // Submit the form
+        // Submit the form after a microtask so the overlay paints first
         const form = document.getElementById('citation-request-form');
         if (form) {
-            form.submit();
+            if (window.queueMicrotask) {
+                queueMicrotask(() => form.submit());
+            } else {
+                Promise.resolve().then(() => form.submit());
+            }
         }
         
         return false; // Prevent default form submission
