@@ -61,31 +61,30 @@
                                         <h2 class="text-xl font-bold text-maroon-800">Quick Links</h2>
                                     </div>
                                     <div class="flex flex-col gap-2 w-full flex-1 justify-center">
-                                        <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
+                                        <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
                                             <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
                                             <span class="font-semibold text-maroon-800">SPJRD</span>
-                                            <span class="ml-auto text-xs text-gray-700 font-bold">12</span>
-                                        </div>
-                                        <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
+                                        </a>
+                                        <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
                                             <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
                                             <span class="font-semibold text-maroon-800">Scopus</span>
                                             <span class="ml-auto text-xs text-gray-700 font-bold">12</span>
-                                        </div>
-                                        <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
+                                        </a>
+                                        <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
                                             <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0 0V4" /></svg>
                                             <span class="font-semibold text-maroon-800">Web of Science</span>
                                             <span class="ml-auto text-xs text-gray-700 font-bold">8</span>
-                                        </div>
-                                        <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
+                                        </a>
+                                        <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
                                             <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
                                             <span class="font-semibold text-maroon-800">ACI</span>
                                             <span class="ml-auto text-xs text-gray-700 font-bold">5</span>
-                                        </div>
-                                        <div class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
+                                        </a>
+                                        <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
                                             <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
                                             <span class="font-semibold text-maroon-800">Peer Review</span>
                                             <span class="ml-auto text-xs text-gray-700 font-bold">2</span>
-                                        </div>
+                                        </a>
                                     </div>
                                     <a href="#" class="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-maroon-800 text-white rounded-2xl shadow hover:bg-maroon-900 transition-all text-xs font-semibold group">
                                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
