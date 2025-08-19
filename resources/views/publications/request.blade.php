@@ -721,7 +721,13 @@ function tabNav() {
             ];
             this.tabCompletion.recommendation = recommendationFields.every(field => {
                 const element = document.querySelector(`[name="${field}"]`);
-                return element && element.value.trim() !== '';
+                if (!element) {
+                    console.log(`❌ Recommendation field "${field}" not found in DOM`);
+                    return false;
+                }
+                const isValid = element.value.trim() !== '';
+                console.log(`📝 Recommendation field "${field}": ${isValid ? '✅' : '❌'} (value: "${element.value.trim()}")`);
+                return isValid;
             });
 
             // Check terminal tab completion
@@ -758,6 +764,15 @@ function tabNav() {
                 review: this.tabCompletion.review,
                 allComplete: this.allComplete
             });
+            
+            // Debug: Log all recommendation field values
+            if (this.tab === 'recommendation') {
+                console.log('🔍 Recommendation field values:');
+                ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'].forEach(field => {
+                    const element = document.querySelector(`[name="${field}"]`);
+                    console.log(`  ${field}: "${element ? element.value : 'NOT FOUND'}"`);
+                });
+            }
             console.log('=== END DEBUG ===');
 
             // Update review display
@@ -959,6 +974,27 @@ function tabNav() {
                         console.log(`🔄 Event triggered: ${eventType} on ${e.target.name}`);
                         this.checkTabs();
                     }
+                });
+            });
+            
+            // Special event listener for signatory components
+            document.addEventListener('DOMContentLoaded', () => {
+                // Watch for changes in signatory hidden inputs
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                            const target = mutation.target;
+                            if (target.name && ['rec_facultyname', 'dean'].includes(target.name)) {
+                                console.log(`🔄 Signatory field changed: ${target.name} = "${target.value}"`);
+                                this.checkTabs();
+                            }
+                        }
+                    });
+                });
+                
+                // Observe all hidden inputs that might be signatory fields
+                document.querySelectorAll('input[type="hidden"][name*="faculty"], input[type="hidden"][name*="dean"]').forEach(input => {
+                    observer.observe(input, { attributes: true, attributeFilter: ['value'] });
                 });
             });
             

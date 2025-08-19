@@ -81,6 +81,12 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
             this.selectedName = opt.name;
             this.query = opt.name;
             this.open = false;
+            // Trigger validation after selection
+            setTimeout(() => {
+                if (window.Alpine && window.Alpine.store('tabNav')) {
+                    window.Alpine.store('tabNav').checkTabs();
+                }
+            }, 100);
         },
         handleBlur() {
             setTimeout(() => { if (!this.hovering) this.open = false; }, 150);
