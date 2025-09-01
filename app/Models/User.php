@@ -21,14 +21,14 @@ class User extends Authenticatable
     use TwoFactorAuthenticatable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'signatory_type',
+        'name', 'email', 'password', 'role', 'signatory_type', 'profile_photo_path', 'auth_provider',
     ];
 
     protected $hidden = [
         'password', 'remember_token', 'two_factor_recovery_codes', 'two_factor_secret',
     ];
 
-    protected $appends = [ 'profile_photo_url', ];
+    protected $appends = [];
 
     protected function casts(): array
     {
@@ -43,5 +43,32 @@ class User extends Authenticatable
     public function requests()
     {
         return $this->hasMany(Request::class);
+    }
+
+    public function signatures()
+    {
+        return $this->hasMany(Signature::class);
+    }
+
+
+
+    /**
+     * Get the user's profile photo URL.
+     * If profile_photo_path is a full URL (Google), return it directly.
+     * Otherwise, use the default Jetstream behavior.
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->profile_photo_path) {
+            // Check if it's a full URL (starts with http/https)
+            if (filter_var($this->profile_photo_path, FILTER_VALIDATE_URL)) {
+                return $this->profile_photo_path;
+            }
+        }
+        
+        // Use default Jetstream behavior for local files
+        return $this->hasProfilePhoto()
+            ? $this->profilePhotoUrl
+            : $this->defaultProfilePhotoUrl();
     }
 }

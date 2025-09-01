@@ -17,6 +17,7 @@ class SettingsController extends Controller
             'official_rdd_director_name' => Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD'),
             'official_rdd_director_title' => Setting::get('official_rdd_director_title', 'Director, Research and Development Division'),
             'citations_request_enabled' => Setting::get('citations_request_enabled', '1'),
+            'calendar_marks' => json_decode(Setting::get('calendar_marks', '[]'), true) ?? [],
         ];
         return view('admin.settings', $data);
     }
@@ -30,10 +31,33 @@ class SettingsController extends Controller
             'official_rdd_director_name' => 'required|string|max:255',
             'official_rdd_director_title' => 'required|string|max:255',
             'citations_request_enabled' => 'required|in:0,1',
+            'calendar_marks' => 'nullable|array',
+            'calendar_marks.*.date' => 'nullable|date',
+            'calendar_marks.*.note' => 'nullable|string|max:500',
         ]);
-        foreach ($validated as $k => $v) {
-            Setting::set($k, $v);
+        // Save simple scalar settings
+        Setting::set('official_deputy_director_name', $validated['official_deputy_director_name']);
+        Setting::set('official_deputy_director_title', $validated['official_deputy_director_title']);
+        Setting::set('official_rdd_director_name', $validated['official_rdd_director_name']);
+        Setting::set('official_rdd_director_title', $validated['official_rdd_director_title']);
+        Setting::set('citations_request_enabled', $validated['citations_request_enabled']);
+
+        // Normalize and save calendar marks as JSON
+        $marks = [];
+        if (!empty($validated['calendar_marks']) && is_array($validated['calendar_marks'])) {
+            foreach ($validated['calendar_marks'] as $row) {
+                $date = $row['date'] ?? null;
+                $note = $row['note'] ?? null;
+                if (!$date && !$note) {
+                    continue; // skip empty rows
+                }
+                $marks[] = [
+                    'date' => $date,
+                    'note' => $note,
+                ];
+            }
         }
+        Setting::set('calendar_marks', json_encode($marks));
         return back()->with('success', 'Settings updated.');
     }
 

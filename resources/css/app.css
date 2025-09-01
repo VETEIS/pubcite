@@ -1,3 +1,32 @@
+/* Global non-input selection/caret disabling */
+html, body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    caret-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* Allow selection/caret where appropriate */
+input, textarea, select, [contenteditable="true"], [contenteditable]:not([contenteditable="false"]), .allow-select, .user-select-auto {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+    caret-color: auto;
+    -webkit-touch-callout: default;
+}
+
+/* Utility to force-disable on specific elements if needed */
+.user-select-none {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    caret-color: transparent !important;
+    -webkit-touch-callout: none !important;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

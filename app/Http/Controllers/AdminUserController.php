@@ -29,7 +29,19 @@ class AdminUserController extends Controller
                 }
             });
         }
-        $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        
+        // Apply sorting
+        $sortBy = $request->get('sort', 'name');
+        $sortOrder = $request->get('order', 'asc');
+        
+        if (in_array($sortBy, ['id', 'name', 'email', 'role'])) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            // Default sorting
+            $query->orderBy('name', 'asc');
+        }
+        
+        $users = $query->paginate(15)->withQueryString();
         $currentRole = $request->role;
         $currentSearch = $request->search;
         $adminCount = User::where('role', 'admin')->count();

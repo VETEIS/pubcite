@@ -1,0 +1,1013 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NudgeNotification;
+use App\Models\User; // Added this import for the new role fallback logic
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
+        
+        // Force refresh user data from database to ensure we have the latest role
+        $user = User::find($user->id);
+        
+        // Log the access attempt for debugging
+        Log::info('Dashboard access', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_role' => $user->role
+        ]);
+        
+        // Redirect admin users to admin dashboard
+        if ($user->role === 'admin') {
+            Log::info('Redirecting admin user to admin dashboard', ['user_id' => $user->id]);
+            return redirect()->route('admin.dashboard');
+        }
+        
+        // Handle regular user dashboard
+        Log::info('Routing to user dashboard', ['user_id' => $user->id]);
+        $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        return view('dashboard', compact('requests', 'citations_request_enabled'));
+    }
+            $status = request('status');
+            $search = request('search');
+            $type = request('type');
+            $period = request('period');
+            $now = now();
+            $rangeDescription = '';
+            if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
+                $query->where('status', $status);
+            }
+            if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                // Map plural to singular for database query
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $query->where('type', $dbType);
+            }
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $start = $now->copy()->startOfWeek();
+                    $end = $now->copy()->endOfWeek();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This week: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $start = $now->copy()->startOfMonth();
+                    $end = $now->copy()->endOfMonth();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This month: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $start = $now->copy()->startOfQuarter();
+                    $end = $now->copy()->endOfQuarter();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This quarter: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $start = $now->copy()->startOfYear();
+                    $end = $now->copy()->endOfYear();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This year: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                }
+            }
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    if (config('database.default') === 'pgsql') {
+                        $q->where('request_code', 'ilike', "%$search%")
+                          ->orWhere('type', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $q->where('request_code', 'like', "%$search%")
+                          ->orWhere('type', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
+                    }
+                });
+            }
+            $requests = $query->paginate(15)->withQueryString();
+            $stats = [
+                'publication' => [
+                    'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                    'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                    'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                    'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+                ],
+                'citation' => [
+                    'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                    'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                    'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                    'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+                ],
+            ];
+            // Calculate status counts based on current filters
+            $statusQuery = \App\Models\Request::query();
+            if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                // Map plural to singular for database query
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $statusQuery->where('type', $dbType);
+            }
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                }
+            }
+            $filterCounts = [
+                'pending' => $statusQuery->where('status', 'pending')->count(),
+                'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
+                'rejected' => $statusQuery->where('status', 'rejected')->count(),
+            ];
+
+            // --- Real Chart Data Aggregation ---
+            // Use the same filters as the table for chart data
+            $chartBaseQuery = \App\Models\Request::query();
+            
+            // Apply type filter
+            if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $chartBaseQuery->where('type', $dbType);
+            }
+            
+            // Apply period filter
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                }
+            }
+            
+            // Apply search filter
+            if ($search) {
+                $chartBaseQuery->where(function($q) use ($search) {
+                    if (config('database.default') === 'pgsql') {
+                        $q->where('request_code', 'ilike', "%$search%")
+                          ->orWhere('type', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $q->where('request_code', 'like', "%$search%")
+                          ->orWhere('type', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
+                    }
+                });
+            }
+            
+            // Status counts for current filters (same as table)
+            $statusCounts = [
+                'pending' => 0,
+                'endorsed' => 0,
+                'rejected' => 0,
+            ];
+            $statusRaw = $chartBaseQuery->selectRaw('status, COUNT(*) as count')->groupBy('status')->get();
+            foreach ($statusRaw as $row) {
+                $statusCounts[$row->status] = $row->count;
+            }
+            
+            // Monthly chart data - adapt based on period filter
+            $driver = config('database.default');
+            if ($driver === 'pgsql') {
+                $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM')";
+            } else {
+                $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m')";
+            }
+            
+            // Determine chart time range based on period filter
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    // For week, show daily data
+                    if ($driver === 'pgsql') {
+                        $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM-DD')";
+                    } else {
+                        $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m-%d')";
+                    }
+                    $chartStart = $now->copy()->startOfWeek();
+                    $chartEnd = $now->copy()->endOfWeek();
+                    $months = [];
+                    for ($i = 0; $i < 7; $i++) {
+                        $months[] = $chartStart->copy()->addDays($i)->format('Y-m-d');
+                    }
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    // For month, show daily data
+                    if ($driver === 'pgsql') {
+                        $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM-DD')";
+                    } else {
+                        $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m-%d')";
+                    }
+                    $chartStart = $now->copy()->startOfMonth();
+                    $chartEnd = $now->copy()->endOfMonth();
+                    $months = [];
+                    for ($i = 0; $i < $chartStart->daysInMonth; $i++) {
+                        $months[] = $chartStart->copy()->addDays($i)->format('Y-m-d');
+                    }
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    // For quarter, show monthly data
+                    $chartStart = $now->copy()->startOfQuarter();
+                    $chartEnd = $now->copy()->endOfQuarter();
+                    $months = [];
+                    for ($i = 0; $i < 3; $i++) {
+                        $months[] = $chartStart->copy()->addMonths($i)->format('Y-m');
+                    }
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    // For year, show monthly data
+                    $chartStart = $now->copy()->startOfYear();
+                    $chartEnd = $now->copy()->endOfYear();
+                    $months = [];
+                    for ($i = 0; $i < 12; $i++) {
+                        $months[] = $chartStart->copy()->addMonths($i)->format('Y-m');
+                    }
+                }
+            } else {
+                // Default: show last 12 months
+                $chartStart = $now->copy()->subMonths(11)->startOfMonth();
+                $chartEnd = $now->copy()->endOfMonth();
+                $months = [];
+                for ($i = 0; $i < 12; $i++) {
+                    $months[] = $now->copy()->subMonths(11 - $i)->format('Y-m');
+                }
+            }
+            
+            // Get chart data with same filters as table
+            $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
+                ->when($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
+                    $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                    $q->where('type', $dbType);
+                })
+                ->when($period, function($q) use ($period, $now) {
+                    if ($period === 'week' || $period === 'This Week') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                    } elseif ($period === 'month' || $period === 'This Month') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                    } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                    } elseif ($period === 'year' || $period === 'This Year') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                    }
+                })
+                ->when($search, function($q) use ($search) {
+                    $q->where(function($sq) use ($search) {
+                        if (config('database.default') === 'pgsql') {
+                            $sq->where('request_code', 'ilike', "%$search%")
+                              ->orWhere('type', 'ilike', "%$search%")
+                              ->orWhereHas('user', function($uq) use ($search) {
+                                  $uq->where('name', 'ilike', "%$search%")
+                                     ->orWhere('email', 'ilike', "%$search%") ;
+                              });
+                        } else {
+                            $sq->where('request_code', 'like', "%$search%")
+                              ->orWhere('type', 'like', "%$search%")
+                              ->orWhereHas('user', function($uq) use ($search) {
+                                  $uq->where('name', 'like', "%$search%")
+                                     ->orWhere('email', 'like', "%$search%") ;
+                              });
+                        }
+                    });
+                })
+                ->groupBy('type', 'month')
+                ->orderBy('month')
+                ->get();
+            
+            $monthlyCounts = [
+                'Publication' => array_fill_keys($months, 0),
+                'Citation' => array_fill_keys($months, 0),
+            ];
+            foreach ($rawCounts as $row) {
+                $monthlyCounts[$row->type][$row->month] = $row->count;
+            }
+            // --- End Real Chart Data Aggregation ---
+
+            // Fetch 5 most recent applications for sidebar
+            $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+            // Fetch latest 10 activity logs for Activity Log card
+            $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
+            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
+            } catch (\Exception $e) {
+                Log::error('Admin dashboard error: ' . $e->getMessage(), [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                // Return a user-friendly error page instead of crashing
+                return response()->view('errors.500', [], 500);
+            }
+        }
+        Log::info('Routing to user dashboard', ['user_id' => $user->id]);
+        $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        return view('dashboard', compact('requests', 'citations_request_enabled'));
+    }
+
+    public function adminDashboard()
+    {
+        $user = Auth::user();
+        
+        // Force refresh user data from database to ensure we have the latest role
+        $user = User::find($user->id);
+        
+        // Log the access attempt for debugging
+        Log::info('Admin dashboard access', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_role' => $user->role
+        ]);
+        
+        // Only show admin dashboard for users with explicit 'admin' role
+        if ($user->role !== 'admin') {
+            Log::info('Non-admin user attempted to access admin dashboard', ['user_id' => $user->id]);
+            return redirect()->route('dashboard')->with('error', 'Access denied. Admin privileges required.');
+        }
+        
+        Log::info('Routing to admin dashboard', ['user_id' => $user->id]);
+        
+        try {
+            $query = \App\Models\Request::with('user')->orderByDesc('requested_at');
+            $status = request('status');
+            $search = request('search');
+            $type = request('type');
+            $period = request('period');
+            $now = now();
+            $rangeDescription = '';
+            
+            if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
+                $query->where('status', $status);
+            }
+            if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                // Map plural to singular for database query
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $query->where('type', $dbType);
+            }
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $start = $now->copy()->startOfWeek();
+                    $end = $now->copy()->endOfWeek();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This week: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $start = $now->copy()->startOfMonth();
+                    $end = $now->copy()->endOfMonth();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This month: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $start = $now->copy()->startOfQuarter();
+                    $end = $now->copy()->endOfQuarter();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This quarter: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $start = $now->copy()->startOfYear();
+                    $end = $now->copy()->endOfYear();
+                    $query->whereBetween('requested_at', [$start, $end]);
+                    $rangeDescription = 'This year: ' . $start->format('M j') . ' – ' . $end->format('M j');
+                }
+            }
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    if (config('database.default') === 'pgsql') {
+                        $q->where('request_code', 'ilike', "%$search%")
+                          ->orWhere('type', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $q->where('request_code', 'like', "%$search%")
+                          ->orWhere('type', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
+                    }
+                });
+            }
+            $requests = $query->paginate(15)->withQueryString();
+            $stats = [
+                'publication' => [
+                    'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                    'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                    'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                    'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+                ],
+                'citation' => [
+                    'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                    'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                    'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                    'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+                ],
+            ];
+            $statusQuery = \App\Models\Request::query();
+            if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $statusQuery->where('type', $dbType);
+            }
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $statusQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                }
+            }
+            $filterCounts = [
+                'pending' => $statusQuery->where('status', 'pending')->count(),
+                'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
+                'rejected' => $statusQuery->where('status', 'rejected')->count(),
+            ];
+            // --- Real Chart Data Aggregation ---
+            // Only use type and period filters for chart data, ignore status
+            $chartType = $type;
+            $chartPeriod = $period;
+            $chartNow = $now;
+            $chartStartMonth = $chartNow->copy()->subMonths(11)->startOfMonth();
+            $chartEndMonth = $chartNow->copy()->endOfMonth();
+            $chartBaseQuery = \App\Models\Request::query();
+            if ($chartType && in_array($chartType, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                $dbType = $chartType === 'Publications' ? 'Publication' : ($chartType === 'Citations' ? 'Citation' : $chartType);
+                $chartBaseQuery->where('type', $dbType);
+            }
+            if ($chartPeriod) {
+                if ($chartPeriod === 'week' || $chartPeriod === 'This Week') {
+                    $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfWeek(), $chartNow->copy()->endOfWeek()]);
+                } elseif ($chartPeriod === 'month' || $chartPeriod === 'This Month') {
+                    $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfMonth(), $chartNow->copy()->endOfMonth()]);
+                } elseif ($chartPeriod === 'quarter' || $chartPeriod === 'This Quarter') {
+                    $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfQuarter(), $chartNow->copy()->endOfQuarter()]);
+                } elseif ($chartPeriod === 'year' || $chartPeriod === 'This Year') {
+                    $chartBaseQuery->whereBetween('requested_at', [$chartNow->copy()->startOfYear(), $chartNow->copy()->endOfYear()]);
+                }
+            } else {
+                $chartBaseQuery->whereBetween('requested_at', [$chartStartMonth, $chartEndMonth]);
+            }
+            $driver = config('database.default');
+            if ($driver === 'pgsql') {
+                $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM')";
+            } else {
+                $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m')";
+            }
+            $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
+                ->when($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
+                    $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                    $q->where('type', $dbType);
+                })
+                ->when($period, function($q) use ($period, $now) {
+                    if ($period === 'week' || $period === 'This Week') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                    } elseif ($period === 'month' || $period === 'This Month') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                    } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                    } elseif ($period === 'year' || $period === 'This Year') {
+                        $q->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                    }
+                })
+                ->when($search, function($q) use ($search) {
+                    $q->where(function($sq) use ($search) {
+                        if (config('database.default') === 'pgsql') {
+                            $sq->where('request_code', 'ilike', "%$search%")
+                              ->orWhere('type', 'ilike', "%$search%")
+                              ->orWhereHas('user', function($uq) use ($search) {
+                                  $uq->where('name', 'ilike', "%$search%")
+                                     ->orWhere('email', 'ilike', "%$search%") ;
+                              });
+                        } else {
+                            $sq->where('request_code', 'like', "%$search%")
+                              ->orWhere('type', 'like', "%$search%")
+                              ->orWhereHas('user', function($uq) use ($search) {
+                                  $uq->where('name', 'like', "%$search%")
+                                     ->orWhere('email', 'like', "%$search%") ;
+                              });
+                        }
+                    });
+                })
+                ->groupBy('type', 'month')
+                ->orderBy('month')
+                ->get();
+            
+            $months = [];
+            for ($i = 0; $i < 12; $i++) {
+                $months[] = $chartNow->copy()->subMonths(11 - $i)->format('Y-m');
+            }
+            $monthlyCounts = [
+                'Publication' => array_fill_keys($months, 0),
+                'Citation' => array_fill_keys($months, 0),
+            ];
+            foreach ($rawCounts as $row) {
+                $monthlyCounts[$row->type][$row->month] = $row->count;
+            }
+            // Status counts for current type/period filter (not status)
+            $statusCounts = [
+                'pending' => 0,
+                'endorsed' => 0,
+                'rejected' => 0,
+            ];
+            $statusRaw = $chartBaseQuery->selectRaw('status, COUNT(*) as count')->groupBy('status')->get();
+            foreach ($statusRaw as $row) {
+                $statusCounts[$row->status] = $row->count;
+            }
+            // --- End Real Chart Data Aggregation ---
+
+            // Fetch 5 most recent applications for sidebar
+            $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+            // Fetch latest 10 activity logs for Activity Log card
+            $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
+            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
+        } catch (\Exception $e) {
+            Log::error('Admin dashboard error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return a user-friendly error page instead of crashing
+            return response()->view('errors.500', [], 500);
+        }
+    }
+
+    public function nudge(\App\Models\Request $request)
+    {
+        $user = Auth::user();
+        if ($request->user_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        if ($request->status !== 'pending') {
+            return back()->with('error', 'Only pending requests can be nudged.');
+        }
+        // Log activity
+        try {
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'request_id' => $request->id,
+                'action' => 'nudged',
+                'details' => [
+                    'request_code' => $request->request_code,
+                    'type' => $request->type,
+                    'by_name' => $user->name,
+                    'by_email' => $user->email,
+                ],
+                'created_at' => now(),
+            ]);
+            
+            Log::info('Activity log created successfully for nudge', [
+                'request_id' => $request->id,
+                'request_code' => $request->request_code,
+                'user_id' => $user->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create activity log for nudge: ' . $e->getMessage(), [
+                'request_id' => $request->id,
+                'request_code' => $request->request_code,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail the nudge if activity logging fails
+        }
+        // Email all admins
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            // Add admin notification entry
+            \App\Models\AdminNotification::create([
+                'user_id' => $admin->id,
+                'request_id' => $request->id,
+                'type' => 'nudge',
+                'title' => 'Nudge: ' . $request->request_code,
+                'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
+                'data' => [
+                    'request_code' => $request->request_code,
+                    'type' => $request->type,
+                    'user_name' => $user->name,
+                    'user_email' => $user->email,
+                ],
+            ]);
+            try {
+                Mail::to($admin->email)->send(new NudgeNotification($request, $user));
+            } catch (\Exception $e) {
+                Log::error('Nudge email failed: ' . $e->getMessage());
+            }
+        }
+        return back()->with('success', 'Nudge sent to admins.');
+    }
+
+    public function getData()
+    {
+        try {
+            $user = Auth::user();
+            if ($user->role !== 'admin') {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        
+        // Get the same filters as the main dashboard
+        $status = request('status');
+        $search = request('search');
+        $type = request('type');
+        $period = request('period');
+        $now = now();
+        
+        // Create the exact same query as the main dashboard for table data
+        $tableQuery = \App\Models\Request::with('user')->orderByDesc('requested_at');
+        
+        // Apply status filter
+        if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
+            $tableQuery->where('status', $status);
+        }
+        
+        // Apply type filter (with plural support)
+        if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+            $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+            $tableQuery->where('type', $dbType);
+        }
+        
+        // Apply period filter
+        if ($period) {
+            if ($period === 'week' || $period === 'This Week') {
+                $tableQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+            } elseif ($period === 'month' || $period === 'This Month') {
+                $tableQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+            } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                $tableQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+            } elseif ($period === 'year' || $period === 'This Year') {
+                $tableQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+            }
+        }
+        // Apply search filter
+        if ($search) {
+            $tableQuery->where(function($q) use ($search) {
+                if (config('database.default') === 'pgsql') {
+                    $q->where('request_code', 'ilike', "%$search%")
+                      ->orWhere('type', 'ilike', "%$search%")
+                      ->orWhereHas('user', function($uq) use ($search) {
+                          $uq->where('name', 'ilike', "%$search%")
+                             ->orWhere('email', 'ilike', "%$search%") ;
+                      });
+                } else {
+                    $q->where('request_code', 'like', "%$search%")
+                      ->orWhere('type', 'like', "%$search%")
+                      ->orWhereHas('user', function($uq) use ($search) {
+                          $uq->where('name', 'like', "%$search%")
+                             ->orWhere('email', 'like', "%$search%") ;
+                      });
+                }
+            });
+        }
+        
+        // Get the filtered data (same as table)
+        $allRequests = $tableQuery->get();
+        // Add file/document data for each request
+        $requestsWithFiles = $allRequests->map(function($req) {
+            $files = [
+                'pdfs' => [],
+                'docx' => [],
+            ];
+            // Extract from pdf_path JSON if present
+            if (!empty($req->pdf_path)) {
+                $pdfPathData = json_decode($req->pdf_path, true);
+                // PDFs
+                if (!empty($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
+                    foreach ($pdfPathData['pdfs'] as $key => $file) {
+                        $files['pdfs'][] = [
+                            'name' => ucfirst(str_replace('_', ' ', $key)),
+                            'file_name' => $file['original_name'] ?? basename($file['path'] ?? ''),
+                            'path' => isset($file['path']) ? asset('storage/' . $file['path']) : null,
+                            'missing' => empty($file['path']),
+                        ];
+                    }
+                }
+                // DOCX
+                if (!empty($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
+                    foreach ($pdfPathData['docxs'] as $key => $path) {
+                        $files['docx'][] = [
+                            'name' => ucfirst($key),
+                            'file_name' => ucfirst($key) . '_Form.docx',
+                            'path' => $path ? asset('storage/' . $path) : null,
+                            'missing' => empty($path),
+                        ];
+                    }
+                }
+            }
+            $arr = $req->toArray();
+            $arr['files'] = $files;
+            return $arr;
+        });
+        $stats = [
+            'publication' => [
+                'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+            ],
+            'citation' => [
+                'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+            ],
+        ];
+        // Use the SAME filtered data for charts - charts should reflect table data exactly
+        $chartData = $allRequests; // This is the filtered data that matches the table
+        
+        // Status counts from the filtered data (same as table)
+        $statusCounts = [
+            'pending' => $chartData->where('status', 'pending')->count(),
+            'endorsed' => $chartData->where('status', 'endorsed')->count(),
+            'rejected' => $chartData->where('status', 'rejected')->count(),
+        ];
+        
+        // Monthly chart data - adapt based on period filter
+        $driver = config('database.default');
+        if ($driver === 'pgsql') {
+            $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM')";
+        } else {
+            $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m')";
+        }
+        
+        // Determine chart time range based on period filter
+        $months = []; // Initialize months array
+        
+        if ($period) {
+            if ($period === 'week' || $period === 'This Week') {
+                // For week, show daily data
+                if ($driver === 'pgsql') {
+                    $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM-DD')";
+                } else {
+                    $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m-%d')";
+                }
+                $chartStart = $now->copy()->startOfWeek();
+                $chartEnd = $now->copy()->endOfWeek();
+                for ($i = 0; $i < 7; $i++) {
+                    $months[] = $chartStart->copy()->addDays($i)->format('Y-m-d');
+                }
+            } elseif ($period === 'month' || $period === 'This Month') {
+                // For month, show daily data
+                if ($driver === 'pgsql') {
+                    $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM-DD')";
+                } else {
+                    $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m-%d')";
+                }
+                $chartStart = $now->copy()->startOfMonth();
+                $chartEnd = $now->copy()->endOfMonth();
+                for ($i = 0; $i < $chartStart->daysInMonth; $i++) {
+                    $months[] = $chartStart->copy()->addDays($i)->format('Y-m-d');
+                }
+            } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                // For quarter, show monthly data
+                $chartStart = $now->copy()->startOfQuarter();
+                $chartEnd = $now->copy()->endOfQuarter();
+                for ($i = 0; $i < 3; $i++) {
+                    $months[] = $chartStart->copy()->addMonths($i)->format('Y-m');
+                }
+            } elseif ($period === 'year' || $period === 'This Year') {
+                // For year, show monthly data
+                $chartStart = $now->copy()->startOfYear();
+                $chartEnd = $now->copy()->endOfYear();
+                for ($i = 0; $i < 12; $i++) {
+                    $months[] = $chartStart->copy()->addMonths($i)->format('Y-m');
+                }
+            } else {
+                // Default: show last 12 months for unknown period
+                $chartStart = $now->copy()->subMonths(11)->startOfMonth();
+                $chartEnd = $now->copy()->endOfMonth();
+                for ($i = 0; $i < 12; $i++) {
+                    $months[] = $now->copy()->subMonths(11 - $i)->format('Y-m');
+                }
+            }
+        } else {
+            // Default: show last 12 months
+            $chartStart = $now->copy()->subMonths(11)->startOfMonth();
+            $chartEnd = $now->copy()->endOfMonth();
+            for ($i = 0; $i < 12; $i++) {
+                $months[] = $now->copy()->subMonths(11 - $i)->format('Y-m');
+            }
+        }
+        
+        // Get chart data using the SAME filters as the table
+        $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
+            ->when($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $q->where('type', $dbType);
+            })
+            ->when($period, function($q) use ($period, $now) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $q->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $q->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $q->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $q->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                }
+            })
+            ->when($search, function($q) use ($search) {
+                $q->where(function($sq) use ($search) {
+                    if (config('database.default') === 'pgsql') {
+                        $sq->where('request_code', 'ilike', "%$search%")
+                          ->orWhere('type', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $sq->where('request_code', 'like', "%$search%")
+                          ->orWhere('type', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
+                    }
+                });
+            })
+            ->when($status && in_array($status, ['pending', 'endorsed', 'rejected']), function($q) use ($status) {
+                $q->where('status', $status);
+            })
+            ->groupBy('type', 'month')
+            ->orderBy('month')
+            ->get();
+        
+        $monthlyCounts = [
+            'Publication' => array_fill_keys($months, 0),
+            'Citation' => array_fill_keys($months, 0),
+        ];
+        foreach ($rawCounts as $row) {
+            $monthlyCounts[$row->type][$row->month] = $row->count;
+        }
+        return response()->json([
+            'months' => $months,
+            'monthlyCounts' => $monthlyCounts,
+            'statusCounts' => $statusCounts,
+            'type' => $type,
+        ]);
+        } catch (\Exception $e) {
+            Log::error('Chart data error: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return empty chart data instead of crashing
+            return response()->json([
+                'months' => [],
+                'monthlyCounts' => ['Publication' => [], 'Citation' => []],
+                'statusCounts' => ['pending' => 0, 'endorsed' => 0, 'rejected' => 0],
+                'type' => null,
+            ]);
+        }
+    }
+
+    public function streamUpdates()
+    {
+        $user = Auth::user();
+        if ($user->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Set headers for Server-Sent Events
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no'); // Disable nginx buffering
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: Cache-Control');
+
+        // Keep connection alive and send updates
+        $lastCheck = now();
+        $maxExecutionTime = 300; // 5 minutes max
+        $startTime = time();
+        $lastUpdateTime = null;
+        
+        while (true) {
+            // Check if we've exceeded max execution time
+            if (time() - $startTime > $maxExecutionTime) {
+                echo "data: " . json_encode(['type' => 'timeout']) . "\n\n";
+                break;
+            }
+            
+            // Check for new requests or status changes
+            try {
+                // Use try-catch for each database operation to prevent stream crashes
+                $newRequests = 0;
+                $statusChanges = 0;
+                
+                try {
+                    $newRequests = \App\Models\Request::where('requested_at', '>', $lastCheck)->count();
+                } catch (\Exception $e) {
+                    \Log::error('SSE Stream Error: ' . $e->getMessage());
+                    $newRequests = 0;
+                }
+                
+                try {
+                    $statusChanges = \App\Models\ActivityLog::where('created_at', '>', $lastCheck)
+                        ->whereIn('action', ['created', 'status_changed', 'deleted', 'nudged'])
+                        ->count();
+                } catch (\Exception $e) {
+                    \Log::error('SSE Stream Error: ' . $e->getMessage());
+                    $statusChanges = 0;
+                }
+                
+                // Only send update if there are actual changes AND we haven't sent an update in the last 5 seconds
+                if (($newRequests > 0 || $statusChanges > 0) && 
+                    (!$lastUpdateTime || now()->diffInSeconds($lastUpdateTime) > 5)) {
+                    
+                    // Get updated data with error handling
+                    $now = now();
+                    $stats = [
+                        'publication' => [
+                            'week' => 0, 'month' => 0, 'quarter' => 0, 'year' => 0
+                        ],
+                        'citation' => [
+                            'week' => 0, 'month' => 0, 'quarter' => 0, 'year' => 0
+                        ],
+                    ];
+                    
+                    try {
+                        $stats = [
+                            'publication' => [
+                                'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                                'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                                'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                                'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+                            ],
+                            'citation' => [
+                                'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
+                                'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+                                'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
+                                'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
+                            ],
+                        ];
+                    } catch (\Exception $e) {
+                        \Log::error('SSE Stream Error: ' . $e->getMessage());
+                    }
+                    
+                    $recentApplications = collect();
+                    $activityLogs = collect();
+                    
+                    try {
+                        $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+                    } catch (\Exception $e) {
+                        \Log::error('SSE Stream Error: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
+                    } catch (\Exception $e) {
+                        \Log::error('SSE Stream Error: ' . $e->getMessage());
+                    }
+                    
+                    $updateData = [
+                        'stats' => $stats,
+                        'recentApplications' => $recentApplications,
+                        'activityLogs' => $activityLogs,
+                        'timestamp' => now()->toISOString(),
+                        'hasChanges' => true,
+                    ];
+                    
+                    echo "data: " . json_encode($updateData) . "\n\n";
+                    ob_flush();
+                    flush();
+                    
+                    $lastUpdateTime = now();
+                }
+                
+                $lastCheck = now();
+                
+            } catch (\Exception $e) {
+                // Log error and send error message
+                \Illuminate\Support\Facades\Log::error('SSE Stream Error: ' . $e->getMessage());
+                echo "data: " . json_encode(['error' => 'Database error']) . "\n\n";
+                break;
+            }
+            
+            // Sleep for 2 seconds before next check
+            sleep(2);
+            
+            // Check if connection is still alive
+            if (connection_aborted()) {
+                break;
+            }
+        }
+        
+        exit();
+    }
+} 

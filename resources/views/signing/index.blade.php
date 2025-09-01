@@ -1,115 +1,191 @@
 <x-app-layout>
-    <div class="flex h-[calc(100vh-4rem)] p-4 gap-x-6">
-        <div class="flex-1 flex items-center justify-center h-full m-0">
-            <div class="w-full h-full max-w-5xl mx-auto rounded-2xl shadow-xl bg-white/30 backdrop-blur border border-white/40 p-6 flex flex-col items-stretch">
-                <div class="flex items-center justify-between mb-4">
-                    <h1 class="text-2xl font-bold text-maroon-900">For Signing</h1>
-                </div>
-                
-                <!-- Floating Notifications -->
-                @if(session('success'))
-                <div id="success-notification" class="fixed top-20 right-4 z-[60] bg-green-600 text-white px-4 py-2 rounded shadow-lg backdrop-blur border border-green-500/20 transform transition-all duration-300 opacity-100 translate-x-0">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+    <div class="h-screen bg-gray-50 flex overflow-hidden" style="scrollbar-gutter: stable;">
+        @include('components.user-sidebar')
+
+        <!-- Main Content -->
+        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>
+                .flex-1::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
+            <!-- Content Area -->
+            <main class="p-4 rounded-bl-lg h-full">
+                <!-- Dashboard Header with Modern Compact Filters -->
+                <div class="relative flex items-center justify-between mb-4">
+                    <!-- Overview Header -->
+                    <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
+                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20v-6m0 0l-3 3m3-3l3 3M5 8l7-3 7 3-7 3-7-3z"/>
                         </svg>
-                        <span>{{ session('success') }}</span>
+                        <span>Signature Requests</span>
                     </div>
+                    
+                    <!-- Enhanced Search and User Controls -->
+                    @include('components.user-navbar', ['showFilters' => false])
                 </div>
-                @endif
-                
-                @if(session('error'))
-                <div id="error-notification" class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow-lg backdrop-blur border border-red-500/20 transform transition-all duration-300 opacity-100 translate-x-0">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        <span>{{ session('error') }}</span>
-                    </div>
-                </div>
-                @endif
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-                    <!-- Left: Signature upload -->
-                    <div class="bg-white/70 backdrop-blur border border-white/40 rounded-xl shadow p-4">
-                        <h2 class="text-sm font-bold text-maroon-900 mb-2">Digital Signature (PNG)</h2>
-                        <div class="flex flex-col items-center gap-3">
-                            @if($signatureUrl)
-                                <img src="{{ $signatureUrl }}" alt="Signature" class="max-h-24 object-contain border rounded bg-white p-2">
-                            @else
-                                <div class="text-xs text-gray-500">No signature uploaded</div>
-                            @endif
-                            <form method="POST" action="{{ route('signing.signature') }}" enctype="multipart/form-data" class="w-full">
-                                @csrf
-                                <input type="file" name="signature" accept="image/png" class="w-full text-xs border rounded p-1" required>
-                                <button type="submit" class="mt-2 w-full inline-flex items-center justify-center px-3 py-1.5 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 text-xs font-semibold">Upload</button>
-                            </form>
-                            <p class="text-[11px] text-gray-500">Use a transparent PNG for best results. Max 2MB.</p>
+
+                <!-- Optimized Content Grid -->
+                <div class="grid grid-cols-1 xl:grid-cols-5 gap-4 max-w-7xl mx-auto h-[calc(100vh-140px)]">
+                    <!-- Left: Signature Management Card -->
+                    <div class="xl:col-span-2">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+                            <!-- Compact Card Header -->
+                            <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-maroon-50 to-maroon-100/30 flex-shrink-0">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                        </svg>
+                                    </div>
+                                    <h2 class="text-base font-semibold text-maroon-900">Digital Signatures</h2>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800 border border-maroon-200">
+                                    {{ Auth::user()->signatures()->count() }} signatures
+                                </span>
+                            </div>
+                        </div>
+                            
+                            <!-- Card Content -->
+                            <div class="p-4 flex-1 overflow-hidden">
+                                @livewire('signature-manager')
+                            </div>
                         </div>
                     </div>
-                    <!-- Right: Requests list -->
-                    <div class="lg:col-span-2 bg-white/70 backdrop-blur border border-white/40 rounded-xl shadow p-4 flex flex-col min-h-0">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-sm font-bold text-maroon-900">Requests requiring your signature</h2>
-                        </div>
-                        <div class="overflow-y-auto min-h-0">
-                            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                                <thead class="bg-white/50 sticky top-0">
-                                    <tr>
-                                        <th class="px-3 py-2 text-left font-bold text-maroon-900">Date</th>
-                                        <th class="px-3 py-2 text-left font-bold text-maroon-900">Code</th>
-                                        <th class="px-3 py-2 text-left font-bold text-maroon-900">Type</th>
-                                        <th class="px-3 py-2 text-left font-bold text-maroon-900">As</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    @forelse($requests as $req)
-                                        <tr class="hover:bg-white/40">
-                                            <td class="px-3 py-2">{{ \Carbon\Carbon::parse($req['requested_at'])->format('M d, Y H:i') }}</td>
-                                            <td class="px-3 py-2 font-bold text-maroon-900">{{ $req['request_code'] }}</td>
-                                            <td class="px-3 py-2">{{ $req['type'] }}</td>
-                                            <td class="px-3 py-2">{{ str_replace('_',' ', ucfirst($req['matched_role'])) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="4" class="px-3 py-8 text-center text-gray-500">No requests found.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+
+                    <!-- Right: Pending Requests Card -->
+                    <div class="xl:col-span-3">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+                            <!-- Compact Card Header -->
+                            <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100/30 flex-shrink-0">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <h2 class="text-base font-semibold text-gray-900">Pending Signature Requests</h2>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                        <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5 animate-pulse"></div>
+                                        {{ count($requests) }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Card Content - Table -->
+                            <div class="flex-1 overflow-hidden">
+                                <div class="h-full overflow-y-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50 sticky top-0">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center gap-1">
+                                                        ID
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    </div>
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center gap-1">
+                                                        Type
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    </div>
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center gap-1">
+                                                        Role
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    </div>
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center gap-1">
+                                                        Date
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    </div>
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center gap-1">
+                                                        Status
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    </div>
+                                                </th>
+                                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Action
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            @if(count($requests) > 0)
+                                                @foreach($requests as $index => $request)
+                                                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                                        <td class="px-6 py-4 whitespace-nowrap">
+                                                            <span class="text-sm font-medium text-gray-900">{{ $request['request_code'] }}</span>
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap">
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                                {{ $request['type'] === 'Publication' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
+                                                                {{ $request['type'] }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {{ ucfirst(str_replace('_', ' ', $request['matched_role'])) }}
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {{ \Carbon\Carbon::parse($request['requested_at'])->format('M d, Y') }}
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap">
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                                <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
+                                                                Pending
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                            <button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-sm font-medium">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                                                </svg>
+                                                                Sign
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @else
+                                                <tr>
+                                                    <td colspan="6" class="px-6 py-12 text-center">
+                                                        <div class="flex flex-col items-center justify-center gap-3">
+                                                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                                </svg>
+                                                            </div>
+                                                            <div>
+                                                                <h4 class="text-lg font-semibold text-gray-900">No pending requests</h4>
+                                                                <p class="text-gray-500">Signature requests will appear here when they need your attention.</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
-    
-    <script>
-        // Auto-hide notifications after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const successNotification = document.getElementById('success-notification');
-            const errorNotification = document.getElementById('error-notification');
-            
-            if (successNotification) {
-                setTimeout(() => {
-                    successNotification.classList.add('opacity-0', 'translate-x-full');
-                    setTimeout(() => {
-                        if (document.body.contains(successNotification)) {
-                            document.body.removeChild(successNotification);
-                        }
-                    }, 300);
-                }, 5000);
-            }
-            
-            if (errorNotification) {
-                setTimeout(() => {
-                    errorNotification.classList.add('opacity-0', 'translate-x-full');
-                    setTimeout(() => {
-                        if (document.body.contains(errorNotification)) {
-                            document.body.removeChild(errorNotification);
-                        }
-                    }, 300);
-                }, 5000);
-            }
-        });
-    </script>
 </x-app-layout> 

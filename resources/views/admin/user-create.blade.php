@@ -1,84 +1,204 @@
 <x-app-layout>
-<div class="flex h-[calc(100vh-4rem)] p-4 gap-x-6">
-    <!-- Sidebar -->
-    @include('admin.partials.sidebar')
-            <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 group focus:outline-none {{ request()->routeIs('dashboard') ? '' : 'hover:scale-110 hover:-translate-y-1 transition-all duration-200' }}">
-                <svg class="w-7 h-7 {{ request()->routeIs('dashboard') ? 'text-maroon-800 fill-maroon-800' : 'text-maroon-800' }} group-hover:text-maroon-800 transition" fill="{{ request()->routeIs('dashboard') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M13 5v6" /></svg>
-                <span class="text-xs mt-1 pl-2 {{ request()->routeIs('dashboard') ? 'font-extrabold text-maroon-800' : 'font-bold' }} group-hover:text-maroon-800">Overview</span>
-                @if(request()->routeIs('dashboard'))
-                    <div class="h-0.5 bg-maroon-800 rounded-full w-8 mx-auto mt-1"></div>
-                @endif
-            </a>
-            
-    <!-- Main Content -->
-    <div class="flex-1 flex items-center justify-center h-full m-0">
-        <div class="w-full h-full max-w-3xl mx-auto rounded-2xl shadow-xl bg-white/30 backdrop-blur border border-white/40 p-6 flex flex-col items-stretch">
-            <h2 class="text-2xl font-bold text-maroon-800 mb-6">Add New User</h2>
+    <div x-data="{ 
+        searchOpen: false,
+        userMenuOpen: false
+    }" class="h-screen bg-gray-50 flex overflow-hidden" style="scrollbar-gutter: stable;">
+        
+        <!-- Hidden notification divs for global notification system -->
+        @if(session('success'))
+            <div id="success-notification" class="hidden">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div id="error-notification" class="hidden">{{ session('error') }}</div>
+        @endif
+
+        @include('admin.partials.sidebar')
+
+        <!-- Main Content -->
+        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>
+                .flex-1::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
+            <!-- Content Area -->
+            <main class="p-4 rounded-bl-lg h-full">
+                <!-- Dashboard Header -->
+                <div class="relative flex items-center justify-between mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-7 h-7 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add New User
+                    </h1>
+                    
+                    <!-- Search and User Controls -->
+                    <div class="flex items-center gap-3">
+                        <!-- Search Input Field -->
+                        <form method="GET" action="{{ route('dashboard') }}" class="relative">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-900 shadow-sm w-48 bg-white text-gray-900 placeholder-gray-500" style="transition:all 0.2s;" autocomplete="on">
+                            <button type="submit" class="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none" tabindex="-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </button>
+                        </form>
+                        
+                        <!-- User Avatar Dropdown -->
+                        <div class="relative">
+                            <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1 transition-colors">
+                                @if(Auth::user()->profile_photo_path)
+                                    <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover">
+                                @else
+                                    <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold">
+                                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                                    </div>
+                                @endif
+                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- User Dropdown Menu -->
+                            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                <div class="py-2">
+                                    <div class="px-4 py-2 border-b border-gray-100">
+                                        <div class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'Admin' }}</div>
+                                        <div class="text-xs text-gray-500">Administrator</div>
+                                    </div>
+                                    <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        Profile
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                            </svg>
+                                            Sign Out
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Card -->
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             @if($errors->any())
-                <div class="mb-4 text-red-700 bg-red-100 border border-red-200 rounded p-3">
-                    <ul class="list-disc pl-5">
+                            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <h3 class="text-sm font-semibold text-red-800">Please fix the following errors:</h3>
+                                </div>
+                                <ul class="list-disc pl-5 text-sm text-red-700">
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
                 </div>
             @endif
-            <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-4">
+
+                        <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-6">
                 @csrf
+                            
+                            <!-- Name Field -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" />
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                                <input type="text" name="name" value="{{ old('name') }}" required 
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" 
+                                       placeholder="Enter full name" />
                 </div>
+
+                            <!-- Email Field -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" required class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" />
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                                <input type="email" name="email" value="{{ old('email') }}" required 
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" 
+                                       placeholder="Enter email address" />
                 </div>
+
+                            <!-- Password Fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <input type="password" name="password" required class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" />
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                                    <input type="password" name="password" required 
+                                           class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" 
+                                           placeholder="Enter password" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                        <input type="password" name="password_confirmation" required class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500" />
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+                                    <input type="password" name="password_confirmation" required 
+                                           class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" 
+                                           placeholder="Confirm password" />
                     </div>
                 </div>
+
+                            <!-- Role Field -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                    <select name="role" id="role-select" required class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">User Role</label>
+                                <select name="role" id="role-select" required 
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
+                                    <option value="">Select a role</option>
                     <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
                     <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                     <option value="signatory" {{ old('role') == 'signatory' ? 'selected' : '' }}>Signatory</option>
                 </select>
                             </div>
+
+                            <!-- Signatory Type Field (Conditional) -->
             <div id="signatory-type-group" class="hidden">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Signatory Type</label>
-                <select name="signatory_type" class="w-full border rounded-lg px-3 py-2 focus:border-maroon-500 focus:ring-maroon-500">
-                    <option value="">Select type</option>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Signatory Type</label>
+                                <select name="signatory_type" 
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
+                                    <option value="">Select signatory type</option>
                     <option value="faculty" {{ old('signatory_type') == 'faculty' ? 'selected' : '' }}>Faculty</option>
                     <option value="center_manager" {{ old('signatory_type') == 'center_manager' ? 'selected' : '' }}>Research Center Manager</option>
                     <option value="college_dean" {{ old('signatory_type') == 'college_dean' ? 'selected' : '' }}>College Dean</option>
                 </select>
             </div>
-            <div class="flex justify-between items-center mt-6">
-                    <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-xl shadow hover:bg-gray-300 transition font-semibold text-sm">Back</a>
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-maroon-700 text-white rounded-xl shadow hover:bg-maroon-800 transition font-semibold text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+
+                            <!-- Form Actions -->
+                            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                                <a href="{{ route('admin.users.index') }}" 
+                                   class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg shadow-sm hover:bg-gray-200 hover:shadow-md transition-all duration-300 font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    </svg>
+                                    Cancel
+                                </a>
+                                <button type="submit" 
+                                        class="inline-flex items-center gap-2 px-6 py-3 bg-maroon-700 text-white rounded-lg shadow-sm hover:bg-maroon-800 hover:shadow-md transition-all duration-300 font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
                         Create User
                     </button>
                 </div>
             </form>
         </div>
+                </div>
+            </main>
     </div>
 </div>
+
 <script>
     const roleSelect = document.getElementById('role-select');
     const signatoryGroup = document.getElementById('signatory-type-group');
+        
     function toggleSignatory() {
         if (roleSelect && signatoryGroup) {
             signatoryGroup.classList.toggle('hidden', roleSelect.value !== 'signatory');
         }
     }
+        
     if (roleSelect) {
         roleSelect.addEventListener('change', toggleSignatory);
         toggleSignatory();

@@ -38,15 +38,8 @@ class SigningController extends Controller
             }
         }
 
-        // Signature URL if uploaded
-        $signaturePath = $this->getSignaturePath($user->id);
-        $signatureUrl = $signaturePath && Storage::disk('public')->exists($signaturePath)
-            ? Storage::disk('public')->url($signaturePath)
-            : null;
-
         return view('signing.index', [
             'requests' => $needs,
-            'signatureUrl' => $signatureUrl,
             'signatoryType' => $signatoryType,
         ]);
     }

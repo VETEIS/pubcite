@@ -73,7 +73,7 @@ class PublicationsController extends Controller
                 // Don't fail the status change if activity logging fails
             }
             $adminComment = $httpRequest->input('admin_comment', null);
-            \Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
+            Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
         }
 
         return back()->with('success', 'Request status updated successfully.');

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-turbo="false">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="turbo-visit-control" content="reload">
+        <meta name="turbo-cache-control" content="no-preview">
 
         <title>{{ config('app.name', 'USeP Publication Unit') }}</title>
 
@@ -11,242 +13,1194 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Preload hero art for faster paint -->
+        <link rel="preload" as="image" href="/images/art.png" fetchpriority="high">
+
         <!-- Scripts -->
             @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        <!-- Alpine.js -->
+        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
         <!-- Styles -->
-        @livewireStyles
+    
+    <style>
+        html { scroll-behavior: smooth; }
+        /* Prevent Alpine flicker for x-cloak */
+        [x-cloak] { display: none !important; }
+        /* Hide scrollbars but keep functionality */
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;  /* Safari and Chrome */
+        }
+        
+        /* Floating hero shapes (JS-driven for randomness) */
+        .hero-shape {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(20px);
+            opacity: 0;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+        .hero-shape.shape-1 { width: 240px; height: 240px; background: #ef4444; top: -40px; left: -40px; animation-name: drift1; animation-duration: 18s; animation-delay: .2s; }
+        .hero-shape.shape-2 { width: 320px; height: 320px; background: #f59e0b; bottom: -60px; right: 10%; animation-name: drift2; animation-duration: 22s; animation-delay: .8s; }
+        .hero-shape.shape-3 { width: 200px; height: 200px; background: #10b981; top: 10%; right: -60px; animation-name: drift3; animation-duration: 20s; animation-delay: 1.2s; }
+        
+        /* Multi-axis drifting to simulate random motion */
+        @keyframes drift1 {
+            0%   { transform: translate(0, 0) scale(1); }
+            25%  { transform: translate(35vw, -10vh) scale(1.04); }
+            50%  { transform: translate(12vw, 18vh) scale(1.01); }
+            75%  { transform: translate(-22vw, -8vh) scale(0.98); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        @keyframes drift2 {
+            0%   { transform: translate(0, 0) scale(1); }
+            20%  { transform: translate(-30vw, 12vh) scale(1.02); }
+            45%  { transform: translate(28vw, -20vh) scale(1.05); }
+            70%  { transform: translate(-18vw, 14vh) scale(0.99); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        @keyframes drift3 {
+            0%   { transform: translate(0, 0) scale(1); }
+            30%  { transform: translate(22vw, 16vh) scale(1.03); }
+            55%  { transform: translate(-28vw, -14vh) scale(0.97); }
+            85%  { transform: translate(10vw, -18vh) scale(1.02); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* Enhanced scroll indicators */
+        #scroll-left,
+        #scroll-right,
+        #scroll-left-researchers,
+        #scroll-right-researchers {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 2px solid rgba(156, 163, 175, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            transition: all 0.3s ease !important;
+            z-index: 20 !important;
+        }
+        
+        /* Container spacing for hover effects */
+        #publishers-container,
+        #researchers-container {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        
+        /* Improve researcher cards overflow handling */
+        #researchers-container {
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+        }
+        
+        /* Ensure cards don't get cut off */
+        .researcher-card {
+            margin: 0.5rem;
+        }
+        
+
+        
+        /* Hover effects for scroll indicators: scale entire button */
+        #scroll-left,
+        #scroll-right,
+        #scroll-left-researchers,
+        #scroll-right-researchers { 
+            transition: transform .2s ease; 
+            transform-origin: center;
+        }
+        #scroll-left:hover,
+        #scroll-right:hover,
+        #scroll-left-researchers:hover,
+        #scroll-right-researchers:hover { 
+            transform: translateY(-50%) scale(1.15); 
+        }
+        
+        /* Back-to-top overlay */
+        #backToTop { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 60; opacity: 0; transform: translateY(8px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
+        #backToTop.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* Scroll hint overlay */
+        #scrollHint { position: fixed; left: 50%; bottom: 2.5rem; transform: translateX(-50%) translateY(8px); z-index: 70; opacity: 0; transition: opacity .3s ease, transform .3s ease; pointer-events: none; will-change: transform, opacity; }
+        #scrollHint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        @keyframes hintBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(6px); }
+        }
+
+        /* Fancy mouse + chevrons */
+        #scrollHint .mouse {
+            width: 22px; height: 34px; border: 2px solid rgba(255,255,255,0.85);
+            border-radius: 14px; position: relative;
+        }
+        #scrollHint .wheel {
+            width: 3px; height: 7px; background: rgba(255,255,255,0.9); border-radius: 2px;
+            position: absolute; left: 50%; top: 7px; transform: translateX(-50%);
+            animation: wheelSlide 1.6s ease-in-out infinite;
+        }
+        @keyframes wheelSlide {
+            0%   { transform: translateX(-50%) translateY(0); opacity: 1; }
+            70%  { transform: translateX(-50%) translateY(12px); opacity: 0.2; }
+            100% { opacity: 0; }
+        }
+        #scrollHint .chev { width: 18px; height: 18px; color: rgba(255,255,255,0.85); animation: chevFade 1.8s ease-in-out infinite; }
+        #scrollHint .chev.chev-2 { opacity: .5; animation-delay: .25s; }
+        @keyframes chevFade {
+            0%   { opacity: .1; transform: translateY(-2px); }
+            30%  { opacity: .7; }
+            60%  { opacity: .4; transform: translateY(2px); }
+            100% { opacity: .1; transform: translateY(6px); }
+        }
+
+        /* Hero title enhancements */
+        .hero-title { letter-spacing: -0.01em; text-shadow: 0 4px 22px rgba(255,255,255,0.25); display: inline-block; position: relative; }
+        .hero-title::after { content: ""; display: block; height: 3px; border-radius: 9999px; margin-top: 10px; background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.9), rgba(255,255,255,0)); }
+
+        /* Paint containment to reduce overdraw */
+        #hero { contain: paint; }
+
+        /* Anchor offset for fixed navbar */
+        .scroll-target { scroll-margin-top: 5rem; }
+
+        /* Reveal-on-scroll sections */
+        .reveal-section { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+        .reveal-section.visible { opacity: 1; transform: translateY(0); }
+        
+        /* Shake animation for calendar interactions */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        /* Hide horizontal scrollbar and prevent overflow */
+        .calendar-details-container {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        /* Ensure card effects aren't cut off */
+        .marked-date-card {
+            margin: 0.5rem 0;
+            transform-origin: center;
+        }
+
+        /* Glassmorphism Modal Styles */
+        .glassmorphism-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .glassmorphism-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .glassmorphism-card {
+            position: relative;
+            max-width: 60vw;
+            width: 60vw;
+            max-height: 90vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .glassmorphism-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+            animation: liquidFlow 8s ease-in-out infinite;
+            background-size: 200% 200%;
+        }
+
+        .glassmorphism-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 24px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .glassmorphism-content {
+            position: relative;
+            z-index: 3;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.95);
+            overflow-y: auto;
+            max-height: calc(90vh - 4rem);
+        }
+
+        .glassmorphism-content h2,
+        .glassmorphism-content h3 {
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .glassmorphism-content p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .glassmorphism-button {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+        }
+
+        .glassmorphism-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .glassmorphism-button.secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glassmorphism-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Liquid animation for the glass effect */
+        @keyframes liquidFlow {
+            0%, 100% { 
+                background-position: 0% 50%;
+                background-size: 200% 200%;
+            }
+            50% { 
+                background-position: 100% 50%;
+                background-size: 200% 200%;
+            }
+        }
+
+        /* Prevent layout shift */
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0 !important;
+        }
+
+        /* Prevent scrollbar layout shift - better approach */
+        html {
+            overflow-y: scroll;
+        }
+
+        /* Custom scrollbar for modal content */
+        .glassmorphism-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .glassmorphism-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .glassmorphism-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .glassmorphism-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
     </head>
     <body>
         <div class="min-h-screen bg-white relative font-sans text-gray-900 antialiased">
-            <!-- Waves Main Background Overlay (behind everything) -->
-            <div class="pointer-events-none absolute inset-0 z-0 select-none bg-white">
-                <img src="/images/waves.png" alt="Waves" class="w-full h-full object-contain mx-auto my-auto" style="position:absolute; top:0; left:0; right:0; bottom:0; margin:auto;" draggable="false" />
+            <!-- How It Works Modal -->
+            <div id="howItWorksModal" class="glassmorphism-modal hidden">
+                <div class="glassmorphism-card">
+                    <div class="glassmorphism-content">
+                        <div class="flex items-center justify-between mb-8">
+                            <h2 class="text-3xl font-bold">How PubCite Works</h2>
+                            <button onclick="hideHowItWorks()" class="glassmorphism-button p-2 rounded-lg">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
             </div>
 
+                        <div class="grid md:grid-cols-3 gap-8">
+                            <!-- Step 1 -->
+                            <div class="text-center relative">
+                                <div class="w-16 h-16 bg-gradient-to-br from-maroon-300 to-maroon-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                    <span class="text-white font-bold text-xl">1</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-3">Submit Request</h3>
+                                <p>Fill out the application form for publication or citation incentives with your research details.</p>
+                                
+                                <!-- Arrow to next step -->
+                                <div class="hidden md:block absolute top-8 right-0 transform translate-x-1/2">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 2 -->
+                            <div class="text-center relative">
+                                <div class="w-16 h-16 bg-gradient-to-br from-maroon-400 to-maroon-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                    <span class="text-white font-bold text-xl">2</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-3">Track Progress</h3>
+                                <p>Monitor your application status in real-time with detailed updates and notifications.</p>
+                                
+                                <!-- Arrow to next step -->
+                                <div class="hidden md:block absolute top-8 right-0 transform translate-x-1/2">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 3 -->
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-maroon-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                    <span class="text-white font-bold text-xl">3</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-3">Get Approved</h3>
+                                <p>Receive approval and access to incentives to support your research contributions.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 pt-8 border-t border-white/20">
+                            <div class="text-center">
+                                <h3 class="text-xl font-bold mb-4">Ready to Get Started?</h3>
+                                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                                    <a href="{{ route('register') }}" class="inline-flex items-center px-6 py-3 font-semibold rounded-lg bg-maroon-700 hover:bg-maroon-800 text-white transition-colors border border-maroon-500 hover:border-maroon-600 shadow-lg hover:shadow-xl">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 0v4m0-4h4m-4 0H8M7 20h10a2 2 0 002-2v-5a2 2 0 00-2-2h-3l-2-2-2 2H7a2 2 0 00-2 2v5a2 2 0 002 2z"/>
+                                        </svg>
+                                        Create Account
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- Simple Maroon Navbar for Consistency (overlay is behind this) -->
-            <nav class="bg-maroon-800 border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
+            <nav class="bg-maroon-800/95 backdrop-blur-sm border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
                 <div class="px-6">
                     <div class="flex justify-between h-16">
                         <div class="flex items-center gap-3">
                             <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain rounded-full" />
-                            <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">USeP Publication Unit</span>
+                            <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">PubCite</span>
                             @if (View::exists('components.breadcrumbs'))
-                                <span class="flex items-center justify-center ml-6">
+                            <span class="flex items-center justify-center ml-2">
                                     @include('components.breadcrumbs', ['crumbs' => $breadcrumbs ?? null, 'inline' => true])
                                 </span>
                             @endif
                         </div>
                         <div class="flex items-center gap-2 sm:gap-4">
-                            <!-- <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain" /> -->
+                        @auth
+                            
+                        @else
+                            
+                        @endif
+
+                        <!-- Quick Links Dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
+                                Quick Links
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <div x-show="open" class="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
+                                <div class="py-1">
+                                    <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
+                                        <span>SPJRD</span>
+                                    </a>
+                                    <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
+                                        <span>Scopus (Suggested Journals)</span>
+                                    </a>
+                                    <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0 0V4" /></svg>
+                                        <span>Web of Science (Suggested)</span>
+                                    </a>
+                                    <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
+                                        <span>ACI (Suggested)</span>
+                                    </a>
+                                    <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
+                                        <span>Peer Review</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+
+                        <!-- Announcements Dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                Announcements
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <div x-show="open" class="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
+                                <div class="py-1">
+                                    <div class="px-3 py-2 border-b border-gray-100">
+                                        <h4 class="text-sm font-semibold text-gray-900">Latest Updates</h4>
+                                    </div>
+                                    <div class="max-h-64 overflow-y-auto">
+                                        <div class="px-3 py-2 hover:bg-gray-50">
+                                            <div class="text-sm font-medium text-gray-900">New Publication Incentive Guidelines</div>
+                                            <div class="text-xs text-gray-600 mt-1">Updated guidelines for 2024 publication incentives are now available.</div>
+                                            <div class="text-xs text-gray-500 mt-1">2 hours ago</div>
+                                        </div>
+                                        <div class="px-3 py-2 hover:bg-gray-50">
+                                            <div class="text-sm font-medium text-gray-900">Research Workshop Series</div>
+                                            <div class="text-xs text-gray-600 mt-1">Join our upcoming workshop series on research methodology and academic writing techniques.</div>
+                                            <div class="text-xs text-gray-500 mt-1">1 day ago</div>
+                                        </div>
+                                        <div class="px-3 py-2 hover:bg-gray-50">
+                                            <div class="text-sm font-medium text-gray-900">Journal Indexing Updates</div>
+                                            <div class="text-xs text-gray-600 mt-1">Latest updates on Scopus and Web of Science indexing for USeP publications.</div>
+                                            <div class="text-xs text-gray-500 mt-1">3 days ago</div>
+                                        </div>
+                                        <div class="px-3 py-2 hover:bg-gray-50">
+                                            <div class="text-sm font-medium text-gray-900">Call for Papers</div>
+                                            <div class="text-xs text-gray-600 mt-1">Submit your research papers for the upcoming special issue on sustainable development.</div>
+                                            <div class="text-xs text-gray-500 mt-1">1 week ago</div>
+                                        </div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+
+                        <!-- Navbar actions -->
+                        <div class="hidden md:flex items-center gap-2">
+                            @guest
+                            <a href="{{ route('login') }}" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H3m6-6l-6 6 6 6M12 3h6a2 2 0 012 2v14a2 2 0 01-2 2h-6" />
+                                </svg>
+                                Sign In
+                            </a>
+                            @endguest
+                                </div>
+
+                        @if (Route::has('login'))
+                            @auth
+                                <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 3l9 6.75V20a1.5 1.5 0 01-1.5 1.5H15a1.5 1.5 0 01-1.5-1.5v-4.5H10.5V20A1.5 1.5 0 019 21.5H4.5A1.5 1.5 0 013 20V9.75z" />
+                                    </svg>
+                                    Dashboard
+                                </a>
+                            @endauth
+                        @endif
+                            </div>
+                        </div>
                 </div>
             </nav>
 
             <!-- Main Content -->
-            <div class="relative z-10 pt-16">
+            <div class="relative z-10 pt-16 bg-transparent">
                 <main>
-                    <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-                        <!-- Floating Side Cards (hidden on small screens) -->
-                        <div class="hidden lg:block absolute left-0 z-20 pl-6" id="left-floating-card-container">
-                            <div class="w-64 h-full flex flex-col justify-center">
-                                <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center opacity-0">
-                                    <!-- Icon -->
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-8 h-8 text-maroon-800 drop-shadow-lg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-1a4 4 0 00-4-4H7" />
+                <!-- Hero Section -->
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-16 flex items-center" style="min-height: calc(100vh - 4rem);">
+                    <div class="hero-shape"></div>
+                    <div class="hero-shape"></div>
+                    <div class="hero-shape"></div>
+                    <div class="hero-shape"></div>
+                    <div class="hero-shape"></div>
+                    <div class="max-w-7xl mx-auto px-6 relative z-10">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="text-left">
+                                <!--
+                                <div class="flex justify-start mb-6">
+                                    <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-16 w-16 rounded-full object-cover shadow-lg ring-2 ring-white/30" />
+                                </div>
+                                -->
+                                <h1 class="hero-title text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
+                                    USeP Publication Unit
+                                </h1>
+                                
+                                
+                                <p class="text-lg md:text-xl text-maroon-100 mb-8 max-w-3xl leading-relaxed">
+                                    PubCite: Empowering researchers and faculty with comprehensive publication and citation requests management, and progress tracking to advance academic excellence.
+                                </p>
+                                @guest
+                                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                                        <button onclick="showHowItWorks()" class="inline-flex items-center px-6 py-3 border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/20 hover:-translate-y-1 transition-all duration-300">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        <h2 class="text-xl font-bold text-maroon-800">Quick Links</h2>
-                                    </div>
-                                    <div class="flex flex-col gap-2 w-full flex-1 justify-center">
-                                        <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
-                                            <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
-                                            <span class="font-semibold text-maroon-800">SPJRD</span>
-                                        </a>
-                                        <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
-                                            <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
-                                            <span class="font-semibold text-maroon-800">Scopus</span>
-                                            <span class="ml-auto text-xs text-gray-700 font-bold">12</span>
-                                        </a>
-                                        <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
-                                            <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0 0V4" /></svg>
-                                            <span class="font-semibold text-maroon-800">Web of Science</span>
-                                            <span class="ml-auto text-xs text-gray-700 font-bold">8</span>
-                                        </a>
-                                        <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
-                                            <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
-                                            <span class="font-semibold text-maroon-800">ACI</span>
-                                            <span class="ml-auto text-xs text-gray-700 font-bold">5</span>
-                                        </a>
-                                        <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-white/60 backdrop-blur rounded-2xl px-3 py-1 shadow group hover:scale-105 hover:shadow-lg transition-all cursor-pointer">
-                                            <svg class="w-5 h-5 text-maroon-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
-                                            <span class="font-semibold text-maroon-800">Peer Review</span>
-                                            <span class="ml-auto text-xs text-gray-700 font-bold">2</span>
+                                            See How It Works
+                                        </button>
+                                        <a href="{{ route('register') }}" class="inline-flex items-center px-6 py-3 bg-white text-maroon-900 font-semibold rounded-lg hover:bg-maroon-50 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 0v4m0-4h4m-4 0H8M7 20h10a2 2 0 002-2v-5a2 2 0 00-2-2h-3l-2-2-2 2H7a2 2 0 00-2 2v5a2 2 0 002 2z" />
+                                        </svg>
+                                            Get Started Today
                                         </a>
                                     </div>
-                                    <a href="#" class="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-maroon-800 text-white rounded-2xl shadow hover:bg-maroon-900 transition-all text-xs font-semibold group">
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                                        Expand
-                                    </a>
+                                @else
+                                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                                        <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur border border-white/30 text-white font-semibold rounded-lg hover:bg-white/30 transition duration-200">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            You're logged in as {{ Auth::user()->name }}
+                                            <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full {{ Auth::user()->role === 'admin' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white' }}">
+                                                {{ Auth::user()->role === 'admin' ? 'Admin' : 'User' }}
+                                            </span>
+                                        </a>
+                                             </div>
+                                @endguest
+                                         </div>
+                            <div class="hidden md:flex justify-end relative">
+                                <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 pointer-events-none" style="width: 60vh; height: 60vh; background: radial-gradient(closest-side, rgba(255,255,255,0.28), rgba(255,255,255,0.12), transparent 70%); filter: blur(16px); border-radius: 9999px;"></div>
+                                <img src="/images/art.png" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none pointer-events-none" style="filter: drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 6px rgba(255,255,255,0.45)) drop-shadow(0 20px 60px rgba(0,0,0,0.35));" />
+                                             </div>
+                                         </div>
+                                             </div>
+                </section>
+
+                <!-- Our Services Section -->
+                <section id="services" class="py-12 bg-white/80 reveal-section scroll-target relative overflow-hidden">
+                    <!-- Modern section separator -->
+                    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
+                    
+                    <!-- Subtle wave background pattern -->
+                    <div class="absolute inset-0 pointer-events-none opacity-15">
+                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="wave1" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#8b0000"/>
+                                    <stop offset="100%" stop-color="#b22222"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,200 Q300,150 600,200 T1200,200 L1200,400 L0,400 Z" fill="url(#wave1)"/>
+                            <path d="M0,250 Q400,200 800,250 T1200,250 L1200,400 L0,400 Z" fill="url(#wave1)" opacity="0.7"/>
+                        </svg>
+                                         </div>
+                    <div class="max-w-7xl mx-auto px-6">
+                        <!-- Two Column Layout -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+                            <!-- Left Column: Services Card -->
+                            <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 h-full">
+                                <!-- Services Header -->
+                                <div class="text-center mb-6">
+                                    <div class="flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                        <h2 class="text-3xl font-bold text-gray-900">Our Services</h2>
+                                             </div>
+                                         </div>
+
+                                <!-- Services List -->
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4 p-4 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                    </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-gray-900 mb-2">Publication & Citation Incentives</h3>
+                                            <p class="text-gray-600 leading-relaxed">Submit applications for publication and citation incentives to support your research contributions and academic achievements with streamlined processing.</p>
                                 </div>
                             </div>
-                        </div>
-                        <div class="hidden lg:block absolute right-0 z-20 pr-6" id="right-floating-card-container">
-                            <div class="w-64 h-full flex flex-col justify-center">
-                                <div class="side-floating-card h-full bg-white/40 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-6 flex flex-col justify-between overflow-x-hidden overflow-visible opacity-0">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-8 h-8 text-maroon-800 drop-shadow-lg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-1a4 4 0 00-4-4H7" />
+
+                                    <div class="flex items-start gap-4 p-4 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                         </svg>
-                                        <h2 class="text-xl font-bold text-maroon-800">Announcements</h2>
-                                    </div>
-                                    <div class="flex-1 overflow-y-auto w-full flex flex-col gap-0.5 relative px-0" style="overflow: visible;">
-                                         <div class="flex items-center gap-2 bg-white/80 rounded-xl p-2 w-full border-b border-maroon-800/10 last:border-b-0 group hover:bg-white/90 transition-all cursor-pointer min-h-[3.5rem]">
-                                             <svg class="w-5 h-5 text-maroon-800 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                                             <div class="flex flex-col w-full">
-                                                 <span class="text-maroon-800 text-xs font-semibold leading-tight">Jul 15</span>
-                                                 <span class="text-xs text-gray-700 leading-snug line-clamp-3">Incentive Application Deadline extended to July 31.</span>
-                                             </div>
-                                         </div>
-                                         <div class="flex items-center gap-2 bg-white/80 rounded-xl p-2 w-full border-b border-maroon-800/10 last:border-b-0 group hover:bg-white/90 transition-all cursor-pointer min-h-[3.5rem]">
-                                             <svg class="w-5 h-5 text-maroon-800 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                                             <div class="flex flex-col w-full">
-                                                 <span class="text-maroon-800 text-xs font-semibold leading-tight">Jul 10</span>
-                                                 <span class="text-xs text-gray-700 leading-snug line-clamp-3">New journal indexed in Scopus!</span>
-                                             </div>
-                                         </div>
-                                         <div class="flex items-center gap-2 bg-white/80 rounded-xl p-2 w-full border-b border-maroon-800/10 last:border-b-0 group hover:bg-white/90 transition-all cursor-pointer min-h-[3.5rem]">
-                                             <svg class="w-5 h-5 text-maroon-800 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                                             <div class="flex flex-col w-full">
-                                                 <span class="text-maroon-800 text-xs font-semibold leading-tight">Jul 05</span>
-                                                 <span class="text-xs text-gray-700 leading-snug line-clamp-3">Workshop: Research Publishing 101, July 20.</span>
-                                             </div>
-                                         </div>
-                                         <div class="flex items-center gap-2 bg-white/80 rounded-xl p-2 w-full border-b border-maroon-800/10 last:border-b-0 group hover:bg-white/90 transition-all cursor-pointer min-h-[3.5rem]">
-                                             <svg class="w-5 h-5 text-maroon-800 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                                             <div class="flex flex-col w-full">
-                                                 <span class="text-maroon-800 text-xs font-semibold leading-tight">Jul 01</span>
-                                                 <span class="text-xs text-gray-700 leading-snug line-clamp-3">Welcome to the new Publication Portal.</span>
-                                             </div>
-                                         </div>
-                                    </div>
-                                    <a href="#" class="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-maroon-800 text-white rounded-2xl shadow hover:bg-maroon-900 transition-all text-xs font-semibold group w-auto mx-auto">
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                                        Expand
-                                    </a>
-                                </div>
-                            </div>
                         </div>
-                        <!-- Main Card -->
-                        <div id="main-welcome-card" class="w-full sm:max-w-4xl mx-auto px-6 py-6 bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl relative">
-                    <!-- Welcome Header -->
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-gray-900 mb-2">Real-time Status Tracking</h3>
+                                            <p class="text-gray-600 leading-relaxed">Monitor the progress of your submitted applications and requests with detailed status updates and transparent communication throughout the process.</p>
+                        </div>
+                                         </div>
+
+                                    <div class="flex items-start gap-4 p-4 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                            </svg>
+                                             </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-gray-900 mb-2">News & Events Hub</h3>
+                                            <p class="text-gray-600 leading-relaxed">Stay informed with the latest news, upcoming events, workshops, and important announcements from the Publications Unit and research community.</p>
+                                         </div>
+                                             </div>
+                                         </div>
+                                             </div>
+
+                            <!-- Right Column: Suggested Journals -->
+                            <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 h-full">
                     <div class="text-center mb-6">
-                        <div class="flex justify-center mb-4">
-                            <img src="/images/usep.png" alt="USeP Logo" class="rounded-full object-cover" style="width: 60px; height: 60px;">
+                                    <div class="flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                        </svg>
+                                        <h3 class="text-3xl font-bold text-gray-900">Suggested Journals</h3>
                         </div>
-                        <h1 class="text-3xl font-extrabold text-maroon-900 mb-2">Welcome to USeP Publication Unit</h1>
-                        <div class="w-40 h-1 bg-maroon-800 mx-auto"></div>
+                                    <p class="text-gray-600 max-w-2xl mx-auto">Discover high-impact research journals from leading publishers.</p>
                     </div>
 
-                    <!-- Indexing Logos Row -->
-                    <!--
-                    <div class="w-full sm:max-w-4xl mx-auto">
-                        <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl px-6 py-3 mb-8 mt-6 flex justify-center items-center gap-8">
-                            <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center justify-center">
-                                <img src="/images/scopus.png" alt="Scopus" class="h-16 w-auto object-contain transition-transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-maroon-800/40" />
-                                <div class="w-20 h-1 bg-maroon-800 mx-auto mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                            </a>
-                            <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center justify-center">
-                                <img src="/images/wos.png" alt="Web of Science" class="h-16 w-auto object-contain transition-transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-maroon-800/40" />
-                                <div class="w-20 h-1 bg-maroon-800 mx-auto mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                            </a>
-                            <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center justify-center">
-                                <img src="/images/aci.png" alt="ACI" class="h-16 w-auto object-contain transition-transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-maroon-800/40" />
-                                <div class="w-20 h-1 bg-maroon-800 mx-auto mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                            </a>
-                            <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center justify-center">
-                                <img src="/images/peer.png" alt="Peer Review" class="h-16 w-auto object-contain rounded transition-transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-maroon-800/40" />
-                                <div class="w-20 h-1 bg-maroon-800 mx-auto mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                            </a>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <a data-name="Scopus" href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 hover:border-maroon-200">
+                                        <div class="flex items-center justify-center h-12 mb-4">
+                                            <img src="/images/scopus.png" alt="Scopus" loading="lazy" class="h-10 w-auto object-contain group-hover:scale-110 transition-transform duration-300" />
+                                        </div>
+                                        <h4 class="text-lg font-bold text-gray-900 mb-2 text-center">Scopus</h4>
+                                        <p class="text-sm text-gray-600 text-center leading-relaxed">Elsevier's comprehensive abstract and citation database with peer-reviewed literature coverage.</p>
+                                    </a>
+                                    
+                                    <a data-name="Web of Science" href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 hover:border-maroon-200">
+                                        <div class="flex items-center justify-center h-12 mb-4">
+                                            <img src="/images/wos.png" alt="Web of Science" loading="lazy" class="h-10 w-auto object-contain group-hover:scale-110 transition-transform duration-300" />
+                                </div>
+                                        <h4 class="text-lg font-bold text-gray-900 mb-2 text-center">Web of Science</h4>
+                                        <p class="text-sm text-gray-600 text-center leading-relaxed">Clarivate Analytics' multidisciplinary research database with advanced citation indexing.</p>
+                                    </a>
+                                    
+                                    <a data-name="ACI" href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 hover:border-maroon-200">
+                                        <div class="flex items-center justify-center h-12 mb-4">
+                                            <img src="/images/aci.png" alt="ACI" loading="lazy" class="h-10 w-auto object-contain group-hover:scale-110 transition-transform duration-300" />
+                            </div>
+                                        <h4 class="text-lg font-bold text-gray-900 mb-2 text-center">Scopus-ACI</h4>
+                                        <p class="text-sm text-gray-600 text-center leading-relaxed">ASEAN Citation Index for enhanced regional research visibility and collaboration.</p>
+                                    </a>
+                                    
+                                    <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
+                                        <span>Peer Review</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    -->
+                </section>
 
-                    <!-- Features Grid - More Compact -->
-                    <div class="grid md:grid-cols-3 gap-4 mb-6">
-                        <div>
-                            <a href="{{ route('login') }}" class="block text-center p-4 bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl
-                                hover:bg-white/40 hover:backdrop-blur-lg hover:scale-105 hover:shadow-2xl hover:-translate-y-2 transition-all duration-200 group">
-                                <div class="w-10 h-10 bg-maroon-800 rounded-full flex items-center justify-center mx-auto mb-3
-                                    group-hover:-translate-y-1 group-hover:scale-110 transition-transform duration-200">
-                                    <svg class="w-5 h-5 text-white group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 9c-2.21 0-4-1.79-4-4h2a2 2 0 104 0h2c0 2.21-1.79 4-4 4zm0-16C6.477 1 2 5.477 2 11c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10z" />
+                <!-- List of Suggested Journals Section removed; embedded in Our Services -->
+
+                <!-- USeP Researchers Section -->
+                <section class="py-12 bg-white/90 reveal-section relative overflow-hidden">
+                    <!-- Modern section separator -->
+                    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
+                    
+                    <!-- Subtle wave background pattern -->
+                    <div class="absolute inset-0 pointer-events-none opacity-15">
+                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="wave2" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#c05050"/>
+                                    <stop offset="100%" stop-color="#d16c6c"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,180 Q250,130 500,180 T1200,180 L1200,400 L0,400 Z" fill="url(#wave2)"/>
+                            <path d="M0,220 Q350,170 700,220 T1200,220 L1200,400 L0,400 Z" fill="url(#wave2)" opacity="0.6"/>
                                 </svg>
                             </div>
-                                <h3 class="text-base font-semibold text-maroon-800 mb-1">Application for Incentives</h3>
-                                <p class="text-gray-600 text-xs">Apply for incentives and track your application status.</p>
-                            </a>
+                    <div class="max-w-7xl mx-auto px-6">
+                        <div class="text-center mb-8">
+                            <div class="flex items-center justify-center mb-4">
+                                <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <h2 class="text-3xl font-bold text-gray-900">USeP Researchers</h2>
+                            </div>
+                            <p class="text-gray-600 max-w-2xl mx-auto">Meet our distinguished faculty members and researchers from across disciplines.</p>
                         </div>
 
+                        <div class="relative">
+                            <!-- Scroll Indicators -->
+                            <button id="scroll-left-researchers" class="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur border border-gray-200 rounded-full p-4 md:p-3 shadow-lg transition-transform duration-200 opacity-0" onclick="scrollResearchers('left')">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            
+                            <button id="scroll-right-researchers" class="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur border border-gray-200 rounded-full p-4 md:p-3 shadow-lg transition-transform duration-200 opacity-0" onclick="scrollResearchers('right')">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+
+                            <!-- Researchers Container -->
+                            <div id="researchers-container" class="flex gap-6 overflow-x-auto scrollbar-hide pb-4 pt-4 px-8 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50">
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-maroon-100 to-maroon-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-maroon-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Active</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Maria Santos</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Associate Professor, College of Education</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                    Educational Technology
+                                                </span>
+                                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                                    Curriculum Development
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Leading research in innovative teaching methodologies and digital learning platforms for enhanced student engagement.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                        </div>
+
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-blue-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Research</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Prof. Juan Dela Cruz</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Professor, College of Engineering</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                                                    Renewable Energy
+                                                </span>
+                                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                                                    Smart Grid Technology
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Pioneering sustainable energy solutions and integrating technology in engineering education.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                                </div>
+
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-green-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Active</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Ana Rodriguez</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Associate Professor, College of Science</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                                    Environmental Science
+                                                </span>
+                                                <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
+                                                    Climate Research
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Conducting groundbreaking research on climate change impacts and environmental sustainability.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                                </div>
+
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-purple-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Innovation</span>
+                                        </div>
+                                    </div>
+                                                                        <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Carlos Mendoza</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Assistant Professor, College of Computer Studies</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                                                    Artificial Intelligence
+                                                </span>
+                                                <span class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">
+                                                    Machine Learning
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Advancing AI and machine learning applications for healthcare and educational technology solutions.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                        </div>
+
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-orange-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Leadership</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Prof. Elena Santos</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Professor, College of Business Administration</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                                    Business Strategy
+                                                </span>
+                                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                                    Entrepreneurship
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Leading research in sustainable business practices and entrepreneurial development in emerging markets.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                                </div>
+
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-teal-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-teal-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Collaboration</span>
+                                             </div>
+                                         </div>
+                                                                        <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Roberto Garcia</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Associate Professor, College of Agriculture</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
+                                                    Sustainable Agriculture
+                                                </span>
+                                                <span class="bg-lime-100 text-lime-800 text-xs px-2 py-1 rounded-full">
+                                                    Food Security
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Developing sustainable agricultural practices and food security solutions for rural communities.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                                         </div>
+
+                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
+                                    <div class="relative">
+                                        <div class="h-48 bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
+                                            <div class="w-20 h-20 bg-rose-300 rounded-full flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                             </div>
+                                         </div>
+                                        <div class="absolute top-4 right-4">
+                                            <span class="bg-rose-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Excellence</span>
+                                             </div>
+                                         </div>
+                                    <div class="p-6 flex flex-col flex-1">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Sofia Martinez</h3>
+                                            <p class="text-sm text-gray-600 mb-3">Professor, College of Arts and Sciences</p>
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <span class="bg-violet-100 text-violet-800 text-xs px-2 py-1 rounded-full">
+                                                    Cultural Studies
+                                                </span>
+                                                <span class="bg-fuchsia-100 text-fuchsia-800 text-xs px-2 py-1 rounded-full">
+                                                    Social Sciences
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 leading-relaxed">Exploring cultural heritage preservation and social development in Southeast Asian communities.</p>
+                                        </div>
+                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Testimonials Section -->
+                <section class="py-12 bg-white/90 reveal-section relative overflow-hidden">
+                    <!-- Modern section separator -->
+                    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
+                    
+                    <!-- Subtle wave background pattern -->
+                    <div class="absolute inset-0 pointer-events-none opacity-15 -z-10">
+                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="wave3" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#de8c8c"/>
+                                    <stop offset="100%" stop-color="#e7a8a8"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,160 Q200,110 400,160 T1200,160 L1200,400 L0,400 Z" fill="url(#wave3)"/>
+                            <path d="M0,200 Q300,150 600,200 T1200,200 L1200,400 L0,400 Z" fill="url(#wave3)" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="max-w-7xl mx-auto px-6">
+                        <div class="text-center mb-8">
+                            <div class="flex items-center justify-center mb-4">
+                                <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m2 8l-4-4H7a3 3 0 01-3-3V7a3 3 0 013-3h10a3 3 0 013 3v6a3 3 0 01-3 3h-1l-2 2" />
+                                </svg>
+                                <h2 class="text-3xl font-bold text-gray-900">What Researchers Say</h2>
+                            </div>
+                            <p class="text-gray-600 max-w-2xl mx-auto">Testimonials from successful researchers who used PubCite.</p>
+                        </div>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <img loading="lazy" src="/images/usep.png" alt="" class="w-10 h-10 rounded-full object-cover" />
                         <div>
-                            <a href="#" class="block text-center p-4 bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl
-                                hover:bg-white/40 hover:backdrop-blur-lg hover:scale-105 hover:shadow-2xl hover:-translate-y-2 transition-all duration-200 group">
-                                <div class="w-10 h-10 bg-maroon-800 rounded-full flex items-center justify-center mx-auto mb-3
-                                    group-hover:-translate-y-1 group-hover:scale-110 transition-transform duration-200">
-                                    <svg class="w-5 h-5 text-white group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="font-semibold text-gray-900">Dr. Maria Santos</div>
+                                        <div class="text-xs text-gray-500">College of Education</div>
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 text-sm leading-relaxed">The Publications Unit streamlined my submission process and connected me to the right journals.</p>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <img loading="lazy" src="/images/usep.png" alt="" class="w-10 h-10 rounded-full object-cover" />
+                                    <div>
+                                        <div class="font-semibold text-gray-900">Prof. Juan Dela Cruz</div>
+                                        <div class="text-xs text-gray-500">College of Engineering</div>
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 text-sm leading-relaxed">Great support from start to finish. The suggested journals list was especially helpful.</p>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <img loading="lazy" src="/images/usep.png" alt="" class="w-10 h-10 rounded-full object-cover" />
+                                    <div>
+                                        <div class="font-semibold text-gray-900">Dr. Sofia Martinez</div>
+                                        <div class="text-xs text-gray-500">College of Arts and Sciences</div>
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 text-sm leading-relaxed">Their guidance on indexing and citation incentives helped elevate my research impact.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Services & Announcements Section -->
+                <section class="py-12 bg-white/80 reveal-section relative overflow-hidden">
+                    <!-- Modern section separator -->
+                    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
+                    
+                    <!-- Subtle wave background pattern -->
+                    <div class="absolute inset-0 pointer-events-none opacity-15">
+                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="wave4" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#f3d1d1"/>
+                                    <stop offset="100%" stop-color="#f8e6e6"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,140 Q150,90 300,140 T600,140 L600,400 L0,400 Z" fill="url(#wave4)"/>
+                            <path d="M0,180 Q250,130 500,180 T600,180 L600,400 L0,400 Z" fill="url(#wave4)" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="max-w-7xl mx-auto px-6">
+                        <div class="grid lg:grid-cols-2 gap-8">
+                            <!-- Services -->
+                            <div>
+                                <div class="flex items-center mb-8">
+                                    <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    <h2 class="text-3xl font-bold text-gray-900">Our Services</h2>
+                                </div>
+                                                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
                             </div>
-                                <h3 class="text-base font-semibold text-maroon-800 mb-1">List of Suggested Journals</h3>
-                                <p class="text-gray-600 text-xs">Description of Service 1 Lorem ipsum dolor sit amet</p>
-                            </a>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Application for Publication/Citation Incentives</h3>
+                                            <p class="text-gray-600 leading-relaxed">Submit applications for publication and citation incentives to support your research contributions and academic achievements.</p>
+                        </div>
                         </div>
 
-                        <div>
-                            <a href="#" class="block text-center p-4 bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl
-                                hover:bg-white/40 hover:backdrop-blur-lg hover:scale-105 hover:shadow-2xl hover:-translate-y-2 transition-all duration-200 group">
-                                <div class="w-10 h-10 bg-maroon-800 rounded-full flex items-center justify-center mx-auto mb-3
-                                    group-hover:-translate-y-1 group-hover:scale-110 transition-transform duration-200">
-                                    <svg class="w-5 h-5 text-white group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                 </svg>
                             </div>
-                                <h3 class="text-base font-semibold text-maroon-800 mb-1">USeP Researchers</h3>
-                                <p class="text-gray-600 text-xs">Description of Service 2 Lorem ipsum dolor sit amet</p>
-                            </a>
+                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Monitor Application/Request Status</h3>
+                                            <p class="text-gray-600 leading-relaxed">Track the progress of your submitted applications and requests in real-time with detailed status updates.</p>
+                                        </div>
+                        </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Pertinent News and Events</h3>
+                                            <p class="text-gray-600 leading-relaxed">Stay updated with the latest news, events, and important announcements from the Publications Unit.</p>
+                                        </div>
+                                    </div>
                         </div>
                     </div>
 
-                    <!-- Call to Action -->
-                    <div class="text-center">
-            @if (Route::has('login'))
-                    @auth
-                                <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-6 py-3 bg-maroon-700 border border-transparent rounded-md font-semibold text-base text-white uppercase tracking-widest hover:bg-maroon-800 focus:bg-maroon-800 active:bg-maroon-900 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:ring-offset-2 disabled:opacity-50 transition ease-in-out duration-150">
-                                    Go to Dashboard
-                        </a>
-                    @else
-                                <div class="space-y-3">
-                                    <div class="text-base text-gray-900 font-medium">
-                                        New to the platform? 
-                                        <a href="{{ route('register') }}" class="text-maroon-800 hover:text-maroon-800 underline">Create an account</a>
+                            <!-- Announcements -->
+                            <div>
+                                <div class="flex items-center mb-8">
+                                    <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <h2 class="text-3xl font-bold text-gray-900">Latest Announcements</h2>
                                     </div>
+                                <div class="space-y-4">
+                                    <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-blue-500">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
                                 </div>
-                    @endauth
-            @endif
+                                            <div>
+                                                <h3 class="text-base font-semibold text-gray-900 mb-1">New Publication Incentive Guidelines</h3>
+                                                <p class="text-sm text-gray-600 leading-relaxed">Updated guidelines for 2024 publication incentives are now available for all faculty members.</p>
                     </div>
                 </div>
                 </div>
+
+                                    <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-green-500">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                            </div>
+                                            <div>
+                                                <h3 class="text-base font-semibold text-gray-900 mb-1">Research Workshop Series</h3>
+                                                <p class="text-sm text-gray-600 leading-relaxed">Join our upcoming workshop series on research methodology and academic writing techniques.</p>
+                                            </div>
+                        </div>
+                    </div>
+
+                                    <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-orange-500">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-base font-semibold text-gray-900 mb-1">Journal Indexing Updates</h3>
+                                                <p class="text-sm text-gray-600 leading-relaxed">Latest updates on Scopus and Web of Science indexing for USeP publications.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+                </div>
+                </section>
         </main>
         </div>
 
         <div class="relative z-30">
             <x-footer />
         </div>
+        </div>
 
-        @livewireScripts
+        <!-- Back to Top Button -->
+        <button id="backToTop" class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-maroon-600 text-white shadow-lg hover:bg-maroon-700 focus:outline-none" aria-label="Back to top">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+        </button>
+
+        <!-- Scroll Down Hint -->
+        <div id="scrollHint" class="flex items-center gap-3 text-white px-4 py-2 rounded-full border border-white/20 shadow-xl">
+            <div class="mouse relative">
+                <div class="wheel"></div>
+            </div>
+            <div class="flex items-center gap-1">
+                <svg class="chev" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <svg class="chev chev-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <span class="text-xs tracking-wide">Scroll</span>
+        </div>
     </body>
 </html>
 
@@ -258,50 +1212,663 @@ function debounce(fn, delay) {
         clearTimeout(timer);
         timer = setTimeout(() => fn.apply(this, args), delay);
     };
+};
+
+
+
+// Scroll functionality for researchers
+function scrollResearchers(direction) {
+    const container = document.getElementById('researchers-container');
+    const scrollLeft = document.getElementById('scroll-left-researchers');
+    const scrollRight = document.getElementById('scroll-right-researchers');
+
+    if (direction === 'left') {
+        container.scrollBy({ left: -300, behavior: 'smooth' }); // Scroll by 300px
+        if (container.scrollLeft <= 0) {
+            scrollLeft.style.opacity = '0';
+        } else {
+            scrollLeft.style.opacity = '1';
+        }
+        if (container.scrollLeft > 0) {
+            scrollRight.style.opacity = '1';
+        }
+    } else {
+        container.scrollBy({ left: 300, behavior: 'smooth' }); // Scroll by 300px
+        if (container.scrollLeft >= container.scrollWidth - container.clientWidth) {
+            scrollRight.style.opacity = '0';
+        } else {
+            scrollRight.style.opacity = '1';
+        }
+        if (container.scrollLeft < container.scrollWidth - container.clientWidth) {
+            scrollLeft.style.opacity = '1';
+        }
+    }
 }
-// Ensure side cards match the main card's height and vertical position
-function syncSideCardHeightsAndPosition() {
-    const mainCard = document.getElementById('main-welcome-card');
-    const leftContainer = document.getElementById('left-floating-card-container');
-    const rightContainer = document.getElementById('right-floating-card-container');
-    const sideCards = document.querySelectorAll('.side-floating-card');
-    if (!mainCard || !leftContainer || !rightContainer) return;
-    const rect = mainCard.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const top = rect.top + scrollTop;
-    const height = rect.height;
-    leftContainer.style.top = top + 'px';
-    rightContainer.style.top = top + 'px';
-    sideCards.forEach(card => {
-        card.style.height = height + 'px';
+
+// Initial scroll indicator visibility and update on scroll/resize
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded - Setting up scroll indicators');
+
+    // Researchers scroll indicators
+    const researchersContainer = document.getElementById('researchers-container');
+    const researchersScrollLeft = document.getElementById('scroll-left-researchers');
+    const researchersScrollRight = document.getElementById('scroll-right-researchers');
+
+    console.log('Researchers container:', researchersContainer);
+    console.log('Researchers scroll left:', researchersScrollLeft);
+    console.log('Researchers scroll right:', researchersScrollRight);
+
+    function updateResearchersScrollIndicators() {
+        if (!researchersContainer || !researchersScrollLeft || !researchersScrollRight) return;
+        
+        const maxScrollLeft = researchersContainer.scrollWidth - researchersContainer.clientWidth;
+        const isAtStart = researchersContainer.scrollLeft <= 2; // small tolerance
+        const isAtEnd = researchersContainer.scrollLeft >= (maxScrollLeft - 2);
+        const hasOverflow = researchersContainer.scrollWidth > researchersContainer.clientWidth;
+
+        console.log('Researchers scroll update:', { isAtStart, isAtEnd, hasOverflow, scrollLeft: researchersContainer.scrollLeft, scrollWidth: researchersContainer.scrollWidth, clientWidth: researchersContainer.clientWidth });
+
+        // Show/hide left arrow
+        if (hasOverflow && !isAtStart) {
+            researchersScrollLeft.style.opacity = '1';
+            researchersScrollLeft.style.pointerEvents = 'auto';
+        } else {
+            researchersScrollLeft.style.opacity = '0';
+            researchersScrollLeft.style.pointerEvents = 'none';
+        }
+
+        // Show/hide right arrow
+        if (hasOverflow && !isAtEnd) {
+            researchersScrollRight.style.opacity = '1';
+            researchersScrollRight.style.pointerEvents = 'auto';
+        } else {
+            researchersScrollRight.style.opacity = '0';
+            researchersScrollRight.style.pointerEvents = 'none';
+        }
+    }
+
+    // Initial check for researchers
+    updateResearchersScrollIndicators();
+
+    // Update researchers indicators on scroll
+    researchersContainer.addEventListener('scroll', updateResearchersScrollIndicators);
+
+    // Update researchers indicators on window resize
+    window.addEventListener('resize', updateResearchersScrollIndicators);
+    
+    console.log('Scroll indicators setup complete');
+
+    // Rebuild bottom section as Calendar & Details and render multiple marks
+    try {
+        const announcementsHeader = Array.from(document.querySelectorAll('h2')).find(el => el.textContent && el.textContent.trim() === 'Latest Announcements');
+        if (announcementsHeader) {
+            const section = announcementsHeader.closest('section');
+            if (section) {
+                section.innerHTML = `
+                    <!-- Modern section separator -->
+                    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
+                    
+                    <!-- Subtle wave background pattern -->
+                    <div class="absolute inset-0 pointer-events-none opacity-15">
+                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="wave5" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#b22222"/>
+                                    <stop offset="100%" stop-color="#c05050"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,120 Q300,70 600,120 T1200,120 L1200,400 L0,400 Z" fill="url(#wave5)"/>
+                            <path d="M0,160 Q400,110 800,160 T1200,160 L1200,400 L0,400 Z" fill="url(#wave5)" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="max-w-7xl mx-auto px-6">
+                        <!-- Section Header -->
+                        <div class="text-center mb-12">
+                            <div class="flex items-center justify-center mb-4">
+                                <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <h2 class="text-3xl font-bold text-gray-900">USeP Calendar</h2>
+                            </div>
+                            <p class="text-gray-600 max-w-2xl mx-auto">Stay updated with important dates, deadlines, and events from the Publications Unit.</p>
+                        </div>
+
+                        <!-- Single Calendar Card with Two Columns -->
+                        <div class="bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/50 relative overflow-hidden">
+                            <!-- Decorative background elements -->
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-maroon-100/30 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+                            <div class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-100/30 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
+                                <!-- Left Column: Calendar -->
+                                <div class="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-white/60 shadow-lg">
+                                    <div id="calendarHeader" class="flex items-center justify-between mb-6">
+                                        <div id="calendarMonth" class="text-xl font-bold text-gray-900"></div>
+                                        <div class="flex items-center gap-2">
+                                            <button class="p-2 rounded-lg bg-white/50 hover:bg-white/70 transition-colors border border-white/60">
+                                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                                </svg>
+                                            </button>
+                                            <button class="p-2 rounded-lg bg-white/50 hover:bg-white/70 transition-colors border border-white/60">
+                                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-600 mb-3 select-none">
+                                        <div class="p-2 rounded-lg bg-gray-50">Sun</div>
+                                        <div class="p-2 rounded-lg bg-gray-50">Mon</div>
+                                        <div class="p-2 rounded-lg bg-gray-50">Tue</div>
+                                        <div class="p-2 rounded-lg bg-gray-50">Wed</div>
+                                        <div class="p-2 rounded-lg bg-gray-50">Thu</div>
+                                        <div class="p-2 rounded-lg bg-gray-50">Fri</div>
+                                        <div class="p-2 rounded-lg bg-gray-50">Sat</div>
+                                    </div>
+                                    
+                                    <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
+                                    
+                                    <div id="calendarLegend" class="mt-6 pt-4 flex flex-wrap gap-4 text-xs text-gray-600 relative">
+                                        <!-- Modern legend separator -->
+                                        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-200 to-transparent"></div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 shadow-sm"></span>
+                                            <span>Today</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block w-3 h-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-sm"></span>
+                                            <span>Marked Date</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Marked Dates -->
+                                <div class="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-white/60 shadow-lg">
+                                    <div class="flex items-center mb-4">
+                                        <svg class="w-6 h-6 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h10M7 16h10" />
+                                        </svg>
+                                        <h3 class="text-xl font-bold text-gray-900">Marked Dates</h3>
+                                    </div>
+                                    <div class="max-h-[300px] calendar-details-container" id="calendarDetails">
+                                        <div class="text-center text-gray-500 py-8">
+                                            <div class="relative">
+                                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <!-- Decorative dots around the calendar icon -->
+                                                <div class="absolute -top-2 -right-2 w-3 h-3 bg-maroon-200 rounded-full"></div>
+                                                <div class="absolute -bottom-2 -left-2 w-2 h-2 bg-blue-200 rounded-full"></div>
+                                                <div class="absolute top-1/2 -right-4 w-1.5 h-1.5 bg-green-200 rounded-full"></div>
+                                                <div class="absolute top-1/2 -left-4 w-1.5 h-1.5 bg-purple-200 rounded-full"></div>
+                                            </div>
+                                            <p class="text-sm font-medium text-gray-400">No marked dates for this month</p>
+                                            <p class="text-xs text-gray-300 mt-1">Events will appear here when added by administrators</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Calendar state
+                let currentDate = new Date();
+                let currentYear = currentDate.getFullYear();
+                let currentMonth = currentDate.getMonth();
+
+                // Render calendar and details
+                const monthEl = section.querySelector('#calendarMonth');
+                const gridEl = section.querySelector('#calendarGrid');
+                const detailsEl = section.querySelector('#calendarDetails');
+                const marks = @json(json_decode(\App\Models\Setting::get('calendar_marks', '[]'), true));
+
+                function renderCalendar() {
+                    const today = new Date();
+                    const firstDay = new Date(currentYear, currentMonth, 1);
+                    const startDay = firstDay.getDay();
+                    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    
+                    monthEl.textContent = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
+                    gridEl.innerHTML = '';
+                    
+                    // Add padding for first day of month
+                    for (let i = 0; i < startDay; i++) {
+                        const pad = document.createElement('div');
+                        pad.className = 'p-2';
+                        gridEl.appendChild(pad);
+                    }
+                    
+                    const parsedMarks = (Array.isArray(marks) ? marks : []).map(m => ({
+                        date: m && m.date ? new Date(m.date + 'T00:00:00') : null,
+                        note: m && m.note ? String(m.note) : ''
+                    })).filter(m => m.date);
+                    
+                    const marksByDay = new Map();
+                    parsedMarks.forEach(m => {
+                        if (m.date.getFullYear() === currentYear && m.date.getMonth() === currentMonth) {
+                            const d = m.date.getDate();
+                            if (!marksByDay.has(d)) marksByDay.set(d, []);
+                            marksByDay.get(d).push(m);
+                        }
+                    });
+                    
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'p-3 rounded-lg border border-white/60 bg-white/30 hover:bg-white/50 transition-all duration-200 cursor-pointer';
+                        const isToday = d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                        const hasMarks = marksByDay.has(d);
+                        
+                        if (isToday && hasMarks) {
+                            // Today is also a marked date - use half blue, half amber gradient
+                            cell.className = 'p-3 rounded-lg bg-gradient-to-br from-blue-400 via-blue-300 to-amber-400 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer ring-2 ring-blue-200/50';
+                            
+                            // Add click event for marked dates
+                            cell.addEventListener('click', () => {
+                                const clickedDate = new Date(currentYear, currentMonth, d);
+                                highlightMarkedDate(clickedDate);
+                            });
+                        } else if (isToday) {
+                            cell.className = 'p-3 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer';
+                        } else if (hasMarks) {
+                            cell.className = 'p-3 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer ring-2 ring-amber-200/50';
+                            
+                            // Add click event for marked dates
+                            cell.addEventListener('click', () => {
+                                const clickedDate = new Date(currentYear, currentMonth, d);
+                                highlightMarkedDate(clickedDate);
+                            });
+                        }
+                        
+                        cell.textContent = d;
+                        gridEl.appendChild(cell);
+                    }
+                    
+                    // Render details list
+                    const monthMarks = parsedMarks.filter(m => m.date.getFullYear() === currentYear && m.date.getMonth() === currentMonth)
+                        .sort((a,b) => a.date - b.date);
+                    
+                    if (monthMarks.length === 0) {
+                        detailsEl.innerHTML = `
+                            <div class="text-center text-gray-500 py-8">
+                                <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-sm">No marked dates for this month</p>
+                            </div>
+                        `;
+                                         } else {
+                         detailsEl.innerHTML = monthMarks.map((m, index) => {
+                             const ds = m.date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+                             return `
+                                 <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/60 hover:bg-white/80 transition-all duration-200 shadow-sm hover:shadow-md marked-date-card" data-date="${m.date.toISOString().split('T')[0]}" style="margin: 0.5rem 0;">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-bold text-gray-900 mb-1">${ds}</div>
+                                            <div class="text-sm text-gray-600 leading-relaxed">${m.note ? m.note : 'No description provided'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Function to highlight marked date card
+                function highlightMarkedDate(clickedDate) {
+                    const dateString = clickedDate.toISOString().split('T')[0];
+                    const card = detailsEl.querySelector(`[data-date="${dateString}"]`);
+                    
+                    if (card) {
+                        // Add shake animation
+                        card.style.animation = 'shake 0.5s ease-in-out';
+                        card.style.transform = 'scale(1.05)';
+                        
+                        // Check if card is visible in the container
+                        const container = detailsEl;
+                        const cardRect = card.getBoundingClientRect();
+                        const containerRect = container.getBoundingClientRect();
+                        
+                        const isCardVisible = (
+                            cardRect.top >= containerRect.top &&
+                            cardRect.bottom <= containerRect.bottom
+                        );
+                        
+                        // Only scroll if card is not visible
+                        if (!isCardVisible) {
+                            card.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }
+                        
+                        // Reset after animation
+                        setTimeout(() => {
+                            card.style.animation = '';
+                            card.style.transform = '';
+                        }, 500);
+                    }
+                }
+
+                // Navigation buttons
+                const prevBtn = section.querySelector('button:first-of-type');
+                const nextBtn = section.querySelector('button:last-of-type');
+                
+                prevBtn.addEventListener('click', () => {
+                    currentMonth--;
+                    if (currentMonth < 0) {
+                        currentMonth = 11;
+                        currentYear--;
+                    }
+                    renderCalendar();
+                });
+                
+                nextBtn.addEventListener('click', () => {
+                    currentMonth++;
+                    if (currentMonth > 11) {
+                        currentMonth = 0;
+                        currentYear++;
+                    }
+                    renderCalendar();
+                });
+
+                    // Initial render
+    renderCalendar();
+
+
+    // How It Works Modal Functions (Global Scope)
+    window.showHowItWorks = function() {
+        const modal = document.getElementById('howItWorksModal');
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.hideHowItWorks = function() {
+        const modal = document.getElementById('howItWorksModal');
+        
+        modal.classList.remove('show');
+        modal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = 'auto';
+    };
+
+    // Close modal when clicking outside
+    document.getElementById('howItWorksModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            window.hideHowItWorks();
+        }
     });
-}
-const debouncedSync = debounce(syncSideCardHeightsAndPosition, 30);
 
-function revealSideCards() {
-    syncSideCardHeightsAndPosition();
-    document.querySelectorAll('.side-floating-card').forEach(card => card.classList.remove('opacity-0'));
-}
-
-// Run early to reduce initial flash, and again when everything is fully loaded
-document.addEventListener('DOMContentLoaded', syncSideCardHeightsAndPosition);
-window.addEventListener('load', revealSideCards);
-window.addEventListener('resize', debouncedSync);
-window.addEventListener('scroll', debouncedSync);
-
-// Turbo lifecycle support (Hotwire)
-document.addEventListener('turbo:render', syncSideCardHeightsAndPosition);
-document.addEventListener('turbo:load', revealSideCards);
-// Before Turbo caches the page, clear inline styles to avoid stale heights
-document.addEventListener('turbo:before-cache', () => {
-    const leftContainer = document.getElementById('left-floating-card-container');
-    const rightContainer = document.getElementById('right-floating-card-container');
-    const sideCards = document.querySelectorAll('.side-floating-card');
-    if (leftContainer) leftContainer.style.top = '';
-    if (rightContainer) rightContainer.style.top = '';
-    sideCards.forEach(card => {
-        card.style.height = '';
-        card.classList.add('opacity-0');
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            window.hideHowItWorks();
+        }
     });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to rebuild calendar section:', e);
+    }
+
+    // Randomized hero shapes animation
+    const hero = document.getElementById('hero');
+    const shapes = hero ? hero.querySelectorAll('.hero-shape') : [];
+    const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#a855f7', '#f97316', '#22c55e'];
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function edgePoint(vw, vh, side) {
+        switch (side) {
+            case 'left':   return { x: -0.15 * vw, y: rand(-0.1 * vh, 1.1 * vh) };
+            case 'right':  return { x: 1.15 * vw,  y: rand(-0.1 * vh, 1.1 * vh) };
+            case 'top':    return { x: rand(-0.1 * vw, 1.1 * vw), y: -0.15 * vh };
+            case 'bottom': return { x: rand(-0.1 * vw, 1.1 * vw), y: 1.15 * vh };
+            default:       return { x: -0.15 * vw, y: 0 };
+        }
+    }
+    function oppositeSide(side) {
+        const map = { left: 'right', right: 'left', top: 'bottom', bottom: 'top' };
+        return map[side];
+    }
+    function scheduleColorSwap(el) {
+        // Smoothly transition colors over time
+        el.style.transition = 'background-color 1500ms ease, filter 1500ms ease, opacity 1500ms ease';
+        const swap = () => {
+            el.style.backgroundColor = pick(colors);
+            el.style.filter = `blur(${rand(16, 28)}px)`;
+            el.style.opacity = rand(0.18, 0.35).toFixed(2);
+            el._colorTimer = setTimeout(swap, rand(3000, 7000));
+        };
+        el._colorTimer = setTimeout(swap, rand(1500, 3500));
+    }
+    function animateShape(el) {
+        if (!hero) return;
+        const heroRect = hero.getBoundingClientRect();
+        const vw = heroRect.width;
+        const vh = heroRect.height;
+        const size = rand(140, 380);
+        const duration = rand(14000, 26000); // ms
+        const delay = rand(0, 800); // ms
+        const startSide = pick(['left', 'right', 'top', 'bottom']);
+        const endSide = Math.random() < 0.6 ? oppositeSide(startSide) : pick(['left', 'right', 'top', 'bottom'].filter(s => s !== startSide));
+        const start = edgePoint(vw, vh, startSide);
+        const end = edgePoint(vw, vh, endSide);
+        const mid = { x: (start.x + end.x) / 2 + rand(-0.1 * vw, 0.1 * vw), y: (start.y + end.y) / 2 + rand(-0.1 * vh, 0.1 * vh) };
+
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        // Avoid changing backgroundColor/filter on every frame; set once per cycle
+        el.style.backgroundColor = pick(colors);
+        el.style.transform = `translate(${start.x}px, ${start.y}px)`; // ensure offscreen before starting
+        el.style.opacity = '0';
+
+        // Kick off a color swap loop if not already running
+        if (!el._colorTimer) scheduleColorSwap(el);
+
+        el.animate([
+            { transform: `translate(${start.x}px, ${start.y}px) scale(1)`, opacity: 0 },
+            { transform: `translate(${mid.x}px, ${mid.y}px) scale(${rand(0.95,1.08).toFixed(2)})`, opacity: 0.28 },
+            { transform: `translate(${end.x}px, ${end.y}px) scale(1)`, opacity: 0 }
+        ], {
+            duration,
+            delay,
+            iterations: 1,
+            easing: 'ease-in-out',
+            fill: 'forwards'
+        }).onfinish = () => {
+            animateShape(el);
+        };
+    }
+    function setupHeroShapes(targetCount = 7) {
+        const heroEl = document.getElementById('hero');
+        if (!heroEl) return;
+        let current = heroEl.querySelectorAll('.hero-shape');
+        const missing = targetCount - current.length;
+        for (let i = 0; i < missing; i++) {
+            const d = document.createElement('div');
+            d.className = 'hero-shape';
+            heroEl.prepend(d);
+        }
+        current = heroEl.querySelectorAll('.hero-shape');
+        current.forEach((el, idx) => {
+            if (el.getAnimations) {
+                try { el.getAnimations().forEach(a => a.cancel()); } catch (_) {}
+            }
+            if (el._colorTimer) { try { clearTimeout(el._colorTimer); } catch (_) {} el._colorTimer = null; }
+            setTimeout(() => animateShape(el), idx * 250);
+        });
+        // Ensure two shapes appear immediately in viewport
+        const immediate = Array.from(current).slice(0, 2);
+        immediate.forEach(el => animateShapeImmediate(el));
+    }
+
+    // Initialize hero shapes now and on browser restore/visibility
+    setupHeroShapes();
+
+    // Visibility enforcement: ensure at least 2 shapes visible inside hero
+    function rectsIntersect(a, b) {
+        return !(b.left > a.right || b.right < a.left || b.top > a.bottom || b.bottom < a.top);
+    }
+    function countVisibleShapes() {
+        const heroEl = document.getElementById('hero');
+        if (!heroEl) return 0;
+        const heroRect = heroEl.getBoundingClientRect();
+        let count = 0;
+        heroEl.querySelectorAll('.hero-shape').forEach(el => {
+            const r = el.getBoundingClientRect();
+            const op = parseFloat(getComputedStyle(el).opacity || '0');
+            if (op > 0.12 && rectsIntersect(heroRect, r)) count += 1;
+        });
+        return count;
+    }
+    function ensureMinVisible() {
+        const visible = countVisibleShapes();
+        if (visible < 2) {
+            const heroEl = document.getElementById('hero');
+            if (!heroEl) return;
+            const shapesList = Array.from(heroEl.querySelectorAll('.hero-shape'));
+            let needed = 2 - visible;
+            for (const el of shapesList) {
+                if (needed <= 0) break;
+                const op = parseFloat(getComputedStyle(el).opacity || '0');
+                if (op < 0.05) {
+                    animateShapeImmediate(el);
+                    needed -= 1;
+                }
+            }
+        }
+    }
+    function animateShapeImmediate(el) {
+        const heroEl = document.getElementById('hero');
+        if (!heroEl) return;
+        const heroRect = heroEl.getBoundingClientRect();
+        const vw = heroRect.width;
+        const vh = heroRect.height;
+        const size = rand(160, 340);
+        const midX = rand(0.2 * vw, 0.8 * vw);
+        const midY = rand(0.2 * vh, 0.8 * vh);
+        const end = edgePoint(vw, vh, pick(['left','right','top','bottom']));
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        el.style.backgroundColor = pick(colors);
+        el.style.transform = `translate(${midX}px, ${midY}px)`;
+        if (el.getAnimations) { try { el.getAnimations().forEach(a => a.cancel()); } catch(_){} }
+        if (el._colorTimer) { try { clearTimeout(el._colorTimer); } catch(_){} el._colorTimer = null; }
+        scheduleColorSwap(el);
+        el.animate([
+            { transform: `translate(${midX}px, ${midY}px) scale(1)`, opacity: 0 },
+            { transform: `translate(${midX}px, ${midY}px) scale(${rand(0.97,1.06).toFixed(2)})`, opacity: 0.28 },
+            { transform: `translate(${end.x}px, ${end.y}px) scale(1)`, opacity: 0 }
+        ], {
+            duration: rand(12000, 20000),
+            delay: 0,
+            iterations: 1,
+            easing: 'ease-in-out',
+            fill: 'forwards'
+        }).onfinish = () => animateShape(el);
+    }
+    if (window.__ensureVisibleTimer) { try { clearInterval(window.__ensureVisibleTimer); } catch(_){} }
+    window.__ensureVisibleTimer = setInterval(ensureMinVisible, 600);
+    window.addEventListener('pageshow', () => { setupHeroShapes(); ensureMinVisible(); });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            // Use requestIdleCallback if available to start asap without blocking
+            const reinit = () => { setupHeroShapes(); ensureMinVisible(); };
+            if (window.requestIdleCallback) { requestIdleCallback(reinit, { timeout: 200 }); } else { reinit(); }
+        }
+    });
+
+    // Back to Top visibility and initial hint state
+    const backToTop = document.getElementById('backToTop');
+    const scrollHint = document.getElementById('scrollHint');
+    const onScroll = () => {
+        if (window.scrollY > 300) {
+            backToTop.classList.add('show');
+        } else {
+            backToTop.classList.remove('show');
+        }
+
+        // Show hint only near top
+        if (scrollHint) {
+            if (window.scrollY < 40) {
+                scrollHint.classList.add('show');
+            } else {
+                scrollHint.classList.remove('show');
+            }
+        }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // Set initial state on load
+    onScroll();
+    backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // Reveal sections on scroll
+    const revealSections = document.querySelectorAll('.reveal-section');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    revealSections.forEach(sec => revealObserver.observe(sec));
+
+    // Override anchor default to ensure exact offset for services
+    const toServices = document.getElementById('scrollToServices');
+    if (toServices) {
+        toServices.addEventListener('click', (e) => {
+            const target = document.getElementById('services');
+            if (target) {
+                e.preventDefault();
+                const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        });
+    }
+
+    // Swipe gestures for researchers
+    let touchStartX = 0;
+    let touchEndX = 0;
+    if (researchersContainer) {
+        researchersContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+        researchersContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const delta = touchEndX - touchStartX;
+            if (Math.abs(delta) > 50) {
+                scrollResearchers(delta > 0 ? 'left' : 'right');
+            }
+        }, { passive: true });
+    }
+
+    // Search/filter for researchers
+    const researcherSearch = document.getElementById('researcherSearch');
+    if (researcherSearch) {
+        const filterResearchers = debounce(() => {
+            const q = researcherSearch.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('#researchers-container .researcher-card');
+            cards.forEach((card) => {
+                const name = (card.getAttribute('data-name') || card.querySelector('h3')?.textContent || '').toLowerCase();
+                const tags = (card.getAttribute('data-tags') || card.textContent || '').toLowerCase();
+                const match = !q || name.includes(q) || tags.includes(q);
+                card.style.display = match ? '' : 'none';
+            });
+        }, 150);
+        researcherSearch.addEventListener('input', filterResearchers);
+    }
+
+    // Journal search removed per request
 });
 </script> 

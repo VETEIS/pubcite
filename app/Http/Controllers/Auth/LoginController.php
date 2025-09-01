@@ -55,6 +55,14 @@ class LoginController extends Controller
         Auth::login($user);
         Log::info('User logged in successfully: ' . $request->email);
 
-        return redirect()->intended('/dashboard');
+        // Clear any existing intended URL to prevent redirect issues
+        session()->forget('url.intended');
+
+        // Redirect admin users to admin dashboard, regular users to user dashboard
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } else {
+            return redirect()->route('dashboard');
+        }
     }
 } 

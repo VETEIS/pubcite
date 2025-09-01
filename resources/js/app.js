@@ -62,12 +62,8 @@ Alpine.store('adminModal', {
     }
 });
 
-// Initialize Alpine
-Alpine.start();
+// Let Livewire handle Alpine initialization
+// Alpine.start() is called by Livewire automatically
 
-// Debug: Check if Alpine and store are working
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, Alpine available:', !!window.Alpine);
-    console.log('Store available:', !!Alpine.store('adminModal'));
-    console.log('Store state:', Alpine.store('adminModal'));
-});
+// Start Alpine.js
+Alpine.start();

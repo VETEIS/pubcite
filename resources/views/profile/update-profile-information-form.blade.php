@@ -1,97 +1,70 @@
-<x-form-section submit="updateProfileInformation">
-    <div class="bg-white/30 backdrop-blur border border-white/40 rounded-lg p-6">
-        <x-slot name="title">
-            {{ __('Profile Information') }}
-        </x-slot>
+<form wire:submit.prevent="updateProfileInformation" class="space-y-6">
+    <!-- Username -->
+    <div class="space-y-2">
+        <x-label for="username" value="{{ __('Username') }}" class="text-sm font-medium text-gray-700" />
+        <x-input id="username" type="text" class="mt-1 block w-full" wire:model="state.username" required autocomplete="username" placeholder="Enter your username" value="{{ Auth::user()->username ?? '' }}" />
+        <x-input-error for="username" class="mt-2" />
+    </div>
 
-        <x-slot name="description">
-            {{ __('Update your account\'s profile information and email address.') }}
-        </x-slot>
+    <!-- Name -->
+    <div class="space-y-2">
+        <x-label for="name" value="{{ __('Full Name') }}" class="text-sm font-medium text-gray-700" />
+        <x-input id="name" type="text" class="mt-1 block w-full" wire:model="state.name" required autocomplete="name" placeholder="Enter your full name" value="{{ Auth::user()->name }}" />
+        <x-input-error for="name" class="mt-2" />
+    </div>
 
-        <x-slot name="form">
-            <!-- Profile Photo -->
-            @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
-                <div x-data="{photoName: null, photoPreview: null}" class="col-span-6 sm:col-span-4">
-                    <!-- Profile Photo File Input -->
-                    <input type="file" id="photo" class="hidden"
-                                wire:model.live="photo"
-                                x-ref="photo"
-                                x-on:change="
-                                        photoName = $refs.photo.files[0].name;
-                                        const reader = new FileReader();
-                                        reader.onload = (e) => {
-                                            photoPreview = e.target.result;
-                                        };
-                                        reader.readAsDataURL($refs.photo.files[0]);
-                                " />
+    <!-- Email -->
+    <div class="space-y-2">
+        <x-label for="email" value="{{ __('Email Address') }}" class="text-sm font-medium text-gray-700" />
+        <div class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700">
+            {{ Auth::user()->email }}
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Email address cannot be changed for security reasons.</p>
 
-                    <x-label for="photo" value="{{ __('Photo') }}" />
-
-                    <!-- Current Profile Photo -->
-                    <div class="mt-2" x-show="! photoPreview">
-                        <img src="{{ $this->user->profile_photo_url }}" alt="{{ $this->user->name }}" class="rounded-full size-20 object-cover">
-                    </div>
-
-                    <!-- New Profile Photo Preview -->
-                    <div class="mt-2" x-show="photoPreview" style="display: none;">
-                        <span class="block rounded-full size-20 bg-cover bg-no-repeat bg-center"
-                              x-bind:style="'background-image: url(\'' + photoPreview + '\');'">
-                        </span>
-                    </div>
-
-                    <x-secondary-button class="mt-2 me-2" type="button" x-on:click.prevent="$refs.photo.click()">
-                        {{ __('Select A New Photo') }}
-                    </x-secondary-button>
-
-                    @if ($this->user->profile_photo_path)
-                        <x-secondary-button type="button" class="mt-2" wire:click="deleteProfilePhoto">
-                            {{ __('Remove Photo') }}
-                        </x-secondary-button>
-                    @endif
-
-                    <x-input-error for="photo" class="mt-2" />
-                </div>
-            @endif
-
-            <!-- Name -->
-            <div class="col-span-6 sm:col-span-4">
-                <x-label for="name" value="{{ __('Name') }}" />
-                <x-input id="name" type="text" class="mt-1 block w-full" wire:model="state.name" required autocomplete="name" />
-                <x-input-error for="name" class="mt-2" />
-            </div>
-
-            <!-- Email -->
-            <div class="col-span-6 sm:col-span-4">
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" type="email" class="mt-1 block w-full" wire:model="state.email" required autocomplete="username" />
-                <x-input-error for="email" class="mt-2" />
-
-                @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::emailVerification()) && ! $this->user->hasVerifiedEmail())
-                    <p class="text-sm mt-2">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button type="button" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500" wire:click.prevent="sendEmailVerification">
+        @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::emailVerification()) && ! $this->user->hasVerifiedEmail())
+            <div class="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm text-yellow-800 font-medium">{{ __('Your email address is unverified.') }}</p>
+                        <button type="button" class="text-sm text-yellow-700 hover:text-yellow-900 underline mt-1" wire:click.prevent="sendEmailVerification">
                             {{ __('Click here to re-send the verification email.') }}
                         </button>
-                    </p>
-
-                    @if ($this->verificationLinkSent)
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                @endif
+                    </div>
+                </div>
             </div>
-        </x-slot>
 
-        <x-slot name="actions">
-            <x-action-message class="me-3" on="saved">
-                {{ __('Saved.') }}
-            </x-action-message>
-
-            <x-button wire:loading.attr="disabled" wire:target="photo">
-                {{ __('Save') }}
-            </x-button>
-        </x-slot>
+            @if ($this->verificationLinkSent)
+                <div class="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-sm text-green-800 font-medium">{{ __('A new verification link has been sent to your email address.') }}</p>
+                    </div>
+                </div>
+            @endif
+        @endif
     </div>
-</x-form-section>
+
+    <!-- Form Actions -->
+    <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+        <x-action-message class="text-sm text-green-600 font-medium" on="saved">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ __('Profile information saved successfully.') }}
+            </div>
+        </x-action-message>
+
+        <x-button wire:loading.attr="disabled" class="bg-maroon-600 hover:bg-maroon-700 focus:ring-maroon-500">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ __('Save Changes') }}
+        </x-button>
+    </div>
+</form>

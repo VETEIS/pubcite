@@ -444,12 +444,8 @@
             </div>
         </div>
     </div>
-    @if(session('success'))
-        <div id="success-notification" class="hidden">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div id="error-notification" class="hidden">{{ session('error') }}</div>
-    @endif
+
+
 </div>
 <script>
 function publicationForm() {

@@ -8,59 +8,58 @@ use Carbon\Carbon;
 
 class CleanupTempFiles extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'cleanup:temp-files {--hours=24 : Hours after which to delete temp files}';
+    protected $signature = 'cleanup:temp-files';
+    protected $description = 'Clean up temporary files older than 24 hours';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Clean up temporary DOCX files older than specified hours';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        $hours = $this->option('hours');
-        $cutoffTime = Carbon::now()->subHours($hours);
+        $this->info('Starting cleanup of temporary files...');
         
-        $this->info("Cleaning up temp files older than {$hours} hours...");
+        $tempDirectories = [
+            'temp',
+            'uploads/temp',
+            'public/temp'
+        ];
         
-        $tempPath = 'temp';
         $deletedCount = 0;
+        $totalSize = 0;
         
-        if (Storage::exists($tempPath)) {
-            $directories = Storage::directories($tempPath);
-            
-            foreach ($directories as $userDir) {
-                $userSubDirs = Storage::directories($userDir);
+        foreach ($tempDirectories as $directory) {
+            if (Storage::exists($directory)) {
+                $files = Storage::files($directory);
                 
-                foreach ($userSubDirs as $tempDir) {
-                    $dirName = basename($tempDir);
+                foreach ($files as $file) {
+                    $lastModified = Storage::lastModified($file);
+                    $fileAge = Carbon::createFromTimestamp($lastModified);
                     
-                    // Extract timestamp from directory name (format: preview_timestamp_random)
-                    if (preg_match('/^preview_(\d+)_/', $dirName, $matches)) {
-                        $timestamp = (int) $matches[1];
-                        $dirTime = Carbon::createFromTimestamp($timestamp);
+                    // Delete files older than 24 hours
+                    if ($fileAge->diffInHours(now()) > 24) {
+                        $size = Storage::size($file);
+                        Storage::delete($file);
+                        $deletedCount++;
+                        $totalSize += $size;
                         
-                        if ($dirTime->lt($cutoffTime)) {
-                            Storage::deleteDirectory($tempDir);
-                            $deletedCount++;
-                            $this->line("Deleted: {$tempDir}");
-                        }
+                        $this->line("Deleted: {$file} (Size: " . $this->formatBytes($size) . ")");
                     }
                 }
             }
         }
         
-        $this->info("Cleanup completed. Deleted {$deletedCount} temp directories.");
+        $this->info("Cleanup completed!");
+        $this->info("Files deleted: {$deletedCount}");
+        $this->info("Total space freed: " . $this->formatBytes($totalSize));
         
         return 0;
+    }
+    
+    private function formatBytes($size, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
+            $size /= 1024;
+        }
+        
+        return round($size, $precision) . ' ' . $units[$i];
     }
 } 
