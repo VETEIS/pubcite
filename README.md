@@ -1,61 +1,310 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PubCite - USeP Publication Unit System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## About Laravel
+A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management, and digital signature workflows.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📋 Core Functionality
+- **Publication Incentive Applications** - Submit and manage publication incentive requests
+- **Citation Incentive Applications** - Handle citation-based incentive submissions
+- **Digital Document Management** - Secure file upload, storage, and retrieval
+- **Digital Signature System** - Upload, manage, and apply personal signatures to documents
+- **Real-time Dashboard** - Live updates and comprehensive analytics
+- **Multi-role Access Control** - Admin, User, and Signatory roles with appropriate permissions
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🔐 Authentication & Security
+- **Google OAuth Integration** - Seamless login with USeP Google accounts (@usep.edu.ph)
+- **Two-Factor Authentication** - Enhanced security with 2FA support
+- **Role-based Access Control** - Granular permissions for different user types
+- **Secure File Storage** - Private S3 storage with encryption
+- **Rate Limiting** - Protection against abuse and spam
 
-## Learning Laravel
+### 📊 Admin Features
+- **Comprehensive Dashboard** - Real-time statistics and activity monitoring
+- **User Management** - Create, edit, and manage user accounts
+- **Request Management** - Review, approve, and track all applications
+- **System Settings** - Configure application parameters
+- **File Management** - Secure file downloads and management
+- **Activity Logging** - Detailed audit trails for all actions
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### ✍️ Signature Management
+- **Personal Signature Upload** - Secure signature image management
+- **Document Signing** - Apply signatures to generated documents
+- **Signature Reversion** - Undo signatures within 24-hour window
+- **Privacy Protection** - Owner-only access to signature files
+- **Multiple Signature Support** - Manage multiple signature styles
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🛠️ Technology Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Backend
+- **Laravel 12.x** - PHP web framework
+- **PostgreSQL** - Primary database
+- **Laravel Fortify** - Authentication scaffolding
+- **Laravel Jetstream** - User interface scaffolding
+- **Laravel Sanctum** - API authentication
+- **Laravel Socialite** - OAuth providers
 
-## Laravel Sponsors
+### Frontend
+- **Tailwind CSS** - Utility-first CSS framework
+- **Alpine.js** - Lightweight JavaScript framework
+- **Chart.js** - Data visualization
+- **Livewire** - Full-stack framework for dynamic UIs
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Document Processing
+- **PhpWord** - Microsoft Word document generation
+- **DomPDF** - PDF generation and manipulation
+- **FPDF/FPDI** - Advanced PDF processing
+- **ZIP Manipulation** - Direct DOCX file processing
 
-### Premium Partners
+### Infrastructure
+- **Docker** - Containerization
+- **AWS S3** - File storage
+- **Render** - Cloud deployment platform
+- **Vite** - Asset bundling
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 📦 Installation
 
-## Contributing
+### Prerequisites
+- PHP 8.2 or higher
+- Composer
+- Node.js 20.x
+- PostgreSQL 12+
+- Redis (optional, for caching)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Local Development Setup
 
-## Code of Conduct
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/VETEIS/pubcite.git
+   cd pubcite
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
 
-## Security Vulnerabilities
+3. **Install Node.js dependencies**
+   ```bash
+   npm install
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+4. **Environment configuration**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-## License
+5. **Database setup**
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+6. **Build assets**
+   ```bash
+   npm run build
+   ```
+
+7. **Start development server**
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
+
+### Docker Deployment
+
+1. **Build the Docker image**
+   ```bash
+   docker build -t pubcite .
+   ```
+
+2. **Run the container**
+   ```bash
+   docker run -p 10000:10000 pubcite
+   ```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+```env
+# Application
+APP_NAME="PubCite"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.com
+
+# Database
+DB_CONNECTION=pgsql
+DB_HOST=your-db-host
+DB_PORT=5432
+DB_DATABASE=pubcite
+DB_USERNAME=your-username
+DB_PASSWORD=your-password
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=https://your-domain.com/auth/google/callback
+
+# AWS S3
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=your-bucket-name
+
+# Signature Management
+MAX_SIGNATURE_BYTES=1000000
+SIGNATURE_MAX_DIMENSIONS=2000
+SIGNATURE_RETENTION_DAYS=90
+```
+
+### Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URI: `https://your-domain.com/auth/google/callback`
+6. Restrict to `@usep.edu.ph` domain
+
+### AWS S3 Configuration
+
+1. Create a private S3 bucket
+2. Enable server-side encryption (SSE-KMS recommended)
+3. Block public access
+4. Configure bucket policy to deny anonymous access
+5. Set up lifecycle policies for cost optimization
+
+## 🚀 Deployment
+
+### Render.com Deployment
+
+1. Connect your GitHub repository to Render
+2. Use the provided `render.yaml` configuration
+3. Set environment variables in Render dashboard
+4. Deploy automatically on push to main branch
+
+### Manual Deployment
+
+1. **Build production assets**
+   ```bash
+   npm run build
+   composer install --optimize-autoloader --no-dev
+   ```
+
+2. **Run migrations**
+   ```bash
+   php artisan migrate --force
+   ```
+
+3. **Cache configuration**
+   ```bash
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+
+## 📚 Usage
+
+### For Users
+1. **Login** - Use your USeP Google account or registered credentials
+2. **Submit Applications** - Create publication or citation incentive requests
+3. **Upload Documents** - Attach required files and supporting documents
+4. **Track Status** - Monitor your application progress in the dashboard
+5. **Manage Signatures** - Upload and manage your digital signatures
+
+### For Signatories
+1. **Review Requests** - Access pending documents requiring signatures
+2. **Sign Documents** - Apply your digital signature to official documents
+3. **Revert Signatures** - Undo signatures within the 24-hour window if needed
+
+### For Administrators
+1. **Dashboard Overview** - Monitor system activity and statistics
+2. **User Management** - Create and manage user accounts
+3. **Request Processing** - Review, approve, or reject applications
+4. **System Configuration** - Adjust application settings and parameters
+5. **File Management** - Access and manage uploaded documents
+
+## 🔧 Development
+
+### Running Tests
+```bash
+php artisan test
+```
+
+### Code Style
+```bash
+./vendor/bin/pint
+```
+
+### Database Seeding
+```bash
+php artisan db:seed
+```
+
+### Debug Commands
+```bash
+# Debug user roles
+php artisan debug:user-roles
+
+# Clean up temporary files
+php artisan cleanup:temp-files
+```
+
+## 📁 Project Structure
+
+```
+pubcite/
+├── app/
+│   ├── Console/Commands/     # Artisan commands
+│   ├── Enums/               # Application enums
+│   ├── Http/Controllers/    # HTTP controllers
+│   ├── Mail/                # Email notifications
+│   ├── Models/              # Eloquent models
+│   ├── Services/            # Business logic services
+│   └── View/Components/     # Blade components
+├── database/
+│   ├── factories/           # Model factories
+│   ├── migrations/          # Database migrations
+│   └── seeders/             # Database seeders
+├── resources/
+│   ├── css/                 # Stylesheets
+│   ├── js/                  # JavaScript files
+│   └── views/               # Blade templates
+├── routes/                  # Route definitions
+├── storage/                 # File storage
+└── tests/                   # Test suites
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the GitHub repository
+- Contact the development team
+- Check the documentation in the `/docs` folder
+
+## 🏛️ About USeP
+
+The University of Southeastern Philippines (USeP) is a premier state university in the Philippines, committed to excellence in education, research, and community service. The Publication Unit supports faculty and researchers in their academic publishing endeavors.
+
+---
+
+**Developed with ❤️ for the University of Southeastern Philippines**
