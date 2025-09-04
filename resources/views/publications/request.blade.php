@@ -1,7 +1,6 @@
 <x-app-layout>
 <div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center p-4 pb-20">
     <div class="w-full max-w-4xl mx-auto">
-        <!-- Main Form Card - Fixed Height for Consistency -->
         <div class="bg-white/30 backdrop-blur-md border border-white/40 overflow-hidden shadow-xl sm:rounded-lg p-0 relative h-[calc(90vh-4rem)] flex flex-col">
             <div class="flex flex-col items-center text-center mb-4 px-6 pt-6">
                 <h2 class="text-xl font-bold text-maroon-800 mb-1">Publication Request</h2>
@@ -79,29 +78,24 @@
                             </div>
 
                             <div class="flex-1 overflow-y-auto">
-                                <!-- Incentive Application Tab -->
                                 <div :class="$store.tabNav && $store.tabNav.tab === 'incentive' ? '' : 'hidden'" class="space-y-4">
                                     @include('publications.incentive-application')
                                 </div>
 
-                                <!-- Recommendation Letter Tab -->
                                 <div :class="$store.tabNav && $store.tabNav.tab === 'recommendation' ? '' : 'hidden'" class="space-y-4">
                                     @include('publications.recommendation-letter')
                                 </div>
 
-                                <!-- Terminal Report Tab -->
                                 <div :class="$store.tabNav && $store.tabNav.tab === 'terminal' ? '' : 'hidden'" class="space-y-4">
                                     @include('publications.terminal-report')
                                 </div>
 
-                                <!-- File Upload Tab -->
                                 <div :class="$store.tabNav && $store.tabNav.tab === 'upload' ? '' : 'hidden'" class="space-y-4">
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="font-semibold text-maroon-800 mb-3">Required Documents</h3>
                                         <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
                                         
                                         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                            <!-- Article PDF Card -->
                                             <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                                  x-data="{ fileName: '', displayName: '' }"
                                                  @click="$refs.articlePdf.click()">
@@ -122,7 +116,6 @@
                                                     @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                             </div>
 
-                                            <!-- Acceptance Letter Card -->
                                             <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                                  x-data="{ fileName: '', displayName: '' }"
                                                  @click="$refs.acceptancePdf.click()">
@@ -143,7 +136,6 @@
                                                     @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
                                             </div>
 
-                                            <!-- Peer Review Card -->
                                             <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                                                  x-data="{ fileName: '', displayName: '' }"
                                                  @click="$refs.peerReviewPdf.click()">

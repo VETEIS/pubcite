@@ -107,10 +107,8 @@ class AdminRequestController extends Controller
         try {
             $request = \App\Models\Request::with('user')->findOrFail($requestId);
             
-            // Get all files from the request directory
             $requestFiles = $this->getRequestFiles($request);
             
-            // Extract signatory information
             $signatories = $this->extractSignatories($request->form_data);
             
             return response()->json([
@@ -148,25 +146,21 @@ class AdminRequestController extends Controller
         $files = [];
         
         try {
-            // Parse the pdf_path JSON to get actual file locations
             $pdfPathData = json_decode($request->pdf_path, true);
             
             if (!$pdfPathData) {
-                return $files; // Return empty array if no file data
+                return $files;
             }
             
-            // Handle PDF files
             if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
                 foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
                     if (isset($fileInfo['path']) && is_string($fileInfo['path'])) {
-                        // Try local disk first, then public for backward compatibility
                         $fullPath = Storage::disk('local')->path($fileInfo['path']);
                         if (!file_exists($fullPath)) {
                             $fullPath = storage_path('app/public/' . $fileInfo['path']);
                         }
                         
                         if (file_exists($fullPath) && is_readable($fullPath)) {
-                            // Generate secure download link
                             $secureFilename = base64_encode($request->id . '|' . ($fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf'));
                             $downloadUrl = route('admin.download.file', ['type' => 'pdf', 'filename' => $secureFilename]);
                             
@@ -184,19 +178,16 @@ class AdminRequestController extends Controller
                 }
             }
             
-            // Handle DOCX files
             if (isset($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
                 foreach ($pdfPathData['docxs'] as $key => $docxPath) {
                     if (!$docxPath || !is_string($docxPath)) continue;
 
                     $fullPath = null;
-                    // Detect absolute path (Windows or POSIX) or already storage path
                     $isAbsolute = preg_match('/^(?:[A-Za-z]:\\\\|\\\\\\\\|\/)/', $docxPath) === 1 || str_starts_with($docxPath, storage_path());
 
                     if ($isAbsolute) {
                         $fullPath = $docxPath;
                     } else {
-                        // Try local disk first, then public for backward compatibility
                         $fullPath = Storage::disk('local')->path($docxPath);
                         if (!file_exists($fullPath)) {
                             $fullPath = storage_path('app/public/' . $docxPath);
@@ -204,7 +195,6 @@ class AdminRequestController extends Controller
                     }
 
                     if ($fullPath && file_exists($fullPath) && is_readable($fullPath)) {
-                        // Generate secure download link with correct filename
                         $fileName = $this->getDocxFileName($key);
                         $secureFilename = base64_encode($request->id . '|' . $fileName);
                         $downloadUrl = route('admin.download.file', ['type' => 'docx', 'filename' => $secureFilename]);
@@ -222,7 +212,6 @@ class AdminRequestController extends Controller
                 }
             }
             
-            // Add signed documents if they exist
             if ($request->signed_document_path && Storage::disk('local')->exists($request->signed_document_path)) {
                 $fullPath = Storage::disk('local')->path($request->signed_document_path);
                 if (file_exists($fullPath) && is_readable($fullPath)) {
@@ -241,7 +230,6 @@ class AdminRequestController extends Controller
                 }
             }
             
-            // Add backup documents if they exist
             if ($request->original_document_path && Storage::disk('local')->exists($request->original_document_path)) {
                 $fullPath = Storage::disk('local')->path($request->original_document_path);
                 if (file_exists($fullPath) && is_readable($fullPath)) {
@@ -269,9 +257,6 @@ class AdminRequestController extends Controller
         return $files;
     }
 
-    /**
-     * Get the correct DOCX filename based on the key
-     */
     private function getDocxFileName($key): string
     {
         switch ($key) {
@@ -288,7 +273,6 @@ class AdminRequestController extends Controller
 
     private function extractSignatories($formData)
     {
-        // Normalize form data to array
         if (is_string($formData)) {
             $decoded = json_decode($formData, true);
             $formData = is_array($decoded) ? $decoded : [];
@@ -297,13 +281,11 @@ class AdminRequestController extends Controller
             return [];
         }
 
-        // Normalize keys to lowercase for consistent lookup
         $normalized = [];
         foreach ($formData as $k => $v) {
             $normalized[strtolower($k)] = $v;
         }
 
-        // Role to candidate fields mapping (ordered by priority)
         $roleToFields = [
             'Faculty' => ['facultyname', 'faculty_name', 'rec_facultyname'],
             'Research Center Manager' => ['centermanager', 'center_manager', 'research_center_manager'],
@@ -454,7 +436,6 @@ class AdminRequestController extends Controller
             $zip->close();
 
             if ($addedFiles === 0) {
-                // Log errors for debugging
                 if (!empty($errors)) {
                     \Illuminate\Support\Facades\Log::warning('ZIP download failed - no files added', [
                         'request_id' => $requestId,
@@ -464,7 +445,6 @@ class AdminRequestController extends Controller
                 abort(404, 'No files found to include in ZIP');
             }
 
-            // Log successful ZIP creation
             \Illuminate\Support\Facades\Log::info('ZIP download created successfully', [
                 'request_id' => $requestId,
                 'files_added' => $addedFiles,

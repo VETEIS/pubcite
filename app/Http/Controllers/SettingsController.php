@@ -35,21 +35,19 @@ class SettingsController extends Controller
             'calendar_marks.*.date' => 'nullable|date',
             'calendar_marks.*.note' => 'nullable|string|max:500',
         ]);
-        // Save simple scalar settings
         Setting::set('official_deputy_director_name', $validated['official_deputy_director_name']);
         Setting::set('official_deputy_director_title', $validated['official_deputy_director_title']);
         Setting::set('official_rdd_director_name', $validated['official_rdd_director_name']);
         Setting::set('official_rdd_director_title', $validated['official_rdd_director_title']);
         Setting::set('citations_request_enabled', $validated['citations_request_enabled']);
 
-        // Normalize and save calendar marks as JSON
         $marks = [];
         if (!empty($validated['calendar_marks']) && is_array($validated['calendar_marks'])) {
             foreach ($validated['calendar_marks'] as $row) {
                 $date = $row['date'] ?? null;
                 $note = $row['note'] ?? null;
                 if (!$date && !$note) {
-                    continue; // skip empty rows
+                    continue;
                 }
                 $marks[] = [
                     'date' => $date,

@@ -12,25 +12,16 @@ class Signature extends Model
 
     protected $fillable = ['user_id', 'label', 'path', 'mime_type'];
 
-    /**
-     * Get the user that owns the signature.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Scope a query to only include signatures for a specific user.
-     */
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    /**
-     * Scope a query to only include active signatures.
-     */
     public function scopeActive($query)
     {
         return $query->whereNull('deleted_at');

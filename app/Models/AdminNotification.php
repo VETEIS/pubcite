@@ -9,7 +9,7 @@ class AdminNotification extends Model
     protected $table = 'admin_notifications';
 
     protected $fillable = [
-        'user_id', // recipient admin id
+        'user_id',
         'type',
         'title',
         'message',

@@ -39,7 +39,6 @@ class PublicationsController extends Controller
         $request->status = $httpRequest->input('status');
         $request->save();
 
-        // Activity log for status change
         if ($oldStatus !== $request->status) {
             try {
                 \App\Models\ActivityLog::create([
@@ -70,7 +69,6 @@ class PublicationsController extends Controller
                     'new_status' => $request->status,
                     'error' => $e->getMessage()
                 ]);
-                // Don't fail the status change if activity logging fails
             }
             $adminComment = $httpRequest->input('admin_comment', null);
             Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
@@ -135,7 +133,6 @@ class PublicationsController extends Controller
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
-            // The response is final. Do not add any code after this line.
         } catch (\Exception $e) {
             Log::error('Error generating DOCX: ' . $e->getMessage());
             return response()->json([
@@ -150,8 +147,7 @@ class PublicationsController extends Controller
         try {
             Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
             
-            // Use local disk for security (private storage)
-            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $privateUploadPath = $uploadPath;
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
             if (!file_exists($fullPath)) {
@@ -168,7 +164,6 @@ class PublicationsController extends Controller
                 $templateProcessor->setValue($key, $value);
             }
             
-            // Add signature placeholders for all user types
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -190,7 +185,7 @@ class PublicationsController extends Controller
                 throw $e;
             }
             
-            return $outputPath; // Return the relative path for the controller to use
+            return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateIncentiveDocxFromHtml: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -203,8 +198,7 @@ class PublicationsController extends Controller
     private function generateRecommendationDocxFromHtml($data, $uploadPath)
     {
         try {
-            // Use local disk for security (private storage)
-            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $privateUploadPath = $uploadPath;
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
             if (!file_exists($fullPath)) {
@@ -220,7 +214,6 @@ class PublicationsController extends Controller
                 $templateProcessor->setValue($key, $value);
             }
             
-            // Add signature placeholders for all user types
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -244,8 +237,7 @@ class PublicationsController extends Controller
     private function generateTerminalDocxFromHtml($data, $uploadPath)
     {
         try {
-            // Use local disk for security (private storage)
-            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $privateUploadPath = $uploadPath;
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
             if (!file_exists($fullPath)) {
@@ -261,7 +253,6 @@ class PublicationsController extends Controller
                 $templateProcessor->setValue($key, $value);
             }
             
-            // Add signature placeholders for all user types
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -285,7 +276,6 @@ class PublicationsController extends Controller
     private function generateDocxFromTemplate($templateName, $data, $typeChecked = [], $indexedChecked = [], $outputPath)
     {
         try {
-            // Load the template
             $templatePath = Storage::disk('public')->path('templates/' . $templateName);
             
             if (!file_exists($templatePath)) {
@@ -294,14 +284,11 @@ class PublicationsController extends Controller
             
             Log::info('Loading template', ['templatePath' => $templatePath]);
             
-            // Load the existing document
             $phpWord = IOFactory::load($templatePath);
             
-            // Get all sections
             $sections = $phpWord->getSections();
             
             foreach ($sections as $section) {
-                // Get all elements in the section
                 $elements = $section->getElements();
                 
                 foreach ($elements as $element) {
@@ -309,7 +296,6 @@ class PublicationsController extends Controller
                 }
             }
             
-            // Save the modified document
             $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
             $objWriter->save($outputPath);
             
@@ -327,18 +313,15 @@ class PublicationsController extends Controller
 
     private function replacePlaceholdersInElement($element, $data, $typeChecked, $indexedChecked)
     {
-        // Handle different types of elements
         if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
             $this->replacePlaceholdersInText($element, $data, $typeChecked, $indexedChecked);
         } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
-            // Process text runs
             foreach ($element->getElements() as $textElement) {
                 if ($textElement instanceof \PhpOffice\PhpWord\Element\Text) {
                     $this->replacePlaceholdersInText($textElement, $data, $typeChecked, $indexedChecked);
                 }
             }
         } elseif ($element instanceof \PhpOffice\PhpWord\Element\Table) {
-            // Process tables
             foreach ($element->getRows() as $row) {
                 foreach ($row->getCells() as $cell) {
                     foreach ($cell->getElements() as $cellElement) {
@@ -353,7 +336,6 @@ class PublicationsController extends Controller
     {
         $text = $textElement->getText();
         
-        // Replace all placeholders with actual data
         $replacements = [
             '{{collegeheader}}' => $data['collegeheader'] ?? '',
             '{{name}}' => $data['name'] ?? '',
@@ -377,7 +359,6 @@ class PublicationsController extends Controller
             '{{centermanager}}' => $data['centermanager'] ?? '',
             '{{collegedean}}' => $data['collegedean'] ?? '',
             
-            // Recommendation letter placeholders
             '{{rec_collegeheader}}' => $data['rec_collegeheader'] ?? '',
             '{{rec_date}}' => $data['rec_date'] ?? now()->format('Y-m-d'),
             '{{rec_facultyname}}' => $data['rec_facultyname'] ?? '',
@@ -385,7 +366,6 @@ class PublicationsController extends Controller
             '{{indexing}}' => $data['indexing'] ?? '',
             '{{dean}}' => $data['dean'] ?? '',
             
-            // Terminal report placeholders
             '{{title}}' => $data['title'] ?? '',
             '{{author}}' => $data['author'] ?? '',
             '{{duration}}' => $data['duration'] ?? '',
@@ -397,7 +377,6 @@ class PublicationsController extends Controller
             '{{references}}' => $data['references'] ?? '',
             '{{appendices}}' => $data['appendices'] ?? '',
             
-            // Checkbox replacements
             '{{regional}}' => $typeChecked['regional'] ?? '☐',
             '{{national}}' => $typeChecked['national'] ?? '☐',
             '{{international}}' => $typeChecked['international'] ?? '☐',
@@ -417,8 +396,6 @@ class PublicationsController extends Controller
 
     private function convertHtmlToDocx($html, $outputPath)
     {
-        // This method is no longer used but kept for compatibility
-        // The actual document creation is now done in the specific create*Document methods
     }
 
     public function destroy($id)
@@ -437,11 +414,9 @@ class PublicationsController extends Controller
             }
             return redirect()->back()->with('error', 'Request not found.');
         }
-        // Delete all associated files from storage
         $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
         $allFiles = [];
         
-        // Collect PDF files
         if (isset($pdfPath['pdfs']) && is_array($pdfPath['pdfs'])) {
             foreach ($pdfPath['pdfs'] as $file) {
                 if (isset($file['path'])) {
@@ -450,7 +425,6 @@ class PublicationsController extends Controller
             }
         }
         
-        // Collect DOCX files
         if (isset($pdfPath['docxs']) && is_array($pdfPath['docxs'])) {
             foreach ($pdfPath['docxs'] as $docxPath) {
                 if ($docxPath) {
@@ -459,7 +433,6 @@ class PublicationsController extends Controller
             }
         }
         
-        // Collect signature-related files
         if ($request->signed_document_path) {
             $allFiles[] = $request->signed_document_path;
         }
@@ -467,16 +440,13 @@ class PublicationsController extends Controller
             $allFiles[] = $request->original_document_path;
         }
         
-        // Delete all collected files
         foreach ($allFiles as $filePath) {
             if ($filePath) {
-                // Try both public and local disks
                 Storage::disk('public')->delete($filePath);
                 Storage::disk('local')->delete($filePath);
             }
         }
         
-        // Remove the per-request directory and all its contents
         if (isset($request->user_id) && isset($request->request_code)) {
             $dir = "requests/{$request->user_id}/{$request->request_code}";
             $fullDir = Storage::disk('public')->path($dir);
@@ -491,7 +461,6 @@ class PublicationsController extends Controller
             }
         }
         
-        // Clean up signature-related directories
         if ($request->signed_document_path) {
             $signedDir = dirname($request->signed_document_path);
             if (Storage::disk('local')->exists($signedDir)) {
@@ -505,7 +474,6 @@ class PublicationsController extends Controller
                 Storage::disk('local')->deleteDirectory($backupDir);
             }
         }
-        // Store request details for permanent activity log record
         $requestDetails = [
             'request_code' => $request->request_code,
             'type' => $request->type,
@@ -519,7 +487,6 @@ class PublicationsController extends Controller
             'deleted_by_admin_id' => $user->id,
         ];
         
-        // Activity log for deletion (must be before delete)
         \App\Models\ActivityLog::create([
             'user_id' => $user->id,
             'request_id' => $request->id,
@@ -535,7 +502,6 @@ class PublicationsController extends Controller
         return redirect()->back()->with('success', 'Request and files deleted successfully.');
     }
 
-    // NEW SIMPLIFIED APPROACH - Single step submission
     public function submitPublicationRequest(Request $request)
     {
         Log::info('Publication request submission started', [
@@ -543,9 +509,7 @@ class PublicationsController extends Controller
             'has_files' => $request->hasFile('article_pdf')
         ]);
 
-        // Validate all form data
         $validator = Validator::make($request->all(), [
-            // Incentive Application fields
             'name' => 'required|string',
             'academicrank' => 'required|string',
             'college' => 'required|string',
@@ -557,14 +521,12 @@ class PublicationsController extends Controller
             'facultyname' => 'required|string',
             'centermanager' => 'nullable|string',
             'collegedean' => 'nullable|string',
-            // Recommendation Letter fields
             'rec_collegeheader' => 'required|string',
             'rec_date' => 'required|string',
             'rec_facultyname' => 'required|string',
             'details' => 'required|string',
             'indexing' => 'required|string',
             'dean' => 'required|string',
-            // Terminal Report fields
             'title' => 'required|string',
             'author' => 'required|string',
             'duration' => 'required|string',
@@ -575,7 +537,6 @@ class PublicationsController extends Controller
             'car' => 'required|string',
             'references' => 'required|string',
             'appendices' => 'nullable|string',
-            // File uploads
             'article_pdf' => 'required|file|mimes:pdf|max:20480',
             'acceptance_pdf' => 'required|file|mimes:pdf|max:20480',
             'peer_review_pdf' => 'required|file|mimes:pdf|max:20480',
@@ -592,7 +553,6 @@ class PublicationsController extends Controller
         $data = $validator->validated();
         
         try {
-            // Store uploaded files
             $userId = Auth::id();
             $requestCode = 'PUB-' . now()->format('Ymd-His');
             $uploadPath = "requests/{$userId}/{$requestCode}";
@@ -624,9 +584,7 @@ class PublicationsController extends Controller
                     throw new \Exception("File upload failed for field: {$field}");
                 }
                 
-                // Use the local disk for security (private storage)
                 $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
-                // Store path as is since we're using private disk
                 $cleanPath = $storedPath;
                 $attachments[$field] = [
                     'path' => $cleanPath,
@@ -634,7 +592,6 @@ class PublicationsController extends Controller
                 ];
             }
 
-            // Generate DOCX files using HTML approach
             $docxPaths = [];
             $docxPaths['incentive'] = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
             $docxPaths['recommendation'] = $this->generateRecommendationDocxFromHtml($data, $uploadPath);
@@ -645,7 +602,6 @@ class PublicationsController extends Controller
                 'userId' => $userId
             ]);
 
-            // Save to database
             $userRequest = UserRequest::create([
                 'user_id' => $userId,
                 'request_code' => $requestCode,
@@ -659,7 +615,6 @@ class PublicationsController extends Controller
                 ]),
             ]);
 
-            // Activity log for creation
             try {
                 \App\Models\ActivityLog::create([
                     'user_id' => $userId,
@@ -685,7 +640,6 @@ class PublicationsController extends Controller
                     'user_id' => $userId,
                     'error' => $e->getMessage()
                 ]);
-                // Don't fail the request if activity logging fails
             }
 
             Log::info('Publication request submitted successfully', [
@@ -693,12 +647,9 @@ class PublicationsController extends Controller
                 'requestCode' => $requestCode
             ]);
 
-            // Send email notifications
             try {
-                // Send notification to user
                 Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
                 
-                // Send notification to all admins
                 $adminUsers = \App\Models\User::where('role', 'admin')->get();
                 foreach ($adminUsers as $adminUser) {
                     Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
@@ -711,7 +662,6 @@ class PublicationsController extends Controller
                 ]);
             } catch (\Exception $e) {
                 Log::error('Error sending email notifications: ' . $e->getMessage());
-                // Don't fail the request if email fails
             }
 
             return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
@@ -726,9 +676,6 @@ class PublicationsController extends Controller
         }
     }
 
-    /**
-     * Admin: Download any file (PDF or DOCX) for a request, with user name in filename.
-     */
     public function adminDownloadFile(Request $httpRequest, \App\Models\Request $request)
     {
         try {
@@ -737,14 +684,13 @@ class PublicationsController extends Controller
                 abort(403, 'Unauthorized');
             }
 
-            $fileType = $httpRequest->query('type'); // 'pdf' or 'docx'
-            $fileKey = $httpRequest->query('key');   // e.g. 'article_pdf', 'incentive', etc.
+            $fileType = $httpRequest->query('type');
+            $fileKey = $httpRequest->query('key');
 
             if (!$fileType || !$fileKey) {
                 abort(400, 'Missing file type or key');
             }
 
-            // Decode the pdf_path JSON
             $pdfPath = $request->pdf_path;
             if (!$pdfPath) {
                 abort(404, 'No file data found for this request');
@@ -775,7 +721,6 @@ class PublicationsController extends Controller
                 }
 
                 $storagePath = $paths['docxs'][$fileKey];
-                // Get user name for filename
                 $userName = $request->user->name ?? 'User';
                 $sanitizedUserName = preg_replace('/[^a-zA-Z0-9\s]/', '', $userName);
                 $sanitizedUserName = preg_replace('/\s+/', '_', $sanitizedUserName);
@@ -802,13 +747,11 @@ class PublicationsController extends Controller
                 abort(404, 'File path not found');
             }
 
-            // Build the full file path - try local disk first, then public for backward compatibility
             $fullPath = Storage::disk('local')->path($storagePath);
             if (!file_exists($fullPath)) {
                 $fullPath = Storage::disk('public')->path($storagePath);
             }
 
-            // Log for debugging
             Log::info('Admin download attempt', [
                 'request_id' => $request->id,
                 'file_type' => $fileType,
@@ -823,15 +766,12 @@ class PublicationsController extends Controller
                 abort(404, 'File not found on disk: ' . $storagePath);
             }
 
-            // Get user name for filename
             $userName = $request->user->name ?? 'user';
             $userNameSlug = Str::slug($userName, '_');
             $downloadName = $userNameSlug . '_' . $originalName;
 
-            // Set proper MIME type
             $mime = $ext === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-            // Return file download response
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';
@@ -853,9 +793,6 @@ class PublicationsController extends Controller
         }
     }
 
-    /**
-     * Simple file serving method - alternative to adminDownloadFile
-     */
     public function serveFile(Request $httpRequest, \App\Models\Request $request)
     {
         try {
@@ -871,7 +808,6 @@ class PublicationsController extends Controller
                 abort(400, 'Missing parameters');
             }
 
-            // Get file data
             $pdfPath = $request->pdf_path;
             if (!$pdfPath) {
                 abort(404, 'No file data');
@@ -896,7 +832,6 @@ class PublicationsController extends Controller
                 abort(404, 'File not found');
             }
 
-            // Check if file exists based on type
             if ($fileType === 'pdf') {
             if (!Storage::disk('public')->exists($filePath)) {
                     abort(404, 'PDF file not found on disk');
@@ -909,12 +844,10 @@ class PublicationsController extends Controller
                 $fullPath = Storage::disk('public')->path($filePath);
             }
 
-            // Get user name for filename
             $userName = $request->user->name ?? 'user';
             $userNameSlug = Str::slug($userName, '_');
             $downloadName = $userNameSlug . '_' . $fileName;
 
-            // Serve file using Storage facade
             return response()->download($fullPath, $downloadName);
 
         } catch (\Exception $e) {
@@ -926,9 +859,6 @@ class PublicationsController extends Controller
         }
     }
 
-    /**
-     * Debug method to check file paths and storage
-     */
     public function debugFilePaths(Request $httpRequest, \App\Models\Request $request)
     {
         $user = Auth::user();
@@ -978,9 +908,6 @@ class PublicationsController extends Controller
         return response()->json($debug);
     }
 
-    /**
-     * Admin: Download all files for a request as a ZIP archive.
-     */
     public function adminDownloadZip(Request $httpRequest, \App\Models\Request $request)
     {
         try {
@@ -992,7 +919,6 @@ class PublicationsController extends Controller
             $pdfPath = $request->pdf_path;
             $paths = json_decode($pdfPath, true);
             
-            // Debug logging
             Log::info('ZIP download attempt', [
                 'request_id' => $request->id,
                 'pdf_path_raw' => $pdfPath,
@@ -1009,7 +935,6 @@ class PublicationsController extends Controller
             $userNameSlug = Str::slug($userName, '_');
             $zipName = $userNameSlug . '_request_files.zip';
             
-            // Create a temporary ZIP file
             $zipPath = Storage::disk('public')->path('temp/' . $zipName);
             $zipDir = dirname($zipPath);
             if (!is_dir($zipDir)) {
@@ -1024,7 +949,6 @@ class PublicationsController extends Controller
             $addedFiles = [];
             $missingFiles = [];
 
-            // Add PDF files
             if (isset($paths['pdfs'])) {
                 foreach ($paths['pdfs'] as $key => $fileInfo) {
                     $filePath = Storage::disk('public')->path($fileInfo['path']);
@@ -1050,7 +974,6 @@ class PublicationsController extends Controller
                 }
             }
 
-            // Add DOCX files
             if (isset($paths['docxs'])) {
                 foreach ($paths['docxs'] as $key => $storagePath) {
                     $filePath = Storage::disk('public')->path($storagePath);
@@ -1085,12 +1008,10 @@ class PublicationsController extends Controller
                 'total_files' => count($addedFiles)
             ]);
 
-            // If no files were added, return an error
             if (empty($addedFiles)) {
                 abort(404, 'No files found on disk for this request. Files may have been deleted or moved.');
             }
 
-            // Return the ZIP file for download
             return response()->download($zipPath, $zipName, [
                 'Content-Type' => 'application/zip',
                 'Content-Disposition' => 'attachment; filename="' . $zipName . '"'
@@ -1135,7 +1056,6 @@ class PublicationsController extends Controller
         ];
     }
     private function mapRecommendationFields($data) {
-        // Forcefully extract the value for rec_collegeheader
         $collegeheader = '';
         if (isset($data['rec_collegeheader'])) {
             if (is_array($data['rec_collegeheader'])) {
@@ -1220,7 +1140,6 @@ class PublicationsController extends Controller
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
             
-            // Convert relative path to absolute path for file_exists check
             $absolutePath = Storage::disk('local')->path($fullPath);
             if (!file_exists($absolutePath)) {
                 throw new \Exception('Generated file not found at: ' . $absolutePath);
@@ -1233,7 +1152,6 @@ class PublicationsController extends Controller
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
-            // The response is final. Do not add any code after this line.
         } catch (\Exception $e) {
             Log::error('Error generating DOCX: ' . $e->getMessage());
             return response()->json([

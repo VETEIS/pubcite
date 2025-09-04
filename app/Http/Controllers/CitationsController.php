@@ -41,7 +41,6 @@ class CitationsController extends Controller
         $request->status = $httpRequest->input('status');
         $request->save();
 
-        // Send status change email if status changed
         if ($oldStatus !== $request->status) {
             $adminComment = $httpRequest->input('admin_comment', null);
             Mail::to($request->user->email)->send(new StatusChangeNotification($request, $request->user, $request->status, $adminComment));
@@ -66,17 +65,14 @@ class CitationsController extends Controller
             $docxType = $request->input('docx_type', 'incentive');
             $reqId = $request->input('request_id');
             
-            // Determine if this is a preview (no request_id) or post-submission (with request_id)
             $isPreview = !$reqId;
             
             if ($isPreview) {
-                // Preview mode: use temp directory
                 $userId = Auth::id();
                 $tempCode = 'preview_' . time() . '_' . Str::random(8);
                 $uploadPath = "temp/{$userId}/{$tempCode}";
                 Log::info('Generating Citation DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
             } else {
-                // Post-submission mode: use request directory
                 $userRequest = \App\Models\Request::find($reqId);
                 if (!$userRequest) {
                     throw new \Exception('Request not found for DOCX generation');
@@ -89,7 +85,6 @@ class CitationsController extends Controller
             
             Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
             
-            // Generate a unique hash for the request data and docx type
             $hashSource = json_encode([
                 'type' => $docxType,
                 'data' => $data
@@ -123,7 +118,6 @@ class CitationsController extends Controller
             
             Log::info('Citation DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
             
-            // Return the file for download
             return response()->download($fullPath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"'
@@ -143,7 +137,6 @@ class CitationsController extends Controller
         try {
             Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
             
-            // Use local disk for security (private storage)
             $privateUploadPath = $uploadPath; // uploadPath is already in correct format
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
@@ -157,12 +150,10 @@ class CitationsController extends Controller
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
             $templateProcessor = new TemplateProcessor($templatePath);
-            // Use only the mapped fields
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
             
-            // Add signature placeholders for all user types
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -200,7 +191,6 @@ class CitationsController extends Controller
             Log::info('CITATION RECO: Raw data', $data);
             Log::info('CITATION RECO: Using mapped data', $data);
             
-            // Use local disk for security (private storage)
             $privateUploadPath = $uploadPath; // uploadPath is already in correct format
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
@@ -218,7 +208,6 @@ class CitationsController extends Controller
                 $templateProcessor->setValue($key, $value);
             }
             
-            // Add signature placeholders for all user types
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -250,11 +239,9 @@ class CitationsController extends Controller
             
             $request = UserRequest::findOrFail($id);
             
-            // Delete associated files (PDFs and DOCXs)
             $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
             $allFiles = [];
             
-            // Collect PDF files
             if (isset($pdfPath['pdfs']) && is_array($pdfPath['pdfs'])) {
                 foreach ($pdfPath['pdfs'] as $file) {
                     if (isset($file['path'])) {
@@ -263,7 +250,6 @@ class CitationsController extends Controller
                 }
             }
             
-            // Collect DOCX files
             if (isset($pdfPath['docxs']) && is_array($pdfPath['docxs'])) {
                 foreach ($pdfPath['docxs'] as $docxPath) {
                     if ($docxPath) {
@@ -272,7 +258,6 @@ class CitationsController extends Controller
                 }
             }
             
-            // Collect signature-related files
             if ($request->signed_document_path) {
                 $allFiles[] = $request->signed_document_path;
             }
@@ -280,16 +265,13 @@ class CitationsController extends Controller
                 $allFiles[] = $request->original_document_path;
             }
             
-            // Delete all collected files
             foreach ($allFiles as $filePath) {
                 if ($filePath) {
-                    // Try both public and local disks
                     Storage::disk('public')->delete($filePath);
                     Storage::disk('local')->delete($filePath);
                 }
             }
             
-            // Remove the per-request directory and all its contents
             if (isset($request->user_id) && isset($request->request_code)) {
                 $dir = "requests/{$request->user_id}/{$request->request_code}";
                 $fullDir = storage_path('app/public/' . $dir);
@@ -304,7 +286,6 @@ class CitationsController extends Controller
                 }
             }
             
-            // Clean up signature-related directories
             if ($request->signed_document_path) {
                 $signedDir = dirname($request->signed_document_path);
                 if (Storage::disk('local')->exists($signedDir)) {
@@ -319,7 +300,6 @@ class CitationsController extends Controller
                 }
             }
             
-            // Store request details for permanent activity log record
             $requestDetails = [
                 'request_code' => $request->request_code,
                 'type' => $request->type,
@@ -333,7 +313,6 @@ class CitationsController extends Controller
                 'deleted_by_admin_id' => $user->id,
             ];
             
-            // Activity log for deletion (must be before delete)
             try {
                 \App\Models\ActivityLog::create([
                     'user_id' => $user->id,
@@ -355,7 +334,6 @@ class CitationsController extends Controller
                     'deleted_by_user_id' => $user->id,
                     'error' => $e->getMessage()
                 ]);
-                // Don't fail the deletion if activity logging fails
             }
             
             $request->delete();
@@ -375,24 +353,19 @@ class CitationsController extends Controller
         }
         
         try {
-            // Validate the request
             $validator = Validator::make($request->all(), [
-                // Personal Profile
                 'name' => 'required|string',
                 'rank' => 'required|string',
                 'college' => 'required|string',
-                // Citation Details (simplified)
                 'bibentry' => 'required|string',
                 'issn' => 'required|string',
                 'doi' => 'nullable|string',
                 'scopus' => 'nullable',
                 'wos' => 'nullable',
                 'aci' => 'nullable',
-                // Signatures
                 'faculty_name' => 'required|string',
                 'center_manager' => 'nullable|string',
                 'dean_name' => 'required|string',
-                // File uploads (if any)
                 'rec_collegeheader' => 'required|string',
             ]);
 

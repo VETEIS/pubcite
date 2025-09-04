@@ -25,7 +25,6 @@ class SigningController extends Controller
         $signatoryType = $user->signatoryType();
         $userName = trim($user->name ?? '');
 
-        // Fetch recent pending requests and filter in PHP by expected field keys
         $candidateRequests = UserRequest::orderByDesc('requested_at')->limit(200)->get();
         $needs = [];
 
@@ -46,7 +45,6 @@ class SigningController extends Controller
 
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
         
-        // Add signature status to each request
         foreach ($needs as &$request) {
             $request['signature_status'] = $request['signature_status'] ?? 'pending';
             $request['can_revert'] = false;
@@ -75,7 +73,6 @@ class SigningController extends Controller
         ]);
         $file = $validated['signature'];
         $path = 'signatures/' . $user->id . '.png';
-        // Ensure directory
         Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
         return back()->with('success', 'Signature uploaded successfully.');
     }
@@ -90,7 +87,6 @@ class SigningController extends Controller
         if ($userName === '') return null;
         $nameLower = mb_strtolower($userName);
 
-        // Map signatory_type to possible keys present in form_data
         $map = [
             'faculty' => ['facultyname', 'faculty_name', 'rec_faculty_name'],
             'center_manager' => ['centermanager', 'center_manager', 'research_center_manager'],
@@ -107,9 +103,6 @@ class SigningController extends Controller
         return null;
     }
 
-    /**
-     * Sign a document with the user's signature
-     */
     public function signDocument(Request $request)
     {
         /** @var User $user */
@@ -126,12 +119,10 @@ class SigningController extends Controller
         $userRequest = UserRequest::findOrFail($validated['request_id']);
         $signature = Signature::findOrFail($validated['signature_id']);
 
-        // Check if user owns the signature
         if ($signature->user_id !== $user->id) {
             abort(403, 'You can only use your own signatures');
         }
 
-        // Check if request is already signed
         if ($userRequest->isSigned()) {
             return response()->json([
                 'success' => false,
@@ -139,7 +130,6 @@ class SigningController extends Controller
             ]);
         }
 
-        // Check if user can sign this request (role matching)
         $signatoryType = $user->signatoryType();
         $userName = trim($user->name ?? '');
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
@@ -152,7 +142,6 @@ class SigningController extends Controller
             ]);
         }
 
-        // Sign the document
         $signingService = app(DocumentSigningService::class);
         $success = $signingService->signDocument($userRequest, $user, $signature);
 
@@ -170,9 +159,6 @@ class SigningController extends Controller
         }
     }
 
-    /**
-     * Revert a signed document
-     */
     public function revertDocument(Request $request)
     {
         /** @var User $user */
@@ -187,7 +173,6 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($validated['request_id']);
 
-        // Check if user can revert this document
         if ($userRequest->signed_by !== $user->id) {
             abort(403, 'You can only revert documents you signed');
         }
@@ -199,7 +184,6 @@ class SigningController extends Controller
             ]);
         }
 
-        // Revert the document
         $signingService = app(DocumentSigningService::class);
         $success = $signingService->revertDocument($userRequest);
 

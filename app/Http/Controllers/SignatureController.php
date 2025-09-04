@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Gate;
 
 class SignatureController extends Controller
 {
-    /**
-     * Display a listing of the signatures for the authenticated user.
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -27,9 +24,6 @@ class SignatureController extends Controller
         return view('signatures.index', compact('signatures'));
     }
 
-    /**
-     * Store a newly created signature in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -40,10 +34,8 @@ class SignatureController extends Controller
         $user = Auth::user();
         $file = $request->file('signature');
         
-        // Store the file in private storage
         $path = $file->store("signatures/{$user->id}", 'local');
         
-        // Create the signature record
         $signature = Signature::create([
             'user_id' => $user->id,
             'label' => $request->input('label'),
@@ -63,9 +55,6 @@ class SignatureController extends Controller
             ->with('success', 'Signature uploaded successfully.');
     }
 
-    /**
-     * Display the specified signature.
-     */
     public function show(Signature $signature)
     {
         if (!Gate::allows('view', $signature)) {
@@ -79,9 +68,6 @@ class SignatureController extends Controller
         return response()->file(Storage::disk('local')->path($signature->path));
     }
 
-    /**
-     * Show the form for editing the specified signature.
-     */
     public function edit(Signature $signature)
     {
         if (!Gate::allows('update', $signature)) {
@@ -91,9 +77,6 @@ class SignatureController extends Controller
         return view('signatures.edit', compact('signature'));
     }
 
-    /**
-     * Update the specified signature in storage.
-     */
     public function update(Request $request, Signature $signature)
     {
         if (!Gate::allows('update', $signature)) {
@@ -107,16 +90,13 @@ class SignatureController extends Controller
 
         $data = ['label' => $request->input('label')];
 
-        // If a new file is uploaded, replace the old one
         if ($request->hasFile('signature')) {
             $file = $request->file('signature');
             
-            // Delete the old file
             if (Storage::disk('local')->exists($signature->path)) {
                 Storage::disk('local')->delete($signature->path);
             }
             
-            // Store the new file
             $path = $file->store("signatures/{$signature->user_id}", 'local');
             
             $data['path'] = $path;
@@ -137,21 +117,16 @@ class SignatureController extends Controller
             ->with('success', 'Signature updated successfully.');
     }
 
-    /**
-     * Remove the specified signature from storage.
-     */
     public function destroy(Signature $signature)
     {
         if (!Gate::allows('delete', $signature)) {
             abort(404);
         }
 
-        // Delete the file from storage
         if (Storage::disk('local')->exists($signature->path)) {
             Storage::disk('local')->delete($signature->path);
         }
 
-        // Soft delete the record
         $signature->delete();
 
         if (request()->expectsJson()) {

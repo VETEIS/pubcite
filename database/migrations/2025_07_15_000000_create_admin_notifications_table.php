@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('admin_notifications', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id'); // admin recipient
+            $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('request_id')->nullable();
             $table->string('type', 50);
             $table->string('title');

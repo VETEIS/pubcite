@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NudgeNotification;
-use App\Models\User; // Added this import for the new role fallback logic
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -16,23 +16,19 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Force refresh user data from database to ensure we have the latest role
         $user = User::find($user->id);
         
-        // Log the access attempt for debugging
         Log::info('Dashboard access', [
             'user_id' => $user->id,
             'user_email' => $user->email,
             'user_role' => $user->role
         ]);
         
-        // Redirect admin users to admin dashboard
         if ($user->role === 'admin') {
             Log::info('Redirecting admin user to admin dashboard', ['user_id' => $user->id]);
             return redirect()->route('admin.dashboard');
         }
         
-        // Handle regular user dashboard
         Log::info('Routing to user dashboard', ['user_id' => $user->id]);
         $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
@@ -43,17 +39,14 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Force refresh user data from database to ensure we have the latest role
         $user = User::find($user->id);
         
-        // Log the access attempt for debugging
         Log::info('Admin dashboard access', [
             'user_id' => $user->id,
             'user_email' => $user->email,
             'user_role' => $user->role
         ]);
         
-        // Only show admin dashboard for users with explicit 'admin' role
         if ($user->role !== 'admin') {
             Log::info('Non-admin user attempted to access admin dashboard', ['user_id' => $user->id]);
             return redirect()->route('dashboard')->with('error', 'Access denied. Admin privileges required.');
@@ -72,7 +65,6 @@ class DashboardController extends Controller
             $now = now();
             $rangeDescription = '';
             
-            // Apply sorting
             if (in_array($sortBy, ['requested_at', 'request_code', 'type', 'status'])) {
                 if ($sortBy === 'requested_at') {
                     $query->orderBy('requested_at', $sortOrder);
@@ -84,7 +76,6 @@ class DashboardController extends Controller
                     $query->orderBy('status', $sortOrder);
                 }
             } else {
-                // Default sorting
                 $query->orderByDesc('requested_at');
             }
             
@@ -92,7 +83,6 @@ class DashboardController extends Controller
                 $query->where('status', $status);
             }
             if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
-                // Map plural to singular for database query
                 $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                 $query->where('type', $dbType);
             }
@@ -174,8 +164,7 @@ class DashboardController extends Controller
                 'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
                 'rejected' => $statusQuery->where('status', 'rejected')->count(),
             ];
-            // --- Real Chart Data Aggregation ---
-            // Only use type and period filters for chart data, ignore status
+            // Chart Data Aggregation
             $chartType = $type;
             $chartPeriod = $period;
             $chartNow = $now;
@@ -255,7 +244,6 @@ class DashboardController extends Controller
             foreach ($rawCounts as $row) {
                 $monthlyCounts[$row->type][$row->month] = $row->count;
             }
-            // Status counts for current type/period filter (not status)
             $statusCounts = [
                 'pending' => 0,
                 'endorsed' => 0,
@@ -265,11 +253,7 @@ class DashboardController extends Controller
             foreach ($statusRaw as $row) {
                 $statusCounts[$row->status] = $row->count;
             }
-            // --- End Real Chart Data Aggregation ---
-
-            // Fetch 5 most recent applications for sidebar
             $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
-            // Fetch latest 10 activity logs for Activity Log card
             $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
             return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
         } catch (\Exception $e) {
@@ -279,7 +263,6 @@ class DashboardController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // Return a user-friendly error page instead of crashing
             return response()->view('errors.500', [], 500);
         }
     }
@@ -293,7 +276,6 @@ class DashboardController extends Controller
         if ($request->status !== 'pending') {
             return back()->with('error', 'Only pending requests can be nudged.');
         }
-        // Log activity
         try {
             ActivityLog::create([
                 'user_id' => $user->id,
@@ -320,12 +302,9 @@ class DashboardController extends Controller
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            // Don't fail the nudge if activity logging fails
         }
-        // Email all admins
         $admins = \App\Models\User::where('role', 'admin')->get();
         foreach ($admins as $admin) {
-            // Add admin notification entry
             \App\Models\AdminNotification::create([
                 'user_id' => $admin->id,
                 'request_id' => $request->id,
@@ -356,28 +335,21 @@ class DashboardController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
         
-            // Get the same filters as the main dashboard
             $status = request('status');
             $search = request('search');
             $type = request('type');
             $period = request('period');
             $now = now();
             
-            // Create the exact same query as the main dashboard for table data
             $tableQuery = \App\Models\Request::with('user')->orderByDesc('requested_at');
-            
-            // Apply status filter
             if ($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected'])) {
                 $tableQuery->where('status', $status);
             }
             
-            // Apply type filter (with plural support)
             if ($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
                 $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                 $tableQuery->where('type', $dbType);
             }
-            
-            // Apply period filter
             if ($period && $period !== 'null') {
                 if ($period === 'week' || $period === 'This Week') {
                     $tableQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
@@ -390,7 +362,6 @@ class DashboardController extends Controller
                 }
             }
             
-            // Apply search filter
             if ($search && $search !== 'null') {
                 $tableQuery->where(function($q) use ($search) {
                     if (config('database.default') === 'pgsql') {
@@ -411,17 +382,13 @@ class DashboardController extends Controller
                 });
             }
             
-            // Get the filtered data (same as table)
             $allRequests = $tableQuery->get();
-            
-            // Status counts from the filtered data (same as table)
             $statusCounts = [
                 'pending' => $allRequests->where('status', 'pending')->count(),
                 'endorsed' => $allRequests->where('status', 'endorsed')->count(),
                 'rejected' => $allRequests->where('status', 'rejected')->count(),
             ];
             
-            // Monthly chart data - adapt based on period filter
             $driver = config('database.default');
             if ($driver === 'pgsql') {
                 $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM')";
@@ -429,12 +396,10 @@ class DashboardController extends Controller
                 $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m')";
             }
             
-            // Determine chart time range based on period filter
-            $months = []; // Initialize months array
+            $months = [];
             
             if ($period) {
                 if ($period === 'week' || $period === 'This Week') {
-                    // For week, show daily data
                     if ($driver === 'pgsql') {
                         $monthExpr = "TO_CHAR(requested_at, 'YYYY-MM-DD')";
                     } else {
@@ -446,7 +411,6 @@ class DashboardController extends Controller
                         $months[] = $chartStart->copy()->addDays($i)->format('Y-m-d');
                     }
                 } elseif ($period === 'month' || $period === 'This Month') {
-                    // For month, show date range data (1-5, 6-10, etc.)
                     if ($driver === 'pgsql') {
                         $monthExpr = "CASE 
                             WHEN EXTRACT(DAY FROM requested_at) <= 5 THEN '1-5'
@@ -468,24 +432,20 @@ class DashboardController extends Controller
                     }
                     $chartStart = $now->copy()->startOfMonth();
                     $chartEnd = $now->copy()->endOfMonth();
-                    // Create 6 date ranges for the month
                     $months = ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'];
                 } elseif ($period === 'quarter' || $period === 'This Quarter') {
-                    // For quarter, show monthly data
                     $chartStart = $now->copy()->startOfQuarter();
                     $chartEnd = $now->copy()->endOfQuarter();
                     for ($i = 0; $i < 3; $i++) {
                         $months[] = $chartStart->copy()->addMonths($i)->format('Y-m');
                     }
                 } elseif ($period === 'year' || $period === 'This Year') {
-                    // For year, show monthly data
                     $chartStart = $now->copy()->startOfYear();
                     $chartEnd = $now->copy()->endOfYear();
                     for ($i = 0; $i < 12; $i++) {
                         $months[] = $chartStart->copy()->addMonths($i)->format('Y-m');
                     }
                 } else {
-                    // Default: show last 12 months for unknown period
                     $chartStart = $now->copy()->subMonths(11)->startOfMonth();
                     $chartEnd = $now->copy()->endOfMonth();
                     for ($i = 0; $i < 12; $i++) {
@@ -493,7 +453,6 @@ class DashboardController extends Controller
                     }
                 }
             } else {
-                // Default: show last 12 months
                 $chartStart = $now->copy()->subMonths(11)->startOfMonth();
                 $chartEnd = $now->copy()->endOfMonth();
                 for ($i = 0; $i < 12; $i++) {
@@ -501,7 +460,6 @@ class DashboardController extends Controller
                 }
             }
             
-            // Get chart data using the SAME filters as the table
             $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
                 ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                     $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
@@ -544,7 +502,6 @@ class DashboardController extends Controller
                 ->orderBy('month')
                 ->get();
 
-            // For monthly period, get actual dates for tooltips
             $dateDetails = [];
             if ($period === 'month' || $period === 'This Month') {
                 $dateDetails = \App\Models\Request::selectRaw("DATE(requested_at) as date, COUNT(*) as count")
@@ -615,8 +572,8 @@ class DashboardController extends Controller
                 'statusCounts' => $statusCounts,
                 'type' => $type,
                 'period' => $period,
-                'totalRecords' => $allRequests->count(), // Add total count for verification
-                'dateDetails' => $dateDetails, // Add date details for tooltips
+                'totalRecords' => $allRequests->count(),
+                'dateDetails' => $dateDetails,
             ]);
             
         } catch (\Exception $e) {
@@ -625,7 +582,6 @@ class DashboardController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // Return empty chart data instead of crashing
             return response()->json([
                 'months' => [],
                 'monthlyCounts' => ['Publication' => [], 'Citation' => []],
@@ -644,30 +600,25 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Set headers for Server-Sent Events
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
         header('Connection: keep-alive');
-        header('X-Accel-Buffering: no'); // Disable nginx buffering
+        header('X-Accel-Buffering: no');
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Headers: Cache-Control');
 
-        // Keep connection alive and send updates
         $lastCheck = now();
-        $maxExecutionTime = 300; // 5 minutes max
+        $maxExecutionTime = 300;
         $startTime = time();
         $lastUpdateTime = null;
         
         while (true) {
-            // Check if we've exceeded max execution time
             if (time() - $startTime > $maxExecutionTime) {
                 echo "data: " . json_encode(['type' => 'timeout']) . "\n\n";
                 break;
             }
             
-            // Check for new requests or status changes
             try {
-                // Use try-catch for each database operation to prevent stream crashes
                 $newRequests = 0;
                 $statusChanges = 0;
                 
@@ -687,11 +638,9 @@ class DashboardController extends Controller
                     $statusChanges = 0;
                 }
                 
-                // Only send update if there are actual changes AND we haven't sent an update in the last 5 seconds
                 if (($newRequests > 0 || $statusChanges > 0) && 
                     (!$lastUpdateTime || now()->diffInSeconds($lastUpdateTime) > 5)) {
                     
-                    // Get updated data with error handling
                     $now = now();
                     $stats = [
                         'publication' => [
@@ -753,13 +702,11 @@ class DashboardController extends Controller
                 Log::error('SSE Stream Error: ' . $e->getMessage());
             }
             
-            // Send keep-alive every 30 seconds
             if (!$lastUpdateTime || now()->diffInSeconds($lastUpdateTime) > 30) {
                 echo "data: " . json_encode(['type' => 'keepalive']) . "\n\n";
                 $lastUpdateTime = now();
             }
             
-            // Sleep for 2 seconds before next check
             sleep(2);
         }
     }

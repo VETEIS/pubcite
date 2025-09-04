@@ -21,7 +21,6 @@ class GoogleController extends Controller
     {
         $googleUser = Socialite::driver('google')->stateless()->user();
 
-        // Restrict to @usep.edu.ph emails only
         if (!str_ends_with($googleUser->getEmail(), '@usep.edu.ph')) {
             return redirect()->route('login')->withErrors(['email' => 'Only @usep.edu.ph email addresses are allowed.']);
         }
@@ -30,13 +29,12 @@ class GoogleController extends Controller
             ['email' => $googleUser->getEmail()],
             [
                 'name' => $googleUser->getName(),
-                'password' => bcrypt(uniqid()), // random password
+                'password' => bcrypt(uniqid()),
                 'role' => 'user',
                 'auth_provider' => 'google',
             ]
         );
 
-        // Update profile picture from Google if available
         if ($googleUser->getAvatar()) {
             \Log::info('Google profile picture found', [
                 'user_email' => $googleUser->getEmail(),
@@ -59,10 +57,8 @@ class GoogleController extends Controller
 
         Auth::login($user, true);
 
-        // Clear any existing intended URL to prevent redirect issues
         session()->forget('url.intended');
 
-        // Log the redirect for debugging
         \Log::info('Google login redirect', [
             'user_id' => $user->id,
             'user_role' => $user->role,
@@ -71,7 +67,6 @@ class GoogleController extends Controller
             'redirecting_to' => $user->role === 'admin' ? 'admin.dashboard' : 'dashboard'
         ]);
 
-        // Redirect admin users to admin dashboard, regular users to user dashboard
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         } else {

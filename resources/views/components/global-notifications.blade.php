@@ -1,4 +1,3 @@
-{{-- Global Notification System - Include this in your layout files --}}
 <script>
 (function() {
 	'use strict';

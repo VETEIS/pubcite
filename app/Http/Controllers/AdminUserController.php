@@ -30,14 +30,12 @@ class AdminUserController extends Controller
             });
         }
         
-        // Apply sorting
         $sortBy = $request->get('sort', 'name');
         $sortOrder = $request->get('order', 'asc');
         
         if (in_array($sortBy, ['id', 'name', 'email', 'role'])) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
-            // Default sorting
             $query->orderBy('name', 'asc');
         }
         
@@ -118,7 +116,6 @@ class AdminUserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 
-    // Admin notifications API
     public function listNotifications(Request $request)
     {
         $admin = Auth::user();
