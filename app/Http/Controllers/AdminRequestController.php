@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AdminRequestController extends Controller
 {
@@ -158,15 +159,25 @@ class AdminRequestController extends Controller
             if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
                 foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
                     if (isset($fileInfo['path']) && is_string($fileInfo['path'])) {
-                        $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                        // Try local disk first, then public for backward compatibility
+                        $fullPath = Storage::disk('local')->path($fileInfo['path']);
+                        if (!file_exists($fullPath)) {
+                            $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                        }
+                        
                         if (file_exists($fullPath) && is_readable($fullPath)) {
+                            // Generate secure download link
+                            $secureFilename = base64_encode($request->id . '|' . ($fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf'));
+                            $downloadUrl = route('admin.download.file', ['type' => 'pdf', 'filename' => $secureFilename]);
+                            
                             $files[] = [
                                 'name' => $fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf',
                                 'path' => $fileInfo['path'],
                                 'type' => 'pdf',
                                 'size' => $this->formatFileSize(filesize($fullPath)),
                                 'full_path' => $fullPath,
-                                'key' => $key
+                                'key' => $key,
+                                'download_url' => $downloadUrl
                             ];
                         }
                     }
@@ -185,26 +196,67 @@ class AdminRequestController extends Controller
                     if ($isAbsolute) {
                         $fullPath = $docxPath;
                     } else {
-                        // Try both public and private disk locations
-                        $fullPathPublic = storage_path('app/public/' . $docxPath);
-                        $fullPathPrivate = storage_path('app/' . $docxPath);
-                        if (file_exists($fullPathPublic) && is_readable($fullPathPublic)) {
-                            $fullPath = $fullPathPublic;
-                        } elseif (file_exists($fullPathPrivate) && is_readable($fullPathPrivate)) {
-                            $fullPath = $fullPathPrivate;
+                        // Try local disk first, then public for backward compatibility
+                        $fullPath = Storage::disk('local')->path($docxPath);
+                        if (!file_exists($fullPath)) {
+                            $fullPath = storage_path('app/public/' . $docxPath);
                         }
                     }
 
                     if ($fullPath && file_exists($fullPath) && is_readable($fullPath)) {
+                        // Generate secure download link with correct filename
+                        $fileName = $this->getDocxFileName($key);
+                        $secureFilename = base64_encode($request->id . '|' . $fileName);
+                        $downloadUrl = route('admin.download.file', ['type' => 'docx', 'filename' => $secureFilename]);
+                        
                         $files[] = [
-                            'name' => ucfirst(str_replace('_', ' ', (is_string($key) ? $key : 'document'))) . '.docx',
+                            'name' => $fileName,
                             'path' => $docxPath,
                             'type' => 'docx',
                             'size' => $this->formatFileSize(filesize($fullPath)),
                             'full_path' => $fullPath,
-                            'key' => $key
+                            'key' => $key,
+                            'download_url' => $downloadUrl
                         ];
                     }
+                }
+            }
+            
+            // Add signed documents if they exist
+            if ($request->signed_document_path && Storage::disk('local')->exists($request->signed_document_path)) {
+                $fullPath = Storage::disk('local')->path($request->signed_document_path);
+                if (file_exists($fullPath) && is_readable($fullPath)) {
+                    $secureFilename = base64_encode($request->id . '|' . basename($request->signed_document_path));
+                    $downloadUrl = route('admin.download.file', ['type' => 'signed', 'filename' => $secureFilename]);
+                    
+                    $files[] = [
+                        'name' => 'Signed Document - ' . basename($request->signed_document_path),
+                        'path' => $request->signed_document_path,
+                        'type' => 'signed',
+                        'size' => $this->formatFileSize(filesize($fullPath)),
+                        'full_path' => $fullPath,
+                        'key' => 'signed',
+                        'download_url' => $downloadUrl
+                    ];
+                }
+            }
+            
+            // Add backup documents if they exist
+            if ($request->original_document_path && Storage::disk('local')->exists($request->original_document_path)) {
+                $fullPath = Storage::disk('local')->path($request->original_document_path);
+                if (file_exists($fullPath) && is_readable($fullPath)) {
+                    $secureFilename = base64_encode($request->id . '|' . basename($request->original_document_path));
+                    $downloadUrl = route('admin.download.file', ['type' => 'backup', 'filename' => $secureFilename]);
+                    
+                    $files[] = [
+                        'name' => 'Original Document - ' . basename($request->original_document_path),
+                        'path' => $request->original_document_path,
+                        'type' => 'backup',
+                        'size' => $this->formatFileSize(filesize($fullPath)),
+                        'full_path' => $fullPath,
+                        'key' => 'backup',
+                        'download_url' => $downloadUrl
+                    ];
                 }
             }
         } catch (\Exception $e) {
@@ -215,6 +267,23 @@ class AdminRequestController extends Controller
         }
         
         return $files;
+    }
+
+    /**
+     * Get the correct DOCX filename based on the key
+     */
+    private function getDocxFileName($key): string
+    {
+        switch ($key) {
+            case 'incentive':
+                return 'Incentive_Application_Form.docx';
+            case 'recommendation':
+                return 'Recommendation_Letter_Form.docx';
+            case 'terminal':
+                return 'Terminal_Report_Form.docx';
+            default:
+                return ucfirst(str_replace('_', ' ', (is_string($key) ? $key : 'document'))) . '.docx';
+        }
     }
 
     private function extractSignatories($formData)

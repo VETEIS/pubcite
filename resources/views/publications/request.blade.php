@@ -966,7 +966,7 @@ function tabNav() {
             events.forEach(eventType => {
                 document.addEventListener(eventType, (e) => {
                     // Only run validation if the event is on a form element
-                    if (e.target.matches('input, textarea, select')) {
+                    if (e.target && typeof e.target.matches === 'function' && e.target.matches('input, textarea, select')) {
                         console.log(`🔄 Event triggered: ${eventType} on ${e.target.name}`);
                         this.checkTabs();
                     }

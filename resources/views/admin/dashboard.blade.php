@@ -1743,17 +1743,43 @@ function populateModal(data) {
         data.files.forEach(file => {
             const fileDiv = document.createElement('div');
                     fileDiv.className = 'flex items-center justify-between bg-white rounded border border-gray-200 p-3';
-            const type = file.type === 'pdf' ? 'pdf' : 'docx';
+            const type = file.type;
             const key = file.key;
-            const serveUrl = `/admin/requests/${data.id}/serve?type=${type}&key=${encodeURIComponent(key)}`;
+            
+            // Use secure download URL if available, otherwise fallback to old method
+            const downloadUrl = file.download_url || `/admin/requests/${data.id}/serve?type=${type}&key=${encodeURIComponent(key)}`;
+            
+            // Get appropriate icon and color based on file type
+            let iconClass = 'text-gray-500';
+            let bgColor = 'bg-gray-600';
+            
+            if (type === 'pdf') {
+                iconClass = 'text-red-500';
+                bgColor = 'bg-red-600';
+            } else if (type === 'docx') {
+                iconClass = 'text-blue-500';
+                bgColor = 'bg-blue-600';
+            } else if (type === 'signed') {
+                iconClass = 'text-green-500';
+                bgColor = 'bg-green-600';
+            } else if (type === 'backup') {
+                iconClass = 'text-orange-500';
+                bgColor = 'bg-orange-600';
+            }
+            
             fileDiv.innerHTML = `
                         <div class="flex items-center gap-3">
-                            <span class="text-sm text-gray-900">${file.name}</span>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-sm text-gray-900">${file.name}</span>
+                            </div>
                             <span class="text-xs text-gray-500">(${file.size})</span>
                 </div>
                         <div class="flex gap-2">
-                            <a href="${serveUrl}" target="_blank" class="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">View</a>
-                            <a href="${serveUrl}" download class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>
+                            <a href="${downloadUrl}" target="_blank" class="px-2 py-1 ${bgColor} text-white text-xs rounded hover:opacity-80 transition-colors">View</a>
+                            <a href="${downloadUrl}" download class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>
                 </div>
             `;
             filesContainer.appendChild(fileDiv);

@@ -102,14 +102,14 @@ class CitationsController extends Controller
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
                     Log::info('Filtered data for incentive', ['filtered' => $filtered]);
-                    $filename = "Cite_Incentive_Application_{$uniqueHash}.docx";
+                    $filename = "Incentive_Application_Form.docx";
                     $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, $filename);
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
                     Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
-                    $filename = "Cite_Recommendation_Letter_{$uniqueHash}.docx";
+                    $filename = "Recommendation_Letter_Form.docx";
                     $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, $filename);
                     break;
                     
@@ -138,41 +138,53 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename = 'Cite_Incentive_Application.docx')
+    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename = 'Incentive_Application_Form.docx')
     {
         try {
             Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
-            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = storage_path('app/' . $publicUploadPath);
+            
+            // Use local disk for security (private storage)
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $fullPath = Storage::disk('local')->path($privateUploadPath);
+            
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
+            
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
-            $outputPath = $publicUploadPath . '/' . $filename;
-            $fullOutputPath = storage_path('app/' . $outputPath);
+            $outputPath = $privateUploadPath . '/' . $filename;
+            $fullOutputPath = Storage::disk('local')->path($outputPath);
+            
             $templateProcessor = new TemplateProcessor($templatePath);
             // Use only the mapped fields
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
-            $fullOutputPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fullOutputPath);
-            $testFile = $fullOutputPath . '.test.txt';
-            file_put_contents($testFile, 'test');
-            Log::info('Test file created', [
-                'test_file' => $testFile,
-                'test_file_exists' => file_exists($testFile),
-                'dir_contents' => scandir(dirname($fullOutputPath))
-            ]);
+            
+            // Add signature placeholders for all user types
+            $signaturePlaceholders = [
+                'facultysignature' => '${facultysignature}',
+                'centermanagersignature' => '${centermanagersignature}',
+                'deansignature' => '${deansignature}',
+                'deputydirectorsignature' => '${deputydirectorsignature}',
+                'directorsignature' => '${directorsignature}'
+            ];
+            
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
+            
             try {
                 Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
                 $templateProcessor->saveAs($fullOutputPath);
-                Log::info('Tried to save DOCX', ['fullOutputPath' => $fullOutputPath]);
+                Log::info('DOCX saved successfully', ['path' => $fullOutputPath]);
             } catch (\Exception $e) {
                 Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
                 throw $e;
             }
-            return $fullOutputPath; // Return the full path for the controller to use
+            
+            return $outputPath; // Return the relative path for the controller to use
         } catch (\Exception $e) {
             Log::error('Error in generateCitationIncentiveDocxFromHtml: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -182,33 +194,46 @@ class CitationsController extends Controller
         }
     }
 
-    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Cite_Recommendation_Letter.docx')
+    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Recommendation_Letter_Form.docx')
     {
         try {
             Log::info('CITATION RECO: Raw data', $data);
-            // Hardcoded mapping for test
-            // $data = [
-            //     'collegeheader' => 'TEST COLLEGE HEADER',
-            //     'facultyname' => 'TEST FACULTY NAME',
-            //     'date' => '2025-07-22',
-            // ];
             Log::info('CITATION RECO: Using mapped data', $data);
-            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = storage_path('app/' . $publicUploadPath);
+            
+            // Use local disk for security (private storage)
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $fullPath = Storage::disk('local')->path($privateUploadPath);
+            
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
+            
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
-            $outputPath = $publicUploadPath . '/' . $filename;
-            $fullOutputPath = storage_path('app/' . $outputPath);
+            $outputPath = $privateUploadPath . '/' . $filename;
+            $fullOutputPath = Storage::disk('local')->path($outputPath);
+            
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
+            
+            // Add signature placeholders for all user types
+            $signaturePlaceholders = [
+                'facultysignature' => '${facultysignature}',
+                'centermanagersignature' => '${centermanagersignature}',
+                'deansignature' => '${deansignature}',
+                'deputydirectorsignature' => '${deputydirectorsignature}',
+                'directorsignature' => '${directorsignature}'
+            ];
+            
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
+            
             $templateProcessor->saveAs($fullOutputPath);
             Log::info('CITATION RECO: Saved populated docx', ['output' => $fullOutputPath]);
-            return $fullOutputPath;
+            return $outputPath;
         } catch (\Exception $e) {
             Log::error('CITATION RECO: Error generating docx', ['error' => $e->getMessage()]);
             throw $e;
@@ -228,6 +253,8 @@ class CitationsController extends Controller
             // Delete associated files (PDFs and DOCXs)
             $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
             $allFiles = [];
+            
+            // Collect PDF files
             if (isset($pdfPath['pdfs']) && is_array($pdfPath['pdfs'])) {
                 foreach ($pdfPath['pdfs'] as $file) {
                     if (isset($file['path'])) {
@@ -235,6 +262,8 @@ class CitationsController extends Controller
                     }
                 }
             }
+            
+            // Collect DOCX files
             if (isset($pdfPath['docxs']) && is_array($pdfPath['docxs'])) {
                 foreach ($pdfPath['docxs'] as $docxPath) {
                     if ($docxPath) {
@@ -242,8 +271,22 @@ class CitationsController extends Controller
                     }
                 }
             }
+            
+            // Collect signature-related files
+            if ($request->signed_document_path) {
+                $allFiles[] = $request->signed_document_path;
+            }
+            if ($request->original_document_path) {
+                $allFiles[] = $request->original_document_path;
+            }
+            
+            // Delete all collected files
             foreach ($allFiles as $filePath) {
-                Storage::disk('public')->delete($filePath);
+                if ($filePath) {
+                    // Try both public and local disks
+                    Storage::disk('public')->delete($filePath);
+                    Storage::disk('local')->delete($filePath);
+                }
             }
             
             // Remove the per-request directory and all its contents
@@ -258,6 +301,21 @@ class CitationsController extends Controller
                         }
                     }
                     rmdir($fullDir);
+                }
+            }
+            
+            // Clean up signature-related directories
+            if ($request->signed_document_path) {
+                $signedDir = dirname($request->signed_document_path);
+                if (Storage::disk('local')->exists($signedDir)) {
+                    Storage::disk('local')->deleteDirectory($signedDir);
+                }
+            }
+            
+            if ($request->original_document_path) {
+                $backupDir = dirname($request->original_document_path);
+                if (Storage::disk('local')->exists($backupDir)) {
+                    Storage::disk('local')->deleteDirectory($backupDir);
                 }
             }
             
@@ -357,9 +415,9 @@ class CitationsController extends Controller
             foreach ($fields as $field) {
                 if ($request->hasFile($field)) {
                     $file = $request->file($field);
-                    $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'public');
-                    // Remove leading 'public/' if present
-                    $cleanPath = preg_replace('/^public\//', '', $storedPath);
+                    $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
+                    // Store path as is since we're using private disk
+                    $cleanPath = $storedPath;
                     $pdfPaths[$field] = [
                         'path' => $cleanPath,
                         'original_name' => $file->getClientOriginalName()
@@ -371,13 +429,13 @@ class CitationsController extends Controller
             $docxPaths = [];
             try {
                 $incentivePath = $this->generateCitationIncentiveDocxFromHtml($request->all(), $uploadPath);
-                $docxPaths['incentive_application'] = preg_replace('/^public\//', '', $incentivePath);
+                $docxPaths['incentive_application'] = $incentivePath;
             } catch (\Exception $e) {
                 Log::error('Error generating incentive DOCX: ' . $e->getMessage());
             }
             try {
                 $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($request->all(), $uploadPath);
-                $docxPaths['recommendation_letter'] = preg_replace('/^public\//', '', $recommendationPath);
+                $docxPaths['recommendation_letter'] = $recommendationPath;
             } catch (\Exception $e) {
                 Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
             }

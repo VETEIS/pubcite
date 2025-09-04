@@ -61,10 +61,17 @@ Route::middleware([
     // Signing for signatories
     Route::get('/signing', [\App\Http\Controllers\SigningController::class, 'index'])->name('signing.index');
     Route::post('/signing/signature', [\App\Http\Controllers\SigningController::class, 'storeSignature'])->name('signing.signature');
+    Route::post('/signing/sign-document', [\App\Http\Controllers\SigningController::class, 'signDocument'])->name('signing.sign-document');
+Route::post('/signing/revert-document', [\App\Http\Controllers\SigningController::class, 'revertDocument'])->name('signing.revert-document');
+
+// Secure file download routes for admin
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/download/{type}/{filename}', [\App\Http\Controllers\AdminFileController::class, 'download'])->name('admin.download.file');
+});
     
     // Signature management routes (only store, show, update, destroy - no index/create)
     Route::middleware('auth')->group(function () {
-        Route::resource('signatures', \App\Http\Controllers\SignatureController::class)->except(['index', 'create']);
+        Route::resource('signatures', \App\Http\Controllers\SignatureController::class)->except(['create']);
     });
     
 

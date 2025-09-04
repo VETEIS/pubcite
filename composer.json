@@ -18,6 +18,8 @@
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.0",
         "phpoffice/phpword": "^1.4",
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi": "^2.6",
         "spatie/laravel-responsecache": "^7.7"
     },
     "require-dev": {

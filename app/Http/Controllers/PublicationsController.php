@@ -149,36 +149,48 @@ class PublicationsController extends Controller
     {
         try {
             Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
-            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = Storage::disk('public')->path($publicUploadPath);
+            
+            // Use local disk for security (private storage)
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $fullPath = Storage::disk('local')->path($privateUploadPath);
+            
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
+            
             $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
-            $outputPath = $publicUploadPath . '/Incentive_Application_Form.docx';
-            $fullOutputPath = Storage::disk('public')->path($outputPath);
+            $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
+            $fullOutputPath = Storage::disk('local')->path($outputPath);
+            
             $templateProcessor = new TemplateProcessor($templatePath);
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
-            $fullOutputPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fullOutputPath);
-            $testFile = $fullOutputPath . '.test.txt';
-            file_put_contents($testFile, 'test');
-            Log::info('Test file created', [
-                'test_file' => $testFile,
-                'test_file_exists' => file_exists($testFile),
-                'dir_contents' => scandir(dirname($fullOutputPath))
-            ]);
+            
+            // Add signature placeholders for all user types
+            $signaturePlaceholders = [
+                'facultysignature' => '${facultysignature}',
+                'centermanagersignature' => '${centermanagersignature}',
+                'deansignature' => '${deansignature}',
+                'deputydirectorsignature' => '${deputydirectorsignature}',
+                'directorsignature' => '${directorsignature}'
+            ];
+            
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
+            
             try {
                 Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
                 $templateProcessor->saveAs($fullOutputPath);
-                Log::info('Tried to save DOCX', ['fullOutputPath' => $fullOutputPath]);
+                Log::info('DOCX saved successfully', ['path' => $fullOutputPath]);
             } catch (\Exception $e) {
                 Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
                 throw $e;
             }
-            return $fullOutputPath; // Return the full path for the controller to use
+            
+            return $outputPath; // Return the relative path for the controller to use
         } catch (\Exception $e) {
             Log::error('Error in generateIncentiveDocxFromHtml: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -191,20 +203,38 @@ class PublicationsController extends Controller
     private function generateRecommendationDocxFromHtml($data, $uploadPath)
     {
         try {
-            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = Storage::disk('public')->path($publicUploadPath);
+            // Use local disk for security (private storage)
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $fullPath = Storage::disk('local')->path($privateUploadPath);
+            
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
+            
             $templatePath = storage_path('app/templates/Recommendation_Letter_Form.docx');
-            $outputPath = $publicUploadPath . '/Recommendation_Letter_Form.docx';
-            $fullOutputPath = Storage::disk('public')->path($outputPath);
+            $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
+            $fullOutputPath = Storage::disk('local')->path($outputPath);
+            
             $templateProcessor = new TemplateProcessor($templatePath);
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
+            
+            // Add signature placeholders for all user types
+            $signaturePlaceholders = [
+                'facultysignature' => '${facultysignature}',
+                'centermanagersignature' => '${centermanagersignature}',
+                'deansignature' => '${deansignature}',
+                'deputydirectorsignature' => '${deputydirectorsignature}',
+                'directorsignature' => '${directorsignature}'
+            ];
+            
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
+            
             $templateProcessor->saveAs($fullOutputPath);
-            return $fullOutputPath;
+            return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateRecommendationDocxFromHtml: ' . $e->getMessage());
             throw $e;
@@ -214,20 +244,38 @@ class PublicationsController extends Controller
     private function generateTerminalDocxFromHtml($data, $uploadPath)
     {
         try {
-            $publicUploadPath = 'public/' . ltrim($uploadPath, '/');
-            $fullPath = Storage::disk('public')->path($publicUploadPath);
+            // Use local disk for security (private storage)
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+            $fullPath = Storage::disk('local')->path($privateUploadPath);
+            
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
             }
+            
             $templatePath = storage_path('app/templates/Terminal_Report_Form.docx');
-            $outputPath = $publicUploadPath . '/Terminal_Report_Form.docx';
-            $fullOutputPath = Storage::disk('public')->path($outputPath);
+            $outputPath = $privateUploadPath . '/Terminal_Report_Form.docx';
+            $fullOutputPath = Storage::disk('local')->path($outputPath);
+            
             $templateProcessor = new TemplateProcessor($templatePath);
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
+            
+            // Add signature placeholders for all user types
+            $signaturePlaceholders = [
+                'facultysignature' => '${facultysignature}',
+                'centermanagersignature' => '${centermanagersignature}',
+                'deansignature' => '${deansignature}',
+                'deputydirectorsignature' => '${deputydirectorsignature}',
+                'directorsignature' => '${directorsignature}'
+            ];
+            
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
+            
             $templateProcessor->saveAs($fullOutputPath);
-            return $fullOutputPath;
+            return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateTerminalDocxFromHtml: ' . $e->getMessage());
             throw $e;
@@ -392,6 +440,8 @@ class PublicationsController extends Controller
         // Delete all associated files from storage
         $pdfPath = $request->pdf_path ? json_decode($request->pdf_path, true) : [];
         $allFiles = [];
+        
+        // Collect PDF files
         if (isset($pdfPath['pdfs']) && is_array($pdfPath['pdfs'])) {
             foreach ($pdfPath['pdfs'] as $file) {
                 if (isset($file['path'])) {
@@ -399,6 +449,8 @@ class PublicationsController extends Controller
                 }
             }
         }
+        
+        // Collect DOCX files
         if (isset($pdfPath['docxs']) && is_array($pdfPath['docxs'])) {
             foreach ($pdfPath['docxs'] as $docxPath) {
                 if ($docxPath) {
@@ -406,9 +458,24 @@ class PublicationsController extends Controller
                 }
             }
         }
-        foreach ($allFiles as $filePath) {
-            Storage::disk('public')->delete($filePath);
+        
+        // Collect signature-related files
+        if ($request->signed_document_path) {
+            $allFiles[] = $request->signed_document_path;
         }
+        if ($request->original_document_path) {
+            $allFiles[] = $request->original_document_path;
+        }
+        
+        // Delete all collected files
+        foreach ($allFiles as $filePath) {
+            if ($filePath) {
+                // Try both public and local disks
+                Storage::disk('public')->delete($filePath);
+                Storage::disk('local')->delete($filePath);
+            }
+        }
+        
         // Remove the per-request directory and all its contents
         if (isset($request->user_id) && isset($request->request_code)) {
             $dir = "requests/{$request->user_id}/{$request->request_code}";
@@ -421,6 +488,21 @@ class PublicationsController extends Controller
                     }
                 }
                 rmdir($fullDir);
+            }
+        }
+        
+        // Clean up signature-related directories
+        if ($request->signed_document_path) {
+            $signedDir = dirname($request->signed_document_path);
+            if (Storage::disk('local')->exists($signedDir)) {
+                Storage::disk('local')->deleteDirectory($signedDir);
+            }
+        }
+        
+        if ($request->original_document_path) {
+            $backupDir = dirname($request->original_document_path);
+            if (Storage::disk('local')->exists($backupDir)) {
+                Storage::disk('local')->deleteDirectory($backupDir);
             }
         }
         // Store request details for permanent activity log record
@@ -542,10 +624,10 @@ class PublicationsController extends Controller
                     throw new \Exception("File upload failed for field: {$field}");
                 }
                 
-                // Use the public disk instead of the default local disk
-                $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'public');
-                // Remove leading 'public/' if present
-                $cleanPath = preg_replace('/^public\//', '', $storedPath);
+                // Use the local disk for security (private storage)
+                $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
+                // Store path as is since we're using private disk
+                $cleanPath = $storedPath;
                 $attachments[$field] = [
                     'path' => $cleanPath,
                     'original_name' => $file->getClientOriginalName(),
@@ -554,9 +636,9 @@ class PublicationsController extends Controller
 
             // Generate DOCX files using HTML approach
             $docxPaths = [];
-            $docxPaths['incentive'] = preg_replace('/^public\//', '', $this->generateIncentiveDocxFromHtml($data, $uploadPath));
-            $docxPaths['recommendation'] = preg_replace('/^public\//', '', $this->generateRecommendationDocxFromHtml($data, $uploadPath));
-            $docxPaths['terminal'] = preg_replace('/^public\//', '', $this->generateTerminalDocxFromHtml($data, $uploadPath));
+            $docxPaths['incentive'] = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
+            $docxPaths['recommendation'] = $this->generateRecommendationDocxFromHtml($data, $uploadPath);
+            $docxPaths['terminal'] = $this->generateTerminalDocxFromHtml($data, $uploadPath);
 
             Log::info('Creating database entry', [
                 'requestCode' => $requestCode,
@@ -720,8 +802,11 @@ class PublicationsController extends Controller
                 abort(404, 'File path not found');
             }
 
-            // Build the full file path
-            $fullPath = Storage::disk('public')->path($storagePath);
+            // Build the full file path - try local disk first, then public for backward compatibility
+            $fullPath = Storage::disk('local')->path($storagePath);
+            if (!file_exists($fullPath)) {
+                $fullPath = Storage::disk('public')->path($storagePath);
+            }
 
             // Log for debugging
             Log::info('Admin download attempt', [
@@ -1134,13 +1219,17 @@ class PublicationsController extends Controller
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
-            if (!file_exists($fullPath)) {
-                throw new \Exception('Generated file not found');
+            
+            // Convert relative path to absolute path for file_exists check
+            $absolutePath = Storage::disk('local')->path($fullPath);
+            if (!file_exists($absolutePath)) {
+                throw new \Exception('Generated file not found at: ' . $absolutePath);
             }
+            
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';
-            return response()->download($fullPath, $filename, [
+            return response()->download($absolutePath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);

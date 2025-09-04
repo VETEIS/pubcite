@@ -6,11 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Request as UserRequest;
+use App\Models\Setting;
+use App\Models\User;
+use App\Models\Signature;
+use App\Services\DocumentSigningService;
+use App\Enums\SignatureStatus;
 
 class SigningController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var User $user */
         $user = Auth::user();
         if (!$user || !$user->isSignatory()) {
             abort(403);
@@ -38,14 +44,28 @@ class SigningController extends Controller
             }
         }
 
+        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
+        
+        // Add signature status to each request
+        foreach ($needs as &$request) {
+            $request['signature_status'] = $request['signature_status'] ?? 'pending';
+            $request['can_revert'] = false;
+            if (isset($request['signed_at'])) {
+                $signedAt = \Carbon\Carbon::parse($request['signed_at']);
+                $request['can_revert'] = $signedAt->diffInHours(now()) < 24;
+            }
+        }
+        
         return view('signing.index', [
             'requests' => $needs,
             'signatoryType' => $signatoryType,
+            'citations_request_enabled' => $citations_request_enabled,
         ]);
     }
 
     public function storeSignature(Request $request)
     {
+        /** @var User $user */
         $user = Auth::user();
         if (!$user || !$user->isSignatory()) {
             abort(403);
@@ -85,5 +105,115 @@ class SigningController extends Controller
             }
         }
         return null;
+    }
+
+    /**
+     * Sign a document with the user's signature
+     */
+    public function signDocument(Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->isSignatory()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'request_id' => 'required|exists:requests,id',
+            'signature_id' => 'required|exists:signatures,id',
+        ]);
+
+        $userRequest = UserRequest::findOrFail($validated['request_id']);
+        $signature = Signature::findOrFail($validated['signature_id']);
+
+        // Check if user owns the signature
+        if ($signature->user_id !== $user->id) {
+            abort(403, 'You can only use your own signatures');
+        }
+
+        // Check if request is already signed
+        if ($userRequest->isSigned()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This request is already signed'
+            ]);
+        }
+
+        // Check if user can sign this request (role matching)
+        $signatoryType = $user->signatoryType();
+        $userName = trim($user->name ?? '');
+        $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
+        $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
+        
+        if (!$matchedRole) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to sign this request'
+            ]);
+        }
+
+        // Sign the document
+        $signingService = app(DocumentSigningService::class);
+        $success = $signingService->signDocument($userRequest, $user, $signature);
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Document signed successfully',
+                'signature_status' => SignatureStatus::SIGNED->value
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to sign document. Please try again.'
+            ]);
+        }
+    }
+
+    /**
+     * Revert a signed document
+     */
+    public function revertDocument(Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->isSignatory()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'request_id' => 'required|exists:requests,id',
+        ]);
+
+        $userRequest = UserRequest::findOrFail($validated['request_id']);
+
+        // Check if user can revert this document
+        if ($userRequest->signed_by !== $user->id) {
+            abort(403, 'You can only revert documents you signed');
+        }
+
+        if (!$userRequest->canBeReverted()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document can no longer be reverted (older than 24 hours)'
+            ]);
+        }
+
+        // Revert the document
+        $signingService = app(DocumentSigningService::class);
+        $success = $signingService->revertDocument($userRequest);
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Document reverted successfully',
+                'signature_status' => SignatureStatus::PENDING->value
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to revert document. Please try again.'
+            ]);
+        }
     }
 } 

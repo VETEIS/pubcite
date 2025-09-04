@@ -10,7 +10,22 @@ use Illuminate\Support\Facades\Gate;
 
 class SignatureController extends Controller
 {
+    /**
+     * Display a listing of the signatures for the authenticated user.
+     */
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+        $signatures = Signature::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'label', 'path', 'created_at']);
 
+        if ($request->expectsJson()) {
+            return response()->json($signatures);
+        }
+
+        return view('signatures.index', compact('signatures'));
+    }
 
     /**
      * Store a newly created signature in storage.
