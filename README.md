@@ -4,7 +4,7 @@
 [![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management, and digital signature workflows.
+A web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows.
 
 ## 🚀 Features
 
@@ -307,5 +307,4 @@ The University of Southeastern Philippines (USeP) is a premier state university 
 
 ---
 
-**Developed with ❤️ for the University of Southeastern Philippines**
-@vete
+**Developed with ❤️ for the University of Southeastern Philippines** - @vete
