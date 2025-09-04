@@ -54,13 +54,13 @@ A comprehensive web application for the University of Southeastern Philippines (
 - **Chart.js** - Data visualization
 - **Livewire** - Full-stack framework for dynamic UIs
 
-### Document Processing
+### Document Processing (wip)
 - **PhpWord** - Microsoft Word document generation
 - **DomPDF** - PDF generation and manipulation
 - **FPDF/FPDI** - Advanced PDF processing
 - **ZIP Manipulation** - Direct DOCX file processing
 
-### Infrastructure
+### Infrastructure (wip)
 - **Docker** - Containerization
 - **AWS S3** - File storage
 - **Render** - Cloud deployment platform
@@ -173,7 +173,7 @@ SIGNATURE_RETENTION_DAYS=90
 5. Add authorized redirect URI: `https://your-domain.com/auth/google/callback`
 6. Restrict to `@usep.edu.ph` domain
 
-### AWS S3 Configuration
+### AWS S3 Configuration (wip)
 
 1. Create a private S3 bucket
 2. Enable server-side encryption (SSE-KMS recommended)
@@ -308,3 +308,4 @@ The University of Southeastern Philippines (USeP) is a premier state university 
 ---
 
 **Developed with ❤️ for the University of Southeastern Philippines**
+@vete
