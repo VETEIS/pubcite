@@ -7,14 +7,14 @@
         <meta name="turbo-visit-control" content="reload">
         <meta name="turbo-cache-control" content="no-preview">
 
-        <title>{{ config('app.name', 'USeP Publication Unit') }}</title>
+        <title>{{ config('app.name', 'PubCite') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Preload hero art for faster paint -->
-        <link rel="preload" as="image" href="/images/art.png" fetchpriority="high">
+        <link rel="preload" as="image" href="/images/art.webp" fetchpriority="high">
 
         <!-- Scripts -->
             @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -23,21 +23,18 @@
         <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
         <!-- Styles -->
-    
     <style>
         html { scroll-behavior: smooth; }
-        /* Prevent Alpine flicker for x-cloak */
         [x-cloak] { display: none !important; }
-        /* Hide scrollbars but keep functionality */
+        
         .scrollbar-hide {
-            -ms-overflow-style: none;  /* Internet Explorer 10+ */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
         .scrollbar-hide::-webkit-scrollbar {
-            display: none;  /* Safari and Chrome */
+            display: none;
         }
         
-        /* Floating hero shapes (JS-driven for randomness) */
         .hero-shape {
             position: absolute;
             border-radius: 9999px;
@@ -46,11 +43,21 @@
             will-change: transform, opacity;
             pointer-events: none;
         }
-        .hero-shape.shape-1 { width: 240px; height: 240px; background: #ef4444; top: -40px; left: -40px; animation-name: drift1; animation-duration: 18s; animation-delay: .2s; }
-        .hero-shape.shape-2 { width: 320px; height: 320px; background: #f59e0b; bottom: -60px; right: 10%; animation-name: drift2; animation-duration: 22s; animation-delay: .8s; }
-        .hero-shape.shape-3 { width: 200px; height: 200px; background: #10b981; top: 10%; right: -60px; animation-name: drift3; animation-duration: 20s; animation-delay: 1.2s; }
-        
-        /* Multi-axis drifting to simulate random motion */
+        .hero-shape.shape-1 { 
+            width: 240px; height: 240px; background: #ef4444; 
+            top: -40px; left: -40px; 
+            animation: drift1 18s .2s infinite; 
+        }
+        .hero-shape.shape-2 { 
+            width: 320px; height: 320px; background: #f59e0b; 
+            bottom: -60px; right: 10%; 
+            animation: drift2 22s .8s infinite; 
+        }
+        .hero-shape.shape-3 { 
+            width: 200px; height: 200px; background: #10b981; 
+            top: 10%; right: -60px; 
+            animation: drift3 20s 1.2s infinite; 
+        }
         @keyframes drift1 {
             0%   { transform: translate(0, 0) scale(1); }
             25%  { transform: translate(35vw, -10vh) scale(1.04); }
@@ -73,7 +80,6 @@
             100% { transform: translate(0, 0) scale(1); }
         }
 
-        /* Enhanced scroll indicators */
         #scroll-left,
         #scroll-right,
         #scroll-left-researchers,
@@ -86,29 +92,21 @@
             z-index: 20 !important;
         }
         
-        /* Container spacing for hover effects */
         #publishers-container,
         #researchers-container {
-            padding-top: 2rem !important;
-            padding-bottom: 2rem !important;
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
+            padding: 2rem 1rem !important;
         }
         
-        /* Improve researcher cards overflow handling */
         #researchers-container {
             padding-left: 2rem !important;
             padding-right: 2rem !important;
         }
         
-        /* Ensure cards don't get cut off */
         .researcher-card {
             margin: 0.5rem;
         }
         
 
-        
-        /* Hover effects for scroll indicators: scale entire button */
         #scroll-left,
         #scroll-right,
         #scroll-left-researchers,
@@ -123,26 +121,41 @@
             transform: translateY(-50%) scale(1.15); 
         }
         
-        /* Back-to-top overlay */
-        #backToTop { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 60; opacity: 0; transform: translateY(8px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
-        #backToTop.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        #backToTop { 
+            position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 60; 
+            opacity: 0; transform: translateY(8px); 
+            transition: opacity .25s ease, transform .25s ease; 
+            pointer-events: none; 
+        }
+        #backToTop.show { 
+            opacity: 1; transform: translateY(0); 
+            pointer-events: auto; 
+        }
 
-        /* Scroll hint overlay */
-        #scrollHint { position: fixed; left: 50%; bottom: 2.5rem; transform: translateX(-50%) translateY(8px); z-index: 70; opacity: 0; transition: opacity .3s ease, transform .3s ease; pointer-events: none; will-change: transform, opacity; }
-        #scrollHint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #scrollHint { 
+            position: fixed; left: 50%; bottom: 2.5rem; z-index: 70; 
+            transform: translateX(-50%) translateY(8px); 
+            opacity: 0; transition: opacity .3s ease, transform .3s ease; 
+            pointer-events: none; will-change: transform, opacity; 
+        }
+        #scrollHint.show { 
+            opacity: 1; transform: translateX(-50%) translateY(0); 
+        }
         @keyframes hintBounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(6px); }
         }
 
-        /* Fancy mouse + chevrons */
         #scrollHint .mouse {
-            width: 22px; height: 34px; border: 2px solid rgba(255,255,255,0.85);
+            width: 22px; height: 34px; 
+            border: 2px solid rgba(255,255,255,0.85);
             border-radius: 14px; position: relative;
         }
         #scrollHint .wheel {
-            width: 3px; height: 7px; background: rgba(255,255,255,0.9); border-radius: 2px;
-            position: absolute; left: 50%; top: 7px; transform: translateX(-50%);
+            width: 3px; height: 7px; 
+            background: rgba(255,255,255,0.9); border-radius: 2px;
+            position: absolute; left: 50%; top: 7px; 
+            transform: translateX(-50%);
             animation: wheelSlide 1.6s ease-in-out infinite;
         }
         @keyframes wheelSlide {
@@ -150,8 +163,14 @@
             70%  { transform: translateX(-50%) translateY(12px); opacity: 0.2; }
             100% { opacity: 0; }
         }
-        #scrollHint .chev { width: 18px; height: 18px; color: rgba(255,255,255,0.85); animation: chevFade 1.8s ease-in-out infinite; }
-        #scrollHint .chev.chev-2 { opacity: .5; animation-delay: .25s; }
+        #scrollHint .chev { 
+            width: 18px; height: 18px; 
+            color: rgba(255,255,255,0.85); 
+            animation: chevFade 1.8s ease-in-out infinite; 
+        }
+        #scrollHint .chev.chev-2 { 
+            opacity: .5; animation-delay: .25s; 
+        }
         @keyframes chevFade {
             0%   { opacity: .1; transform: translateY(-2px); }
             30%  { opacity: .7; }
@@ -159,74 +178,94 @@
             100% { opacity: .1; transform: translateY(6px); }
         }
 
-        /* Hero title enhancements */
-        .hero-title { letter-spacing: -0.01em; text-shadow: 0 4px 22px rgba(255,255,255,0.25); display: inline-block; position: relative; }
-        .hero-title::after { content: ""; display: block; height: 3px; border-radius: 9999px; margin-top: 10px; background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.9), rgba(255,255,255,0)); }
+        .hero-title { 
+            letter-spacing: -0.01em; 
+            text-shadow: 0 4px 22px rgba(255,255,255,0.25); 
+            display: inline-block; position: relative; 
+        }
+        .hero-title::after { 
+            content: ""; display: block; height: 3px; 
+            border-radius: 9999px; margin-top: 10px; 
+            background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.9), rgba(255,255,255,0)); 
+        }
 
-        /* Paint containment to reduce overdraw */
         #hero { contain: paint; }
-
-        /* Anchor offset for fixed navbar */
         .scroll-target { scroll-margin-top: 5rem; }
 
-        /* Reveal-on-scroll sections */
-        .reveal-section { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
-        .reveal-section.visible { opacity: 1; transform: translateY(0); }
+        .reveal-section { 
+            opacity: 0; transform: translateY(16px); 
+            transition: opacity .5s ease, transform .5s ease; 
+        }
+        .reveal-section.visible { 
+            opacity: 1; transform: translateY(0); 
+        }
         
-        /* Shake animation for calendar interactions */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
             20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
         
-        /* Hide horizontal scrollbar and prevent overflow */
         .calendar-details-container {
-            overflow-x: hidden;
-            overflow-y: auto;
+            overflow-x: hidden; overflow-y: auto;
         }
         
-        /* Ensure card effects aren't cut off */
+        .hero-art-glow {
+            filter: drop-shadow(0 0 1px rgba(255,255,255,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.3)) drop-shadow(0 15px 40px rgba(0,0,0,0.25));
+            transition: filter 0.3s ease;
+        }
+        
+        .group:hover .hero-art-glow {
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.9)) drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 0 16px rgba(255,255,255,0.3)) drop-shadow(0 20px 50px rgba(0,0,0,0.3));
+        }
+        
+        [x-cloak] {
+            display: none !important;
+        }
+        
+        
+        .group:hover . {
+            animation-play-state: paused;
+        }
+        
+        .journal-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            min-width: 2.5rem;
+            text-align: center;
+        }
+        
         .marked-date-card {
-            margin: 0.5rem 0;
-            transform-origin: center;
+            margin: 0.5rem 0; transform-origin: center;
         }
 
-        /* Glassmorphism Modal Styles */
         .glassmorphism-modal {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            opacity: 0;
-            visibility: hidden;
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem; background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            opacity: 0; visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-
         .glassmorphism-modal.show {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1; visibility: visible;
         }
 
         .glassmorphism-card {
-            position: relative;
-            max-width: 60vw;
-            width: 60vw;
-            max-height: 90vh;
+            position: relative; max-width: 60vw; width: 60vw; max-height: 90vh;
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.25),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
             overflow: hidden;
         }
 
@@ -278,6 +317,10 @@
         .glassmorphism-content p {
             color: rgba(255, 255, 255, 0.8);
         }
+        
+        .glassmorphism-content .bg-white\/20 p {
+            color: inherit;
+        }
 
         .glassmorphism-button {
             background: rgba(255, 255, 255, 0.15);
@@ -304,44 +347,26 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        /* Liquid animation for the glass effect */
         @keyframes liquidFlow {
-            0%, 100% { 
-                background-position: 0% 50%;
-                background-size: 200% 200%;
-            }
-            50% { 
-                background-position: 100% 50%;
-                background-size: 200% 200%;
-            }
+            0%, 100% { background-position: 0% 50%; background-size: 200% 200%; }
+            50% { background-position: 100% 50%; background-size: 200% 200%; }
         }
 
-        /* Prevent layout shift */
         body.modal-open {
             overflow: hidden;
             padding-right: 0 !important;
+            position: fixed;
+            width: 100%;
         }
+        html { overflow-y: scroll; }
 
-        /* Prevent scrollbar layout shift - better approach */
-        html {
-            overflow-y: scroll;
-        }
-
-        /* Custom scrollbar for modal content */
-        .glassmorphism-content::-webkit-scrollbar {
-            width: 6px;
-        }
-
+        .glassmorphism-content::-webkit-scrollbar { width: 6px; }
         .glassmorphism-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 3px; 
         }
-
         .glassmorphism-content::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.3); border-radius: 3px; 
         }
-
         .glassmorphism-content::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
         }
@@ -349,6 +374,37 @@
     </head>
     <body>
         <div class="min-h-screen bg-white relative font-sans text-gray-900 antialiased">
+            <!-- Data Privacy Disclaimer Modal -->
+            <div id="privacyModal" class="glassmorphism-modal show">
+                <div class="glassmorphism-card" style="max-width: 50vw; width: 50vw;">
+                    <div class="glassmorphism-content">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-maroon-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-2xl font-bold mb-4">Data Privacy Notice</h2>
+                            <p class="text-lg mb-6">
+                                By continuing to use <span class="font-bold text-maroon-600">PubCite</span>, you agree to the 
+                                <a href="https://www.usep.edu.ph/usep-data-privacy-statement/" target="_blank" rel="noopener noreferrer" 
+                                   class="text-maroon-600 hover:text-maroon-800 font-medium transition-colors duration-200">
+                                    University of Southeastern Philippines' Data Privacy Statement
+                                </a>.
+                            </p>
+                            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                                <button onclick="declinePrivacy()" class="glassmorphism-button secondary px-8 py-3 rounded-lg font-semibold">
+                                    Decline
+                                </button>
+                                <button onclick="acceptPrivacy()" class="bg-maroon-600 hover:bg-maroon-700 hover:-translate-y-0.5 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border border-white/20">
+                                    I Agree
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- How It Works Modal -->
             <div id="howItWorksModal" class="glassmorphism-modal hidden">
                 <div class="glassmorphism-card">
@@ -362,47 +418,73 @@
                             </button>
             </div>
 
-                        <div class="grid md:grid-cols-3 gap-8">
+                        <div class="space-y-8">
                             <!-- Step 1 -->
-                            <div class="text-center relative">
-                                <div class="w-16 h-16 bg-gradient-to-br from-maroon-300 to-maroon-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                    <span class="text-white font-bold text-xl">1</span>
-                                </div>
-                                <h3 class="text-xl font-bold mb-3">Submit Request</h3>
-                                <p>Fill out the application form for publication or citation incentives with your research details.</p>
-                                
-                                <!-- Arrow to next step -->
-                                <div class="hidden md:block absolute top-8 right-0 transform translate-x-1/2">
-                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Sign In with Your USeP Account</h3>
+                                    <p class="text-gray-600">Use your USeP Google account (@usep.edu.ph) to securely access the system. No need to create a separate account!</p>
                                 </div>
                             </div>
                             
                             <!-- Step 2 -->
-                            <div class="text-center relative">
-                                <div class="w-16 h-16 bg-gradient-to-br from-maroon-400 to-maroon-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                    <span class="text-white font-bold text-xl">2</span>
-                                </div>
-                                <h3 class="text-xl font-bold mb-3">Track Progress</h3>
-                                <p>Monitor your application status in real-time with detailed updates and notifications.</p>
-                                
-                                <!-- Arrow to next step -->
-                                <div class="hidden md:block absolute top-8 right-0 transform translate-x-1/2">
-                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Choose Your Incentive Type</h3>
+                                    <p class="text-gray-600">Select between <strong>Publication Incentives</strong> (for published research papers) or <strong>Citation Incentives</strong> (for citations received).</p>
                                 </div>
                             </div>
                             
                             <!-- Step 3 -->
-                            <div class="text-center">
-                                <div class="w-16 h-16 bg-maroon-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                    <span class="text-white font-bold text-xl">3</span>
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">3</div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Upload Your Documents</h3>
+                                    <p class="text-gray-600">Attach your research papers, publication proofs, or citation records. The system securely stores and submit all your documents for review.</p>
                                 </div>
-                                <h3 class="text-xl font-bold mb-3">Get Approved</h3>
-                                <p>Receive approval and access to incentives to support your research contributions.</p>
                             </div>
+                            
+                            <!-- Step 4 -->
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">4</div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Track Your Application</h3>
+                                    <p class="text-gray-600">Monitor your application progress in real-time through your dashboard. Get instant updates when your application is reviewed or approved.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 5 -->
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">5</div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Receive Your Incentive</h3>
+                                    <p class="text-gray-600">Once approved, download your official documents and receive your publication or citation incentive through the university's standard process.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 grid md:grid-cols-2 gap-6">
+                            <div class="p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
+                                <h4 class="text-lg font-semibold text-white mb-2">📚 Publication Incentives</h4>
+                                <p class="text-gray-900 text-sm">For faculty who have published research papers in indexed journals. Submit your publication details and supporting documents.</p>
+                            </div>
+                            
+                            <div class="p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
+                                <h4 class="text-lg font-semibold text-white mb-2">📊 Citation Incentives</h4>
+                                <p class="text-gray-900 text-sm">For researchers whose work has been cited by other scholars. Provide citation records and impact metrics.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
+                            <h4 class="text-lg font-semibold text-white mb-2">✍️ Signatory Feature</h4>
+                            <p class="text-gray-900">For signatories, download documents for external signing and upload the signed versions. You can revert signed documents within 24 hours if needed.</p>
+                        </div>
+                        
+                        <div class="mt-6 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
+                            <h4 class="text-lg font-semibold text-white mb-2">🔒 Secure & Private</h4>
+                            <p class="text-gray-900">Your documents are stored securely with encryption, and only authorized personnel can access your applications. All file operations are logged for audit purposes.</p>
                         </div>
                         
                         <div class="mt-8 pt-8 border-t border-white/20">
@@ -423,34 +505,40 @@
             </div>
 
 
-            <!-- Simple Maroon Navbar for Consistency (overlay is behind this) -->
+            <!-- Navigation -->
             <nav class="bg-maroon-800/95 backdrop-blur-sm border-b border-maroon-900 fixed top-0 left-0 w-full z-50 shadow-lg">
                 <div class="px-6">
                     <div class="flex justify-between h-16">
                         <div class="flex items-center gap-3">
                             <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain rounded-full" />
                             <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">PubCite</span>
-                            @if (View::exists('components.breadcrumbs'))
+                            @if (\Illuminate\Support\Facades\View::exists('components.breadcrumbs'))
                             <span class="flex items-center justify-center ml-2">
                                     @include('components.breadcrumbs', ['crumbs' => $breadcrumbs ?? null, 'inline' => true])
                                 </span>
                             @endif
                         </div>
-                        <div class="flex items-center gap-2 sm:gap-4">
-                        @auth
-                            
-                        @else
-                            
-                        @endif
+                        <div class="flex items-center gap-2 sm:gap-4" x-data="{ 
+                            quickLinksOpen: false, 
+                            announcementsOpen: false,
+                            toggleQuickLinks() {
+                                this.quickLinksOpen = !this.quickLinksOpen;
+                                if (this.quickLinksOpen) this.announcementsOpen = false;
+                            },
+                            toggleAnnouncements() {
+                                this.announcementsOpen = !this.announcementsOpen;
+                                if (this.announcementsOpen) this.quickLinksOpen = false;
+                            }
+                        }">
 
                         <!-- Quick Links Dropdown -->
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
+                        <div class="relative">
+                            <button @click="toggleQuickLinks()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
                                 Quick Links
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
-                            <div x-show="open" class="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
+                            <div x-show="quickLinksOpen" x-cloak class="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
                                 <div class="py-1">
                                     <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
@@ -477,13 +565,13 @@
                         </div>
 
                         <!-- Announcements Dropdown -->
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
+                        <div class="relative">
+                            <button @click="toggleAnnouncements()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
-                            <div x-show="open" class="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
+                            <div x-show="announcementsOpen" x-cloak class="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
                                 <div class="py-1">
                                     <div class="px-3 py-2 border-b border-gray-100">
                                         <h4 class="text-sm font-semibold text-gray-900">Latest Updates</h4>
@@ -526,7 +614,7 @@
                             @endguest
                                 </div>
 
-                        @if (Route::has('login'))
+                        @if (\Illuminate\Support\Facades\Route::has('login'))
                             @auth
                                 <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -554,32 +642,67 @@
                     <div class="max-w-7xl mx-auto px-6 relative z-10">
                         <div class="grid md:grid-cols-2 gap-8 items-center">
                             <div class="text-left">
-                                <!--
-                                <div class="flex justify-start mb-6">
-                                    <img src="/images/spjrd.png" alt="SPJRD Logo" class="h-16 w-16 rounded-full object-cover shadow-lg ring-2 ring-white/30" />
-                                </div>
-                                -->
                                 <h1 class="hero-title text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
                                     USeP Publication Unit
                                 </h1>
                                 
-                                
-                                <p class="text-lg md:text-xl text-maroon-100 mb-8 max-w-3xl leading-relaxed">
-                                    PubCite: Empowering researchers and faculty with comprehensive publication and citation requests management, and progress tracking to advance academic excellence.
-                                </p>
+                                <div class="mb-6">
+                                    <!--<h3 class="text-md font-medium text-white mb-3">Suggested Journals:</h3>-->
+                                    <div class="flex gap-0 justify-start items-stretch">
+                                        <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex-1 h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300">
+                                            <div class="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg  transition-all duration-300  hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="scopus-count" data-target="2847">0</div>
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <img src="/images/scopus.webp" alt="Scopus" class="h-24 w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                </div>
+                                            </div>
+                                            <span class="text-white font-medium text-xs text-center">Scopus</span>
+                                        </a>
+                                        
+                                        <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex-1 h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300">
+                                            <div class="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg  transition-all duration-300  hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="wos-count" data-target="1923">0</div>
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <img src="/images/wos.webp" alt="Web of Science" class="h-24 w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                </div>
+                                            </div>
+                                            <span class="text-white font-medium text-xs text-center">Web of Science</span>
+                                        </a>
+                                        
+                                        <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="group flex-1 h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300">
+                                            <div class="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg  transition-all duration-300  hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="aci-count" data-target="856">0</div>
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <img src="/images/aci.webp" alt="ACI" class="h-20 w-20 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                </div>
+                                            </div>
+                                            <span class="text-white font-medium text-xs text-center">Scopus-ACI</span>
+                                        </a>
+                                        
+                                        <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex-1 h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300">
+                                            <div class="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg  transition-all duration-300  hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="peer-count" data-target="3421">0</div>
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <img src="/images/peer.webp" alt="Peer Review" class="h-24 w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                </div>
+                                            </div>
+                                            <span class="text-white font-medium text-xs text-center">Peer Review</span>
+                                        </a>
+                                    </div>
+                                </div>
                                 @guest
-                                    <div class="flex flex-col sm:flex-row gap-4 items-start">
-                                        <button onclick="showHowItWorks()" class="inline-flex items-center px-6 py-3 border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/20 hover:-translate-y-1 transition-all duration-300">
+                                    <div class="flex flex-col sm:flex-row gap-4 items-start max-w-3xl">
+                                        <button onclick="showHowItWorks()" class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-full hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 flex-1">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
                                             See How It Works
                                         </button>
-                                        <a href="{{ route('register') }}" class="inline-flex items-center px-6 py-3 bg-white text-maroon-900 font-semibold rounded-lg hover:bg-maroon-50 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                        <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-8 py-4 bg-white text-maroon-900 font-semibold rounded-full hover:bg-maroon-50 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl flex-1">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 0v4m0-4h4m-4 0H8M7 20h10a2 2 0 002-2v-5a2 2 0 00-2-2h-3l-2-2-2 2H7a2 2 0 00-2 2v5a2 2 0 002 2z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                         </svg>
-                                            Get Started Today
+                                            Apply For Incentives
                                         </a>
                                     </div>
                                 @else
@@ -588,9 +711,9 @@
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
-                                            You're logged in as {{ Auth::user()->name }}
-                                            <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full {{ Auth::user()->role === 'admin' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white' }}">
-                                                {{ Auth::user()->role === 'admin' ? 'Admin' : 'User' }}
+                                            You're logged in as {{ \Illuminate\Support\Facades\Auth::user()->name }}
+                                            <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full {{ \Illuminate\Support\Facades\Auth::user()->role === 'admin' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white' }}">
+                                                {{ \Illuminate\Support\Facades\Auth::user()->role === 'admin' ? 'Admin' : 'User' }}
                                             </span>
                                         </a>
                                              </div>
@@ -598,7 +721,9 @@
                                          </div>
                             <div class="hidden md:flex justify-end relative">
                                 <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 pointer-events-none" style="width: 60vh; height: 60vh; background: radial-gradient(closest-side, rgba(255,255,255,0.28), rgba(255,255,255,0.12), transparent 70%); filter: blur(16px); border-radius: 9999px;"></div>
-                                <img src="/images/art.png" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none pointer-events-none" style="filter: drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 6px rgba(255,255,255,0.45)) drop-shadow(0 20px 60px rgba(0,0,0,0.35));" />
+                                <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="cursor-pointer hover:scale-105 transition-all duration-300 group">
+                                    <img src="/images/art.webp" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none hero-art-glow" />
+                                </a>
                                              </div>
                                          </div>
                                              </div>
@@ -606,10 +731,8 @@
 
                 <!-- Our Services Section -->
                 <section id="services" class="py-12 bg-white/80 reveal-section scroll-target relative overflow-hidden">
-                    <!-- Modern section separator -->
                     <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
                     
-                    <!-- Subtle wave background pattern -->
                     <div class="absolute inset-0 pointer-events-none opacity-15">
                         <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
                             <defs>
@@ -623,12 +746,8 @@
                         </svg>
                                          </div>
                     <div class="max-w-7xl mx-auto px-6">
-                        <!-- Two Column Layout -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
-                            <!-- Left Column: Services Card -->
-                            <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 h-full">
-                                <!-- Services Header -->
-                                <div class="text-center mb-6">
+                        <!-- Services Section -->
+                        <div class="text-center mb-8">
                                     <div class="flex items-center justify-center mb-4">
                                         <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -637,101 +756,47 @@
                                              </div>
                                          </div>
 
-                                <!-- Services List -->
-                                <div class="space-y-6">
-                                    <div class="flex items-start gap-4 p-4 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/50">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div class="flex flex-col items-center text-center p-6 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300 hover:-translate-y-1">
+                                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                             </svg>
                                     </div>
-                                        <div class="flex-1">
-                                            <h3 class="text-lg font-bold text-gray-900 mb-2">Publication & Citation Incentives</h3>
+                                    <h3 class="text-xl font-bold text-gray-900 mb-3">Publication & Citation Incentives</h3>
                                             <p class="text-gray-600 leading-relaxed">Submit applications for publication and citation incentives to support your research contributions and academic achievements with streamlined processing.</p>
-                                </div>
                             </div>
 
-                                    <div class="flex items-start gap-4 p-4 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="flex flex-col items-center text-center p-6 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300 hover:-translate-y-1">
+                                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                         </svg>
                         </div>
-                                        <div class="flex-1">
-                                            <h3 class="text-lg font-bold text-gray-900 mb-2">Real-time Status Tracking</h3>
+                                    <h3 class="text-xl font-bold text-gray-900 mb-3">Real-time Status Tracking</h3>
                                             <p class="text-gray-600 leading-relaxed">Monitor the progress of your submitted applications and requests with detailed status updates and transparent communication throughout the process.</p>
-                        </div>
                                          </div>
 
-                                    <div class="flex items-start gap-4 p-4 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="flex flex-col items-center text-center p-6 bg-white/50 rounded-xl border border-white/60 hover:bg-white/70 transition-all duration-300 hover:-translate-y-1">
+                                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                             </svg>
                                              </div>
-                                        <div class="flex-1">
-                                            <h3 class="text-lg font-bold text-gray-900 mb-2">News & Events Hub</h3>
+                                    <h3 class="text-xl font-bold text-gray-900 mb-3">News & Events Hub</h3>
                                             <p class="text-gray-600 leading-relaxed">Stay informed with the latest news, upcoming events, workshops, and important announcements from the Publications Unit and research community.</p>
-                                         </div>
-                                             </div>
-                                         </div>
-                                             </div>
-
-                            <!-- Right Column: Suggested Journals -->
-                            <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 h-full">
-                    <div class="text-center mb-6">
-                                    <div class="flex items-center justify-center mb-4">
-                                        <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                                        </svg>
-                                        <h3 class="text-3xl font-bold text-gray-900">Suggested Journals</h3>
-                        </div>
-                                    <p class="text-gray-600 max-w-2xl mx-auto">Discover high-impact research journals from leading publishers.</p>
-                    </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <a data-name="Scopus" href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 hover:border-maroon-200">
-                                        <div class="flex items-center justify-center h-12 mb-4">
-                                            <img src="/images/scopus.png" alt="Scopus" loading="lazy" class="h-10 w-auto object-contain group-hover:scale-110 transition-transform duration-300" />
-                                        </div>
-                                        <h4 class="text-lg font-bold text-gray-900 mb-2 text-center">Scopus</h4>
-                                        <p class="text-sm text-gray-600 text-center leading-relaxed">Elsevier's comprehensive abstract and citation database with peer-reviewed literature coverage.</p>
-                                    </a>
-                                    
-                                    <a data-name="Web of Science" href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 hover:border-maroon-200">
-                                        <div class="flex items-center justify-center h-12 mb-4">
-                                            <img src="/images/wos.png" alt="Web of Science" loading="lazy" class="h-10 w-auto object-contain group-hover:scale-110 transition-transform duration-300" />
-                                </div>
-                                        <h4 class="text-lg font-bold text-gray-900 mb-2 text-center">Web of Science</h4>
-                                        <p class="text-sm text-gray-600 text-center leading-relaxed">Clarivate Analytics' multidisciplinary research database with advanced citation indexing.</p>
-                                    </a>
-                                    
-                                    <a data-name="ACI" href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 hover:border-maroon-200">
-                                        <div class="flex items-center justify-center h-12 mb-4">
-                                            <img src="/images/aci.png" alt="ACI" loading="lazy" class="h-10 w-auto object-contain group-hover:scale-110 transition-transform duration-300" />
-                            </div>
-                                        <h4 class="text-lg font-bold text-gray-900 mb-2 text-center">Scopus-ACI</h4>
-                                        <p class="text-sm text-gray-600 text-center leading-relaxed">ASEAN Citation Index for enhanced regional research visibility and collaboration.</p>
-                                    </a>
-                                    
-                                    <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
-                                        <span>Peer Review</span>
-                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- List of Suggested Journals Section removed; embedded in Our Services -->
-
                 <!-- USeP Researchers Section -->
                 <section class="py-12 bg-white/90 reveal-section relative overflow-hidden">
-                    <!-- Modern section separator -->
                     <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
                     
-                    <!-- Subtle wave background pattern -->
                     <div class="absolute inset-0 pointer-events-none opacity-15">
                         <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
                             <defs>
@@ -752,11 +817,9 @@
                                 </svg>
                                 <h2 class="text-3xl font-bold text-gray-900">USeP Researchers</h2>
                             </div>
-                            <p class="text-gray-600 max-w-2xl mx-auto">Meet our distinguished faculty members and researchers from across disciplines.</p>
                         </div>
 
                         <div class="relative">
-                            <!-- Scroll Indicators -->
                             <button id="scroll-left-researchers" class="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur border border-gray-200 rounded-full p-4 md:p-3 shadow-lg transition-transform duration-200 opacity-0" onclick="scrollResearchers('left')">
                                 <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -769,7 +832,7 @@
                                 </svg>
                             </button>
 
-                            <!-- Researchers Container -->
+                            <!-- Researchers -->
                             <div id="researchers-container" class="flex gap-6 overflow-x-auto scrollbar-hide pb-4 pt-4 px-8 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50">
                                 <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
                                     <div class="relative">
@@ -992,188 +1055,12 @@
                     </div>
                 </section>
 
-                <!-- Testimonials Section -->
-                <section class="py-12 bg-white/90 reveal-section relative overflow-hidden">
-                    <!-- Modern section separator -->
+                <!-- Calendar Section (JavaScript will replace this) -->
+                <section class="py-12 bg-white/80 reveal-section relative overflow-hidden">
                     <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
-                    
-                    <!-- Subtle wave background pattern -->
-                    <div class="absolute inset-0 pointer-events-none opacity-15 -z-10">
-                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="wave3" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#de8c8c"/>
-                                    <stop offset="100%" stop-color="#e7a8a8"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M0,160 Q200,110 400,160 T1200,160 L1200,400 L0,400 Z" fill="url(#wave3)"/>
-                            <path d="M0,200 Q300,150 600,200 T1200,200 L1200,400 L0,400 Z" fill="url(#wave3)" opacity="0.5"/>
-                        </svg>
-                    </div>
                     <div class="max-w-7xl mx-auto px-6">
                         <div class="text-center mb-8">
-                            <div class="flex items-center justify-center mb-4">
-                                <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m2 8l-4-4H7a3 3 0 01-3-3V7a3 3 0 013-3h10a3 3 0 013 3v6a3 3 0 01-3 3h-1l-2 2" />
-                                </svg>
-                                <h2 class="text-3xl font-bold text-gray-900">What Researchers Say</h2>
-                            </div>
-                            <p class="text-gray-600 max-w-2xl mx-auto">Testimonials from successful researchers who used PubCite.</p>
-                        </div>
-                        <div class="grid md:grid-cols-3 gap-4">
-                            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <img loading="lazy" src="/images/usep.png" alt="" class="w-10 h-10 rounded-full object-cover" />
-                        <div>
-                                        <div class="font-semibold text-gray-900">Dr. Maria Santos</div>
-                                        <div class="text-xs text-gray-500">College of Education</div>
-                                    </div>
-                                </div>
-                                <p class="text-gray-700 text-sm leading-relaxed">The Publications Unit streamlined my submission process and connected me to the right journals.</p>
-                            </div>
-                            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <img loading="lazy" src="/images/usep.png" alt="" class="w-10 h-10 rounded-full object-cover" />
-                                    <div>
-                                        <div class="font-semibold text-gray-900">Prof. Juan Dela Cruz</div>
-                                        <div class="text-xs text-gray-500">College of Engineering</div>
-                                    </div>
-                                </div>
-                                <p class="text-gray-700 text-sm leading-relaxed">Great support from start to finish. The suggested journals list was especially helpful.</p>
-                            </div>
-                            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <img loading="lazy" src="/images/usep.png" alt="" class="w-10 h-10 rounded-full object-cover" />
-                                    <div>
-                                        <div class="font-semibold text-gray-900">Dr. Sofia Martinez</div>
-                                        <div class="text-xs text-gray-500">College of Arts and Sciences</div>
-                                    </div>
-                                </div>
-                                <p class="text-gray-700 text-sm leading-relaxed">Their guidance on indexing and citation incentives helped elevate my research impact.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Services & Announcements Section -->
-                <section class="py-12 bg-white/80 reveal-section relative overflow-hidden">
-                    <!-- Modern section separator -->
-                    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-maroon-300 to-transparent"></div>
-                    
-                    <!-- Subtle wave background pattern -->
-                    <div class="absolute inset-0 pointer-events-none opacity-15">
-                        <svg class="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="wave4" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#f3d1d1"/>
-                                    <stop offset="100%" stop-color="#f8e6e6"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M0,140 Q150,90 300,140 T600,140 L600,400 L0,400 Z" fill="url(#wave4)"/>
-                            <path d="M0,180 Q250,130 500,180 T600,180 L600,400 L0,400 Z" fill="url(#wave4)" opacity="0.4"/>
-                        </svg>
-                    </div>
-                    <div class="max-w-7xl mx-auto px-6">
-                        <div class="grid lg:grid-cols-2 gap-8">
-                            <!-- Services -->
-                            <div>
-                                <div class="flex items-center mb-8">
-                                    <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                    </svg>
-                                    <h2 class="text-3xl font-bold text-gray-900">Our Services</h2>
-                                </div>
-                                                                <div class="space-y-6">
-                                    <div class="flex items-start gap-4">
-                                        <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                            </div>
-                                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Application for Publication/Citation Incentives</h3>
-                                            <p class="text-gray-600 leading-relaxed">Submit applications for publication and citation incentives to support your research contributions and academic achievements.</p>
-                        </div>
-                        </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                </svg>
-                            </div>
-                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Monitor Application/Request Status</h3>
-                                            <p class="text-gray-600 leading-relaxed">Track the progress of your submitted applications and requests in real-time with detailed status updates.</p>
-                                        </div>
-                        </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Pertinent News and Events</h3>
-                                            <p class="text-gray-600 leading-relaxed">Stay updated with the latest news, events, and important announcements from the Publications Unit.</p>
-                                        </div>
-                                    </div>
-                        </div>
-                    </div>
-
-                            <!-- Announcements -->
-                            <div>
-                                <div class="flex items-center mb-8">
-                                    <svg class="w-8 h-8 text-maroon-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                    </svg>
-                                    <h2 class="text-3xl font-bold text-gray-900">Latest Announcements</h2>
-                                    </div>
-                                <div class="space-y-4">
-                                    <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-blue-500">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                </div>
-                                            <div>
-                                                <h3 class="text-base font-semibold text-gray-900 mb-1">New Publication Incentive Guidelines</h3>
-                                                <p class="text-sm text-gray-600 leading-relaxed">Updated guidelines for 2024 publication incentives are now available for all faculty members.</p>
-                    </div>
-                </div>
-                </div>
-
-                                    <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-green-500">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                </svg>
-                            </div>
-                                            <div>
-                                                <h3 class="text-base font-semibold text-gray-900 mb-1">Research Workshop Series</h3>
-                                                <p class="text-sm text-gray-600 leading-relaxed">Join our upcoming workshop series on research methodology and academic writing techniques.</p>
-                                            </div>
-                        </div>
-                    </div>
-
-                                    <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 border-orange-500">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <h3 class="text-base font-semibold text-gray-900 mb-1">Journal Indexing Updates</h3>
-                                                <p class="text-sm text-gray-600 leading-relaxed">Latest updates on Scopus and Web of Science indexing for USeP publications.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                    </div>
+                            <h2 class="text-3xl font-bold text-gray-900">Calendar</h2>
                 </div>
                 </div>
                 </section>
@@ -1205,18 +1092,16 @@
 </html>
 
 <script>
-// Debounce utility
 function debounce(fn, delay) {
     let timer = null;
     return function(...args) {
         clearTimeout(timer);
         timer = setTimeout(() => fn.apply(this, args), delay);
     };
-};
+    }
 
 
 
-// Scroll functionality for researchers
 function scrollResearchers(direction) {
     const container = document.getElementById('researchers-container');
     const scrollLeft = document.getElementById('scroll-left-researchers');
@@ -1245,18 +1130,55 @@ function scrollResearchers(direction) {
     }
 }
 
-// Initial scroll indicator visibility and update on scroll/resize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded - Setting up scroll indicators');
 
-    // Researchers scroll indicators
+    // Animate journal count badges
+    function animateJournalCounts() {
+        const counters = [
+            { id: 'scopus-count', target: 2847 },
+            { id: 'wos-count', target: 1923 },
+            { id: 'aci-count', target: 856 },
+            { id: 'peer-count', target: 3421 }
+        ];
+
+        counters.forEach((counter, index) => {
+            const element = document.getElementById(counter.id);
+            if (!element) return;
+
+            const duration = 2000; // 2 seconds
+            const startTime = Date.now() + (index * 200); // Stagger by 200ms each
+            const target = counter.target;
+
+            function updateCount() {
+                const now = Date.now();
+                const elapsed = now - startTime;
+                
+                if (elapsed < 0) {
+                    requestAnimationFrame(updateCount);
+                    return;
+                }
+
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                const current = Math.floor(easeOut * target);
+
+                element.textContent = current.toLocaleString();
+
+                if (progress < 1) {
+                    requestAnimationFrame(updateCount);
+                }
+            }
+
+            updateCount();
+        });
+    }
+
+    // Start the counting animation
+    animateJournalCounts();
+
     const researchersContainer = document.getElementById('researchers-container');
     const researchersScrollLeft = document.getElementById('scroll-left-researchers');
     const researchersScrollRight = document.getElementById('scroll-right-researchers');
-
-    console.log('Researchers container:', researchersContainer);
-    console.log('Researchers scroll left:', researchersScrollLeft);
-    console.log('Researchers scroll right:', researchersScrollRight);
 
     function updateResearchersScrollIndicators() {
         if (!researchersContainer || !researchersScrollLeft || !researchersScrollRight) return;
@@ -1266,9 +1188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isAtEnd = researchersContainer.scrollLeft >= (maxScrollLeft - 2);
         const hasOverflow = researchersContainer.scrollWidth > researchersContainer.clientWidth;
 
-        console.log('Researchers scroll update:', { isAtStart, isAtEnd, hasOverflow, scrollLeft: researchersContainer.scrollLeft, scrollWidth: researchersContainer.scrollWidth, clientWidth: researchersContainer.clientWidth });
 
-        // Show/hide left arrow
         if (hasOverflow && !isAtStart) {
             researchersScrollLeft.style.opacity = '1';
             researchersScrollLeft.style.pointerEvents = 'auto';
@@ -1277,7 +1197,6 @@ document.addEventListener('DOMContentLoaded', () => {
             researchersScrollLeft.style.pointerEvents = 'none';
         }
 
-        // Show/hide right arrow
         if (hasOverflow && !isAtEnd) {
             researchersScrollRight.style.opacity = '1';
             researchersScrollRight.style.pointerEvents = 'auto';
@@ -1287,20 +1206,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initial check for researchers
     updateResearchersScrollIndicators();
-
-    // Update researchers indicators on scroll
     researchersContainer.addEventListener('scroll', updateResearchersScrollIndicators);
-
-    // Update researchers indicators on window resize
     window.addEventListener('resize', updateResearchersScrollIndicators);
     
-    console.log('Scroll indicators setup complete');
-
-    // Rebuild bottom section as Calendar & Details and render multiple marks
+    // Calendar
     try {
-        const announcementsHeader = Array.from(document.querySelectorAll('h2')).find(el => el.textContent && el.textContent.trim() === 'Latest Announcements');
+        const announcementsHeader = Array.from(document.querySelectorAll('h2')).find(el => el.textContent && el.textContent.trim() === 'Calendar');
         if (announcementsHeader) {
             const section = announcementsHeader.closest('section');
             if (section) {
@@ -1331,7 +1243,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </svg>
                                 <h2 class="text-3xl font-bold text-gray-900">USeP Calendar</h2>
                             </div>
-                            <p class="text-gray-600 max-w-2xl mx-auto">Stay updated with important dates, deadlines, and events from the Publications Unit.</p>
                         </div>
 
                         <!-- Single Calendar Card with Two Columns -->
@@ -1585,6 +1496,78 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendar();
 
 
+    // Privacy Modal Functions
+    window.acceptPrivacy = function() {
+        // Set privacy accepted in localStorage with timestamp
+        const timestamp = Date.now();
+        localStorage.setItem('privacyAccepted', 'true');
+        localStorage.setItem('privacyAcceptedAt', timestamp.toString());
+        
+        // Also set in sessionStorage as backup
+        sessionStorage.setItem('privacyAccepted', 'true');
+        
+        // Set a cookie as additional backup (persists across page reloads)
+        document.cookie = 'privacyAccepted=true; path=/; max-age=86400'; // 24 hours
+        
+        console.log('Privacy accepted - localStorage:', localStorage.getItem('privacyAccepted'));
+        console.log('Privacy accepted - sessionStorage:', sessionStorage.getItem('privacyAccepted'));
+        console.log('Privacy accepted - cookie:', document.cookie);
+        
+        // Close the modal
+        const modal = document.getElementById('privacyModal');
+        modal.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = 'auto';
+    };
+
+    window.declinePrivacy = function() {
+        // Redirect to USeP main website
+        window.location.href = 'https://www.usep.edu.ph/';
+    };
+
+    // Helper function to get cookie value
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    // Initialize privacy modal on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check all three storage methods for privacy acceptance
+        const localStorageAccepted = localStorage.getItem('privacyAccepted');
+        const sessionStorageAccepted = sessionStorage.getItem('privacyAccepted');
+        const cookieAccepted = getCookie('privacyAccepted');
+        const timestamp = localStorage.getItem('privacyAcceptedAt');
+        
+        // User has accepted if ANY storage has the flag
+        const privacyAccepted = localStorageAccepted === 'true' || 
+                               sessionStorageAccepted === 'true' || 
+                               cookieAccepted === 'true';
+        
+        const modal = document.getElementById('privacyModal');
+        
+        console.log('Page load - localStorage:', localStorageAccepted);
+        console.log('Page load - sessionStorage:', sessionStorageAccepted);
+        console.log('Page load - cookie:', cookieAccepted);
+        console.log('Page load - timestamp:', timestamp);
+        console.log('Page load - privacy accepted:', privacyAccepted);
+        console.log('Current URL:', window.location.href);
+        
+        if (privacyAccepted) {
+            // User has already accepted - hide modal
+            console.log('Hiding modal - user already accepted');
+            modal.classList.remove('show');
+        } else {
+            // First visit or hard refresh - show modal
+            console.log('Showing modal - first visit or hard refresh');
+            modal.classList.add('show');
+            document.body.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+    });
+
     // How It Works Modal Functions (Global Scope)
     window.showHowItWorks = function() {
         const modal = document.getElementById('howItWorksModal');
@@ -1605,6 +1588,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Close modal when clicking outside
+    document.getElementById('privacyModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            // Don't allow closing privacy modal by clicking outside
+            // User must explicitly accept or decline
+        }
+    });
+
     document.getElementById('howItWorksModal').addEventListener('click', function(e) {
         if (e.target === this) {
             window.hideHowItWorks();
@@ -1869,6 +1859,5 @@ document.addEventListener('DOMContentLoaded', () => {
         researcherSearch.addEventListener('input', filterResearchers);
     }
 
-    // Journal search removed per request
 });
 </script> 

@@ -29,6 +29,12 @@ export default defineConfig({
         cors: true,
         hmr: {
             host: getLocalIP(),
+            // Preserve localStorage during HMR
+            overlay: false,
         },
+    },
+    // Preserve localStorage during development
+    define: {
+        __VUE_PROD_DEVTOOLS__: false,
     },
 });

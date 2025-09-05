@@ -4,6 +4,11 @@
             <x-authentication-card-logo />
         </x-slot>
 
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
+            <p class="text-gray-600">Enter your email to receive a reset link</p>
+        </div>
+
         <div class="mb-4 text-base text-gray-900 font-medium drop-shadow-sm">
             {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
         </div>

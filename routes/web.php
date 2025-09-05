@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\GoogleController;
@@ -11,12 +12,23 @@ use App\Http\Controllers\AdminUserController;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
+
+// Privacy acceptance handled client-side with localStorage
 
 // Debug route for troubleshooting
 Route::get('/debug', function () {
     return view('debug');
 })->name('debug');
+
+// Test route to check privacy session
+Route::get('/test-privacy', function () {
+    return response()->json([
+        'privacy_accepted' => session('privacy_accepted', false),
+        'session_id' => session()->getId(),
+        'all_session' => session()->all()
+    ]);
+})->name('test.privacy');
 
 // Simple test route
 Route::get('/test', function () {
@@ -60,9 +72,9 @@ Route::middleware([
     Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
     // Signing for signatories
     Route::get('/signing', [\App\Http\Controllers\SigningController::class, 'index'])->name('signing.index');
-    Route::post('/signing/signature', [\App\Http\Controllers\SigningController::class, 'storeSignature'])->name('signing.signature');
-    Route::post('/signing/sign-document', [\App\Http\Controllers\SigningController::class, 'signDocument'])->name('signing.sign-document');
-Route::post('/signing/revert-document', [\App\Http\Controllers\SigningController::class, 'revertDocument'])->name('signing.revert-document');
+    Route::post('/signing/revert-document', [\App\Http\Controllers\SigningController::class, 'revertDocument'])->name('signing.revert-document');
+    Route::get('/signing/download-files/{requestId}', [\App\Http\Controllers\SigningController::class, 'downloadRequestFiles'])->name('signing.download-files')->middleware('throttle:20,1');
+    Route::post('/signing/upload-signed', [\App\Http\Controllers\SigningController::class, 'uploadSignedDocuments'])->name('signing.upload-signed')->middleware('throttle:10,1');
 
 // Secure file download routes for admin
 Route::middleware(['auth', 'admin'])->group(function () {

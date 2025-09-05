@@ -28,37 +28,10 @@
                     @include('components.user-navbar', ['showFilters' => false])
                 </div>
 
-                <!-- Optimized Content Grid -->
-                <div class="grid grid-cols-1 xl:grid-cols-6 gap-4 max-w-7xl mx-auto">
-                    <!-- Left: Signature Management Card -->
-                    <div class="xl:col-span-2">
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-                            <!-- Compact Card Header -->
-                            <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-maroon-50 to-maroon-100/30 flex-shrink-0">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                        </svg>
-                                    </div>
-                                    <h2 class="text-base font-semibold text-maroon-900">Digital Signatures</h2>
-                                </div>
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800 border border-maroon-200">
-                                    {{ Auth::user()->signatures()->count() }} signatures
-                                </span>
-                            </div>
-                        </div>
-                            
-                            <!-- Card Content -->
-                            <div class="p-4 flex-1 overflow-hidden">
-                                @livewire('signature-manager')
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right: Pending Requests Card -->
-                    <div class="xl:col-span-4">
+                <!-- Full Width Content -->
+                <div class="max-w-7xl mx-auto">
+                    <!-- Pending Requests Card -->
+                    <div class="w-full">
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
                             <!-- Compact Card Header -->
                             <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100/30 flex-shrink-0">
@@ -177,23 +150,37 @@
                                                         </td>
                                                         <td class="px-3 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                             @if($request['signature_status'] === 'signed')
-                                                                @if($request['can_revert'])
-                                                                    <button onclick="revertDocument({{ $request['id'] }})" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-all duration-200 text-sm font-medium">
-                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                                                                        </svg>
-                                                                        Revert
-                                                                    </button>
-                                                                @else
-                                                                    <span class="text-xs text-gray-500">Can't revert</span>
-                                                                @endif
+                                                                <div class="flex flex-col gap-2">
+                                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                                                        Signed
+                                                                    </span>
+                                                                    @if($request['can_revert'])
+                                                                        <button onclick="revertDocument({{ $request['id'] }})" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-all duration-200 text-xs font-medium">
+                                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                                                            </svg>
+                                                                            Revert
+                                                                        </button>
+                                                                    @else
+                                                                        <span class="text-xs text-gray-500 italic">Cannot revert after 24 hours</span>
+                                                                    @endif
+                                                                </div>
                                                             @else
-                                                                <button onclick="openSignModal({{ $request['id'] }})" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-sm font-medium">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                                                    </svg>
-                                                                    Sign
-                                                                </button>
+                                                                <div class="flex flex-col gap-2">
+                                                                    <button onclick="downloadRequestFiles({{ $request['id'] }})" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-sm font-medium">
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                                        </svg>
+                                                                        Download
+                                                                    </button>
+                                                                    <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-sm font-medium">
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                                                        </svg>
+                                                                        Upload Signed
+                                                                    </button>
+                                                                </div>
                                                             @endif
                                                         </td>
                                                     </tr>
@@ -229,43 +216,48 @@
     <!-- CSRF Token for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Signing Modal -->
-    <div id="signModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <!-- Upload Signed Documents Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3 text-center">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-maroon-100">
                     <svg class="h-6 w-6 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
                 </div>
-                <h3 class="text-lg font-medium text-gray-900 mt-4">Sign Document</h3>
+                <h3 class="text-lg font-medium text-gray-900 mt-4">Upload Signed Documents</h3>
                 <div class="mt-2 px-7 py-3">
                     <p class="text-sm text-gray-500">
-                        Confirm that you want to sign this document with your selected signature.
+                        Upload the signed documents. They will replace the original files with the same names.
                     </p>
-                    
-                    <!-- Selected Signature Display -->
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Selected Signature:</label>
-                        <div id="selectedSignatureDisplay" class="flex items-center p-3 border rounded-lg bg-gray-50">
-                            <!-- Will show selected signature -->
-                        </div>
-                    </div>
                     
                     <!-- Request Details -->
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Request Details:</label>
-                        <div id="requestDetailsDisplay" class="text-sm text-gray-600 space-y-1">
+                        <div id="uploadRequestDetailsDisplay" class="text-sm text-gray-600 space-y-1">
                             <!-- Will show request details -->
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Area -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Signed Documents:</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-maroon-400 transition-colors">
+                            <input type="file" id="signedDocuments" name="signed_documents[]" multiple accept=".pdf,.docx" class="hidden">
+                            <button type="button" onclick="document.getElementById('signedDocuments').click()" class="text-maroon-600 hover:text-maroon-700 font-medium">
+                                Click to select files
+                            </button>
+                            <p class="text-xs text-gray-500 mt-1">PDF, DOCX files only (max 10MB each)</p>
+                            <div id="selectedFiles" class="mt-2 text-sm text-gray-600"></div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="items-center px-4 py-3">
-                    <button id="confirmSignBtn" class="px-4 py-2 bg-maroon-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-maroon-600 focus:outline-none focus:ring-2 focus:ring-maroon-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Sign Document
+                    <button id="confirmUploadBtn" class="px-4 py-2 bg-maroon-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-maroon-600 focus:outline-none focus:ring-2 focus:ring-maroon-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Upload Signed Documents
                     </button>
-                    <button onclick="closeSignModal()" class="mt-2 px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    <button onclick="closeUploadModal()" class="mt-2 px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
                         Cancel
                     </button>
                 </div>
@@ -282,113 +274,52 @@
         </div>
     </div>
     
-    <style>
-        .signature-item {
-            transition: all 0.2s ease-in-out;
-            border: 2px solid transparent;
-        }
-        
-        .signature-item:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-color: #e5e7eb;
-        }
-        
-        .signature-item.ring-2 {
-            border-color: #8b5cf6;
-            background-color: #f3f4f6;
-        }
-        
-        .selection-indicator {
-            transition: all 0.2s ease-in-out;
-        }
-    </style>
     
     <script>
         let currentRequestId = null;
 
-        function openSignModal(requestId) {
-            console.log('Opening sign modal for request:', requestId);
-            currentRequestId = requestId;
+        function downloadRequestFiles(requestId) {
+            console.log('Downloading files for request:', requestId);
             
-            // Check if a signature is selected
-            if (!window.selectedSignatureData) {
+            // Use direct GET request like admin does
+            window.location.href = `/signing/download-files/${requestId}`;
+        }
+
+        function openUploadModal(requestId) {
+            console.log('Opening upload modal for request:', requestId);
+            
+            // Check if request is already signed
+            const request = window.requestsData?.find(r => r.id == requestId);
+            if (request && request.signature_status === 'signed') {
                 if (window.notificationManager) {
-                    window.notificationManager.error('Please select a signature first by clicking on one from your list above.');
+                    window.notificationManager.error('This request has already been signed. You cannot upload signed documents multiple times.');
                 } else {
-                    alert('Please select a signature first by clicking on one from your list above.');
+                    alert('This request has already been signed. You cannot upload signed documents multiple times.');
                 }
                 return;
             }
             
-            // Update modal with selected signature and request details
-            updateModalDisplay();
-            document.getElementById('signModal').classList.remove('hidden');
-        }
-
-        function closeSignModal() {
-            document.getElementById('signModal').classList.add('hidden');
-            currentRequestId = null;
-            // Don't clear selectedSignatureData - user keeps their selection
-        }
-
-        async function loadSignatures() {
-            console.log('Loading signatures...');
-            try {
-                // Use the existing signature manager to get signatures
-                if (window.signatureManager && typeof window.signatureManager.getSignatures === 'function') {
-                    console.log('Signature manager found, getting signatures...');
-                    const signatures = window.signatureManager.getSignatures();
-                    console.log('Signatures loaded from manager:', signatures);
-                    displaySignatures(signatures);
-                } else {
-                    console.log('Signature manager not available, fetching from server...');
-                    const response = await fetch('/signatures', {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const signatures = await response.json();
-                        console.log('Signatures loaded from server:', signatures);
-                        displaySignatures(signatures);
-                    } else {
-                        console.error('Failed to load signatures');
-                        displaySignatures([]);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading signatures:', error);
-                displaySignatures([]);
-            }
-        }
-
-        function displaySignatures(signatures) {
-            // This function is no longer needed since we're using the Livewire component
-            // The signatures are already displayed in the component
-            console.log('Signatures loaded:', signatures);
-        }
-
-
-
-        function updateModalDisplay() {
-            // Update selected signature display
-            const signatureDisplay = document.getElementById('selectedSignatureDisplay');
-            if (window.selectedSignatureData) {
-                signatureDisplay.innerHTML = `
-                    <img src="${window.selectedSignatureData.display_path}" alt="Signature" class="w-16 h-8 object-contain border rounded mr-3">
-                    <div>
-                        <div class="text-sm font-medium text-gray-900">${window.selectedSignatureData.label || 'Signature'}</div>
-                        <div class="text-xs text-gray-500">Uploaded ${new Date(window.selectedSignatureData.created_at).toLocaleDateString()}</div>
-                    </div>
-                `;
-            }
+            currentRequestId = requestId;
             
+            // Update modal with request details
+            updateUploadModalDisplay();
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            currentRequestId = null;
+            // Clear file selection
+            document.getElementById('signedDocuments').value = '';
+            document.getElementById('selectedFiles').innerHTML = '';
+        }
+
+
+
+
+        function updateUploadModalDisplay() {
             // Update request details display
-            const requestDisplay = document.getElementById('requestDetailsDisplay');
+            const requestDisplay = document.getElementById('uploadRequestDetailsDisplay');
             const request = window.requestsData?.find(r => r.id == currentRequestId);
             if (request) {
                 requestDisplay.innerHTML = `
@@ -400,32 +331,74 @@
             }
         }
 
-        async function confirmSign() {
-            if (!currentRequestId || !window.selectedSignatureData) {
+        function updateSelectedFiles() {
+            const fileInput = document.getElementById('signedDocuments');
+            const selectedFilesDiv = document.getElementById('selectedFiles');
+            
+            if (fileInput.files.length > 0) {
+                let filesList = '<div class="text-left"><strong>Selected files:</strong><ul class="mt-1">';
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i];
+                    filesList += `<li class="text-xs">• ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</li>`;
+                }
+                filesList += '</ul></div>';
+                selectedFilesDiv.innerHTML = filesList;
+            } else {
+                selectedFilesDiv.innerHTML = '';
+            }
+        }
+
+        async function confirmUpload() {
+            if (!currentRequestId) {
                 if (window.notificationManager) {
-                    window.notificationManager.error('Please select a signature first.');
+                    window.notificationManager.error('No request selected.');
                 } else {
-                    alert('Please select a signature first.');
+                    alert('No request selected.');
+                }
+                return;
+            }
+
+            // Double-check if request is already signed
+            const request = window.requestsData?.find(r => r.id == currentRequestId);
+            if (request && request.signature_status === 'signed') {
+                if (window.notificationManager) {
+                    window.notificationManager.error('This request has already been signed. You cannot upload signed documents multiple times.');
+                } else {
+                    alert('This request has already been signed. You cannot upload signed documents multiple times.');
+                }
+                return;
+            }
+
+            const fileInput = document.getElementById('signedDocuments');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                if (window.notificationManager) {
+                    window.notificationManager.error('Please select at least one file to upload.');
+                } else {
+                    alert('Please select at least one file to upload.');
                 }
                 return;
             }
 
             // Show loading overlay
             document.getElementById('loadingOverlay').classList.remove('hidden');
-            document.getElementById('signModal').classList.add('hidden');
+            document.getElementById('uploadModal').classList.add('hidden');
 
             try {
-                const response = await fetch('/signing/sign-document', {
+                const formData = new FormData();
+                formData.append('request_id', currentRequestId);
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                
+                // Add all selected files
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    formData.append('signed_documents[]', fileInput.files[i]);
+                }
+
+                const response = await fetch('/signing/upload-signed', {
                     method: 'POST',
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        request_id: currentRequestId,
-                        signature_id: window.selectedSignatureData.id
-                    })
+                    }
                 });
 
                 const data = await response.json();
@@ -437,12 +410,12 @@
                 } else {
                     window.notificationManager.error(data.message);
                     document.getElementById('loadingOverlay').classList.add('hidden');
-                    document.getElementById('signModal').classList.remove('hidden');
+                    document.getElementById('uploadModal').classList.remove('hidden');
                 }
             } catch (error) {
-                window.notificationManager.error('Failed to sign document. Please try again.');
+                window.notificationManager.error('Failed to upload signed documents. Please try again.');
                 document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('signModal').classList.remove('hidden');
+                document.getElementById('uploadModal').classList.remove('hidden');
             }
         }
 
@@ -481,105 +454,23 @@
         // Store requests data globally for modal display
         window.requestsData = @json($requests);
         
-        // Signature selection functions
-        window.selectSignatureFromList = function(id, label, path, createdAt) {
-            console.log('selectSignatureFromList called with:', { id, label, path, createdAt });
-            
-            // Remove selection from all signature items
-            document.querySelectorAll('.signature-item').forEach(item => {
-                item.classList.remove('ring-2', 'ring-maroon-500', 'bg-maroon-50');
-                const indicator = item.querySelector('.selection-indicator');
-                if (indicator) {
-                    indicator.className = 'w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0 selection-indicator mt-1';
-                }
-            });
-            
-            // Highlight selected signature
-            const selectedItem = document.querySelector(`[data-signature-id="${id}"]`);
-            if (selectedItem) {
-                selectedItem.classList.add('ring-2', 'ring-maroon-500', 'bg-maroon-50');
-                const indicator = selectedItem.querySelector('.selection-indicator');
-                if (indicator) {
-                    indicator.className = 'w-4 h-4 rounded-full border-2 border-maroon-500 bg-maroon-500 flex-shrink-0 selection-indicator mt-1';
-                }
-            }
-            
-            // Store selected signature data globally for the signing modal
-            window.selectedSignatureData = {
-                id: id,
-                label: label,
-                path: path, // This is now the storage path like "signatures/10/image.png"
-                display_path: `/signatures/${id}`, // Use the show route for display
-                created_at: createdAt
-            };
-            
-            console.log('Signature selected from list:', window.selectedSignatureData);
-            
-            // Show success notification
-            if (window.notificationManager) {
-                window.notificationManager.success(`Signature "${label}" selected. You can now sign documents.`);
-            } else {
-                // Fallback to alert if notification manager is not available
-                alert(`Signature "${label}" selected. You can now sign documents.`);
-            }
-        }
-        
-        window.deleteSignatureFromList = function(id) {
-            // Call the Livewire delete method
-            if (window.Livewire) {
-                const wireElement = document.querySelector('[wire\\:id]');
-                if (wireElement) {
-                    const wireId = wireElement.getAttribute('wire:id');
-                    window.Livewire.find(wireId).call('deleteSignature', id);
-                }
-            }
-        }
-        
-        // Bind confirm button and load signatures
+        // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, binding confirm button and loading signatures...');
-            console.log('Signature manager available:', !!window.signatureManager);
+            console.log('DOM loaded, initializing signatory functionality...');
             
-            // Set up event delegation for signature selection and deletion
-            document.addEventListener('click', function(e) {
-                // Handle signature selection
-                if (e.target.closest('.signature-item')) {
-                    const signatureItem = e.target.closest('.signature-item');
-                    const id = signatureItem.getAttribute('data-signature-id');
-                    const label = signatureItem.getAttribute('data-signature-label');
-                    const path = signatureItem.getAttribute('data-signature-path');
-                    const createdAt = signatureItem.getAttribute('data-signature-created');
-                    
-                    if (id && label && path && createdAt) {
-                        selectSignatureFromList(id, label, path, createdAt);
-                    }
-                }
-                
-                // Handle signature deletion
-                if (e.target.closest('.delete-signature-btn')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const button = e.target.closest('.delete-signature-btn');
-                    const id = button.getAttribute('data-signature-id');
-                    if (id) {
-                        deleteSignatureFromList(id);
-                    }
-                }
-            });
+            // Set up file input change event for upload modal
+            const signedDocumentsInput = document.getElementById('signedDocuments');
+            if (signedDocumentsInput) {
+                signedDocumentsInput.addEventListener('change', updateSelectedFiles);
+            }
             
-            // Wait a bit for Livewire to initialize
-                setTimeout(() => {
-                console.log('Loading signatures after delay...');
-                loadSignatures();
-            }, 500);
-            
-            // Bind confirm button
-            const confirmBtn = document.getElementById('confirmSignBtn');
-            if (confirmBtn) {
-                console.log('Confirm button found, binding click event');
-                confirmBtn.onclick = confirmSign;
+            // Bind confirm buttons
+            const confirmUploadBtn = document.getElementById('confirmUploadBtn');
+            if (confirmUploadBtn) {
+                console.log('Confirm upload button found, binding click event');
+                confirmUploadBtn.onclick = confirmUpload;
             } else {
-                console.error('Confirm button not found!');
+                console.error('Confirm upload button not found!');
             }
         });
     </script>
