@@ -36,22 +36,35 @@ class GoogleController extends Controller
         );
 
         if ($googleUser->getAvatar()) {
+            $avatarUrl = $googleUser->getAvatar();
             \Log::info('Google profile picture found', [
                 'user_email' => $googleUser->getEmail(),
-                'avatar_url' => $googleUser->getAvatar(),
-                'previous_photo' => $user->profile_photo_path
+                'avatar_url' => $avatarUrl,
+                'previous_photo' => $user->profile_photo_path,
+                'environment' => app()->environment()
             ]);
             
-            $user->profile_photo_path = $googleUser->getAvatar();
+            // Ensure HTTPS for Google profile pictures
+            if (str_contains($avatarUrl, 'googleusercontent.com')) {
+                $avatarUrl = str_replace('http://', 'https://', $avatarUrl);
+                // Add size parameter if not present
+                if (!str_contains($avatarUrl, '=')) {
+                    $avatarUrl .= '=s96-c';
+                }
+            }
+            
+            $user->profile_photo_path = $avatarUrl;
             $user->save();
             
             \Log::info('Profile picture updated successfully', [
                 'user_id' => $user->id,
-                'new_photo' => $user->profile_photo_path
+                'new_photo' => $user->profile_photo_path,
+                'processed_url' => $avatarUrl
             ]);
         } else {
             \Log::info('No Google profile picture available', [
-                'user_email' => $googleUser->getEmail()
+                'user_email' => $googleUser->getEmail(),
+                'google_user_data' => $googleUser->user
             ]);
         }
 

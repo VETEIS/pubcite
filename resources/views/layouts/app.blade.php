@@ -10,10 +10,7 @@
         <meta http-equiv="X-XSS-Protection" content="1; mode=block">
         <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
         
-        <!-- Content Security Policy - Less restrictive for development -->
-        @if (app()->environment('production'))
-            <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; font-src 'self' https://fonts.bunny.net; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';">
-        @endif
+        <!-- Content Security Policy handled by SecurityHeaders middleware -->
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 

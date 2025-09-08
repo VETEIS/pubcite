@@ -7,10 +7,9 @@
 
         <!-- Force HTTPS -->
         @if (app()->environment('production'))
-            <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;">
-        @else
-            <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:; style-src 'self' 'unsafe-inline' http: https:; img-src 'self' data: http: https:;">
+            <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
         @endif
+        <!-- Content Security Policy handled by SecurityHeaders middleware -->
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
         <meta http-equiv="X-XSS-Protection" content="1; mode=block">
 

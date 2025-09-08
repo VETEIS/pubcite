@@ -62,6 +62,16 @@ class User extends Authenticatable
         if ($this->profile_photo_path) {
             // Check if it's a full URL (starts with http/https)
             if (filter_var($this->profile_photo_path, FILTER_VALIDATE_URL)) {
+                // For Google profile pictures, ensure we're using the correct URL format
+                if (str_contains($this->profile_photo_path, 'googleusercontent.com')) {
+                    // Ensure the URL uses HTTPS and has proper sizing parameters
+                    $url = str_replace('http://', 'https://', $this->profile_photo_path);
+                    // Add size parameter if not present
+                    if (!str_contains($url, '=')) {
+                        $url .= '=s96-c'; // 96x96 pixels, cropped
+                    }
+                    return $url;
+                }
                 return $this->profile_photo_path;
             }
         }
