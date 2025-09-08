@@ -1,4 +1,7 @@
 <x-app-layout>
+    {{-- Privacy Enforcer --}}
+    <x-privacy-enforcer />
+    
     <!-- Global Notifications -->
     <x-global-notifications />
     
@@ -16,12 +19,16 @@
             <main class="p-4 rounded-bl-lg pb-8">
                 <!-- Dashboard Header with Modern Compact Filters -->
                 <div class="relative flex items-center justify-between mb-4">
-                    <!-- Overview Header -->
-                    <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
+                    <!-- Overview Header with Request Counter -->
+                    <div class="flex items-center gap-3 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20v-6m0 0l-3 3m3-3l3 3M5 8l7-3 7 3-7 3-7-3z"/>
                         </svg>
                         <span>Signature Requests</span>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                            <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5 animate-pulse"></div>
+                            {{ count($requests) }}
+                        </span>
                     </div>
                     
                     <!-- Enhanced Search and User Controls -->
@@ -30,26 +37,9 @@
 
                 <!-- Full Width Content -->
                 <div class="max-w-7xl mx-auto">
-                    <!-- Pending Requests Card -->
+                    <!-- Signature Requests Table -->
                     <div class="w-full">
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-                            <!-- Compact Card Header -->
-                            <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100/30 flex-shrink-0">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                            </svg>
-                                        </div>
-                                        <h2 class="text-base font-semibold text-gray-900">Pending Signature Requests</h2>
-                                    </div>
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                        <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5 animate-pulse"></div>
-                                        {{ count($requests) }}
-                                    </span>
-                                </div>
-                            </div>
                             
                             <!-- Card Content - Table -->
                             <div class="flex-1 overflow-hidden">

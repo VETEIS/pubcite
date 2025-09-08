@@ -21,10 +21,24 @@ Route::get('/debug', function () {
     return view('debug');
 })->name('debug');
 
+// Privacy acceptance endpoint
+Route::post('/privacy/accept', function () {
+    // Store privacy acceptance in session for server-side validation
+    session(['privacy_accepted' => true]);
+    session(['privacy_accepted_at' => now()]);
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Privacy statement accepted',
+        'timestamp' => now()->toISOString()
+    ]);
+})->name('privacy.accept');
+
 // Test route to check privacy session
 Route::get('/test-privacy', function () {
     return response()->json([
         'privacy_accepted' => session('privacy_accepted', false),
+        'privacy_accepted_at' => session('privacy_accepted_at'),
         'session_id' => session()->getId(),
         'all_session' => session()->all()
     ]);

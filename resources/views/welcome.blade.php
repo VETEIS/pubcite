@@ -375,7 +375,7 @@
     <body>
         <div class="min-h-screen bg-white relative font-sans text-gray-900 antialiased">
             <!-- Data Privacy Disclaimer Modal -->
-            <div id="privacyModal" class="glassmorphism-modal show">
+            <div id="privacyModal" class="glassmorphism-modal">
                 <div class="glassmorphism-card" style="max-width: 50vw; width: 50vw;">
                     <div class="glassmorphism-content">
                         <div class="text-center">
@@ -645,6 +645,9 @@
                                 <h1 class="hero-title text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
                                     USeP Publication Unit
                                 </h1>
+                                <h2 class="text-xl md:text-2xl font-normal text-white/90 mb-8 leading-relaxed">
+                                    List of indexed journals for publication incentives:
+                                </h2>
                                 
                                 <div class="mb-6">
                                     <!--<h3 class="text-md font-medium text-white mb-3">Suggested Journals:</h3>-->
@@ -1503,15 +1506,24 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('privacyAccepted', 'true');
         localStorage.setItem('privacyAcceptedAt', timestamp.toString());
         
-        // Also set in sessionStorage as backup
-        sessionStorage.setItem('privacyAccepted', 'true');
-        
-        // Set a cookie as additional backup (persists across page reloads)
-        document.cookie = 'privacyAccepted=true; path=/; max-age=86400'; // 24 hours
-        
         console.log('Privacy accepted - localStorage:', localStorage.getItem('privacyAccepted'));
-        console.log('Privacy accepted - sessionStorage:', sessionStorage.getItem('privacyAccepted'));
-        console.log('Privacy accepted - cookie:', document.cookie);
+        
+        // Sync with server
+        fetch('{{ route("privacy.accept") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server sync successful:', data);
+        })
+        .catch(error => {
+            console.error('Server sync failed:', error);
+            // Continue anyway - client-side enforcement will work
+        });
         
         // Close the modal
         const modal = document.getElementById('privacyModal');
@@ -1525,43 +1537,31 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'https://www.usep.edu.ph/';
     };
 
-    // Helper function to get cookie value
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
-    }
 
     // Initialize privacy modal on page load
     document.addEventListener('DOMContentLoaded', function() {
-        // Check all three storage methods for privacy acceptance
-        const localStorageAccepted = localStorage.getItem('privacyAccepted');
-        const sessionStorageAccepted = sessionStorage.getItem('privacyAccepted');
-        const cookieAccepted = getCookie('privacyAccepted');
-        const timestamp = localStorage.getItem('privacyAcceptedAt');
-        
-        // User has accepted if ANY storage has the flag
-        const privacyAccepted = localStorageAccepted === 'true' || 
-                               sessionStorageAccepted === 'true' || 
-                               cookieAccepted === 'true';
-        
+        // Check localStorage for privacy acceptance (simplified)
+        const privacyAccepted = localStorage.getItem('privacyAccepted') === 'true';
         const modal = document.getElementById('privacyModal');
         
-        console.log('Page load - localStorage:', localStorageAccepted);
-        console.log('Page load - sessionStorage:', sessionStorageAccepted);
-        console.log('Page load - cookie:', cookieAccepted);
-        console.log('Page load - timestamp:', timestamp);
         console.log('Page load - privacy accepted:', privacyAccepted);
         console.log('Current URL:', window.location.href);
+        console.log('Modal element found:', !!modal);
+        
+        if (!modal) {
+            console.error('Privacy modal element not found!');
+            return;
+        }
         
         if (privacyAccepted) {
             // User has already accepted - hide modal
             console.log('Hiding modal - user already accepted');
             modal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = 'auto';
         } else {
-            // First visit or hard refresh - show modal
-            console.log('Showing modal - first visit or hard refresh');
+            // User hasn't accepted - show modal
+            console.log('Showing modal - user needs to accept');
             modal.classList.add('show');
             document.body.classList.add('modal-open');
             document.body.style.overflow = 'hidden';

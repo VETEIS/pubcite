@@ -9,11 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Check if privacy was accepted
-    const privacyAccepted = localStorage.getItem('privacyAccepted');
+    // Check if privacy was accepted (consistent with welcome page logic)
+    const privacyAccepted = localStorage.getItem('privacyAccepted') === 'true';
     
-    if (privacyAccepted !== 'true') {
-        // Show notification
+    if (!privacyAccepted) {
         @if(config('app.debug'))
             console.log('Privacy not accepted, redirecting to welcome page...');
         @endif
@@ -36,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Also check on page visibility change (in case user switches tabs)
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
-        const privacyAccepted = localStorage.getItem('privacyAccepted');
-        if (privacyAccepted !== 'true' && window.location.pathname !== '/' && window.location.pathname !== '/welcome') {
+        const privacyAccepted = localStorage.getItem('privacyAccepted') === 'true';
+        if (!privacyAccepted && window.location.pathname !== '/' && window.location.pathname !== '/welcome') {
             window.location.href = '{{ route("welcome") }}';
         }
     }

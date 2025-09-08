@@ -4,10 +4,9 @@
  * before accessing any webapp pages.
  */
 
-// Check if privacy was accepted
+// Check if privacy was accepted (consistent with other components)
 function checkPrivacyAccepted() {
-    const privacyAccepted = localStorage.getItem('privacyAccepted');
-    return privacyAccepted === 'true';
+    return localStorage.getItem('privacyAccepted') === 'true';
 }
 
 // Redirect to welcome page if privacy not accepted
