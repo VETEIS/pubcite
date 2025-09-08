@@ -12,8 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('signatures', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('label', 120)->nullable();
+            $table->string('object_key')->unique();
+            $table->string('mime_type', 50)->nullable();
+            $table->unsignedInteger('width_px')->nullable();
+            $table->unsignedInteger('height_px')->nullable();
+            $table->string('hash_sha256', 64)->nullable()->index();
+            $table->binary('encrypted_meta')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Indexes
+            $table->index(['user_id', 'deleted_at']);
         });
     }
 
