@@ -42,11 +42,11 @@
         @include('components.user-sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto">
+        <div class="flex-1 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg">
+            <main class="max-w-7xl mx-auto px-4 pt-2 min-h-[calc(100vh-2rem)]">
                 <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-4">
+                <div class="relative flex items-center justify-between mb-2">
                     <!-- Overview Header -->
                     <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -247,4 +247,41 @@
             </main>
         </div>
     </div>
+
+    <style>
+        /* Force scrollbar to always be visible to prevent layout shifts */
+        .force-scrollbar {
+            scrollbar-gutter: stable;
+            overflow-y: scroll !important;
+        }
+        
+        /* Ensure scrollbar is always visible even on short content */
+        .force-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox */
+        .force-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Ensure minimum content height to trigger scrollbar */
+        .force-scrollbar > * {
+            min-height: calc(100vh + 1px);
+        }
+    </style>
 </x-app-layout>

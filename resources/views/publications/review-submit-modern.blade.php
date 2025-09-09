@@ -165,6 +165,7 @@ function displayUploadedFiles() {
     const fileFields = ['recommendation_letter', 'published_article', 'peer_review', 'terminal_report'];
     
     fileFields.forEach(fieldName => {
+        // Look for the actual file input in the upload tab
         const input = document.querySelector(`[name="${fieldName}"]`);
         if (input && input.files && input.files.length > 0) {
             const fileName = input.files[0].name;
@@ -175,9 +176,47 @@ function displayUploadedFiles() {
             if (element) {
                 element.textContent = displayName;
                 element.title = fileName;
+                element.classList.remove('text-gray-600');
+                element.classList.add('text-green-600', 'font-medium');
+            }
+        } else {
+            // Reset display if no file
+            const reviewElementId = `review-${fieldName}`;
+            const element = document.getElementById(reviewElementId);
+            if (element) {
+                element.textContent = 'No file uploaded';
+                element.title = '';
+                element.classList.remove('text-green-600', 'font-medium');
+                element.classList.add('text-gray-600');
             }
         }
     });
+}
+
+// Sync file changes between upload tab and review tab
+function syncFileDisplay(fieldName) {
+    const input = document.querySelector(`[name="${fieldName}"]`);
+    const reviewElementId = `review-${fieldName}`;
+    const element = document.getElementById(reviewElementId);
+    
+    if (input && input.files && input.files.length > 0) {
+        const fileName = input.files[0].name;
+        const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
+        
+        if (element) {
+            element.textContent = displayName;
+            element.title = fileName;
+            element.classList.remove('text-gray-600');
+            element.classList.add('text-green-600', 'font-medium');
+        }
+    } else {
+        if (element) {
+            element.textContent = 'No file uploaded';
+            element.title = '';
+            element.classList.remove('text-green-600', 'font-medium');
+            element.classList.add('text-gray-600');
+        }
+    }
 }
 
 function updateReviewFile(type, input) {
@@ -189,12 +228,25 @@ function updateReviewFile(type, input) {
     if (element) {
         element.textContent = displayName;
         element.title = fileName;
+        if (input.files.length > 0) {
+            element.classList.remove('text-gray-600');
+            element.classList.add('text-green-600', 'font-medium');
+        } else {
+            element.classList.remove('text-green-600', 'font-medium');
+            element.classList.add('text-gray-600');
+        }
     }
     
     // Update the original file input
     const originalInput = document.querySelector(`[name="${type}"]`);
     if (originalInput && input.files.length > 0) {
-        originalInput.files = input.files;
+        // Create a new FileList-like object
+        const dt = new DataTransfer();
+        dt.items.add(input.files[0]);
+        originalInput.files = dt.files;
+        
+        // Trigger change event to update form state
+        originalInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
 }
 
@@ -205,13 +257,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function generateDocx(type) {
     const form = document.getElementById('publication-request-form');
+    if (!form) {
+        console.error('Form not found: publication-request-form');
+        alert('Error: Form not found. Please refresh the page and try again.');
+        return;
+    }
+    
     const formData = new FormData(form);
     formData.append('docx_type', type);
 
-    // Show loading state
-    const loadingElement = document.querySelector('[x-data*="loading"]');
-    if (loadingElement && loadingElement.__x) {
-        loadingElement.__x.$data.loading = true;
+    // Debug: Log form data
+    console.log('Form data for', type, ':');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, ':', value);
+    }
+
+    // Show loading state with simple UI feedback
+    const button = event.target.closest('.cursor-pointer');
+    if (button) {
+        button.style.opacity = '0.6';
+        button.style.pointerEvents = 'none';
+        const originalText = button.querySelector('p').textContent;
+        button.querySelector('p').textContent = 'Generating...';
     }
 
     fetch('{{ route("publications.generateDocx") }}', {
@@ -222,13 +289,31 @@ function generateDocx(type) {
         }
     })
     .then(response => {
-        if (response.ok) {
-            return response.blob();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        throw new Error('Network response was not ok');
+        
+        // Check content type
+        const contentType = response.headers.get('content-type');
+        console.log('Response content type:', contentType);
+        
+        return response.blob();
     })
     .then(blob => {
-        const url = window.URL.createObjectURL(blob);
+        // Check if blob is valid
+        if (!blob || blob.size === 0) {
+            throw new Error('Generated file is empty or corrupted');
+        }
+        
+        console.log('Generated blob size:', blob.size, 'bytes');
+        console.log('Generated blob type:', blob.type);
+        
+        // Ensure proper MIME type for DOCX
+        const docxBlob = new Blob([blob], { 
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        });
+        
+        const url = window.URL.createObjectURL(docxBlob);
         const a = document.createElement('a');
         a.href = url;
         const timestamp = new Date().toISOString().slice(0, 10);
@@ -239,17 +324,23 @@ function generateDocx(type) {
             : `Publication_Terminal_Report_${timestamp}.docx`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        
+        // Clean up
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Error generating document. Please try again.');
+        console.error('Error generating document:', error);
+        alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
     })
     .finally(() => {
-        // Hide loading state
-        if (loadingElement && loadingElement.__x) {
-            loadingElement.__x.$data.loading = false;
+        // Restore button state
+        if (button) {
+            button.style.opacity = '1';
+            button.style.pointerEvents = 'auto';
+            button.querySelector('p').textContent = 'Click to generate DOCX';
         }
     });
 }

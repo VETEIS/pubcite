@@ -177,11 +177,13 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            $templateProcessor = new TemplateProcessor($templatePath);
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
+            // Use IOFactory for better Word compatibility
+            $phpWord = IOFactory::load($templatePath);
             
+            // Process the document more carefully
+            $this->replacePlaceholdersInDocument($phpWord, $data);
+            
+            // Add signature placeholders
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -190,13 +192,12 @@ class PublicationsController extends Controller
                 'directorsignature' => '${directorsignature}'
             ];
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
-            }
+            $this->replacePlaceholdersInDocument($phpWord, $signaturePlaceholders);
             
             try {
                 Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
-                $templateProcessor->saveAs($fullOutputPath);
+                $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+                $objWriter->save($fullOutputPath);
                 Log::info('DOCX saved successfully', ['path' => $fullOutputPath]);
             } catch (\Exception $e) {
                 Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
@@ -227,11 +228,13 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            $templateProcessor = new TemplateProcessor($templatePath);
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
+            // Use IOFactory for better Word compatibility
+            $phpWord = IOFactory::load($templatePath);
             
+            // Process the document more carefully
+            $this->replacePlaceholdersInDocument($phpWord, $data);
+            
+            // Add signature placeholders
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -240,11 +243,10 @@ class PublicationsController extends Controller
                 'directorsignature' => '${directorsignature}'
             ];
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
-            }
+            $this->replacePlaceholdersInDocument($phpWord, $signaturePlaceholders);
             
-            $templateProcessor->saveAs($fullOutputPath);
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($fullOutputPath);
             return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateRecommendationDocxFromHtml: ' . $e->getMessage());
@@ -327,6 +329,51 @@ class PublicationsController extends Controller
             ]);
             throw $e;
         }
+    }
+
+    private function replacePlaceholdersInDocument($phpWord, $data)
+    {
+        $sections = $phpWord->getSections();
+        
+        foreach ($sections as $section) {
+            $elements = $section->getElements();
+            
+            foreach ($elements as $element) {
+                $this->replacePlaceholdersInElementSimple($element, $data);
+            }
+        }
+    }
+
+    private function replacePlaceholdersInElementSimple($element, $data)
+    {
+        if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
+            $this->replacePlaceholdersInTextSimple($element, $data);
+        } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+            foreach ($element->getElements() as $textElement) {
+                if ($textElement instanceof \PhpOffice\PhpWord\Element\Text) {
+                    $this->replacePlaceholdersInTextSimple($textElement, $data);
+                }
+            }
+        } elseif ($element instanceof \PhpOffice\PhpWord\Element\Table) {
+            foreach ($element->getRows() as $row) {
+                foreach ($row->getCells() as $cell) {
+                    foreach ($cell->getElements() as $cellElement) {
+                        $this->replacePlaceholdersInElementSimple($cellElement, $data);
+                    }
+                }
+            }
+        }
+    }
+
+    private function replacePlaceholdersInTextSimple($textElement, $data)
+    {
+        $text = $textElement->getText();
+        
+        foreach ($data as $key => $value) {
+            $text = str_replace('${' . $key . '}', $value, $text);
+        }
+        
+        $textElement->setText($text);
     }
 
     private function replacePlaceholdersInElement($element, $data, $typeChecked, $indexedChecked)

@@ -1,4 +1,4 @@
-<aside class="w-64 h-screen flex-shrink-0 bg-gradient-to-b from-maroon-800 to-maroon-900 text-white flex flex-col shadow-2xl border-r border-maroon-700/50">
+<aside class="w-56 h-screen flex-shrink-0 bg-gradient-to-b from-maroon-800 to-maroon-900 text-white flex flex-col shadow-2xl border-r border-maroon-700/50">
     <!-- Brand Section -->
     <div class="p-6 border-b border-maroon-700/50">
         <div class="flex items-center gap-3">
@@ -98,21 +98,4 @@
         @endif
     </nav>
 
-    <!-- User Profile Section -->
-    <div class="p-4 border-t border-maroon-700/50 bg-maroon-800/30">
-        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-            @if(Auth::user()->profile_photo_path)
-                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/20">
-            @else
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-maroon-600 to-maroon-700 flex items-center justify-center text-white font-bold shadow-lg">
-                    {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                </div>
-            @endif
-            <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold text-white truncate">{{ Auth::user()->name ?? 'User' }}</div>
-                <div class="text-xs text-maroon-200 truncate">{{ Auth::user()->email ?? 'No email' }}</div>
-            </div>
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-        </div>
-    </div>
 </aside>

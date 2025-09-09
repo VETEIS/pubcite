@@ -100,8 +100,8 @@
                     
                     // Define required fields for other tabs
                     const tabFields = {
-                        'incentive': ['name', 'rank', 'college', 'bibentry', 'issn'],
-                        'recommendation': ['faculty_name', 'dean_name', 'rec_publication_details', 'rec_indexing_details']
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
+                        'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details']
                     };
                     
                     const requiredFields = tabFields[currentTab] || [];
@@ -139,6 +139,13 @@
                     if (!tabElement) return false;
                     
                     return tabElement.contains(field);
+                },
+                
+                // Get next tab in sequence
+                getNextTab() {
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex + 1] || 'review';
                 },
                 
                 // Check if a tab should be enabled (progressive unlocking)
@@ -360,36 +367,74 @@
                         const value = draftData[fieldName];
                         console.log('Loading signatory field:', fieldName, 'Value:', value);
                         if (value) {
-                            // Find the Alpine.js component and set selectedName
-                            const component = document.querySelector(`[x-data*="signatorySelect"][data-field="${fieldName}"]`);
-                            console.log('Found component for', fieldName, ':', !!component);
+                            // Use multiple selectors to find the component
+                            const selectors = [
+                                `[data-field="${fieldName}"]`,
+                                `[name="${fieldName}"]`,
+                                `input[name="${fieldName}"]`
+                            ];
+                            
+                            let component = null;
+                            for (const selector of selectors) {
+                                component = document.querySelector(selector);
+                                if (component) {
+                                    console.log('Found component for', fieldName, 'using selector:', selector);
+                                    break;
+                                }
+                            }
+                            
                             if (component) {
-                                // Wait for Alpine.js to be ready
-                                this.$nextTick(() => {
-                                    const alpineData = Alpine.$data(component);
-                                    console.log('Alpine data for', fieldName, ':', alpineData);
-                                    if (alpineData) {
-                                        alpineData.selectedName = value;
-                                        alpineData.query = value;
-                                        console.log('Set signatory value:', fieldName, '=', value);
-                                    } else {
-                                        console.log('Alpine data not ready for', fieldName, ', retrying...');
-                                        // Retry after a short delay
-                                        setTimeout(() => {
-                                            const retryData = Alpine.$data(component);
-                                            if (retryData) {
-                                                retryData.selectedName = value;
-                                                retryData.query = value;
-                                                console.log('Retry successful for', fieldName, '=', value);
-                                            }
-                                        }, 500);
-                                    }
-                                });
+                                // Robust restoration with multiple attempts
+                                this.restoreSignatoryValue(component, fieldName, value, 0);
                             } else {
-                                console.log('Component not found for', fieldName);
+                                console.log('Component not found for', fieldName, 'with any selector');
                             }
                         }
                     });
+                },
+                
+                // Robust signatory value restoration with retries
+                restoreSignatoryValue(component, fieldName, value, attempt = 0) {
+                    const maxAttempts = 10;
+                    const delay = Math.min(100 * Math.pow(1.5, attempt), 2000); // Exponential backoff, max 2s
+                    
+                    console.log(`Attempt ${attempt + 1}/${maxAttempts} to restore ${fieldName} = ${value}`);
+                    
+                    // Try to find Alpine.js data
+                    let alpineData = null;
+                    try {
+                        alpineData = Alpine.$data(component);
+                    } catch (e) {
+                        console.log('Alpine.$data failed for', fieldName, ':', e.message);
+                    }
+                    
+                    if (alpineData && alpineData.selectedName !== undefined) {
+                        // Alpine.js component is ready
+                        alpineData.selectedName = value;
+                        alpineData.query = value;
+                        console.log('Successfully restored signatory:', fieldName, '=', value);
+                        
+                        // Trigger validation
+                        setTimeout(() => {
+                            document.dispatchEvent(new CustomEvent('signatory-selected', {
+                                detail: { fieldName: fieldName, selectedName: value }
+                            }));
+                        }, 100);
+                    } else if (attempt < maxAttempts) {
+                        // Retry after delay
+                        setTimeout(() => {
+                            this.restoreSignatoryValue(component, fieldName, value, attempt + 1);
+                        }, delay);
+                    } else {
+                        console.error('Failed to restore signatory after', maxAttempts, 'attempts:', fieldName);
+                        
+                        // Fallback: Set the hidden input value directly
+                        const hiddenInput = component.querySelector('input[type="hidden"]');
+                        if (hiddenInput) {
+                            hiddenInput.value = value;
+                            console.log('Fallback: Set hidden input value for', fieldName, '=', value);
+                        }
+                    }
                 },
                 
                 // Simple tab navigation helpers
@@ -484,36 +529,43 @@
                     this.setupRealTimeValidation();
                 },
                 
-                // Setup real-time validation
+                // Setup real-time validation with debouncing
                 setupRealTimeValidation() {
-                    // Listen for input changes on all form fields
+                    let validationTimeout;
+                    
+                    // Debounced validation function
+                    const debouncedValidation = () => {
+                        clearTimeout(validationTimeout);
+                        validationTimeout = setTimeout(() => {
+                            this.refreshTabStates();
+                        }, 500); // 500ms delay
+                    };
+                    
+                    // Listen for input changes on all form fields (debounced)
                     document.addEventListener('input', (e) => {
                         if (e.target.matches('input, textarea, select')) {
-                            console.log('Input event detected:', e.target.name, 'Value:', e.target.value);
-                            this.refreshTabStates();
+                            debouncedValidation();
                         }
                     });
                     
-                    // Listen for checkbox/radio changes
+                    // Listen for checkbox/radio changes (immediate for better UX)
                     document.addEventListener('change', (e) => {
                         if (e.target.matches('input[type="checkbox"], input[type="radio"]')) {
-                            console.log('Checkbox/radio change detected:', e.target.name, 'Checked:', e.target.checked);
                             this.refreshTabStates();
                         }
                     });
                     
-                    // Listen for file input changes
+                    // Listen for file input changes (immediate for better UX)
                     document.addEventListener('change', (e) => {
                         if (e.target.matches('input[type="file"]')) {
-                            console.log('File input change detected:', e.target.name, 'Files:', e.target.files.length);
                             this.refreshTabStates();
                         }
                     });
                     
-                    // Listen for signatory selection changes
+                    // Listen for signatory selection changes (immediate for better UX)
                     document.addEventListener('signatory-selected', (e) => {
-                        console.log('Signatory selected:', e.detail);
                         this.refreshTabStates();
+                        this.autoSave(); // Trigger auto-save when signatory is selected
                     });
                     
                     // Listen for Alpine.js initialization
@@ -591,31 +643,31 @@
                 <!-- Modern Form Container -->
                 <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl overflow-hidden">
                     <!-- Tab Header -->
-                    <div class="bg-gradient-to-r from-maroon-800 to-maroon-900 px-6 py-4">
-                        <div class="flex border-b border-white/20 mb-0">
+                    <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-t-xl shadow-xl px-6 py-4">
+                        <div class="flex border-b border-maroon-200 mb-0">
                             <button type="button" 
-                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200 rounded-tl-lg"
-                                :class="activeTab === 'incentive' ? 'border-white text-white bg-white/20' : 'border-transparent text-white/70 hover:text-white hover:bg-white/10'"
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 rounded-tl-lg border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'incentive' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : 'text-maroon-600'"
                                 @click="switchTab('incentive')">
                                 Incentive Application
                             </button>
                             <button type="button" 
-                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200"
-                                :class="activeTab === 'recommendation' ? 'border-white text-white bg-white/20' : isTabEnabled('recommendation') ? 'border-transparent text-white/70 hover:text-white hover:bg-white/10' : 'border-transparent text-white/40 cursor-not-allowed bg-white/5'"
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'recommendation' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('recommendation') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
                                 :disabled="!isTabEnabled('recommendation')"
                                 @click="switchTab('recommendation')">
                                 Recommendation Letter
                             </button>
                             <button type="button" 
-                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200"
-                                :class="activeTab === 'upload' ? 'border-white text-white bg-white/20' : isTabEnabled('upload') ? 'border-transparent text-white/70 hover:text-white hover:bg-white/10' : 'border-transparent text-white/40 cursor-not-allowed bg-white/5'"
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'upload' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('upload') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
                                 :disabled="!isTabEnabled('upload')"
                                 @click="switchTab('upload')">
                                 Upload Documents
                             </button>
                             <button type="button" 
-                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200 rounded-tr-lg"
-                                :class="activeTab === 'review' ? 'border-white text-white bg-white/20' : isTabEnabled('review') ? 'border-transparent text-white/70 hover:text-white hover:bg-white/10' : 'border-transparent text-white/40 cursor-not-allowed bg-white/5'"
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 rounded-tr-lg border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'review' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('review') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
                                 :disabled="!isTabEnabled('review')"
                                 @click="switchTab('review')">
                                 Review & Submit
@@ -624,7 +676,7 @@
                     </div>
 
                     <!-- Form Content -->
-                    <div class="p-6">
+                    <div class="pl-6 pr-6 pb-6">
                         <form 
                             id="citation-request-form"
                             method="POST" 
@@ -661,30 +713,85 @@
                                 </div>
                             </div>
 
-                            <!-- Form Actions -->
-                            <div class="flex justify-between pt-6 border-t border-gray-200">
-                                <button type="button" 
-                                    @click="switchTab(getPreviousTab())"
-                                    x-show="activeTab !== 'incentive'"
-                                    class="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                                    Previous
-                                </button>
-                                <div class="flex-1"></div>
-                                <button type="button" 
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Interactive Floating Steps Pill -->
+                <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+                    <div class="bg-white/90 backdrop-blur-sm border border-maroon-200 rounded-full px-6 py-3 shadow-lg">
+                        <div class="flex items-center gap-8">
+                            <!-- Steps group -->
+                            <div class="flex items-center gap-4">
+                                <!-- Step 1: Details (Incentive + Recommendation + Terminal) -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">1</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Details</span>
+                                </div>
+                                
+                                <div class="w-8 h-0.5 bg-maroon-300"></div>
+                                
+                                <!-- Step 2: Upload -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'upload' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">2</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'upload' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Upload</span>
+                                </div>
+                                
+                                <div class="w-8 h-0.5 bg-maroon-300"></div>
+                                
+                                <!-- Step 3: Review -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'review' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">3</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'review' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Review</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Next/Submit button -->
+                            <div class="flex items-center">
+                                <button x-show="activeTab !== 'review'"
                                     @click="switchTab(getNextTab())"
-                                    x-show="activeTab !== 'review'"
                                     :disabled="!isTabEnabled(getNextTab())"
-                                    :class="isTabEnabled(getNextTab()) ? 'px-6 py-2 bg-maroon-600 text-white rounded-lg hover:bg-maroon-700 transition-colors' : 'px-6 py-2 bg-gray-400 text-gray-200 rounded-lg cursor-not-allowed transition-colors'">
+                                    :class="!isTabEnabled(getNextTab())
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-maroon-600 rounded-lg hover:bg-maroon-700 transition-colors w-20'"
+                                    class="transition-colors">
                                     Next
                                 </button>
-                                <button type="submit" 
-                                    id="submit-btn"
-                                    :disabled="!validateForm() || !document.querySelector('#confirm-submission')?.checked"
-                                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    Submit Request
+                                <button x-show="activeTab === 'review'"
+                                    @click="submitForm()"
+                                    :disabled="!validateForm()"
+                                    :class="!validateForm()
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20'"
+                                    class="transition-colors">
+                                    Submit
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </main>
