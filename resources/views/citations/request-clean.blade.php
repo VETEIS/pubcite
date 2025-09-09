@@ -264,6 +264,13 @@
                 
                 // Load draft data into form
                 loadDraftData() {
+                    // Check if we should load a specific draft from sessionStorage
+                    const loadDraftId = sessionStorage.getItem('loadDraftId');
+                    if (loadDraftId) {
+                        this.loadSpecificDraft(loadDraftId);
+                        return;
+                    }
+                    
                     const draftData = @json($request->form_data ?? []);
                     if (!draftData || Object.keys(draftData).length === 0) {
                         // Set initial timestamp even if no draft data
@@ -295,6 +302,51 @@
                     
                     // Update submit button state
                     this.updateSubmitButton();
+                },
+                
+                // Load a specific draft by ID
+                async loadSpecificDraft(draftId) {
+                    try {
+                        const response = await fetch(`/api/draft/${draftId}`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.draft) {
+                            const draftData = JSON.parse(data.draft.form_data);
+                            console.log('Loading specific draft:', draftData);
+                            
+                            // Set timestamp to show draft was loaded
+                            this.lastSaved = 'Draft loaded';
+                            
+                            // Populate all form fields
+                            Object.keys(draftData).forEach(key => {
+                                const element = document.querySelector(`[name="${key}"]`);
+                                if (element) {
+                                    if (element.type === 'checkbox' || element.type === 'radio') {
+                                        element.checked = draftData[key] === '1' || draftData[key] === 'on';
+                                    } else if (element.type === 'file') {
+                                        // Files can't be restored, skip
+                                    } else {
+                                        element.value = draftData[key] || '';
+                                    }
+                                }
+                            });
+                            
+                            // Restore signatory selections
+                            this.restoreSignatorySelections(draftData);
+                            
+                            // Update submit button state
+                            this.updateSubmitButton();
+                            
+                            // Clear the sessionStorage
+                            sessionStorage.removeItem('loadDraftId');
+                        } else {
+                            console.error('Failed to load draft:', data.message);
+                            this.lastSaved = 'Never';
+                        }
+                    } catch (error) {
+                        console.error('Error loading specific draft:', error);
+                        this.lastSaved = 'Never';
+                    }
                 },
                 
                 // Restore signatory Alpine.js selections
@@ -506,12 +558,12 @@
         @include('components.user-sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto">
+        <div class="flex-1 h-screen overflow-y-auto">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg">
+            <main class="max-w-7xl mx-auto px-4 pt-2">
                 <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-4">
-                    <!-- Overview Header -->
+                <div class="relative flex items-center justify-between mb-2">
+                    <!-- Left side - Overview Header -->
                     <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -519,53 +571,55 @@
                         <span>Citation Request</span>
                     </div>
                     
-                <!-- Enhanced Search and User Controls -->
-                <div class="flex items-center gap-4">
-                    <!-- Auto-save Status -->
-                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                        <svg x-show="savingDraft" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        <span x-show="savingDraft" class="text-blue-600">Saving...</span>
-                        <span x-show="!savingDraft" class="text-gray-500">
-                            Last saved: <span x-text="lastSaved || 'Never'"></span>
-                        </span>
+                    <!-- Right side - User Controls -->
+                    <div class="flex items-center gap-4">
+                        <!-- Auto-save Status -->
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg x-show="savingDraft" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span x-show="savingDraft" class="text-blue-600">Saving...</span>
+                            <span x-show="!savingDraft" class="text-gray-500">
+                                Last saved: <span x-text="lastSaved || 'Never'"></span>
+                            </span>
+                        </div>
+                        
+                        @include('components.user-navbar')
                     </div>
-                    
-                    @include('components.user-navbar')
-                </div>
                 </div>
 
                 <!-- Modern Form Container -->
                 <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl overflow-hidden">
-                    <!-- Progress Header -->
+                    <!-- Tab Header -->
                     <div class="bg-gradient-to-r from-maroon-800 to-maroon-900 px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                                        <span class="text-white font-bold text-sm">1</span>
-                                    </div>
-                                    <span class="text-white font-medium">Details</span>
-                                </div>
-                                <div class="w-8 h-0.5 bg-white/30"></div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                                        <span class="text-white font-bold text-sm">2</span>
-                                    </div>
-                                    <span class="text-white font-medium">Upload</span>
-                                </div>
-                                <div class="w-8 h-0.5 bg-white/30"></div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                                        <span class="text-white font-bold text-sm">3</span>
-                                    </div>
-                                    <span class="text-white font-medium">Review</span>
-                                </div>
-                            </div>
-                            <div class="text-white text-sm">
-                                <span class="font-medium">Step 1 of 3</span>
-                            </div>
+                        <div class="flex border-b border-white/20 mb-0">
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200 rounded-tl-lg"
+                                :class="activeTab === 'incentive' ? 'border-white text-white bg-white/20' : 'border-transparent text-white/70 hover:text-white hover:bg-white/10'"
+                                @click="switchTab('incentive')">
+                                Incentive Application
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200"
+                                :class="activeTab === 'recommendation' ? 'border-white text-white bg-white/20' : isTabEnabled('recommendation') ? 'border-transparent text-white/70 hover:text-white hover:bg-white/10' : 'border-transparent text-white/40 cursor-not-allowed bg-white/5'"
+                                :disabled="!isTabEnabled('recommendation')"
+                                @click="switchTab('recommendation')">
+                                Recommendation Letter
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200"
+                                :class="activeTab === 'upload' ? 'border-white text-white bg-white/20' : isTabEnabled('upload') ? 'border-transparent text-white/70 hover:text-white hover:bg-white/10' : 'border-transparent text-white/40 cursor-not-allowed bg-white/5'"
+                                :disabled="!isTabEnabled('upload')"
+                                @click="switchTab('upload')">
+                                Upload Documents
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200 rounded-tr-lg"
+                                :class="activeTab === 'review' ? 'border-white text-white bg-white/20' : isTabEnabled('review') ? 'border-transparent text-white/70 hover:text-white hover:bg-white/10' : 'border-transparent text-white/40 cursor-not-allowed bg-white/5'"
+                                :disabled="!isTabEnabled('review')"
+                                @click="switchTab('review')">
+                                Review & Submit
+                            </button>
                         </div>
                     </div>
 
@@ -584,39 +638,8 @@
                         >
                             @csrf
                             
-                            <!-- Tab Navigation -->
-                            <div class="flex border-b border-gray-200 mb-6 bg-white rounded-t-lg">
-                                <button type="button" 
-                                    class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200 rounded-tl-lg"
-                                    :class="activeTab === 'incentive' ? 'border-maroon-600 text-maroon-700 bg-maroon-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-                                    @click="switchTab('incentive')">
-                                    Incentive Application
-                                </button>
-                                <button type="button" 
-                                    class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200"
-                                    :class="activeTab === 'recommendation' ? 'border-maroon-600 text-maroon-700 bg-maroon-50' : isTabEnabled('recommendation') ? 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' : 'border-transparent text-gray-400 cursor-not-allowed bg-gray-100'"
-                                    :disabled="!isTabEnabled('recommendation')"
-                                    @click="switchTab('recommendation')">
-                                    Recommendation Letter
-                                </button>
-                                <button type="button" 
-                                    class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200"
-                                    :class="activeTab === 'upload' ? 'border-maroon-600 text-maroon-700 bg-maroon-50' : isTabEnabled('upload') ? 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' : 'border-transparent text-gray-400 cursor-not-allowed bg-gray-100'"
-                                    :disabled="!isTabEnabled('upload')"
-                                    @click="switchTab('upload')">
-                                    Upload Documents
-                                </button>
-                                <button type="button" 
-                                    class="flex-1 px-4 py-3 text-sm font-medium text-center border-b-2 transition-all duration-200 rounded-tr-lg"
-                                    :class="activeTab === 'review' ? 'border-maroon-600 text-maroon-700 bg-maroon-50' : isTabEnabled('review') ? 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' : 'border-transparent text-gray-400 cursor-not-allowed bg-gray-100'"
-                                    :disabled="!isTabEnabled('review')"
-                                    @click="switchTab('review')">
-                                    Review & Submit
-                                </button>
-                            </div>
-
                             <!-- Tab Content -->
-                            <div class="min-h-[500px] bg-white rounded-b-lg shadow-sm border border-t-0 border-gray-200 p-6">
+                            <div class="min-h-[500px] bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                 <!-- Incentive Application Tab -->
                                 <div x-show="activeTab === 'incentive'" class="space-y-6">
                                     @include('citations.incentive-application-modern')

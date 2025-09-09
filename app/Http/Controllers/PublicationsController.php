@@ -797,28 +797,6 @@ class PublicationsController extends Controller
                 ]);
                 return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
             } else {
-                // Clean up any existing drafts for this user after successful final submission
-                try {
-                    $deletedDrafts = \App\Models\Request::where('user_id', $userId)
-                        ->where('type', 'Publication')
-                        ->where('status', 'draft')
-                        ->delete();
-                    
-                    if ($deletedDrafts > 0) {
-                        Log::info('Cleaned up draft entries after successful submission', [
-                            'user_id' => $userId,
-                            'deleted_drafts_count' => $deletedDrafts,
-                            'final_request_id' => $userRequest->id
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Failed to clean up draft entries: ' . $e->getMessage(), [
-                        'user_id' => $userId,
-                        'final_request_id' => $userRequest->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    // Don't fail the submission if draft cleanup fails
-                }
                 return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
             }
 

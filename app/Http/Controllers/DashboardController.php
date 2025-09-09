@@ -30,7 +30,9 @@ class DashboardController extends Controller
         }
         
         Log::info('Routing to user dashboard', ['user_id' => $user->id]);
-        $requests = \App\Models\Request::where('user_id', $user->id)->orderByDesc('requested_at')->get();
+        $requests = \App\Models\Request::where('user_id', $user->id)
+            ->where('status', '!=', 'draft') // Exclude drafts from user dashboard
+            ->orderByDesc('requested_at')->get();
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
         return view('dashboard', compact('requests', 'citations_request_enabled'));
     }

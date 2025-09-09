@@ -605,29 +605,6 @@ class CitationsController extends Controller
                 ]);
                 return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
             } else {
-                // Clean up any existing drafts for this user after successful final submission
-                try {
-                    $deletedDrafts = \App\Models\Request::where('user_id', Auth::id())
-                        ->where('type', 'Citation')
-                        ->where('status', 'draft')
-                        ->delete();
-                    
-                    if ($deletedDrafts > 0) {
-                        Log::info('Cleaned up draft entries after successful submission', [
-                            'user_id' => Auth::id(),
-                            'deleted_drafts_count' => $deletedDrafts,
-                            'final_request_id' => $userRequest->id
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Failed to clean up draft entries: ' . $e->getMessage(), [
-                        'user_id' => Auth::id(),
-                        'final_request_id' => $userRequest->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    // Don't fail the submission if draft cleanup fails
-                }
-                
                 return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
             }
         } catch (\Exception $e) {

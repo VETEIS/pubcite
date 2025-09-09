@@ -21,6 +21,10 @@ Route::get('/debug', function () {
     return view('debug');
 })->name('debug');
 
+// Draft management routes
+Route::get('/api/drafts', [App\Http\Controllers\DraftController::class, 'apiIndex'])->name('drafts.api');
+Route::get('/api/draft/{draft}', [App\Http\Controllers\DraftController::class, 'apiShow'])->name('draft.api');
+Route::delete('/drafts/{draft}', [App\Http\Controllers\DraftController::class, 'destroy'])->name('drafts.destroy');
 
 // Simple test route
 Route::get('/test', function () {
