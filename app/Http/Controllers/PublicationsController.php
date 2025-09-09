@@ -31,7 +31,7 @@ class PublicationsController extends Controller
             ->orderBy('id', 'desc')
             ->first();
             
-        \Log::info('Publications create - checking for draft', [
+        Log::info('Publications create - checking for draft', [
             'user_id' => Auth::id(),
             'found_draft' => $existingDraft ? true : false,
             'draft_id' => $existingDraft ? $existingDraft->id : null,
@@ -95,70 +95,6 @@ class PublicationsController extends Controller
         return back()->with('success', 'Request status updated successfully.');
     }
 
-    public function generateIncentiveDocx(Request $request)
-    {
-        try {
-            $reqId = $request->input('request_id');
-            $docxType = $request->input('docx_type', 'incentive');
-            $data = $request->all();
-            $isPreview = !$reqId;
-            if ($isPreview) {
-                $userId = Auth::id();
-                $tempCode = 'preview_' . time() . '_' . Str::random(8);
-                $uploadPath = "temp/{$userId}/{$tempCode}";
-                Log::info('Generating DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
-            } else {
-                $userRequest = \App\Models\Request::find($reqId);
-                if (!$userRequest) {
-                    throw new \Exception('Request not found for DOCX generation');
-                }
-                $reqCode = $userRequest->request_code;
-                $userId = $userRequest->user_id;
-                $uploadPath = "requests/{$userId}/{$reqCode}";
-                Log::info('Generating DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
-            }
-            $filename = null;
-            $fullPath = null;
-            switch ($docxType) {
-                case 'incentive':
-                    $filtered = $this->mapIncentiveFields($data);
-                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
-                    $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath);
-                    $filename = 'Incentive_Application_Form.docx';
-                    break;
-                case 'recommendation':
-                    $filtered = $this->mapRecommendationFields($data);
-                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
-                    $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath);
-                    $filename = 'Recommendation_Letter_Form.docx';
-                    break;
-                case 'terminal':
-                    $filtered = $this->mapTerminalFields($data);
-                    Log::info('Filtered data for terminal', ['filtered' => $filtered]);
-                    $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath);
-                    $filename = 'Terminal_Report_Form.docx';
-                    break;
-                default:
-                    throw new \Exception('Invalid document type: ' . $docxType);
-            }
-            if (!file_exists($fullPath)) {
-                throw new \Exception('Generated file not found');
-            }
-            $userAgent = request()->header('User-Agent');
-            $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
-            $contentDisposition = $isIOS ? 'inline' : 'attachment';
-            return response()->download($fullPath, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error generating DOCX: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error generating document: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
     private function generateIncentiveDocxFromHtml($data, $uploadPath)
     {
@@ -177,13 +113,11 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use IOFactory for better Word compatibility
-            $phpWord = IOFactory::load($templatePath);
+            $templateProcessor = new TemplateProcessor($templatePath);
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
             
-            // Process the document more carefully
-            $this->replacePlaceholdersInDocument($phpWord, $data);
-            
-            // Add signature placeholders
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -192,12 +126,13 @@ class PublicationsController extends Controller
                 'directorsignature' => '${directorsignature}'
             ];
             
-            $this->replacePlaceholdersInDocument($phpWord, $signaturePlaceholders);
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
             
             try {
                 Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
-                $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-                $objWriter->save($fullOutputPath);
+                $templateProcessor->saveAs($fullOutputPath);
                 Log::info('DOCX saved successfully', ['path' => $fullOutputPath]);
             } catch (\Exception $e) {
                 Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
@@ -228,13 +163,11 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use IOFactory for better Word compatibility
-            $phpWord = IOFactory::load($templatePath);
+            $templateProcessor = new TemplateProcessor($templatePath);
+            foreach ($data as $key => $value) {
+                $templateProcessor->setValue($key, $value);
+            }
             
-            // Process the document more carefully
-            $this->replacePlaceholdersInDocument($phpWord, $data);
-            
-            // Add signature placeholders
             $signaturePlaceholders = [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
@@ -243,10 +176,11 @@ class PublicationsController extends Controller
                 'directorsignature' => '${directorsignature}'
             ];
             
-            $this->replacePlaceholdersInDocument($phpWord, $signaturePlaceholders);
+            foreach ($signaturePlaceholders as $key => $placeholder) {
+                $templateProcessor->setValue($key, $placeholder);
+            }
             
-            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-            $objWriter->save($fullOutputPath);
+            $templateProcessor->saveAs($fullOutputPath);
             return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateRecommendationDocxFromHtml: ' . $e->getMessage());
@@ -331,50 +265,6 @@ class PublicationsController extends Controller
         }
     }
 
-    private function replacePlaceholdersInDocument($phpWord, $data)
-    {
-        $sections = $phpWord->getSections();
-        
-        foreach ($sections as $section) {
-            $elements = $section->getElements();
-            
-            foreach ($elements as $element) {
-                $this->replacePlaceholdersInElementSimple($element, $data);
-            }
-        }
-    }
-
-    private function replacePlaceholdersInElementSimple($element, $data)
-    {
-        if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
-            $this->replacePlaceholdersInTextSimple($element, $data);
-        } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
-            foreach ($element->getElements() as $textElement) {
-                if ($textElement instanceof \PhpOffice\PhpWord\Element\Text) {
-                    $this->replacePlaceholdersInTextSimple($textElement, $data);
-                }
-            }
-        } elseif ($element instanceof \PhpOffice\PhpWord\Element\Table) {
-            foreach ($element->getRows() as $row) {
-                foreach ($row->getCells() as $cell) {
-                    foreach ($cell->getElements() as $cellElement) {
-                        $this->replacePlaceholdersInElementSimple($cellElement, $data);
-                    }
-                }
-            }
-        }
-    }
-
-    private function replacePlaceholdersInTextSimple($textElement, $data)
-    {
-        $text = $textElement->getText();
-        
-        foreach ($data as $key => $value) {
-            $text = str_replace('${' . $key . '}', $value, $text);
-        }
-        
-        $textElement->setText($text);
-    }
 
     private function replacePlaceholdersInElement($element, $data, $typeChecked, $indexedChecked)
     {
@@ -583,7 +473,7 @@ class PublicationsController extends Controller
             $recentSubmission = \App\Models\Request::where('user_id', Auth::id())
                 ->where('type', 'Publication')
                 ->where('status', 'pending')
-                ->where('created_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
+                ->where('requested_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
                 ->first();
                 
             if ($recentSubmission) {
@@ -755,28 +645,28 @@ class PublicationsController extends Controller
             $existingDraft = \App\Models\Request::where('user_id', $userId)
                 ->where('type', 'Publication')
                 ->where('status', 'draft')
-                ->orderBy('id', 'desc')
                 ->first();
                 
             if ($existingDraft && $isDraft) {
-                // Update existing draft
+                // Update existing draft - always update, never create new
                 $existingDraft->update([
-                    'form_data' => $data,
+                    'form_data' => json_encode($data), // Ensure proper JSON encoding
                     'pdf_path' => json_encode([
                         'pdfs' => $attachments,
                         'docxs' => [],
                     ]),
+                    'requested_at' => now(), // Update timestamp
                 ]);
                 $userRequest = $existingDraft;
             } else {
-                // Create new request
+                // Create new request (only if not a draft or no existing draft)
                 $userRequest = UserRequest::create([
                     'user_id' => $userId,
                     'request_code' => $requestCode,
                     'type' => 'Publication',
                     'status' => $isDraft ? 'draft' : 'pending',
-                    'requested_at' => now(), // Always set requested_at, even for drafts
-                    'form_data' => $data,
+                    'requested_at' => now(),
+                    'form_data' => json_encode($data), // Ensure proper JSON encoding
                     'pdf_path' => json_encode([
                         'pdfs' => $attachments,
                         'docxs' => $isDraft ? [] : $docxPaths,

@@ -98,4 +98,23 @@
         @endif
     </nav>
 
+    <!-- Logout Button -->
+    <div class="p-4 border-t border-maroon-700/50">
+        <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @csrf
+            <button type="submit" 
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group text-maroon-100 hover:bg-red-600/20 hover:text-red-200 hover:shadow-md">
+                <div class="relative z-10">
+                    <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" 
+                         fill="none" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </div>
+                <span class="font-medium transition-all duration-300 group-hover:translate-x-1">Logout</span>
+            </button>
+        </form>
+    </div>
+
 </aside>

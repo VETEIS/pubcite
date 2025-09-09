@@ -14,6 +14,7 @@
                 lastSaved: null,
                 autoSaveTimer: null,
                 tabStatesRefreshed: 0,
+                confirmChecked: false,
                 
                 showError(message) {
                     this.errorMessage = message;
@@ -37,7 +38,7 @@
                         } else if (field.type === 'file') {
                             isValid = field.files && field.files.length > 0;
                         } else {
-                            isValid = field.value.trim() !== '';
+                            isValid = field.value && field.value.trim() !== '';
                         }
                         
                         if (!isValid) {
@@ -57,6 +58,40 @@
                     return allValid;
                 },
                 
+                // Validate form for submission - only check fields that have been filled out
+                validateFormForSubmission() {
+                    // Get all required fields
+                    const requiredFields = document.querySelectorAll('[required]');
+                    let allValid = true;
+                    
+                    console.log('Validating form for submission, found', requiredFields.length, 'required fields');
+                    
+                    requiredFields.forEach(field => {
+                        // Skip validation if field is hidden (not in current tab)
+                        if (field.offsetParent === null) {
+                            return;
+                        }
+                        
+                        let isValid = false;
+                        
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            isValid = field.checked;
+                        } else if (field.type === 'file') {
+                            isValid = field.files && field.files.length > 0;
+                        } else {
+                            isValid = field.value && field.value.trim() !== '';
+                        }
+                        
+                        if (!isValid) {
+                            allValid = false;
+                            console.log('Invalid field for submission:', field.name, 'Type:', field.type, 'Value:', field.value, 'Visible:', field.offsetParent !== null);
+                        }
+                    });
+                    
+                    console.log('Form validation for submission result:', allValid);
+                    return allValid;
+                },
+                
                 // Sequential tab switching with validation
                 switchTab(targetTab) {
                     const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
@@ -66,6 +101,17 @@
                     // Always allow going back or staying on same tab
                     if (targetIndex <= currentIndex) {
                         this.activeTab = targetTab;
+                        
+                        // Display uploaded files when switching to review tab
+                        if (targetTab === 'review') {
+                            setTimeout(() => {
+                                if (typeof displayUploadedFiles === 'function') {
+                                    displayUploadedFiles();
+                                }
+                                // Update submit button state when switching to review
+                                this.updateSubmitButton();
+                            }, 100);
+                        }
                         return;
                     }
                     
@@ -76,6 +122,17 @@
                     }
                     
                     this.activeTab = targetTab;
+                    
+                    // Display uploaded files when switching to review tab
+                    if (targetTab === 'review') {
+                        setTimeout(() => {
+                            if (typeof displayUploadedFiles === 'function') {
+                                displayUploadedFiles();
+                            }
+                            // Update submit button state when switching to review
+                            this.updateSubmitButton();
+                        }, 100);
+                    }
                 },
                 
                 // Validate current tab - simple and reliable
@@ -88,10 +145,8 @@
                         
                         for (let fileName of requiredFiles) {
                             const fileInput = document.querySelector(`input[name="${fileName}"]`);
-                            console.log('Checking file:', fileName, 'Found:', !!fileInput, 'Files:', fileInput?.files?.length);
                             
                             if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                                console.log('No files selected for:', fileName);
                                 return false;
                             }
                         }
@@ -100,7 +155,7 @@
                     
                     // Define required fields for other tabs
                     const tabFields = {
-                        'incentive': ['name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'issn'],
                         'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details'],
                         'terminal': ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices']
                     };
@@ -113,9 +168,11 @@
                     // Check each required field
                     for (let fieldName of requiredFields) {
                         const field = document.querySelector(`[name="${fieldName}"]`);
-                        console.log('Checking field:', fieldName, 'Found:', !!field, 'Type:', field?.type, 'Value:', field?.value);
                         
-                        if (!field) continue;
+                        if (!field) {
+                            console.log('Field not found:', fieldName);
+                            continue;
+                        }
                         
                         // Check if field is valid
                         if (field.type === 'checkbox' || field.type === 'radio') {
@@ -125,7 +182,7 @@
                             }
                         } else {
                             if (!field.value || field.value.trim() === '') {
-                                console.log('Field is empty:', fieldName);
+                                console.log('Field is empty:', fieldName, 'Value:', field.value);
                                 return false;
                             }
                         }
@@ -158,18 +215,15 @@
                     const currentIndex = tabs.indexOf(this.activeTab);
                     const targetIndex = tabs.indexOf(tabName);
                     
-                    console.log('Checking if tab is enabled:', tabName, 'Current tab:', this.activeTab);
                     
                     // Always allow current tab and previous tabs
                     if (targetIndex <= currentIndex) {
-                        console.log('Tab enabled (current or previous):', tabName);
                         return true;
                     }
                     
                     // For next tab, check if current tab is complete
                     if (targetIndex === currentIndex + 1) {
                         const isValid = this.validateCurrentTab();
-                        console.log('Next tab validation result:', tabName, '=', isValid);
                         return isValid;
                     }
                     
@@ -184,12 +238,10 @@
                         this.activeTab = originalTab;
                         
                         if (!isComplete) {
-                            console.log('Previous tab not complete:', previousTab);
                             return false;
                         }
                     }
                     
-                    console.log('All previous tabs complete, enabling:', tabName);
                     return true;
                 },
                 
@@ -318,8 +370,11 @@
                         const response = await fetch(`/api/draft/${draftId}`);
                         const data = await response.json();
                         
+                        console.log('API response:', data);
+                        
                         if (data.success && data.draft) {
-                            const draftData = JSON.parse(data.draft.form_data);
+                            // form_data is already an object from the API
+                            const draftData = data.draft.form_data;
                             console.log('Loading specific draft:', draftData);
                             
                             // Set timestamp to show draft was loaded
@@ -455,9 +510,10 @@
                 updateSubmitButton() {
                     const submitBtn = document.querySelector('#submit-btn');
                     if (submitBtn) {
-                        const formValid = this.validateForm();
-                        const confirmChecked = document.querySelector('#confirm-submission')?.checked || false;
-                        submitBtn.disabled = !(formValid && confirmChecked);
+                        // If user reached review page, all fields are already validated
+                        // Only check confirmation checkbox
+                        const confirmChecked = this.confirmChecked;
+                        submitBtn.disabled = !confirmChecked;
                     }
                     
                     // Also refresh tab states when form changes
@@ -466,12 +522,10 @@
                 
                 // Refresh tab enabled/disabled states
                 refreshTabStates() {
-                    console.log('Refreshing tab states for current tab:', this.activeTab);
                     // Force Alpine.js to re-evaluate the tab states
                     this.$nextTick(() => {
                         // Trigger validation for current tab
                         const currentTabValid = this.validateCurrentTab();
-                        console.log('Current tab validation result:', currentTabValid);
                         
                         // Force Alpine.js to re-render by updating a reactive property
                         // This will cause isTabEnabled() to be called for all tabs
@@ -521,6 +575,7 @@
                         const confirmCheckbox = document.querySelector('#confirm-submission');
                         if (confirmCheckbox) {
                             confirmCheckbox.addEventListener('change', () => {
+                                this.confirmChecked = confirmCheckbox.checked;
                                 this.updateSubmitButton();
                             });
                         }
@@ -795,12 +850,13 @@
                                     Next
                                 </button>
                                 <button x-show="activeTab === 'review'"
-                                    @click="submitForm()"
-                                    :disabled="!validateForm()"
-                                    :class="!validateForm()
+                                    id="submit-btn"
+                                    @click="document.getElementById('publication-request-form').submit()"
+                                    :disabled="!confirmChecked"
+                                    :class="!confirmChecked
                                         ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
                                         : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20'"
-                                    class="transition-colors">
+                                    class="transition-colors text-center">
                                     Submit
                                 </button>
                             </div>

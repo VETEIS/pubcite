@@ -524,10 +524,11 @@ class CitationsController extends Controller
                 ->first();
                 
             if ($existingDraft && $isDraft) {
-                // Update existing draft
+                // Update existing draft - always update, never create new
                 $existingDraft->update([
                     'form_data' => json_encode($request->except(['_token', ...$fields])),
                     'pdf_path' => json_encode(['pdfs' => $pdfPaths, 'docxs' => []]),
+                    'requested_at' => now(), // Update timestamp
                 ]);
                 $userRequest = $existingDraft;
             } else {

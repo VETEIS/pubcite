@@ -149,7 +149,7 @@
                     Please review all information above. Once submitted, your publication request will be sent to the administrators for review.
                 </p>
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="confirm-submission" class="w-4 h-4 text-maroon-600 border-gray-300 rounded focus:ring-maroon-500">
+                    <input type="checkbox" id="confirm-submission" x-model="confirmChecked" class="w-4 h-4 text-maroon-600 border-gray-300 rounded focus:ring-maroon-500">
                     <label for="confirm-submission" class="text-sm text-green-800">
                         I confirm that all information is accurate and complete
                     </label>
@@ -162,17 +162,26 @@
 <script>
 // Display uploaded files when page loads
 function displayUploadedFiles() {
-    const fileFields = ['recommendation_letter', 'published_article', 'peer_review', 'terminal_report'];
+    console.log('displayUploadedFiles called');
+    const fileFields = [
+        { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
+        { fieldName: 'published_article', elementId: 'review-published-article' },
+        { fieldName: 'peer_review', elementId: 'review-peer-review' },
+        { fieldName: 'terminal_report', elementId: 'review-terminal-report' }
+    ];
     
-    fileFields.forEach(fieldName => {
+    fileFields.forEach(({ fieldName, elementId }) => {
         // Look for the actual file input in the upload tab
         const input = document.querySelector(`[name="${fieldName}"]`);
+        console.log(`Checking field ${fieldName}:`, input, input ? input.files : 'no input');
+        
         if (input && input.files && input.files.length > 0) {
             const fileName = input.files[0].name;
             const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
             
-            const reviewElementId = `review-${fieldName}`;
-            const element = document.getElementById(reviewElementId);
+            console.log(`Found file for ${fieldName}:`, fileName);
+            
+            const element = document.getElementById(elementId);
             if (element) {
                 element.textContent = displayName;
                 element.title = fileName;
@@ -181,8 +190,8 @@ function displayUploadedFiles() {
             }
         } else {
             // Reset display if no file
-            const reviewElementId = `review-${fieldName}`;
-            const element = document.getElementById(reviewElementId);
+            console.log(`No file found for ${fieldName}`);
+            const element = document.getElementById(elementId);
             if (element) {
                 element.textContent = 'No file uploaded';
                 element.title = '';
@@ -223,7 +232,15 @@ function updateReviewFile(type, input) {
     const fileName = input.files.length > 0 ? input.files[0].name : 'No file uploaded';
     const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
     
-    const reviewElementId = `review-${type}`;
+    // Map field names to element IDs
+    const elementIdMap = {
+        'recommendation_letter': 'review-recommendation-letter',
+        'published_article': 'review-published-article',
+        'peer_review': 'review-peer-review',
+        'terminal_report': 'review-terminal-report'
+    };
+    
+    const reviewElementId = elementIdMap[type] || `review-${type}`;
     const element = document.getElementById(reviewElementId);
     if (element) {
         element.textContent = displayName;

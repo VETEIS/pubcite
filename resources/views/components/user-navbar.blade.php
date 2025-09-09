@@ -1,5 +1,5 @@
 <!-- User Navbar Component -->
-<div x-data="{ userMenuOpen: false, draftsOpen: false, drafts: [], loadingDrafts: false }" class="flex items-center gap-4">
+<div class="flex items-center gap-4">
     <!-- Modern Compact Filters -->
     @if(isset($showFilters) && $showFilters)
         <div class="flex items-center gap-2">
@@ -35,46 +35,33 @@
 
     <!-- Drafts Dropdown - Only show on request pages -->
     @if(request()->is('publications/request') || request()->is('citations/request'))
-    <div class="relative">
-        <button @click="if (drafts.length > 0) { loadDrafts(); draftsOpen = !draftsOpen; }" 
-                :class="drafts.length === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'"
-                :disabled="drafts.length === 0"
-                class="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 h-8">
-            <svg :class="drafts.length === 0 ? 'text-gray-400' : 'text-maroon-600'" class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <div class="relative" id="drafts-container">
+        <button id="drafts-button" 
+                class="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 h-8 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300">
+            <svg class="w-3.5 h-3.5 flex-shrink-0 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span>Drafts</span>
+            <span id="drafts-count" class="bg-maroon-100 text-maroon-800 text-xs px-1.5 py-0.5 rounded-full hidden">0</span>
             <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
             </svg>
         </button>
         
         <!-- Drafts Dropdown Menu -->
-        <div x-cloak x-show="draftsOpen" @click.away="draftsOpen = false" @keydown.escape.window="draftsOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-[280px] max-w-[400px]" style="display: none;">
+        <div id="drafts-dropdown" class="absolute right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-[280px] max-w-[400px] hidden">
             <div class="p-3">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-sm font-semibold text-gray-900">Saved Drafts</h3>
-                    <div x-show="loadingDrafts" class="w-4 h-4 border-2 border-maroon-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div id="drafts-loading" class="w-4 h-4 border-2 border-maroon-600 border-t-transparent rounded-full animate-spin hidden"></div>
                 </div>
                 
-                <div x-show="!loadingDrafts && drafts.length === 0" class="text-sm text-gray-500 text-center py-4">
+                <div id="drafts-empty" class="text-sm text-gray-500 text-center py-4 hidden">
                     No saved drafts
                 </div>
                 
-                <div x-show="!loadingDrafts && drafts.length > 0" class="space-y-2 max-h-64 overflow-y-auto">
-                    <template x-for="draft in drafts" :key="draft.id">
-                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <div @click="loadDraft(draft)" class="flex-1 cursor-pointer">
-                                <div class="text-sm font-medium text-gray-900" x-text="draft.type + ' - ' + draft.request_code"></div>
-                                <div class="text-xs text-gray-500" x-text="new Date(draft.created_at).toLocaleString()"></div>
-                            </div>
-                            <button @click="deleteDraft(draft.id)" class="ml-2 p-1 text-gray-400 hover:text-red-600 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </template>
+                <div id="drafts-list" class="space-y-2 max-h-64 overflow-y-auto hidden">
+                    <!-- Drafts will be populated here -->
                 </div>
             </div>
         </div>
@@ -104,63 +91,137 @@
 </div>
 
 <script>
-// Draft management functions
-function loadDrafts() {
-    if (this.drafts.length > 0) return; // Already loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const draftsButton = document.getElementById('drafts-button');
+    const draftsDropdown = document.getElementById('drafts-dropdown');
+    const draftsList = document.getElementById('drafts-list');
+    const draftsEmpty = document.getElementById('drafts-empty');
+    const draftsLoading = document.getElementById('drafts-loading');
+    const draftsCount = document.getElementById('drafts-count');
     
-    this.loadingDrafts = true;
+    if (!draftsButton) return; // Exit if not on a request page
     
-    fetch('/api/drafts')
-        .then(response => response.json())
-        .then(data => {
-            this.drafts = data.drafts || [];
-            this.loadingDrafts = false;
-        })
-        .catch(error => {
-            console.error('Error loading drafts:', error);
-            this.loadingDrafts = false;
-        });
-}
-
-function loadDraft(draft) {
-    // Close the dropdown
-    this.draftsOpen = false;
+    let drafts = [];
+    let isOpen = false;
     
-    // Determine which page to redirect to based on draft type
-    const route = draft.type === 'Publication' ? '/publications/request' : '/citations/request';
+    // Toggle dropdown
+    draftsButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (isOpen) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
     
-    // Store the draft ID in sessionStorage for the request page to pick up
-    sessionStorage.setItem('loadDraftId', draft.id);
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (isOpen && !draftsButton.contains(e.target) && !draftsDropdown.contains(e.target)) {
+            closeDropdown();
+        }
+    });
     
-    // Redirect to the appropriate request page
-    window.location.href = route;
-}
-
-function deleteDraft(draftId) {
-    if (!confirm('Are you sure you want to delete this draft?')) {
-        return;
+    // Close dropdown on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isOpen) {
+            closeDropdown();
+        }
+    });
+    
+    function openDropdown() {
+        isOpen = true;
+        draftsDropdown.classList.remove('hidden');
+        loadDrafts();
     }
     
-    fetch(`/drafts/${draftId}`, {
-        method: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the draft from the local array
-            this.drafts = this.drafts.filter(draft => draft.id !== draftId);
+    function closeDropdown() {
+        isOpen = false;
+        draftsDropdown.classList.add('hidden');
+    }
+    
+    function loadDrafts() {
+        draftsLoading.classList.remove('hidden');
+        draftsEmpty.classList.add('hidden');
+        draftsList.classList.add('hidden');
+        
+        fetch('/api/drafts')
+            .then(response => response.json())
+            .then(data => {
+                drafts = data.drafts || [];
+                renderDrafts();
+                draftsLoading.classList.add('hidden');
+            })
+            .catch(error => {
+                console.error('Error loading drafts:', error);
+                drafts = [];
+                renderDrafts();
+                draftsLoading.classList.add('hidden');
+            });
+    }
+    
+    function renderDrafts() {
+        if (drafts.length === 0) {
+            draftsEmpty.classList.remove('hidden');
+            draftsList.classList.add('hidden');
+            draftsCount.classList.add('hidden');
         } else {
-            alert('Failed to delete draft: ' + (data.message || 'Unknown error'));
+            draftsEmpty.classList.add('hidden');
+            draftsList.classList.remove('hidden');
+            draftsCount.classList.remove('hidden');
+            draftsCount.textContent = drafts.length;
+            
+            draftsList.innerHTML = drafts.map(draft => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex-1 cursor-pointer" onclick="loadDraft(${draft.id})">
+                        <div class="text-sm font-medium text-gray-900">${draft.type} - ${draft.request_code}</div>
+                        <div class="text-xs text-gray-500">${new Date(draft.requested_at).toLocaleString()}</div>
+                    </div>
+                    <button onclick="deleteDraft(${draft.id})" class="ml-2 p-1 text-gray-400 hover:text-red-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
         }
-    })
-    .catch(error => {
-        console.error('Error deleting draft:', error);
-        alert('Failed to delete draft. Please try again.');
-    });
-}
+    }
+    
+    // Global functions for draft actions
+    window.loadDraft = function(draftId) {
+        const draft = drafts.find(d => d.id === draftId);
+        if (!draft) return;
+        
+        closeDropdown();
+        const route = draft.type === 'Publication' ? '/publications/request' : '/citations/request';
+        sessionStorage.setItem('loadDraftId', draftId);
+        window.location.href = route;
+    };
+    
+    window.deleteDraft = function(draftId) {
+        if (!confirm('Are you sure you want to delete this draft?')) return;
+        
+        fetch(`/drafts/${draftId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                drafts = drafts.filter(draft => draft.id !== draftId);
+                renderDrafts();
+            } else {
+                alert('Failed to delete draft: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Failed to delete draft. Please try again.');
+        });
+    };
+});
 </script>
+
+

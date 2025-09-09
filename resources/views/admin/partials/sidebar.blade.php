@@ -67,21 +67,22 @@
         </a>
     </nav>
 
-    <!-- User Profile Section -->
-    <div class="p-4 border-t border-maroon-700/50 bg-maroon-800/30">
-        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-            @if(Auth::user()->profile_photo_path)
-                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/20">
-            @else
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-maroon-600 to-maroon-700 flex items-center justify-center text-white font-bold shadow-lg">
-                    {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+    <!-- Logout Button -->
+    <div class="p-4 border-t border-maroon-700/50">
+        <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @csrf
+            <button type="submit" 
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group text-maroon-100 hover:bg-red-600/20 hover:text-red-200 hover:shadow-md">
+                <div class="relative z-10">
+                    <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" 
+                         fill="none" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
                 </div>
-            @endif
-            <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold text-white truncate">{{ Auth::user()->name ?? 'Admin' }}</div>
-                <div class="text-xs text-maroon-200 truncate">Administrator</div>
-            </div>
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-        </div>
+                <span class="font-medium transition-all duration-300 group-hover:translate-x-1">Logout</span>
+            </button>
+        </form>
     </div>
 </aside> 

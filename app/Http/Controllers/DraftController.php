@@ -16,8 +16,14 @@ class DraftController extends Controller
         // Get all drafts for the current user
         $drafts = UserRequest::where('user_id', $user->id)
             ->where('status', 'draft')
-            ->orderByDesc('created_at')
-            ->get(['id', 'type', 'request_code', 'created_at']);
+            ->orderByDesc('requested_at')
+            ->get(['id', 'type', 'request_code', 'requested_at']);
+        
+        Log::info('Draft API called', [
+            'user_id' => $user->id,
+            'drafts_count' => $drafts->count(),
+            'drafts' => $drafts->toArray()
+        ]);
         
         return response()->json([
             'success' => true,
@@ -59,8 +65,19 @@ class DraftController extends Controller
             // Delete associated files if they exist
             if ($draft->pdf_path) {
                 $pdfData = json_decode($draft->pdf_path, true);
+                
+                // Delete PDF files
                 if (isset($pdfData['pdfs'])) {
                     foreach ($pdfData['pdfs'] as $filePath) {
+                        if (file_exists(storage_path('app/' . $filePath))) {
+                            unlink(storage_path('app/' . $filePath));
+                        }
+                    }
+                }
+                
+                // Delete DOCX files
+                if (isset($pdfData['docxs'])) {
+                    foreach ($pdfData['docxs'] as $filePath) {
                         if (file_exists(storage_path('app/' . $filePath))) {
                             unlink(storage_path('app/' . $filePath));
                         }
