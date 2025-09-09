@@ -1,7 +1,4 @@
 <x-app-layout>
-    {{-- Privacy Enforcer --}}
-    <x-privacy-enforcer />
-    
     <!-- Global Notifications -->
     <x-global-notifications />
     

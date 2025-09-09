@@ -1,7 +1,4 @@
 <x-app-layout>
-    {{-- Privacy Enforcer --}}
-    <x-privacy-enforcer />
-    
     <div x-data="{ 
         loading: false,
         errorMessage: null,

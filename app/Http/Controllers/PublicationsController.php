@@ -531,6 +531,22 @@ class PublicationsController extends Controller
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
         
+        // Prevent duplicate submissions (only for final submissions, not drafts)
+        if (!$isDraft) {
+            $recentSubmission = \App\Models\Request::where('user_id', Auth::id())
+                ->where('type', 'Publication')
+                ->where('status', 'pending')
+                ->where('created_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
+                ->first();
+                
+            if ($recentSubmission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please wait before submitting another request. You can only submit one request every 5 minutes.'
+                ], 429);
+            }
+        }
+        
         // Different validation rules for draft vs final submission
         if ($isDraft) {
             // For drafts, make most fields optional
@@ -781,6 +797,28 @@ class PublicationsController extends Controller
                 ]);
                 return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
             } else {
+                // Clean up any existing drafts for this user after successful final submission
+                try {
+                    $deletedDrafts = \App\Models\Request::where('user_id', $userId)
+                        ->where('type', 'Publication')
+                        ->where('status', 'draft')
+                        ->delete();
+                    
+                    if ($deletedDrafts > 0) {
+                        Log::info('Cleaned up draft entries after successful submission', [
+                            'user_id' => $userId,
+                            'deleted_drafts_count' => $deletedDrafts,
+                            'final_request_id' => $userRequest->id
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to clean up draft entries: ' . $e->getMessage(), [
+                        'user_id' => $userId,
+                        'final_request_id' => $userRequest->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail the submission if draft cleanup fails
+                }
                 return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
             }
 

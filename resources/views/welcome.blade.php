@@ -374,36 +374,6 @@
     </head>
     <body>
         <div class="min-h-screen bg-white relative font-sans text-gray-900 antialiased">
-            <!-- Data Privacy Disclaimer Modal -->
-            <div id="privacyModal" class="glassmorphism-modal">
-                <div class="glassmorphism-card" style="max-width: 50vw; width: 50vw;">
-                    <div class="glassmorphism-content">
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-maroon-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                            </div>
-                            <h2 class="text-2xl font-bold mb-4">Data Privacy Notice</h2>
-                            <p class="text-lg mb-6">
-                                By continuing to use <span class="font-bold text-maroon-600">PubCite</span>, you agree to the 
-                                <a href="https://www.usep.edu.ph/usep-data-privacy-statement/" target="_blank" rel="noopener noreferrer" 
-                                   class="text-maroon-600 hover:text-maroon-800 font-medium transition-colors duration-200">
-                                    University of Southeastern Philippines' Data Privacy Statement
-                                </a>.
-                            </p>
-                            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                                <button onclick="declinePrivacy()" class="glassmorphism-button secondary px-8 py-3 rounded-lg font-semibold">
-                                    Decline
-                                </button>
-                                <button onclick="acceptPrivacy()" class="bg-maroon-600 hover:bg-maroon-700 hover:-translate-y-0.5 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border border-white/20">
-                                    I Agree
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- How It Works Modal -->
             <div id="howItWorksModal" class="glassmorphism-modal hidden">
@@ -1502,74 +1472,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendar();
 
 
-    // Privacy Modal Functions
-    window.acceptPrivacy = function() {
-        // Set privacy accepted in localStorage with timestamp
-        const timestamp = Date.now();
-        localStorage.setItem('privacyAccepted', 'true');
-        localStorage.setItem('privacyAcceptedAt', timestamp.toString());
-        
-        console.log('Privacy accepted - localStorage:', localStorage.getItem('privacyAccepted'));
-        
-        // Sync with server
-        fetch('{{ route("privacy.accept") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Server sync successful:', data);
-        })
-        .catch(error => {
-            console.error('Server sync failed:', error);
-            // Continue anyway - client-side enforcement will work
-        });
-        
-        // Close the modal
-        const modal = document.getElementById('privacyModal');
-        modal.classList.remove('show');
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = 'auto';
-    };
-
-    window.declinePrivacy = function() {
-        // Redirect to USeP main website
-        window.location.href = 'https://www.usep.edu.ph/';
-    };
-
-
-    // Initialize privacy modal on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check localStorage for privacy acceptance (simplified)
-        const privacyAccepted = localStorage.getItem('privacyAccepted') === 'true';
-        const modal = document.getElementById('privacyModal');
-        
-        console.log('Page load - privacy accepted:', privacyAccepted);
-        console.log('Current URL:', window.location.href);
-        console.log('Modal element found:', !!modal);
-        
-        if (!modal) {
-            console.error('Privacy modal element not found!');
-            return;
-        }
-        
-        if (privacyAccepted) {
-            // User has already accepted - hide modal
-            console.log('Hiding modal - user already accepted');
-            modal.classList.remove('show');
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = 'auto';
-        } else {
-            // User hasn't accepted - show modal
-            console.log('Showing modal - user needs to accept');
-            modal.classList.add('show');
-            document.body.classList.add('modal-open');
-            document.body.style.overflow = 'hidden';
-        }
-    });
 
     // How It Works Modal Functions (Global Scope)
     window.showHowItWorks = function() {
@@ -1590,13 +1492,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = 'auto';
     };
 
-    // Close modal when clicking outside
-    document.getElementById('privacyModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            // Don't allow closing privacy modal by clicking outside
-            // User must explicitly accept or decline
-        }
-    });
 
     document.getElementById('howItWorksModal').addEventListener('click', function(e) {
         if (e.target === this) {

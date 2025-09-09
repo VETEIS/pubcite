@@ -1,7 +1,4 @@
 <x-app-layout>
-    {{-- Privacy Enforcer --}}
-    <x-privacy-enforcer />
-    
     <div x-data="citationRequestData()" x-init="console.log('Alpine.js initialized for citations')" class="h-screen bg-gray-50 flex overflow-hidden">
         
         <!-- Hidden notification divs for global notification system -->

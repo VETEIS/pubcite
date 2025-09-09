@@ -1,126 +1,10 @@
 <x-app-layout>
-    {{-- Privacy Enforcer --}}
-    <!-- Privacy Modal -->
-    <div id="privacyModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm hidden">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-8">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-maroon-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold mb-4">Data Privacy Notice</h2>
-                    <p class="text-lg mb-6">
-                        By continuing to use <span class="font-bold text-maroon-600">PubCite</span>, you agree to the 
-                        <a href="https://www.usep.edu.ph/usep-data-privacy-statement/" target="_blank" rel="noopener noreferrer" 
-                           class="text-maroon-600 hover:text-maroon-800 font-medium transition-colors duration-200">
-                            University of Southeastern Philippines' Data Privacy Statement
-                        </a>.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button onclick="acceptPrivacy()" 
-                                class="px-8 py-3 bg-maroon-600 text-white rounded-lg hover:bg-maroon-700 transition-colors duration-200 font-medium">
-                            I Accept
-                        </button>
-                        <button onclick="declinePrivacy()" 
-                                class="px-8 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium">
-                            Decline
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    // Privacy Modal Functions
-    function acceptPrivacy() {
-        console.log('Accept privacy clicked');
-        
-        // Set privacy accepted in localStorage with timestamp
-        const timestamp = Date.now();
-        localStorage.setItem('privacyAccepted', 'true');
-        localStorage.setItem('privacyAcceptedAt', timestamp.toString());
-        
-        console.log('Privacy accepted - localStorage:', localStorage.getItem('privacyAccepted'));
-        
-        // Sync with server
-        fetch('{{ route("privacy.accept") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Server sync successful:', data);
-        })
-        .catch(error => {
-            console.error('Server sync failed:', error);
-            // Continue anyway - client-side enforcement will work
-        });
-        
-        // Close the modal
-        const modal = document.getElementById('privacyModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-    }
-
-    function declinePrivacy() {
-        console.log('Decline privacy clicked');
-        // Redirect to USeP main website
-        window.location.href = 'https://www.usep.edu.ph/';
-    }
-
-    // Initialize privacy modal on page load
-    function initPrivacyModal() {
-        console.log('Initializing privacy modal...');
-        
-        // Check localStorage for privacy acceptance
-        const privacyAccepted = localStorage.getItem('privacyAccepted') === 'true';
-        const modal = document.getElementById('privacyModal');
-        
-        console.log('Page load - privacy accepted:', privacyAccepted);
-        console.log('Modal element found:', !!modal);
-        console.log('Current URL:', window.location.href);
-        
-        if (!modal) {
-            console.error('Privacy modal element not found!');
-            return;
-        }
-        
-        if (privacyAccepted) {
-            // User has already accepted - hide modal
-            console.log('Hiding modal - user already accepted');
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        } else {
-            // User hasn't accepted - show modal
-            console.log('Showing modal - user needs to accept');
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    // Try multiple initialization methods
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPrivacyModal);
-    } else {
-        initPrivacyModal();
-    }
-
-    // Also try after a short delay in case of timing issues
-    setTimeout(initPrivacyModal, 100);
-    </script>
-    
     <script>
         function citationRequestData() {
             return {
                 loading: false,
+                isSubmitting: false,
+                autoSaveDisabled: false,
                 errorMessage: null,
                 errorTimer: null,
                 activeTab: 'incentive',
@@ -352,6 +236,11 @@
                 
                 // Debounced auto-save
                 autoSave() {
+                    // Don't auto-save if disabled (e.g., after form submission)
+                    if (this.autoSaveDisabled) {
+                        return;
+                    }
+                    
                     // Clear existing timer
                     if (this.autoSaveTimer) {
                         clearTimeout(this.autoSaveTimer);
@@ -361,6 +250,16 @@
                     this.autoSaveTimer = setTimeout(() => {
                         this.saveDraft();
                     }, 2000);
+                },
+                
+                // Disable auto-save (called after form submission)
+                disableAutoSave() {
+                    this.autoSaveDisabled = true;
+                    if (this.autoSaveTimer) {
+                        clearTimeout(this.autoSaveTimer);
+                        this.autoSaveTimer = null;
+                    }
+                    console.log('Auto-save disabled after form submission');
                 },
                 
                 // Load draft data into form
@@ -484,11 +383,30 @@
                 
                 // Handle form submission - only show error popup on actual submit
                 handleSubmit(event) {
+                    // Prevent double submission
+                    if (this.isSubmitting) {
+                        event.preventDefault();
+                        return false;
+                    }
+                    
                     if (!this.validateForm(true)) {
                         event.preventDefault();
                         // Error popup is already shown by validateForm()
                         return false;
                     }
+                    
+                    // Mark as submitting and disable submit button
+                    this.isSubmitting = true;
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Submitting...';
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    // Disable auto-save to prevent duplicate entries after submission
+                    this.disableAutoSave();
+                    
                     // Form is valid, allow submission
                     return true;
                 },

@@ -1,7 +1,4 @@
 <x-app-layout>
-    {{-- Privacy Enforcer --}}
-    <x-privacy-enforcer />
-    
         <div x-data="publicationRequestData()" class="h-screen bg-gray-50 flex overflow-hidden">
         
         <!-- Hidden notification divs for global notification system -->

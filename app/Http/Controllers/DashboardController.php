@@ -65,6 +65,9 @@ class DashboardController extends Controller
             $now = now();
             $rangeDescription = '';
             
+            // Exclude drafts from dashboard by default - only show submitted requests
+            $query->where('status', '!=', 'draft');
+            
             if (in_array($sortBy, ['requested_at', 'request_code', 'type', 'status'])) {
                 if ($sortBy === 'requested_at') {
                     $query->orderBy('requested_at', $sortOrder);
@@ -195,6 +198,7 @@ class DashboardController extends Controller
                 $monthExpr = "DATE_FORMAT(requested_at, '%Y-%m')";
             }
             $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
+                ->where('status', '!=', 'draft') // Exclude drafts from chart data
                 ->when($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                     $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                     $q->where('type', $dbType);
@@ -253,7 +257,7 @@ class DashboardController extends Controller
             foreach ($statusRaw as $row) {
                 $statusCounts[$row->status] = $row->count;
             }
-            $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+            $recentApplications = \App\Models\Request::with('user')->where('status', '!=', 'draft')->orderByDesc('requested_at')->limit(5)->get();
             $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
             return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
         } catch (\Exception $e) {
@@ -342,6 +346,10 @@ class DashboardController extends Controller
             $now = now();
             
             $tableQuery = \App\Models\Request::with('user')->orderByDesc('requested_at');
+            
+            // Exclude drafts from dashboard by default - only show submitted requests
+            $tableQuery->where('status', '!=', 'draft');
+            
             if ($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected'])) {
                 $tableQuery->where('status', $status);
             }
@@ -461,6 +469,7 @@ class DashboardController extends Controller
             }
             
             $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
+                ->where('status', '!=', 'draft') // Exclude drafts from chart data
                 ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                     $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                     $q->where('type', $dbType);
@@ -505,6 +514,7 @@ class DashboardController extends Controller
             $dateDetails = [];
             if ($period === 'month' || $period === 'This Month') {
                 $dateDetails = \App\Models\Request::selectRaw("DATE(requested_at) as date, COUNT(*) as count")
+                    ->where('status', '!=', 'draft') // Exclude drafts from date details
                     ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                         $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                         $q->where('type', $dbType);
@@ -674,7 +684,7 @@ class DashboardController extends Controller
                     $activityLogs = collect();
                     
                     try {
-                        $recentApplications = \App\Models\Request::with('user')->orderByDesc('requested_at')->limit(5)->get();
+                        $recentApplications = \App\Models\Request::with('user')->where('status', '!=', 'draft')->orderByDesc('requested_at')->limit(5)->get();
                     } catch (\Exception $e) {
                         Log::error('SSE Stream Error: ' . $e->getMessage());
                     }
