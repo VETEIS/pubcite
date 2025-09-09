@@ -145,7 +145,7 @@
                         <div class="h-1"></div>
                         <x-signatory-select name="faculty_name" type="faculty" placeholder="Search faculty..." />
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
-                        <p class="text-sm text-gray-600 text-center">Signature over Printed Name of the Faculty</p>
+                        <p class="text-sm text-gray-600 text-center">SignatureAAAAAA over Printed Name of the Faculty</p>
                     </div>
                     <div>
                         <div class="h-5"></div>

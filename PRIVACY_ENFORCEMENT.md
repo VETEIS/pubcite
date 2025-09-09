@@ -58,7 +58,6 @@ Add `<x-privacy-enforcer />` to the following pages:
 
 #### Authentication Pages
 - `resources/views/auth/login.blade.php`
-- `resources/views/auth/register.blade.php`
 - `resources/views/auth/forgot-password.blade.php`
 - `resources/views/auth/reset-password.blade.php`
 

@@ -29,7 +29,28 @@ class CitationsController extends Controller
             return redirect()->route('dashboard')->with('error', 'Citations requests are currently disabled by administrators.');
         }
         
-        return view('citations.request');
+        // Check for existing draft
+        $existingDraft = \App\Models\Request::where('user_id', Auth::id())
+            ->where('type', 'Citation')
+            ->where('status', 'draft')
+            ->orderBy('id', 'desc')
+            ->first();
+            
+        \Log::info('Citations create - checking for draft', [
+            'user_id' => Auth::id(),
+            'found_draft' => $existingDraft ? true : false,
+            'draft_id' => $existingDraft ? $existingDraft->id : null,
+            'draft_status' => $existingDraft ? $existingDraft->status : null,
+            'draft_type' => $existingDraft ? $existingDraft->type : null,
+            'form_data' => $existingDraft ? $existingDraft->form_data : null
+        ]);
+            
+        $request = new \stdClass();
+        $request->id = $existingDraft ? $existingDraft->id : null;
+        $request->request_code = $existingDraft ? $existingDraft->request_code : null;
+        $request->form_data = $existingDraft ? (is_string($existingDraft->form_data) ? json_decode($existingDraft->form_data, true) : $existingDraft->form_data) : [];
+        
+        return view('citations.request-clean', compact('request'));
     }
 
     public function adminUpdate(Request $httpRequest, \App\Models\Request $request)
@@ -352,25 +373,86 @@ class CitationsController extends Controller
             return redirect()->route('dashboard')->with('error', 'Citations requests are currently disabled by administrators.');
         }
         
+        // Check if this is a draft save
+        $isDraft = $request->has('save_draft');
+        
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string',
-                'rank' => 'required|string',
-                'college' => 'required|string',
-                'bibentry' => 'required|string',
-                'issn' => 'required|string',
-                'doi' => 'nullable|string',
-                'scopus' => 'nullable',
-                'wos' => 'nullable',
-                'aci' => 'nullable',
-                'faculty_name' => 'required|string',
-                'center_manager' => 'nullable|string',
-                'dean_name' => 'required|string',
-                'rec_collegeheader' => 'required|string',
-            ]);
+            // Different validation rules for draft vs final submission
+            if ($isDraft) {
+                // For drafts, make most fields optional
+                $validationRules = [
+                    'name' => 'nullable|string',
+                    'rank' => 'nullable|string',
+                    'college' => 'nullable|string',
+                    'bibentry' => 'nullable|string',
+                    'issn' => 'nullable|string',
+                    'doi' => 'nullable|string',
+                    'scopus' => 'nullable',
+                    'wos' => 'nullable',
+                    'aci' => 'nullable',
+                    'faculty_name' => 'nullable|string',
+                    'center_manager' => 'nullable|string',
+                    'dean_name' => 'nullable|string',
+                    'rec_collegeheader' => 'nullable|string',
+                    'date' => 'nullable|string',
+                    'rec_faculty_name' => 'nullable|string',
+                    'rec_citing_details' => 'nullable|string',
+                    'rec_indexing_details' => 'nullable|string',
+                    'rec_dean_name' => 'nullable|string',
+                ];
+            } else {
+                // For final submission, require all fields
+                $validationRules = [
+                    'name' => 'required|string',
+                    'rank' => 'required|string',
+                    'college' => 'required|string',
+                    'bibentry' => 'required|string',
+                    'issn' => 'required|string',
+                    'doi' => 'nullable|string',
+                    'scopus' => 'nullable',
+                    'wos' => 'nullable',
+                    'aci' => 'nullable',
+                    'faculty_name' => 'required|string',
+                    'center_manager' => 'nullable|string',
+                    'dean_name' => 'required|string',
+                    'rec_collegeheader' => 'required|string',
+                    'date' => 'required|string',
+                    'rec_faculty_name' => 'required|string',
+                    'rec_citing_details' => 'required|string',
+                    'rec_indexing_details' => 'required|string',
+                    'rec_dean_name' => 'required|string',
+                ];
+            }
+            
+            // Only require files for final submission, not for draft
+            if (!$isDraft) {
+                $validationRules = array_merge($validationRules, [
+                    'recommendation_letter' => 'required|file|mimes:pdf|max:20480',
+                    'citing_article' => 'required|file|mimes:pdf|max:20480',
+                    'cited_article' => 'required|file|mimes:pdf|max:20480',
+                ]);
+            } else {
+                // For drafts, make files optional
+                $validationRules = array_merge($validationRules, [
+                    'recommendation_letter' => 'nullable|file|mimes:pdf|max:20480',
+                    'citing_article' => 'nullable|file|mimes:pdf|max:20480',
+                    'cited_article' => 'nullable|file|mimes:pdf|max:20480',
+                ]);
+            }
+
+            $validator = Validator::make($request->all(), $validationRules);
 
             if ($validator->fails()) {
-                return back()->withErrors($validator)->withInput();
+                // Return JSON response for draft saves, HTML redirect for regular submissions
+                if ($isDraft) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation failed',
+                        'errors' => $validator->errors()->toArray()
+                    ], 422);
+                } else {
+                    return back()->withErrors($validator)->withInput();
+                }
             }
 
             // Generate unique request code
@@ -395,34 +477,55 @@ class CitationsController extends Controller
                         'path' => $cleanPath,
                         'original_name' => $file->getClientOriginalName()
                     ];
+                } elseif (!$isDraft) {
+                    // Only require files for final submission
+                    throw new \Exception("File upload failed for field: {$field}");
                 }
             }
 
-            // Generate DOCX files
+            // Generate DOCX files only for final submission
             $docxPaths = [];
-            try {
-                $incentivePath = $this->generateCitationIncentiveDocxFromHtml($request->all(), $uploadPath);
-                $docxPaths['incentive_application'] = $incentivePath;
-            } catch (\Exception $e) {
-                Log::error('Error generating incentive DOCX: ' . $e->getMessage());
-            }
-            try {
-                $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($request->all(), $uploadPath);
-                $docxPaths['recommendation_letter'] = $recommendationPath;
-            } catch (\Exception $e) {
-                Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
+            if (!$isDraft) {
+                try {
+                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($request->all(), $uploadPath);
+                    $docxPaths['incentive_application'] = $incentivePath;
+                } catch (\Exception $e) {
+                    Log::error('Error generating incentive DOCX: ' . $e->getMessage());
+                }
+                try {
+                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($request->all(), $uploadPath);
+                    $docxPaths['recommendation_letter'] = $recommendationPath;
+                } catch (\Exception $e) {
+                    Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
+                }
             }
 
-            // Create the request record
-            $userRequest = new UserRequest();
-            $userRequest->user_id = $userId;
-            $userRequest->request_code = $requestCode;
-            $userRequest->type = 'Citation';
-            $userRequest->status = 'pending';
-            $userRequest->requested_at = now();
-            $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $docxPaths]);
-            $userRequest->form_data = json_encode($request->except(['_token', ...$fields]));
-            $userRequest->save();
+            // Check if this is an update to existing draft
+            $existingDraft = \App\Models\Request::where('user_id', $userId)
+                ->where('type', 'Citation')
+                ->where('status', 'draft')
+                ->orderBy('id', 'desc')
+                ->first();
+                
+            if ($existingDraft && $isDraft) {
+                // Update existing draft
+                $existingDraft->update([
+                    'form_data' => json_encode($request->except(['_token', ...$fields])),
+                    'pdf_path' => json_encode(['pdfs' => $pdfPaths, 'docxs' => []]),
+                ]);
+                $userRequest = $existingDraft;
+            } else {
+                // Create new request
+                $userRequest = new UserRequest();
+                $userRequest->user_id = $userId;
+                $userRequest->request_code = $requestCode;
+                $userRequest->type = 'Citation';
+                $userRequest->status = $isDraft ? 'draft' : 'pending';
+                $userRequest->requested_at = now(); // Always set requested_at, even for drafts
+                $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $isDraft ? [] : $docxPaths]);
+                $userRequest->form_data = json_encode($request->except(['_token', ...$fields]));
+                $userRequest->save();
+            }
 
             // Activity log for creation
             try {
@@ -460,23 +563,34 @@ class CitationsController extends Controller
                 'docx_count' => count($docxPaths)
             ]);
 
-            // Send email notifications (unchanged)
-            try {
-                Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
-                $adminUsers = \App\Models\User::where('role', 'admin')->get();
-                foreach ($adminUsers as $adminUser) {
-                    Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+            // Only send emails for final submission, not for drafts
+            if (!$isDraft) {
+                try {
+                    Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    $adminUsers = \App\Models\User::where('role', 'admin')->get();
+                    foreach ($adminUsers as $adminUser) {
+                        Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+                    }
+                    Log::info('Email notifications sent successfully', [
+                        'requestId' => $userRequest->id,
+                        'userEmail' => $userRequest->user->email,
+                        'adminEmails' => $adminUsers->pluck('email')->toArray()
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error sending email notifications: ' . $e->getMessage());
                 }
-                Log::info('Email notifications sent successfully', [
-                    'requestId' => $userRequest->id,
-                    'userEmail' => $userRequest->user->email,
-                    'adminEmails' => $adminUsers->pluck('email')->toArray()
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Error sending email notifications: ' . $e->getMessage());
             }
 
-            return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
+            if ($isDraft) {
+                Log::info('Citation draft saved successfully', [
+                    'request_id' => $userRequest->id,
+                    'request_code' => $userRequest->request_code,
+                    'form_data' => $userRequest->form_data
+                ]);
+                return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+            } else {
+                return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
+            }
         } catch (\Exception $e) {
             Log::error('Error submitting citation request: ' . $e->getMessage());
             return back()->with('error', 'An error occurred while submitting your request. Please try again.');

@@ -491,13 +491,16 @@
                             <div class="text-center">
                                 <h3 class="text-xl font-bold mb-4">Ready to Get Started?</h3>
                                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <a href="{{ route('register') }}" class="inline-flex items-center px-6 py-3 font-semibold rounded-lg bg-maroon-700 hover:bg-maroon-800 text-white transition-colors border border-maroon-500 hover:border-maroon-600 shadow-lg hover:shadow-xl">
+                                    <a href="{{ route('login') }}" class="inline-flex items-center px-6 py-3 font-semibold rounded-lg bg-maroon-700 hover:bg-maroon-800 text-white transition-colors border border-maroon-500 hover:border-maroon-600 shadow-lg hover:shadow-xl">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 0v4m0-4h4m-4 0H8M7 20h10a2 2 0 002-2v-5a2 2 0 00-2-2h-3l-2-2-2 2H7a2 2 0 00-2 2v5a2 2 0 002 2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                                         </svg>
-                                        Create Account
+                                        Sign In with Google
                                     </a>
                                 </div>
+                                <p class="text-sm text-white/80 mt-3 text-center">
+                                    Use your USeP Google account to access the system
+                                </p>
                             </div>
                         </div>
                     </div>

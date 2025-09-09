@@ -9,12 +9,12 @@
     $phJson = json_encode($placeholder);
 @endphp
 @if($inline)
-<span x-data='signatorySelect({!! $typeJson !!}, {!! $nameJson !!}, true, {!! $phJson !!})' class="{{ $wrapperClass }}">
+<span x-data='signatorySelect({!! $typeJson !!}, {!! $nameJson !!}, true, {!! $phJson !!})' data-field="{{ $name }}" class="{{ $wrapperClass }}">
     <button type="button" x-ref="trigger" @click="open = true; updatePosition(); fetchOptions()" @keydown.escape.window="open=false"
             class="align-baseline underline decoration-dotted text-maroon-900 font-semibold px-1 rounded focus:outline-none focus:ring-2 focus:ring-maroon-300">
         <span x-text="selectedName || placeholderText"></span>
     </button>
-    <input type="hidden" name="{{ $name }}" :value="selectedName">
+    <input type="hidden" name="{{ $name }}" :value="selectedName" required>
     <div x-show="open" class="fixed z-50 max-h-48 overflow-auto bg-white border border-gray-200 rounded shadow"
          :style="'top:' + popY + 'px; left:' + popX + 'px; min-width:' + popW + 'px'"
          @mouseenter="hovering = true" @mouseleave="hovering = false">
@@ -32,10 +32,10 @@
     </div>
 </span>
 @else
-<div x-data='signatorySelect({!! $typeJson !!}, {!! $nameJson !!}, false, {!! $phJson !!})' class="{{ $wrapperClass }}">
+<div x-data='signatorySelect({!! $typeJson !!}, {!! $nameJson !!}, false, {!! $phJson !!})' data-field="{{ $name }}" class="{{ $wrapperClass }}">
     <input type="text" x-model="query" @focus="open = true; fetchOptions()" @blur="handleBlur" @input.debounce.200ms="fetchOptions()" :placeholder="placeholderText"
            class="{{ $inputClass }}" autocomplete="off">
-    <input type="hidden" name="{{ $name }}" :value="selectedName">
+    <input type="hidden" name="{{ $name }}" :value="selectedName" required>
     <div x-show="open" class="absolute left-0 z-30 mt-1 w-max min-w-full max-h-40 overflow-auto bg-white border border-gray-200 rounded shadow" @mouseenter="hovering = true" @mouseleave="hovering = false">
         <template x-if="loading"><div class="p-2 text-xs text-gray-500">Loading...</div></template>
         <template x-for="opt in options" :key="opt.id">

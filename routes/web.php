@@ -60,9 +60,7 @@ Route::get('/test', function () {
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
+// Registration disabled for security - users must use Google OAuth
 
 Route::get('/forgot-password', function () {
     return view('auth.forgot-password');

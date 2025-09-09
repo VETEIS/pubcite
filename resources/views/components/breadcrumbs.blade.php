@@ -12,7 +12,6 @@
             // Map common routes to icons
             $icon = match(strtolower($seg)) {
                 'login' => 'login',
-                'register' => 'register',
                 'forgot-password' => 'forgot',
                 'dashboard' => 'dashboard',
                 'auth' => 'user',
@@ -32,7 +31,6 @@
     $icons = [
         'home' => '<svg class="w-4 h-4 mr-1 ' . $iconColor . ' inline font-bold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v6a2 2 0 002 2h4a2 2 0 002-2v-6m-6 0h6" /></svg>',
         'login' => '<svg class="w-4 h-4 mr-1 ' . $iconColor . ' inline font-bold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3m6-6v12m13-6a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-        'register' => '<svg class="w-4 h-4 mr-1 ' . $iconColor . ' inline font-bold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>',
         'forgot' => '<svg class="w-4 h-4 mr-1 ' . $iconColor . ' inline font-bold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
         'dashboard' => '<svg class="w-4 h-4 mr-1 ' . $iconColor . ' inline font-bold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" /></svg>',
         'user' => '<svg class="w-4 h-4 mr-1 ' . $iconColor . ' inline font-bold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" /></svg>',

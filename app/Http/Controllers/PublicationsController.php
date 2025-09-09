@@ -24,10 +24,28 @@ class PublicationsController extends Controller
 {
     public function create()
     {
+        // Check for existing draft
+        $existingDraft = \App\Models\Request::where('user_id', Auth::id())
+            ->where('type', 'Publication')
+            ->where('status', 'draft')
+            ->orderBy('id', 'desc')
+            ->first();
+            
+        \Log::info('Publications create - checking for draft', [
+            'user_id' => Auth::id(),
+            'found_draft' => $existingDraft ? true : false,
+            'draft_id' => $existingDraft ? $existingDraft->id : null,
+            'draft_status' => $existingDraft ? $existingDraft->status : null,
+            'draft_type' => $existingDraft ? $existingDraft->type : null,
+            'form_data' => $existingDraft ? $existingDraft->form_data : null
+        ]);
+            
         $request = new \stdClass();
-        $request->id = null;
-        $request->request_code = null;
-        return view('publications.request', compact('request'));
+        $request->id = $existingDraft ? $existingDraft->id : null;
+        $request->request_code = $existingDraft ? $existingDraft->request_code : null;
+        $request->form_data = $existingDraft ? (is_string($existingDraft->form_data) ? json_decode($existingDraft->form_data, true) : $existingDraft->form_data) : [];
+        
+        return view('publications.request-clean', compact('request'));
     }
 
     public function adminUpdate(Request $httpRequest, \App\Models\Request $request)
@@ -339,7 +357,7 @@ class PublicationsController extends Controller
         $replacements = [
             '{{collegeheader}}' => $data['collegeheader'] ?? '',
             '{{name}}' => $data['name'] ?? '',
-            '{{academicrank}}' => $data['academicrank'] ?? '',
+            '{{academicrank}}' => $data['rank'] ?? '',
             '{{employmentstatus}}' => $data['employmentstatus'] ?? '',
             '{{college}}' => $data['college'] ?? '',
             '{{campus}}' => $data['campus'] ?? '',
@@ -355,16 +373,16 @@ class PublicationsController extends Controller
             '{{publisher}}' => $data['publisher'] ?? '',
             '{{citescore}}' => $data['citescore'] ?? '',
             '{{particulars}}' => $data['particulars'] ?? '',
-            '{{facultyname}}' => $data['facultyname'] ?? '',
-            '{{centermanager}}' => $data['centermanager'] ?? '',
-            '{{collegedean}}' => $data['collegedean'] ?? '',
+            '{{facultyname}}' => $data['faculty_name'] ?? '',
+            '{{centermanager}}' => $data['center_manager'] ?? '',
+            '{{collegedean}}' => $data['dean_name'] ?? '',
             
             '{{rec_collegeheader}}' => $data['rec_collegeheader'] ?? '',
             '{{rec_date}}' => $data['rec_date'] ?? now()->format('Y-m-d'),
-            '{{rec_facultyname}}' => $data['rec_facultyname'] ?? '',
-            '{{details}}' => $data['details'] ?? '',
-            '{{indexing}}' => $data['indexing'] ?? '',
-            '{{dean}}' => $data['dean'] ?? '',
+            '{{rec_facultyname}}' => $data['rec_faculty_name'] ?? '',
+            '{{details}}' => $data['rec_publication_details'] ?? '',
+            '{{indexing}}' => $data['rec_indexing_details'] ?? '',
+            '{{dean}}' => $data['rec_dean_name'] ?? '',
             
             '{{title}}' => $data['title'] ?? '',
             '{{author}}' => $data['author'] ?? '',
@@ -506,48 +524,115 @@ class PublicationsController extends Controller
     {
         Log::info('Publication request submission started', [
             'user_id' => Auth::id(),
-            'has_files' => $request->hasFile('article_pdf')
+            'has_files' => $request->hasFile('article_pdf'),
+            'is_draft' => $request->has('save_draft')
         ]);
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'academicrank' => 'required|string',
-            'college' => 'required|string',
-            'bibentry' => 'required|string',
-            'issn' => 'required|string',
-            'doi' => 'nullable|string',
-            'indexed_in' => 'required|string',
-            'particulars' => 'required|string',
-            'facultyname' => 'required|string',
-            'centermanager' => 'nullable|string',
-            'collegedean' => 'nullable|string',
-            'rec_collegeheader' => 'required|string',
-            'rec_date' => 'required|string',
-            'rec_facultyname' => 'required|string',
-            'details' => 'required|string',
-            'indexing' => 'required|string',
-            'dean' => 'required|string',
-            'title' => 'required|string',
-            'author' => 'required|string',
-            'duration' => 'required|string',
-            'abstract' => 'required|string',
-            'introduction' => 'required|string',
-            'methodology' => 'required|string',
-            'rnd' => 'required|string',
-            'car' => 'required|string',
-            'references' => 'required|string',
-            'appendices' => 'nullable|string',
-            'article_pdf' => 'required|file|mimes:pdf|max:20480',
-            'acceptance_pdf' => 'required|file|mimes:pdf|max:20480',
-            'peer_review_pdf' => 'required|file|mimes:pdf|max:20480',
-            'terminal_report_pdf' => 'required|file|mimes:pdf|max:20480',
-        ]);
+        // Check if this is a draft save
+        $isDraft = $request->has('save_draft');
+        
+        // Different validation rules for draft vs final submission
+        if ($isDraft) {
+            // For drafts, make most fields optional
+            $validationRules = [
+                'name' => 'nullable|string',
+                'rank' => 'nullable|string',
+                'college' => 'nullable|string',
+                'bibentry' => 'nullable|string',
+                'issn' => 'nullable|string',
+                'doi' => 'nullable|string',
+                'scopus' => 'nullable',
+                'wos' => 'nullable',
+                'aci' => 'nullable',
+                'faculty_name' => 'nullable|string',
+                'center_manager' => 'nullable|string',
+                'dean_name' => 'nullable|string',
+                'rec_collegeheader' => 'nullable|string',
+                'date' => 'nullable|string',
+                'rec_faculty_name' => 'nullable|string',
+                'rec_publication_details' => 'nullable|string',
+                'rec_indexing_details' => 'nullable|string',
+                'rec_dean_name' => 'nullable|string',
+                'title' => 'nullable|string',
+                'author' => 'nullable|string',
+                'duration' => 'nullable|string',
+                'abstract' => 'nullable|string',
+                'introduction' => 'nullable|string',
+                'methodology' => 'nullable|string',
+                'rnd' => 'nullable|string',
+                'car' => 'nullable|string',
+                'references' => 'nullable|string',
+                'appendices' => 'nullable|string',
+            ];
+        } else {
+            // For final submission, require all fields
+            $validationRules = [
+                'name' => 'required|string',
+                'rank' => 'required|string',
+                'college' => 'required|string',
+                'bibentry' => 'required|string',
+                'issn' => 'required|string',
+                'doi' => 'nullable|string',
+                'scopus' => 'nullable',
+                'wos' => 'nullable',
+                'aci' => 'nullable',
+                'faculty_name' => 'required|string',
+                'center_manager' => 'nullable|string',
+                'dean_name' => 'required|string',
+                'rec_collegeheader' => 'required|string',
+                'date' => 'required|string',
+                'rec_faculty_name' => 'required|string',
+                'rec_publication_details' => 'required|string',
+                'rec_indexing_details' => 'required|string',
+                'rec_dean_name' => 'required|string',
+                'title' => 'required|string',
+                'author' => 'required|string',
+                'duration' => 'required|string',
+                'abstract' => 'required|string',
+                'introduction' => 'required|string',
+                'methodology' => 'required|string',
+                'rnd' => 'required|string',
+                'car' => 'required|string',
+                'references' => 'required|string',
+                'appendices' => 'nullable|string',
+            ];
+        }
+        
+        // Only require files for final submission, not for draft
+        if (!$isDraft) {
+            $validationRules = array_merge($validationRules, [
+                'article_pdf' => 'required|file|mimes:pdf|max:20480',
+                'acceptance_pdf' => 'required|file|mimes:pdf|max:20480',
+                'peer_review_pdf' => 'required|file|mimes:pdf|max:20480',
+                'terminal_report_pdf' => 'required|file|mimes:pdf|max:20480',
+            ]);
+        } else {
+            // For drafts, make files optional
+            $validationRules = array_merge($validationRules, [
+                'article_pdf' => 'nullable|file|mimes:pdf|max:20480',
+                'acceptance_pdf' => 'nullable|file|mimes:pdf|max:20480',
+                'peer_review_pdf' => 'nullable|file|mimes:pdf|max:20480',
+                'terminal_report_pdf' => 'nullable|file|mimes:pdf|max:20480',
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), $validationRules);
 
         if ($validator->fails()) {
             Log::info('Publication request validation failed', [
                 'errors' => $validator->errors()->toArray()
             ]);
-            return back()->withErrors($validator)->withInput();
+            
+            // Return JSON response for draft saves, HTML redirect for regular submissions
+            if ($isDraft) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()->toArray()
+                ], 422);
+            } else {
+                return back()->withErrors($validator)->withInput();
+            }
         }
 
         $data = $validator->validated();
@@ -579,17 +664,18 @@ class PublicationsController extends Controller
                     'mime_type' => $file ? $file->getMimeType() : 'N/A'
                 ]);
                 
-                if (!$file) {
+                if ($file) {
+                    $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
+                    $cleanPath = $storedPath;
+                    $attachments[$field] = [
+                        'path' => $cleanPath,
+                        'original_name' => $file->getClientOriginalName(),
+                    ];
+                } elseif (!$isDraft) {
+                    // Only require files for final submission
                     Log::error('File upload failed - file is null', ['field' => $field]);
                     throw new \Exception("File upload failed for field: {$field}");
                 }
-                
-                $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
-                $cleanPath = $storedPath;
-                $attachments[$field] = [
-                    'path' => $cleanPath,
-                    'original_name' => $file->getClientOriginalName(),
-                ];
             }
 
             $docxPaths = [];
@@ -602,18 +688,38 @@ class PublicationsController extends Controller
                 'userId' => $userId
             ]);
 
-            $userRequest = UserRequest::create([
-                'user_id' => $userId,
-                'request_code' => $requestCode,
-                'type' => 'Publication',
-                'status' => 'pending',
-                'requested_at' => now(),
-                'form_data' => $data,
-                'pdf_path' => json_encode([
-                    'pdfs' => $attachments,
-                    'docxs' => $docxPaths,
-                ]),
-            ]);
+            // Check if this is an update to existing draft
+            $existingDraft = \App\Models\Request::where('user_id', $userId)
+                ->where('type', 'Publication')
+                ->where('status', 'draft')
+                ->orderBy('id', 'desc')
+                ->first();
+                
+            if ($existingDraft && $isDraft) {
+                // Update existing draft
+                $existingDraft->update([
+                    'form_data' => $data,
+                    'pdf_path' => json_encode([
+                        'pdfs' => $attachments,
+                        'docxs' => [],
+                    ]),
+                ]);
+                $userRequest = $existingDraft;
+            } else {
+                // Create new request
+                $userRequest = UserRequest::create([
+                    'user_id' => $userId,
+                    'request_code' => $requestCode,
+                    'type' => 'Publication',
+                    'status' => $isDraft ? 'draft' : 'pending',
+                    'requested_at' => now(), // Always set requested_at, even for drafts
+                    'form_data' => $data,
+                    'pdf_path' => json_encode([
+                        'pdfs' => $attachments,
+                        'docxs' => $isDraft ? [] : $docxPaths,
+                    ]),
+                ]);
+            }
 
             try {
                 \App\Models\ActivityLog::create([
@@ -647,24 +753,36 @@ class PublicationsController extends Controller
                 'requestCode' => $requestCode
             ]);
 
-            try {
-                Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
-                
-                $adminUsers = \App\Models\User::where('role', 'admin')->get();
-                foreach ($adminUsers as $adminUser) {
-                    Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+            // Only send emails for final submission, not for drafts
+            if (!$isDraft) {
+                try {
+                    Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    
+                    $adminUsers = \App\Models\User::where('role', 'admin')->get();
+                    foreach ($adminUsers as $adminUser) {
+                        Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+                    }
+                    
+                    Log::info('Email notifications sent successfully', [
+                        'requestId' => $userRequest->id,
+                        'userEmail' => $userRequest->user->email,
+                        'adminEmails' => $adminUsers->pluck('email')->toArray()
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error sending email notifications: ' . $e->getMessage());
                 }
-                
-                Log::info('Email notifications sent successfully', [
-                    'requestId' => $userRequest->id,
-                    'userEmail' => $userRequest->user->email,
-                    'adminEmails' => $adminUsers->pluck('email')->toArray()
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Error sending email notifications: ' . $e->getMessage());
             }
 
-            return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
+            if ($isDraft) {
+                Log::info('Draft saved successfully', [
+                    'request_id' => $userRequest->id,
+                    'request_code' => $userRequest->request_code,
+                    'form_data' => $userRequest->form_data
+                ]);
+                return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+            } else {
+                return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
+            }
 
         } catch (\Exception $e) {
             Log::error('Error submitting publication request: ' . $e->getMessage(), [
@@ -1034,24 +1152,24 @@ class PublicationsController extends Controller
         return [
             'college' => $data['college'] ?? '',
             'name' => $data['name'] ?? '',
-            'academicrank' => $data['academicrank'] ?? '',
+            'academicrank' => $data['rank'] ?? '',
             'papertitle' => $data['papertitle'] ?? '',
             'bibentry' => $data['bibentry'] ?? '',
             'journaltitle' => $data['journaltitle'] ?? '',
             'issn' => $data['issn'] ?? '',
             'doi' => $data['doi'] ?? '',
             'publisher' => $data['publisher'] ?? '',
-            'scopus' => (isset($data['indexed_in']) && $data['indexed_in'] === 'Scopus') ? '☑' : '☐',
-            'wos' => (isset($data['indexed_in']) && $data['indexed_in'] === 'Web of Science') ? '☑' : '☐',
-            'aci' => (isset($data['indexed_in']) && $data['indexed_in'] === 'ACI') ? '☑' : '☐',
+            'scopus' => (isset($data['scopus']) && $data['scopus'] === '1') ? '☑' : '☐',
+            'wos' => (isset($data['wos']) && $data['wos'] === '1') ? '☑' : '☐',
+            'aci' => (isset($data['aci']) && $data['aci'] === '1') ? '☑' : '☐',
             'regional' => (isset($data['type']) && $data['type'] === 'Regional') ? '☑' : '☐',
             'national' => (isset($data['type']) && $data['type'] === 'National') ? '☑' : '☐',
             'international' => (isset($data['type']) && $data['type'] === 'International') ? '☑' : '☐',
             'citescore' => $data['citescore'] ?? '',
             'particulars' => $data['particulars'] ?? '',
-            'faculty' => $data['facultyname'] ?? '',
-            'centermanager' => $data['centermanager'] ?? '',
-            'dean' => $data['collegedean'] ?? '',
+            'faculty' => $data['faculty_name'] ?? '',
+            'centermanager' => $data['center_manager'] ?? '',
+            'dean' => $data['dean_name'] ?? '',
             'date' => $data['date'] ?? now()->format('Y-m-d'),
         ];
     }
@@ -1071,11 +1189,11 @@ class PublicationsController extends Controller
         Log::info('FORCED rec_collegeheader VALUE', ['value' => $collegeheader, 'raw' => $data['rec_collegeheader'] ?? null, 'request_input' => request()->input('rec_collegeheader'), 'post' => $_POST['rec_collegeheader'] ?? null]);
         return [
             'collegeheader' => $collegeheader,
-            'facultyname' => $data['rec_facultyname'] ?? '',
-            'details' => $data['details'] ?? '',
-            'indexing' => $data['indexing'] ?? '',
-            'dean' => $data['dean'] ?? '',
-            'date' => $data['rec_date'] ?? now()->format('Y-m-d'),
+            'facultyname' => $data['rec_faculty_name'] ?? '',
+            'details' => $data['rec_publication_details'] ?? '',
+            'indexing' => $data['rec_indexing_details'] ?? '',
+            'dean' => $data['rec_dean_name'] ?? '',
+            'date' => $data['date'] ?? now()->format('Y-m-d'),
         ];
     }
     private function mapTerminalFields($data) {

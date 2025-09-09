@@ -63,10 +63,7 @@
 
             <div class="mt-6 text-center">
                 <p class="text-base text-gray-900 font-medium drop-shadow-sm">
-                    {{ __('Don\'t have an account?') }}
-                    <a href="{{ route('register') }}" class="font-semibold text-maroon-800 hover:text-maroon-800 underline">
-                        {{ __('Register here') }}
-                    </a>
+                    {{ __('Don\'t have an account?') }} {{ __('Use "Sign in with Google" to create an account with your USeP email.') }}
                 </p>
             </div>
         </form>

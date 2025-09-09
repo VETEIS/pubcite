@@ -38,7 +38,7 @@ class LoginController extends Controller
             // User doesn't exist - don't create account automatically
             Log::info('Login attempt with non-existent email: ' . $request->email);
             throw ValidationException::withMessages([
-                'email' => 'No account found with this email address. Please register for a new account or use "Sign in with Google" if you previously used Google login.'
+                'email' => 'No account found with this email address. Please use "Sign in with Google" to create an account with your USeP email.'
             ]);
         }
 
@@ -52,7 +52,7 @@ class LoginController extends Controller
         
         Log::info('Password verified for user: ' . $request->email);
 
-        Auth::login($user);
+        Auth::login($user, $request->boolean('remember'));
         Log::info('User logged in successfully: ' . $request->email);
 
         // Clear any existing intended URL to prevent redirect issues

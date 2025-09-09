@@ -50,7 +50,7 @@
         </a>
 
         <!-- Citations Link -->
-        @if(($citations_request_enabled ?? '0') == '1')
+        @if(\App\Models\Setting::get('citations_request_enabled', '1') == '1')
         <a href="{{ route('citations.request') }}" 
            class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden {{ request()->routeIs('citations.*') ? 'bg-white/20 text-white shadow-lg' : 'text-maroon-100 hover:bg-maroon-700/50 hover:text-white hover:shadow-md' }}">
             <div class="relative z-10">

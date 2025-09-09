@@ -213,7 +213,7 @@ SIGNATURE_RETENTION_DAYS=90
 ## 📚 Usage
 
 ### For Users
-1. **Login** - Use your USeP Google account or registered credentials
+1. **Login** - Use your USeP Google account to access the system
 2. **Submit Applications** - Create publication or citation incentive requests
 3. **Upload Documents** - Attach required files and supporting documents
 4. **Track Status** - Monitor your application progress in the dashboard
