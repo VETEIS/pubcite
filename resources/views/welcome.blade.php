@@ -644,12 +644,12 @@
                     <div class="hero-shape"></div>
                     <div class="max-w-7xl mx-auto px-6 relative z-10">
                         <div class="grid md:grid-cols-2 gap-8 items-center">
-                            <div class="text-left">
+                            <div class="text-center">
                                 <h1 class="hero-title text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
                                     USeP Publication Unit
                                 </h1>
                                 <h2 class="text-xl md:text-2xl font-normal text-white/90 mb-8 leading-relaxed">
-                                    List of indexed journals for publication incentives:
+                                    Suggested List of Indexed University Journals
                                 </h2>
                                 
                                 <div class="mb-6">
