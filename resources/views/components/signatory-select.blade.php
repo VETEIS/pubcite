@@ -83,6 +83,12 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
             this.open = false;
             // Trigger validation after selection
             setTimeout(() => {
+                // Trigger custom event for validation
+                document.dispatchEvent(new CustomEvent('signatory-selected', {
+                    detail: { fieldName: this.nameField, selectedName: opt.name }
+                }));
+                
+                // Also trigger Alpine.js validation if available
                 if (window.Alpine && window.Alpine.store('tabNav')) {
                     window.Alpine.store('tabNav').checkTabs();
                 }

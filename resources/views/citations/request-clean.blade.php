@@ -14,6 +14,7 @@
                 savingDraft: false,
                 lastSaved: null,
                 autoSaveTimer: null,
+                tabStatesRefreshed: 0,
                 
                 showError(message) {
                     this.errorMessage = message;
@@ -143,27 +144,31 @@
                 
                 // Check if a tab should be enabled (progressive unlocking)
                 isTabEnabled(tabName) {
+                    // Use the reactive property to force re-evaluation
+                    const _ = this.tabStatesRefreshed;
+                    
                     const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     const targetIndex = tabs.indexOf(tabName);
                     
+                    console.log('Checking if tab is enabled:', tabName, 'Current tab:', this.activeTab);
+                    
                     // Always allow current tab and previous tabs
                     if (targetIndex <= currentIndex) {
+                        console.log('Tab enabled (current or previous):', tabName);
                         return true;
                     }
                     
                     // For next tab, check if current tab is complete
                     if (targetIndex === currentIndex + 1) {
-                        return this.validateCurrentTab();
+                        const isValid = this.validateCurrentTab();
+                        console.log('Next tab validation result:', tabName, '=', isValid);
+                        return isValid;
                     }
                     
                     // For future tabs, check if all previous tabs are complete
                     for (let i = 0; i < targetIndex; i++) {
                         const previousTab = tabs[i];
-                        if (previousTab === this.activeTab) {
-                            // Skip current tab, we already checked it
-                            continue;
-                        }
                         
                         // Temporarily switch to check previous tab
                         const originalTab = this.activeTab;
@@ -172,10 +177,12 @@
                         this.activeTab = originalTab;
                         
                         if (!isComplete) {
+                            console.log('Previous tab not complete:', previousTab);
                             return false;
                         }
                     }
                     
+                    console.log('All previous tabs complete, enabling:', tabName);
                     return true;
                 },
                 
@@ -189,6 +196,7 @@
                         // Collect ALL form data from ALL tabs
                         const inputs = form.querySelectorAll('input, textarea, select');
                         
+                        console.log('Draft save - collecting form data from', inputs.length, 'inputs');
                         inputs.forEach(input => {
                             if (input.type === 'file') {
                                 if (input.files && input.files.length > 0) {
@@ -199,6 +207,10 @@
                                     formData.append(input.name, input.value);
                                 }
                             } else {
+                                // Debug signatory fields specifically
+                                if (input.name.includes('faculty_name') || input.name.includes('center_manager') || input.name.includes('dean_name') || input.name.includes('rec_faculty_name') || input.name.includes('rec_dean_name')) {
+                                    console.log('Saving signatory field:', input.name, '=', input.value);
+                                }
                                 formData.append(input.name, input.value || '');
                             }
                         });
@@ -280,15 +292,35 @@
                     
                     signatoryFields.forEach(fieldName => {
                         const value = draftData[fieldName];
+                        console.log('Loading signatory field:', fieldName, 'Value:', value);
                         if (value) {
                             // Find the Alpine.js component and set selectedName
                             const component = document.querySelector(`[x-data*="signatorySelect"][data-field="${fieldName}"]`);
+                            console.log('Found component for', fieldName, ':', !!component);
                             if (component) {
-                                const alpineData = Alpine.$data(component);
-                                if (alpineData) {
-                                    alpineData.selectedName = value;
-                                    alpineData.query = value;
-                                }
+                                // Wait for Alpine.js to be ready
+                                this.$nextTick(() => {
+                                    const alpineData = Alpine.$data(component);
+                                    console.log('Alpine data for', fieldName, ':', alpineData);
+                                    if (alpineData) {
+                                        alpineData.selectedName = value;
+                                        alpineData.query = value;
+                                        console.log('Set signatory value:', fieldName, '=', value);
+                                    } else {
+                                        console.log('Alpine data not ready for', fieldName, ', retrying...');
+                                        // Retry after a short delay
+                                        setTimeout(() => {
+                                            const retryData = Alpine.$data(component);
+                                            if (retryData) {
+                                                retryData.selectedName = value;
+                                                retryData.query = value;
+                                                console.log('Retry successful for', fieldName, '=', value);
+                                            }
+                                        }, 500);
+                                    }
+                                });
+                            } else {
+                                console.log('Component not found for', fieldName);
                             }
                         }
                     });
@@ -322,10 +354,16 @@
                 
                 // Refresh tab enabled/disabled states
                 refreshTabStates() {
+                    console.log('Refreshing tab states for current tab:', this.activeTab);
                     // Force Alpine.js to re-evaluate the tab states
                     this.$nextTick(() => {
-                        // This will trigger the isTabEnabled() function for each tab
-                        // and update the visual states accordingly
+                        // Trigger validation for current tab
+                        const currentTabValid = this.validateCurrentTab();
+                        console.log('Current tab validation result:', currentTabValid);
+                        
+                        // Force Alpine.js to re-render by updating a reactive property
+                        // This will cause isTabEnabled() to be called for all tabs
+                        this.tabStatesRefreshed = Date.now();
                     });
                 },
                 
@@ -355,6 +393,50 @@
                                 this.updateSubmitButton();
                             });
                         }
+                    });
+                    
+                    // Setup real-time validation
+                    this.setupRealTimeValidation();
+                },
+                
+                // Setup real-time validation
+                setupRealTimeValidation() {
+                    // Listen for input changes on all form fields
+                    document.addEventListener('input', (e) => {
+                        if (e.target.matches('input, textarea, select')) {
+                            console.log('Input event detected:', e.target.name, 'Value:', e.target.value);
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for checkbox/radio changes
+                    document.addEventListener('change', (e) => {
+                        if (e.target.matches('input[type="checkbox"], input[type="radio"]')) {
+                            console.log('Checkbox/radio change detected:', e.target.name, 'Checked:', e.target.checked);
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for file input changes
+                    document.addEventListener('change', (e) => {
+                        if (e.target.matches('input[type="file"]')) {
+                            console.log('File input change detected:', e.target.name, 'Files:', e.target.files.length);
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for signatory selection changes
+                    document.addEventListener('signatory-selected', (e) => {
+                        console.log('Signatory selected:', e.detail);
+                        this.refreshTabStates();
+                    });
+                    
+                    // Listen for Alpine.js initialization
+                    document.addEventListener('alpine:init', () => {
+                        // This will be called when Alpine.js initializes
+                        setTimeout(() => {
+                            this.refreshTabStates();
+                        }, 100);
                     });
                 }
             }

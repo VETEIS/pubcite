@@ -27,7 +27,7 @@
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-recommendation-letter">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('recommendation-letter-review').click()">Change File</button>
-                <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation-letter', this)">
+                <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation_letter', this)">
             </div>
 
             <!-- Published Article Review -->
@@ -42,22 +42,22 @@
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-published-article">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('published-article-review').click()">Change File</button>
-                <input type="file" id="published-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('published-article', this)">
+                <input type="file" id="published-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('published_article', this)">
             </div>
 
-            <!-- Journal Cover Review -->
+            <!-- Peer Review Review -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                         </svg>
                     </div>
-                    <h4 class="text-sm font-medium text-gray-900">Journal Cover & TOC</h4>
+                    <h4 class="text-sm font-medium text-gray-900">Peer Review</h4>
                 </div>
-                <p class="text-xs text-gray-600 mb-2" id="review-journal-cover">No file uploaded</p>
-                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('journal-cover-review').click()">Change File</button>
-                <input type="file" id="journal-cover-review" class="hidden" accept=".pdf" onchange="updateReviewFile('journal-cover', this)">
+                <p class="text-xs text-gray-600 mb-2" id="review-peer-review">No file uploaded</p>
+                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('peer-review-review').click()">Change File</button>
+                <input type="file" id="peer-review-review" class="hidden" accept=".pdf" onchange="updateReviewFile('peer_review', this)">
             </div>
 
             <!-- Terminal Report Review -->
@@ -72,7 +72,7 @@
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-terminal-report">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('terminal-report-review').click()">Change File</button>
-                <input type="file" id="terminal-report-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal-report', this)">
+                <input type="file" id="terminal-report-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal_report', this)">
             </div>
         </div>
     </div>
@@ -160,6 +160,26 @@
 </div>
 
 <script>
+// Display uploaded files when page loads
+function displayUploadedFiles() {
+    const fileFields = ['recommendation_letter', 'published_article', 'peer_review', 'terminal_report'];
+    
+    fileFields.forEach(fieldName => {
+        const input = document.querySelector(`[name="${fieldName}"]`);
+        if (input && input.files && input.files.length > 0) {
+            const fileName = input.files[0].name;
+            const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
+            
+            const reviewElementId = `review-${fieldName}`;
+            const element = document.getElementById(reviewElementId);
+            if (element) {
+                element.textContent = displayName;
+                element.title = fileName;
+            }
+        }
+    });
+}
+
 function updateReviewFile(type, input) {
     const fileName = input.files.length > 0 ? input.files[0].name : 'No file uploaded';
     const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
@@ -172,12 +192,16 @@ function updateReviewFile(type, input) {
     }
     
     // Update the original file input
-    const originalFieldName = type.replace('-', '_');
-    const originalInput = document.querySelector(`[name="${originalFieldName}"]`);
+    const originalInput = document.querySelector(`[name="${type}"]`);
     if (originalInput && input.files.length > 0) {
         originalInput.files = input.files;
     }
 }
+
+// Display uploaded files when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    displayUploadedFiles();
+});
 
 function generateDocx(type) {
     const form = document.getElementById('publication-request-form');

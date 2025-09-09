@@ -70,14 +70,14 @@
                         <tbody>
                             <tr>
                                 <td class="p-4 align-top">
-                                    <textarea name="rec_publication_details" id="rec_publication_details" rows="4" 
-                                              class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent resize-none"
-                                              placeholder="Enter bibliographic details of the published article"></textarea>
+                    <textarea name="rec_publication_details" id="rec_publication_details" rows="4" 
+                              class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent resize-none"
+                              placeholder="Enter bibliographic details of the published article" required></textarea>
                                 </td>
                                 <td class="p-4 align-top">
                                     <textarea name="rec_indexing_details" id="rec_indexing_details" rows="4" 
                                               class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent resize-none"
-                                              placeholder="Enter indexing information (Scopus / WoS / ACI)"></textarea>
+                                              placeholder="Enter indexing information (Scopus / WoS / ACI)" required></textarea>
                                 </td>
                             </tr>
                         </tbody>

@@ -524,7 +524,7 @@ class PublicationsController extends Controller
     {
         Log::info('Publication request submission started', [
             'user_id' => Auth::id(),
-            'has_files' => $request->hasFile('article_pdf'),
+            'has_files' => $request->hasFile('recommendation_letter'),
             'is_draft' => $request->has('save_draft')
         ]);
 
@@ -601,18 +601,18 @@ class PublicationsController extends Controller
         // Only require files for final submission, not for draft
         if (!$isDraft) {
             $validationRules = array_merge($validationRules, [
-                'article_pdf' => 'required|file|mimes:pdf|max:20480',
-                'acceptance_pdf' => 'required|file|mimes:pdf|max:20480',
-                'peer_review_pdf' => 'required|file|mimes:pdf|max:20480',
-                'terminal_report_pdf' => 'required|file|mimes:pdf|max:20480',
+                'recommendation_letter' => 'required|file|mimes:pdf|max:20480',
+                'published_article' => 'required|file|mimes:pdf|max:20480',
+                'peer_review' => 'required|file|mimes:pdf|max:20480',
+                'terminal_report' => 'required|file|mimes:pdf|max:20480',
             ]);
         } else {
             // For drafts, make files optional
             $validationRules = array_merge($validationRules, [
-                'article_pdf' => 'nullable|file|mimes:pdf|max:20480',
-                'acceptance_pdf' => 'nullable|file|mimes:pdf|max:20480',
-                'peer_review_pdf' => 'nullable|file|mimes:pdf|max:20480',
-                'terminal_report_pdf' => 'nullable|file|mimes:pdf|max:20480',
+                'recommendation_letter' => 'nullable|file|mimes:pdf|max:20480',
+                'published_article' => 'nullable|file|mimes:pdf|max:20480',
+                'peer_review' => 'nullable|file|mimes:pdf|max:20480',
+                'terminal_report' => 'nullable|file|mimes:pdf|max:20480',
             ]);
         }
 
@@ -649,10 +649,10 @@ class PublicationsController extends Controller
             
             $attachments = [];
             foreach ([
-                'article_pdf',
-                'acceptance_pdf',
-                'peer_review_pdf',
-                'terminal_report_pdf'
+                'recommendation_letter',
+                'published_article',
+                'peer_review',
+                'terminal_report'
             ] as $field) {
                 $file = $request->file($field);
                 
@@ -1168,6 +1168,7 @@ class PublicationsController extends Controller
             'citescore' => $data['citescore'] ?? '',
             'particulars' => $data['particulars'] ?? '',
             'faculty' => $data['faculty_name'] ?? '',
+            'facultyname' => $data['faculty_name'] ?? '',
             'centermanager' => $data['center_manager'] ?? '',
             'dean' => $data['dean_name'] ?? '',
             'date' => $data['date'] ?? now()->format('Y-m-d'),

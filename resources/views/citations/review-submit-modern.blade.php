@@ -27,7 +27,7 @@
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-recommendation-letter">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('recommendation-letter-review').click()">Change File</button>
-                <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation-letter', this)">
+                <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation_letter', this)">
             </div>
 
             <!-- Citing Article Review -->
@@ -42,7 +42,7 @@
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-citing-article">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('citing-article-review').click()">Change File</button>
-                <input type="file" id="citing-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('citing-article', this)">
+                <input type="file" id="citing-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('citing_article', this)">
             </div>
 
             <!-- Cited Article Review -->
@@ -57,7 +57,7 @@
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-cited-article">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('cited-article-review').click()">Change File</button>
-                <input type="file" id="cited-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited-article', this)">
+                <input type="file" id="cited-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited_article', this)">
             </div>
         </div>
     </div>
@@ -147,6 +147,49 @@ function updateReviewFile(type, input) {
         originalInput.files = input.files;
     }
 }
+
+// Display uploaded files when page loads
+function displayUploadedFiles() {
+    const fileFields = ['recommendation_letter', 'citing_article', 'cited_article'];
+    
+    fileFields.forEach(fieldName => {
+        const input = document.querySelector(`[name="${fieldName}"]`);
+        if (input && input.files && input.files.length > 0) {
+            const fileName = input.files[0].name;
+            const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
+            
+            const reviewElementId = `review-${fieldName}`;
+            const element = document.getElementById(reviewElementId);
+            if (element) {
+                element.textContent = displayName;
+                element.title = fileName;
+            }
+        }
+    });
+}
+
+function updateReviewFile(type, input) {
+    const fileName = input.files.length > 0 ? input.files[0].name : 'No file uploaded';
+    const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
+    
+    const reviewElementId = `review-${type}`;
+    const element = document.getElementById(reviewElementId);
+    if (element) {
+        element.textContent = displayName;
+        element.title = fileName;
+    }
+    
+    // Update the original file input
+    const originalInput = document.querySelector(`[name="${type}"]`);
+    if (originalInput && input.files.length > 0) {
+        originalInput.files = input.files;
+    }
+}
+
+// Display uploaded files when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    displayUploadedFiles();
+});
 
 function generateDocx(type) {
     const form = document.getElementById('citation-request-form');
