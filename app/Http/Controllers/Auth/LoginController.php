@@ -71,6 +71,14 @@ class LoginController extends Controller
         // Clear any existing intended URL to prevent redirect issues
         session()->forget('url.intended');
 
+        // Check if admin is trying to login on mobile
+        if ($user->role === 'admin' && $this->isMobileDevice($request)) {
+            Auth::logout(); // Log out the admin user
+            throw ValidationException::withMessages([
+                'email' => 'Admin accounts must be accessed from desktop devices for full functionality. Please use a desktop computer to login.'
+            ]);
+        }
+
         // Redirect admin users to admin dashboard, regular users to user dashboard
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
@@ -91,5 +99,26 @@ class LoginController extends Controller
         }
 
         return response()->json(['status' => 'error'], 400);
+    }
+
+    /**
+     * Check if the request is from a mobile device
+     */
+    private function isMobileDevice(Request $request): bool
+    {
+        $userAgent = $request->header('User-Agent');
+        $mobileKeywords = [
+            'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 
+            'BlackBerry', 'Windows Phone', 'webOS', 'Opera Mini', 
+            'IEMobile', 'Mobile Safari'
+        ];
+
+        foreach ($mobileKeywords as $keyword) {
+            if (stripos($userAgent, $keyword) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 } 

@@ -80,6 +80,11 @@ class GoogleController extends Controller
             ]);
         }
 
+        // Check if admin is trying to login on mobile
+        if ($user->role === 'admin' && $this->isMobileDevice()) {
+            return redirect()->route('login')->withErrors(['email' => 'Admin accounts must be accessed from desktop devices for full functionality. Please use a desktop computer to login.']);
+        }
+
         Auth::login($user, true);
 
         session()->forget('url.intended');
@@ -97,5 +102,26 @@ class GoogleController extends Controller
         } else {
             return redirect()->route('dashboard');
         }
+    }
+
+    /**
+     * Check if the request is from a mobile device
+     */
+    private function isMobileDevice(): bool
+    {
+        $userAgent = request()->header('User-Agent');
+        $mobileKeywords = [
+            'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 
+            'BlackBerry', 'Windows Phone', 'webOS', 'Opera Mini', 
+            'IEMobile', 'Mobile Safari'
+        ];
+
+        foreach ($mobileKeywords as $keyword) {
+            if (stripos($userAgent, $keyword) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

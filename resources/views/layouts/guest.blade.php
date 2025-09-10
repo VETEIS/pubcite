@@ -4,6 +4,11 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        
+        <!-- Force portrait orientation on mobile -->
+        <meta name="screen-orientation" content="portrait">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-orientation" content="portrait">
 
         <!-- Force HTTPS -->
         @if (app()->environment('production'))
@@ -24,6 +29,67 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Portrait Orientation Lock CSS -->
+        <style>
+            @media screen and (orientation: landscape) and (max-width: 768px) {
+                body {
+                    transform: rotate(90deg);
+                    transform-origin: left top;
+                    width: 100vh;
+                    height: 100vw;
+                    overflow-x: hidden;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                }
+                
+                .orientation-message {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    width: 100vw;
+                    background: linear-gradient(135deg, #8B1538, #A91B47);
+                    color: white;
+                    font-family: 'Figtree', sans-serif;
+                    text-align: center;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    z-index: 9999;
+                }
+                
+                .orientation-message h2 {
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    margin-bottom: 1rem;
+                }
+                
+                .orientation-message p {
+                    font-size: 1rem;
+                    opacity: 0.9;
+                }
+                
+                .orientation-message svg {
+                    width: 4rem;
+                    height: 4rem;
+                    margin-bottom: 1rem;
+                    animation: rotate 2s linear infinite;
+                }
+                
+                @keyframes rotate {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            }
+            
+            @media screen and (orientation: portrait) and (max-width: 768px) {
+                .orientation-message {
+                    display: none;
+                }
+            }
+        </style>
 
         <!-- Fallback when Vite assets are not available -->
         <script>
@@ -58,6 +124,17 @@
         <style>[x-cloak]{display:none!important}</style>
     </head>
     <body class="font-sans antialiased bg-white text-gray-900">
+        <!-- Portrait Orientation Message -->
+        <div class="orientation-message">
+            <div>
+                <svg class="mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <h2>Please Rotate Your Device</h2>
+                <p>This site is optimized for portrait mode only.<br>Please rotate your device to continue.</p>
+            </div>
+        </div>
+        
         <div class="min-h-screen bg-white relative">
             <!-- SVG Waves Background Overlay -->
             <div class="pointer-events-none absolute inset-0 z-0 select-none">

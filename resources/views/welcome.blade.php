@@ -682,7 +682,7 @@
             <div class="main-content relative z-10 pt-8 sm:pt-16 bg-transparent">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center hero-hidden" style="min-height: 100vh; min-height: calc(100vh - 4rem);">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center hero-hidden" style="min-height: 100vh; min-height: calc(100vh - 4rem); min-height: calc(100dvh - 4rem);">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -1183,6 +1183,19 @@ function scrollResearchers(direction) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Set mobile viewport height
+    function setMobileViewportHeight() {
+        const heroSection = document.getElementById('hero');
+        if (heroSection && window.innerWidth < 768) {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            heroSection.style.minHeight = `calc(var(--vh, 1vh) * 100 - 4rem)`;
+        }
+    }
+    
+    // Initialize mobile viewport height
+    setMobileViewportHeight();
+    
     // Privacy Modal Logic
     const privacyModal = document.getElementById('privacy-modal');
     const privacyAcceptBtn = document.getElementById('privacy-modal-accept');
@@ -1886,6 +1899,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
         researcherSearch.addEventListener('input', filterResearchers);
     }
+
+    // Update viewport height on resize and orientation change
+    window.addEventListener('resize', setMobileViewportHeight);
+    window.addEventListener('orientationchange', function() {
+        setTimeout(setMobileViewportHeight, 100);
+    });
 
 });
 </script> 
