@@ -682,7 +682,7 @@
             <div class="main-content relative z-10 pt-16 bg-transparent">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-16 flex items-center hero-hidden" style="min-height: calc(100vh - 4rem);">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-16 flex items-center hero-hidden" style="min-height: 100vh; min-height: calc(100vh - 4rem);">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -743,7 +743,7 @@
                                     </div>
                                 </div>
                                 @guest
-                                    <div class="flex flex-col sm:flex-row gap-4 items-start max-w-3xl">
+                                    <div class="flex flex-col sm:flex-row gap-4 items-center sm:items-start max-w-3xl">
                                         <button onclick="showHowItWorks()" class="hidden sm:inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-full hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 flex-1">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>

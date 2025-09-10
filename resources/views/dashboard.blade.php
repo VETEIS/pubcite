@@ -37,11 +37,41 @@
             </div>
         </div>
 
-        <!-- Sidebar -->
-        @include('components.user-sidebar')
+        <!-- Sidebar - Hidden on mobile -->
+        <div class="hidden lg:block">
+            @include('components.user-sidebar')
+        </div>
 
         <!-- Main Content -->
         <div class="flex-1 h-screen overflow-y-auto force-scrollbar">
+            <!-- Mobile Header - Only visible on mobile -->
+            <div class="lg:hidden bg-gradient-to-r from-maroon-800 to-maroon-900 text-white px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <img src="/images/spjrd.png" alt="SPJRD Logo" class="w-5 h-5 object-contain rounded-full">
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold">PubCite</h1>
+                        <p class="text-xs text-maroon-200">User Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('publications.request') }}" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition">
+                        Publications
+                    </a>
+                    @if(\App\Models\Setting::get('citations_request_enabled', '1') == '1')
+                    <a href="{{ route('citations.request') }}" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition">
+                        Citations
+                    </a>
+                    @endif
+                    @if(Auth::user() && Auth::user()->isSignatory())
+                    <a href="{{ route('signing.index') }}" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition">
+                        Signatures
+                    </a>
+                    @endif
+                </div>
+            </div>
+            
             <!-- Content Area -->
             <main class="max-w-7xl mx-auto px-4 pt-2 pb-4 h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->
