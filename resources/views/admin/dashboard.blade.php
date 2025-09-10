@@ -507,11 +507,11 @@
                         <!-- Enhanced Search Button (like user dashboard) -->
                         <div class="relative" x-data="{ searchOpen: false }">
                             <button @click="searchOpen = !searchOpen" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group">
-                                <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                            </button>
-                            
+                            <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
+                                </button>
+                         
                             <!-- Search Dropdown -->
                             <div x-show="searchOpen" 
                                  x-cloak
@@ -527,7 +527,7 @@
                                 <!-- Search Header -->
                                 <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
                                     <h3 class="text-sm font-semibold text-gray-900">Search Requests</h3>
-                                </div>
+                                     </div>
                                 
                                 <!-- Search Form -->
                                 <div class="p-4">
@@ -540,7 +540,7 @@
                                                    value="{{ request('search') }}"
                                                    placeholder="Search by request code, user name, or email..."
                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
-                                        </div>
+                                     </div>
                                         
                                         <!-- Filter Options -->
                                         <div class="grid grid-cols-2 gap-4">
@@ -579,13 +579,13 @@
                                                 <button type="submit" 
                                                         class="px-4 py-2 bg-maroon-600 text-white text-sm rounded-md hover:bg-maroon-700 transition-colors">
                                                     Search
-                                                </button>
+                                                    </button>
                                             </div>
                                         </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                                                </form>
+                                            </div>
+                    </div>
+                         </div>
                          
                         <!-- User Profile Button -->
                         <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
@@ -605,7 +605,7 @@
                     <!-- Charts Card -->
                     <div class="bg-white border border-gray-200 rounded-lg shadow py-4 pl-4 flex flex-col md:flex-row items-stretch justify-center overflow-y-auto min-h-[220px] gap-4">
                         <!-- Request Stats (Line Chart) -->
-                        <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden pl-3 pr-1 relative">
+                        <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden pl-2 pr-0 relative">
                             <h2 class="text-sm font-semibold mb-2 text-left w-full flex items-center gap-2">
                                 <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -879,29 +879,29 @@
                                         Actions
                                     </th>
                                 </tr>
-                                </thead>
+                            </thead>
                             </table>
                         </div>
                     </div>
                     
                     <!-- Table Body (Scrollable) -->
                     <div class="flex-1 overflow-y-auto table-scroll-area">
-                        @if($filteredRequests->isEmpty())
+                                @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
                             <div class="h-full flex items-center justify-center">
                                 <div class="flex flex-col items-center justify-center gap-3 text-center">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
-                                        </svg>
-                                    </div>
+                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
+                                                    </svg>
+                                        </div>
                                     <div>
                                         <h4 class="text-lg font-semibold text-gray-900">No requests yet</h4>
                                         <p class="text-gray-500">No requests have been submitted yet.</p>
                                     </div>
-                                </div>
+                                            </div>
                             </div>
-                        @else
+                                @else
                             <div class="overflow-x-auto">
                                 <table class="w-full divide-y divide-gray-200">
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -982,11 +982,11 @@
                                         </td>
                                     </tr>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                            </tbody>
+                        </table>
+                                    </div>
                         @endif
-                    </div>
+                                </div>
                     
                     <!-- Pagination (Fixed at bottom) -->
                     <div class="bg-white px-4 py-2 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
