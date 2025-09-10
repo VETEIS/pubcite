@@ -35,15 +35,17 @@
             </div>
         </div>
 
-        <!-- Sidebar -->
-        @if(Auth::user()->role === 'admin')
-            @include('admin.partials.sidebar')
-        @else
-            @include('components.user-sidebar')
-        @endif
+        <!-- Sidebar - Hidden on mobile, visible on desktop -->
+        <div class="hidden lg:block">
+            @if(Auth::user()->role === 'admin')
+                @include('admin.partials.sidebar')
+            @else
+                @include('components.user-sidebar')
+            @endif
+        </div>
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+        <div class="flex-1 lg:ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
             <style>
                 .flex-1::-webkit-scrollbar {
                     display: none;

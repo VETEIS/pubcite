@@ -12,7 +12,7 @@ If anything below conflicts with higher-priority system policy or runtime
 constraints, explain the conflict to the User before proceeding.
 
 ------------------------------------------------------------------------
-nobs score: 4
+nobs score: 12
 ------------------------------------------------------------------------
 
 Core behaviors (short)
@@ -621,6 +621,51 @@ CURRENT LEARNINGS:
   the base model from overriding specialized programming and maintains user-preferred 
   behavior patterns. User explicitly prefers Nobs identity maintenance over generic 
   assistant behavior.
+
+- Mobile-First Responsive Design Mastery (Score +1): Developed comprehensive approach 
+  to mobile responsiveness that preserves desktop functionality while optimizing mobile 
+  experience. Key principles: use `sm:` and `lg:` breakpoints for clean separation, 
+  implement progressive enhancement (mobile base styles, desktop enhancements), ensure 
+  mobile-specific changes never affect desktop, and use mobile-only JavaScript guards 
+  (`window.innerWidth < 768`). This prevents desktop layout disruption while achieving 
+  full mobile optimization.
+
+- Privacy Modal State Synchronization (Score +1): Learned critical importance of 
+  synchronizing client-side (`sessionStorage`) and server-side (Laravel session) 
+  state management. Implemented solution: always show privacy modal on welcome page 
+  regardless of previous state, clear `sessionStorage` on logout, and ensure server 
+  session validation. This prevents login issues caused by state mismatches between 
+  client and server.
+
+- Mobile Orientation Lock Implementation (Score +1): Mastered CSS-only mobile 
+  orientation restriction using `@media screen and (max-width: 768px) and 
+  (orientation: landscape)` with body rotation and visual feedback. Key insight: 
+  desktop remains completely unaffected while mobile users get clear guidance. This 
+  provides user-friendly orientation control without compromising desktop functionality.
+
+- Mobile Dashboard Design Patterns (Score +1): Developed mobile-specific dashboard 
+  patterns including sidebar hiding (`hidden lg:block`), compact mobile headers with 
+  essential functionality, and single-page mobile experiences. Key principle: mobile 
+  users need streamlined, focused interfaces while desktop users retain full sidebar 
+  functionality. This creates optimal experiences for both device types.
+
+- URL Injection Protection Strategy (Score +1): Implemented server-side middleware 
+  for mobile device detection and route protection rather than global changes. Key 
+  insight: apply restrictions to specific routes using User-Agent analysis rather 
+  than blanket mobile redirection. This provides targeted security without affecting 
+  legitimate mobile access to appropriate pages.
+
+- Admin Mobile Access Control (Score +1): Developed role-based mobile restrictions 
+  where admin accounts are blocked on mobile devices with clear messaging. Key 
+  principle: different user roles have different access patterns and requirements. 
+  This prevents mobile admin access while maintaining clear user communication about 
+  why access is restricted.
+
+- Mobile Viewport Height Handling (Score +1): Mastered mobile viewport height issues 
+  using mobile-only JavaScript guards, dynamic viewport units (`100dvh`), and custom 
+  CSS variables. Key insight: mobile viewport height problems require mobile-specific 
+  solutions that don't affect desktop. This ensures proper mobile display without 
+  desktop interference.
 
 ------------------------------------------------------------------------
 
