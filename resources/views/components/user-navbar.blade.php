@@ -42,7 +42,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span>Drafts</span>
-            <span id="drafts-count" class="bg-maroon-100 text-maroon-800 text-xs px-1.5 py-0.5 rounded-full hidden">0</span>
+            <span id="drafts-count" class="bg-maroon-100 text-maroon-800 text-xs px-1.5 py-0.5 rounded-full w-6 h-5 flex items-center justify-center">0</span>
             <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
             </svg>
@@ -69,29 +69,28 @@
     @endif
 
     <!-- User Profile Section -->
-    <div class="relative">
-        <a href="{{ route('profile.show') }}" class="flex items-center gap-3 p-2 rounded-lg bg-gradient-to-r from-maroon-600 to-maroon-700 hover:from-maroon-700 hover:to-maroon-800 transition-all duration-300 group shadow-lg">
+    <div class="relative flex items-center">
+        <!-- Subtle separator -->
+        <div class="w-px h-6 bg-gray-200 mr-3"></div>
+        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 p-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 hover:from-maroon-600 hover:to-maroon-700 transition-all duration-200 group border border-gray-200/50 hover:border-maroon-500/50">
             @if(Auth::user()->profile_photo_path)
-                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/20">
+                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-7 h-7 rounded-full object-cover ring-2 ring-white shadow-sm">
             @else
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center text-white font-bold shadow-lg">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-maroon-500 to-maroon-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                     {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                 </div>
             @endif
-            <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold text-white truncate">{{ Auth::user()->name ?? 'User' }}</div>
-                <div class="text-xs text-maroon-100 truncate">{{ Auth::user()->email ?? 'No email' }}</div>
-            </div>
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <svg class="w-4 h-4 text-maroon-100 group-hover:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-            </svg>
+                <div class="flex items-center gap-1.5">
+                    <div class="text-sm font-medium text-gray-700 group-hover:text-white transition-colors">{{ Auth::user()->name ?? 'User' }}</div>
+                    <div class="w-2 h-2 bg-green-500 group-hover:bg-green-300 rounded-full shadow-sm"></div>
+                </div>
         </a>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize draft dropdown - works with both regular page loads and Turbo
+function initializeDraftDropdown() {
     const draftsButton = document.getElementById('drafts-button');
     const draftsDropdown = document.getElementById('drafts-dropdown');
     const draftsList = document.getElementById('drafts-list');
@@ -101,8 +100,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!draftsButton) return; // Exit if not on a request page
     
+    // Skip if already initialized for this page
+    if (draftsButton.dataset.initialized === 'true') {
+        console.log('Draft dropdown already initialized for this page');
+        return;
+    }
+    
+    console.log('Initializing draft dropdown...');
+    draftsButton.dataset.initialized = 'true';
+    
     let drafts = [];
     let isOpen = false;
+    
+    // Load drafts on page initialization
+    loadDrafts();
     
     // Toggle dropdown
     draftsButton.addEventListener('click', function(e) {
@@ -131,7 +142,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function openDropdown() {
         isOpen = true;
         draftsDropdown.classList.remove('hidden');
-        loadDrafts();
+        // Only reload if drafts haven't been loaded yet
+        if (drafts.length === 0) {
+            loadDrafts();
+        }
     }
     
     function closeDropdown() {
@@ -140,13 +154,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function loadDrafts() {
+        console.log('Loading drafts...');
         draftsLoading.classList.remove('hidden');
         draftsEmpty.classList.add('hidden');
         draftsList.classList.add('hidden');
         
         fetch('/api/drafts')
-            .then(response => response.json())
+            .then(response => {
+                console.log('Draft API response:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Draft API data:', data);
                 drafts = data.drafts || [];
                 renderDrafts();
                 draftsLoading.classList.add('hidden');
@@ -160,15 +179,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renderDrafts() {
+        // Always show the count badge and update the number
+        draftsCount.textContent = drafts.length;
+        
         if (drafts.length === 0) {
             draftsEmpty.classList.remove('hidden');
             draftsList.classList.add('hidden');
-            draftsCount.classList.add('hidden');
         } else {
             draftsEmpty.classList.add('hidden');
             draftsList.classList.remove('hidden');
-            draftsCount.classList.remove('hidden');
-            draftsCount.textContent = drafts.length;
             
             draftsList.innerHTML = drafts.map(draft => `
                 <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -221,7 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Failed to delete draft. Please try again.');
         });
     };
-});
+}
+
+// Initialize on both regular page loads and Turbo navigation
+document.addEventListener('DOMContentLoaded', initializeDraftDropdown);
+document.addEventListener('turbo:load', initializeDraftDropdown);
 </script>
 
 

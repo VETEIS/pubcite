@@ -203,6 +203,10 @@
                         const inputs = form.querySelectorAll('input, textarea, select');
                         
                         console.log('Draft save - collecting form data from', inputs.length, 'inputs');
+                        
+                        // Track if we have meaningful data to save
+                        let hasData = false;
+                        
                         inputs.forEach(input => {
                             if (input.type === 'file') {
                                 // Skip files in auto-save to prevent multiple folder creation
@@ -211,15 +215,27 @@
                             } else if (input.type === 'checkbox' || input.type === 'radio') {
                                 if (input.checked) {
                                     formData.append(input.name, input.value);
+                                    hasData = true;
                                 }
                             } else {
-                                // Debug signatory fields specifically
-                                if (input.name.includes('faculty_name') || input.name.includes('center_manager') || input.name.includes('dean_name') || input.name.includes('rec_faculty_name') || input.name.includes('rec_dean_name')) {
-                                    console.log('Saving signatory field:', input.name, '=', input.value);
+                                // Only save fields that have actual content
+                                const value = input.value || '';
+                                if (value.trim() !== '') {
+                                    // Debug signatory fields specifically
+                                    if (input.name.includes('faculty_name') || input.name.includes('center_manager') || input.name.includes('dean_name') || input.name.includes('rec_faculty_name') || input.name.includes('rec_dean_name')) {
+                                        console.log('Saving signatory field:', input.name, '=', value);
+                                    }
+                                    formData.append(input.name, value);
+                                    hasData = true;
                                 }
-                                formData.append(input.name, input.value || '');
                             }
                         });
+                        
+                        // Don't save if no meaningful data
+                        if (!hasData) {
+                            console.log('No meaningful data to save, skipping auto-save');
+                            return;
+                        }
                         
                         formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
                         formData.append('save_draft', '1');
@@ -318,7 +334,8 @@
                         const data = await response.json();
                         
                         if (data.success && data.draft) {
-                            const draftData = JSON.parse(data.draft.form_data);
+                            // form_data is already an object from the API
+                            const draftData = data.draft.form_data;
                             console.log('Loading specific draft:', draftData);
                             
                             // Set timestamp to show draft was loaded

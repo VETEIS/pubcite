@@ -43,9 +43,15 @@ class DraftController extends Controller
             ], 404);
         }
         
+        // Decode form_data for frontend consumption
+        $draftData = $draft->toArray();
+        if (isset($draftData['form_data'])) {
+            $draftData['form_data'] = json_decode($draftData['form_data'], true);
+        }
+        
         return response()->json([
             'success' => true,
-            'draft' => $draft
+            'draft' => $draftData
         ]);
     }
     
