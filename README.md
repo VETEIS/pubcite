@@ -4,11 +4,11 @@
 [![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows.
+PubCite: A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows. Features full mobile responsiveness, privacy compliance, and role-based access control.
 
-## 🚀 Features
+## Features
 
-### 📋 Core Functionality
+### Core Functionality
 - **Publication Incentive Applications** - Submit and manage publication incentive requests
 - **Citation Incentive Applications** - Handle citation-based incentive submissions
 - **Digital Document Management** - Secure file upload, storage, and retrieval
@@ -16,14 +16,17 @@ A web application for the University of Southeastern Philippines (USeP) Publicat
 - **Real-time Dashboard** - Live updates and comprehensive analytics
 - **Multi-role Access Control** - Admin, User, and Signatory roles with appropriate permissions
 
-### 🔐 Authentication & Security
+### Authentication & Security
 - **Google OAuth Integration** - Seamless login with USeP Google accounts (@usep.edu.ph)
 - **Two-Factor Authentication** - Enhanced security with 2FA support
 - **Role-based Access Control** - Granular permissions for different user types
+- **Privacy Compliance** - Mandatory data privacy agreement acceptance
+- **Mobile Security** - Admin accounts restricted to desktop access
+- **URL Injection Protection** - Server-side mobile device detection and route protection
 - **Secure File Storage** - Private S3 storage with encryption
 - **Rate Limiting** - Protection against abuse and spam
 
-### 📊 Admin Features
+### Admin Features
 - **Comprehensive Dashboard** - Real-time statistics and activity monitoring
 - **User Management** - Create, edit, and manage user accounts
 - **Request Management** - Review, approve, and track all applications
@@ -31,28 +34,40 @@ A web application for the University of Southeastern Philippines (USeP) Publicat
 - **File Management** - Secure file downloads and management
 - **Activity Logging** - Detailed audit trails for all actions
 
-### ✍️ Signature Management
+### Signature Management
 - **Personal Signature Upload** - Secure signature image management
 - **Document Signing** - Apply signatures to generated documents
 - **Signature Reversion** - Undo signatures within 24-hour window
 - **Privacy Protection** - Owner-only access to signature files
 - **Multiple Signature Support** - Manage multiple signature styles
 
-## 🛠️ Technology Stack
+### Mobile Experience
+- **Fully Responsive Design** - Optimized for all device sizes
+- **Mobile-First Approach** - Progressive enhancement from mobile to desktop
+- **Orientation Lock** - Portrait-only mobile experience for optimal usability
+- **Mobile Dashboard** - Streamlined single-page mobile interface
+- **Touch-Friendly Interface** - Optimized for touch interactions
+- **Mobile Security** - Device-specific access controls and restrictions
+
+## Technology Stack
 
 ### Backend
 - **Laravel 12.x** - PHP web framework
 - **PostgreSQL** - Primary database
-- **Laravel Fortify** - Authentication scaffolding
-- **Laravel Jetstream** - User interface scaffolding
+- **Laravel Jetstream** - User interface scaffolding with authentication
 - **Laravel Sanctum** - API authentication
 - **Laravel Socialite** - OAuth providers
+- **Spatie ResponseCache** - HTTP response caching
 
 ### Frontend
-- **Tailwind CSS** - Utility-first CSS framework
+- **Tailwind CSS** - Utility-first CSS framework with responsive design
 - **Alpine.js** - Lightweight JavaScript framework
-- **Chart.js** - Data visualization
+- **Chart.js** - Data visualization (CDN)
 - **Livewire** - Full-stack framework for dynamic UIs
+- **Turbo** - Hotwired Turbo for SPA-like navigation
+- **Vite** - Modern build tool and asset bundler
+- **Mobile-First CSS** - Progressive enhancement for all devices
+- **Glassmorphism Design** - Modern UI with backdrop blur effects
 
 ### Document Processing (wip)
 - **PhpWord** - Microsoft Word document generation
@@ -62,18 +77,17 @@ A web application for the University of Southeastern Philippines (USeP) Publicat
 
 ### Infrastructure (wip)
 - **Docker** - Containerization
-- **AWS S3** - File storage
+- **Local Storage** - File storage (configurable for S3)
 - **Render** - Cloud deployment platform
-- **Vite** - Asset bundling
+- **Vite** - Asset bundling and development server
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - PHP 8.2 or higher
 - Composer
 - Node.js 20.x
 - PostgreSQL 12+
-- Redis (optional, for caching)
 
 ### Local Development Setup
 
@@ -152,16 +166,22 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=https://your-domain.com/auth/google/callback
 
-# AWS S3
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=your-bucket-name
+# File Storage (Optional - defaults to local)
+FILESYSTEM_DISK=local
+# AWS_ACCESS_KEY_ID=your-access-key
+# AWS_SECRET_ACCESS_KEY=your-secret-key
+# AWS_DEFAULT_REGION=us-east-1
+# AWS_BUCKET=your-bucket-name
 
 # Signature Management
 MAX_SIGNATURE_BYTES=1000000
 SIGNATURE_MAX_DIMENSIONS=2000
 SIGNATURE_RETENTION_DAYS=90
+
+# Privacy & Security
+PRIVACY_AGREEMENT_REQUIRED=true
+ADMIN_MOBILE_RESTRICTED=true
+MOBILE_ORIENTATION_LOCK=true
 ```
 
 ### Google OAuth Setup
@@ -173,15 +193,30 @@ SIGNATURE_RETENTION_DAYS=90
 5. Add authorized redirect URI: `https://your-domain.com/auth/google/callback`
 6. Restrict to `@usep.edu.ph` domain
 
-### AWS S3 Configuration (wip)
+### File Storage Configuration
 
-1. Create a private S3 bucket
-2. Enable server-side encryption (SSE-KMS recommended)
-3. Block public access
-4. Configure bucket policy to deny anonymous access
-5. Set up lifecycle policies for cost optimization
+**Local Storage (Default):**
+- Files are stored in `storage/app/public/`
+- Run `php artisan storage:link` to create symbolic link
+- Access files via `/storage/` URL
 
-## 🚀 Deployment
+**AWS S3 (Optional):**
+1. Install AWS SDK: `composer require league/flysystem-aws-s3-v3`
+2. Create a private S3 bucket
+3. Enable server-side encryption (SSE-KMS recommended)
+4. Block public access
+5. Configure bucket policy to deny anonymous access
+6. Set up lifecycle policies for cost optimization
+
+### Mobile Configuration
+
+1. **Orientation Lock** - Mobile devices are restricted to portrait orientation
+2. **Admin Access** - Admin accounts must use desktop devices for full functionality
+3. **Mobile Routes** - Certain features (Publications, Citations) are restricted on mobile
+4. **Responsive Breakpoints** - Uses `sm:` (640px+) and `lg:` (1024px+) breakpoints
+5. **Touch Optimization** - All interactive elements optimized for touch input
+
+## Deployment
 
 ### Render.com Deployment
 
@@ -210,14 +245,16 @@ SIGNATURE_RETENTION_DAYS=90
    php artisan view:cache
    ```
 
-## 📚 Usage
+## Usage
 
 ### For Users
-1. **Login** - Use your USeP Google account to access the system
-2. **Submit Applications** - Create publication or citation incentive requests
-3. **Upload Documents** - Attach required files and supporting documents
-4. **Track Status** - Monitor your application progress in the dashboard
-5. **Manage Signatures** - Upload and manage your digital signatures
+1. **Privacy Agreement** - Accept the data privacy agreement before accessing the system
+2. **Login** - Use your USeP Google account to access the system
+3. **Submit Applications** - Create publication or citation incentive requests
+4. **Upload Documents** - Attach required files and supporting documents
+5. **Track Status** - Monitor your application progress in the dashboard
+6. **Manage Signatures** - Upload and manage your digital signatures
+7. **Mobile Access** - Full functionality available on mobile devices (admin accounts require desktop)
 
 ### For Signatories
 1. **Review Requests** - Access pending documents requiring signatures
@@ -225,13 +262,15 @@ SIGNATURE_RETENTION_DAYS=90
 3. **Revert Signatures** - Undo signatures within the 24-hour window if needed
 
 ### For Administrators
-1. **Dashboard Overview** - Monitor system activity and statistics
-2. **User Management** - Create and manage user accounts
-3. **Request Processing** - Review, approve, or reject applications
-4. **System Configuration** - Adjust application settings and parameters
-5. **File Management** - Access and manage uploaded documents
+1. **Desktop Access Required** - Admin accounts must be accessed from desktop devices
+2. **Dashboard Overview** - Monitor system activity and statistics
+3. **User Management** - Create and manage user accounts
+4. **Request Processing** - Review, approve, or reject applications
+5. **System Configuration** - Adjust application settings and parameters
+6. **File Management** - Access and manage uploaded documents
+7. **Privacy Compliance** - Monitor and manage privacy agreement acceptance
 
-## 🔧 Development
+## Development
 
 ### Running Tests
 ```bash
@@ -257,7 +296,7 @@ php artisan debug:user-roles
 php artisan cleanup:temp-files
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 pubcite/
@@ -282,7 +321,28 @@ pubcite/
 └── tests/                   # Test suites
 ```
 
-## 🤝 Contributing
+## Recent Updates
+
+### Mobile Responsiveness (Latest)
+- **Complete Mobile Optimization** - Full responsive design for all pages and components
+- **Mobile Dashboard** - Streamlined single-page mobile interface with hidden sidebar
+- **Orientation Lock** - Portrait-only mobile experience for optimal usability
+- **Touch-Friendly Interface** - Optimized buttons, dropdowns, and interactions
+- **Mobile Security** - Device-specific access controls and URL injection protection
+
+### Privacy & Security Enhancements
+- **Data Privacy Agreement** - Mandatory privacy acceptance before system access
+- **Session Synchronization** - Client-server state management for privacy compliance
+- **Admin Mobile Restrictions** - Admin accounts restricted to desktop for full functionality
+- **URL Injection Protection** - Server-side middleware preventing unauthorized mobile access
+
+### UI/UX Improvements
+- **Glassmorphism Design** - Modern backdrop blur effects throughout the interface
+- **Progressive Enhancement** - Mobile-first approach with desktop enhancements
+- **Responsive Typography** - Optimized text sizing for all device types
+- **Mobile-First CSS** - Clean breakpoint strategy preserving desktop functionality
+
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -290,21 +350,21 @@ pubcite/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## Support
 
 For support and questions:
 - Create an issue in the GitHub repository
 - Contact the development team
 - Check the documentation in the `/docs` folder
 
-## 🏛️ About USeP
+## About USeP
 
 The University of Southeastern Philippines (USeP) is a premier state university in the Philippines, committed to excellence in education, research, and community service. The Publication Unit supports faculty and researchers in their academic publishing endeavors.
 
 ---
 
-**Developed with ❤️ for the University of Southeastern Philippines** - @vete
+**Developed for the University of Southeastern Philippines - Obrero** - @vete
