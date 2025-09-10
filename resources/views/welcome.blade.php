@@ -26,6 +26,11 @@
     <style>
         html { scroll-behavior: smooth; }
         [x-cloak] { display: none !important; }
+        .hero-hidden { display: none !important; }
+        
+        /* Prevent white flash by hiding content until privacy is handled */
+        .privacy-pending .main-content { display: none !important; }
+        .privacy-pending .privacy-modal { display: block !important; }
         
         .scrollbar-hide {
             -ms-overflow-style: none;
@@ -372,31 +377,28 @@
         }
     </style>
     </head>
-    <body>
-        <div class="min-h-screen bg-white relative font-sans text-gray-900 antialiased">
+    <body class="privacy-pending" style="background: linear-gradient(135deg, #7c2d12 0%, #991b1b 50%, #7c2d12 100%);">
+        <div class="min-h-screen relative font-sans text-gray-900 antialiased" style="background: linear-gradient(135deg, #7c2d12 0%, #991b1b 50%, #7c2d12 100%);">
 
             <!-- Privacy Modal -->
-            <div id="privacy-modal" class="fixed inset-0 bg-gradient-to-br from-maroon-900/95 via-maroon-800/90 to-maroon-900/95 backdrop-blur-md overflow-y-auto h-full w-full z-[9999] hidden">
+            <div id="privacy-modal" class="fixed inset-0 bg-gradient-to-br from-maroon-900/95 via-maroon-800/90 to-maroon-900/95 backdrop-blur-md overflow-y-auto h-full w-full z-[9999]">
                 <div class="min-h-screen flex items-center justify-center p-4">
-                    <div class="w-full max-w-4xl">
-                        <!-- Main Card - Wide Layout -->
-                        <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                    <div class="w-full max-w-2xl">
+                        <!-- Main Card - Compact Layout -->
+                        <div class="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-white/20">
                             <div class="flex flex-col lg:flex-row">
-                                <!-- Left Side - Header & Icon -->
-                                <div class="bg-gradient-to-br from-maroon-600 to-maroon-700 px-8 py-12 lg:py-16 flex flex-col items-center justify-center text-center lg:w-2/5">
-                                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                        </svg>
-                                    </div>
-                                    <h2 class="text-3xl font-bold text-white mb-3">Privacy Agreement</h2>
-                                    <p class="text-maroon-100 text-lg">University of Southeastern Philippines</p>
+                                <!-- Left Side - Header Only -->
+                                <div class="bg-gradient-to-br from-maroon-600 to-maroon-700 px-6 py-6 flex flex-col items-center justify-center text-center lg:w-2/5">
+                                    <h1 class="text-2xl font-bold text-white mb-1 whitespace-nowrap">PubCite</h1>
+                                    <h2 class="text-lg font-bold text-white mb-2 whitespace-nowrap">Data Privacy Agreement</h2>
+                                    <p class="text-maroon-100 text-xs whitespace-nowrap">University of Southeastern Philippines</p>
+                                    <p class="text-maroon-100 text-xs whitespace-nowrap">Publication Unit</p>
                                 </div>
 
                                 <!-- Right Side - Content & Actions -->
-                                <div class="px-8 pt-8 pb-4 lg:pt-10 lg:pb-6 flex flex-col justify-center lg:w-3/5">
-                                    <div class="mb-8">
-                                        <p class="text-gray-700 leading-relaxed mb-6 text-lg text-justify">
+                                <div class="px-6 py-6 flex flex-col justify-center lg:w-3/5">
+                                    <div class="mb-6">
+                                        <p class="text-gray-700 leading-relaxed mb-4 text-sm text-justify">
                                             By continuing, you agree to the 
                                             <a href="https://www.usep.edu.ph/usep-data-privacy-statement/" 
                                                target="_blank" 
@@ -406,12 +408,12 @@
                                             of the University of Southeastern Philippines and acknowledge that your personal information will be collected and processed in accordance with the Data Privacy Act of 2012 (R.A. 10173).
                                         </p>
                                         
-                                        <div class="bg-maroon-50 border border-maroon-200 rounded-xl p-5">
-                                            <div class="flex items-start space-x-3">
-                                                <svg class="w-6 h-6 text-maroon-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="bg-maroon-50 border border-maroon-200 rounded-lg p-3">
+                                            <div class="flex items-start space-x-2">
+                                                <svg class="w-4 h-4 text-maroon-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <p class="text-maroon-800 font-medium">
+                                                <p class="text-xs text-maroon-800 font-medium">
                                                     This agreement is required to access the application. You can review the complete privacy policy by clicking the link above.
                                                 </p>
                                             </div>
@@ -419,18 +421,18 @@
                                     </div>
 
                                     <!-- Actions -->
-                                    <div class="flex flex-col sm:flex-row gap-4">
-                                        <button type="button" id="privacy-modal-decline" class="flex-1 bg-gray-100 text-gray-700 py-4 px-8 rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300/50 transition-all duration-200 font-medium">
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <button type="button" id="privacy-modal-decline" class="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300/50 transition-all duration-200 font-medium text-sm">
                                             <div class="flex items-center justify-center space-x-2">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                                 </svg>
                                                 <span>Decline</span>
                                             </div>
                                         </button>
-                                        <button type="button" id="privacy-modal-accept" class="flex-1 bg-gradient-to-r from-maroon-600 to-maroon-700 text-white py-4 px-8 rounded-xl hover:from-maroon-700 hover:to-maroon-800 focus:outline-none focus:ring-2 focus:ring-maroon-500/50 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
+                                        <button type="button" id="privacy-modal-accept" class="flex-1 bg-gradient-to-r from-maroon-600 to-maroon-700 text-white py-3 px-4 rounded-lg hover:from-maroon-700 hover:to-maroon-800 focus:outline-none focus:ring-2 focus:ring-maroon-500/50 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] text-sm">
                                             <div class="flex items-center justify-center space-x-2">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                                 </svg>
                                                 <span>Accept</span>
@@ -672,10 +674,10 @@
             </nav>
 
             <!-- Main Content -->
-            <div class="relative z-10 pt-16 bg-transparent">
+            <div class="main-content relative z-10 pt-16 bg-transparent">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-16 flex items-center" style="min-height: calc(100vh - 4rem);">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-16 flex items-center hero-hidden" style="min-height: calc(100vh - 4rem);">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -1180,9 +1182,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const privacyModal = document.getElementById('privacy-modal');
     const privacyAcceptBtn = document.getElementById('privacy-modal-accept');
     const privacyDeclineBtn = document.getElementById('privacy-modal-decline');
+    const heroSection = document.getElementById('hero');
+    const body = document.body;
 
-    // Show privacy modal on page load
-    privacyModal.classList.remove('hidden');
+    // Check if privacy was already accepted
+    if (sessionStorage.getItem('privacy_accepted') === 'true') {
+        // Privacy already accepted, show content immediately
+        body.classList.remove('privacy-pending');
+        heroSection.classList.remove('hero-hidden');
+        privacyModal.classList.add('hidden');
+        animateJournalCounts();
+    } else {
+        // Privacy not accepted, ensure modal is visible
+        body.classList.add('privacy-pending');
+    }
 
     // Privacy modal handlers
     function closePrivacyModal() {
@@ -1191,6 +1204,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     privacyAcceptBtn.addEventListener('click', function() {
         closePrivacyModal();
+        // Remove privacy-pending class to show main content
+        body.classList.remove('privacy-pending');
+        // Show the main content
+        heroSection.classList.remove('hero-hidden');
         // Store acceptance in session storage
         sessionStorage.setItem('privacy_accepted', 'true');
         // Set server-side session

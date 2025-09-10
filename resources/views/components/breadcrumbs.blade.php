@@ -5,7 +5,15 @@
         $segments = collect(request()->segments());
         $crumbs = [];
         $url = url('/');
-        $crumbs[] = ['label' => 'Home', 'url' => $url, 'icon' => 'home'];
+        
+        // Skip "Home" breadcrumb for welcome and guest pages
+        $isWelcome = request()->routeIs('welcome');
+        $isGuest = request()->routeIs('login') || request()->routeIs('password.*');
+        
+        if (!$isWelcome && !$isGuest) {
+            $crumbs[] = ['label' => 'Home', 'url' => $url, 'icon' => 'home'];
+        }
+        
         foreach ($segments as $i => $seg) {
             $url .= '/' . $seg;
             $isLast = $i === $segments->count() - 1;

@@ -104,9 +104,11 @@
                 <div class="px-6">
                     <div class="flex justify-between h-16">
                         <div class="flex items-center gap-3">
-                        <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain rounded-full" loading="eager" />
-                            <a href="{{ url('/') }}" class="text-white text-lg font-semibold tracking-wide whitespace-nowrap hover:text-maroon-200 transition duration-150">
-                                PubCite
+                            <a href="{{ url('/') }}" class="flex items-center gap-3 hover:opacity-80 transition duration-150">
+                                <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain rounded-full" loading="eager" />
+                                <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">
+                                    PubCite
+                                </span>
                             </a>
                             @if (View::exists('components.breadcrumbs'))
                             <span class="flex items-center justify-center ml-2">
