@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-global-notifications />
     <script>
         function publicationRequestData() {
             return {
@@ -576,7 +577,6 @@
                     const generatedFilesField = document.getElementById('generated-docx-files');
                     if (generatedFilesField && window.generatedDocxFiles) {
                         generatedFilesField.value = JSON.stringify(window.generatedDocxFiles);
-                        console.log('Including generated files in submission:', window.generatedDocxFiles);
                     }
                     
                     // Mark as submitting and disable submit button
