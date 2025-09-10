@@ -631,10 +631,41 @@ class PublicationsController extends Controller
                 }
             }
 
+            // Check if we have pre-generated files to move instead of regenerating
             $docxPaths = [];
-            $docxPaths['incentive'] = $this->generateIncentiveDocxFromHtml($data, $uploadPath);
-            $docxPaths['recommendation'] = $this->generateRecommendationDocxFromHtml($data, $uploadPath);
-            $docxPaths['terminal'] = $this->generateTerminalDocxFromHtml($data, $uploadPath);
+            $tempFiles = $request->input('generated_docx_files', []);
+            
+            if (!empty($tempFiles) && is_array($tempFiles)) {
+                // Move pre-generated files instead of regenerating
+                Log::info('Moving pre-generated DOCX files', ['tempFiles' => $tempFiles]);
+                foreach ($tempFiles as $type => $tempPath) {
+                    if ($tempPath && file_exists(storage_path('app/' . $tempPath))) {
+                        $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' :
+                                   ($type === 'recommendation' ? 'Recommendation_Letter_Form.docx' : 'Terminal_Report_Form.docx');
+                        $finalPath = $uploadPath . '/' . $filename;
+                        
+                        // Move file from temp to final location
+                        Storage::disk('local')->move($tempPath, $finalPath);
+                        $docxPaths[$type] = $finalPath;
+                        
+                        Log::info('Moved DOCX file', ['type' => $type, 'from' => $tempPath, 'to' => $finalPath]);
+                    }
+                }
+            }
+            
+            // Generate any missing DOCX files
+            if (!isset($docxPaths['incentive'])) {
+                $filtered = $this->mapIncentiveFields($data);
+                $docxPaths['incentive'] = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath);
+            }
+            if (!isset($docxPaths['recommendation'])) {
+                $filtered = $this->mapRecommendationFields($data);
+                $docxPaths['recommendation'] = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath);
+            }
+            if (!isset($docxPaths['terminal'])) {
+                $filtered = $this->mapTerminalFields($data);
+                $docxPaths['terminal'] = $this->generateTerminalDocxFromHtml($filtered, $uploadPath);
+            }
 
             Log::info('Creating database entry', [
                 'requestCode' => $requestCode,
@@ -1170,13 +1201,23 @@ class PublicationsController extends Controller
         try {
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
+            $storeForSubmit = $request->input('store_for_submit', false);
             $data = $request->all();
             $isPreview = !$reqId;
+            
             if ($isPreview) {
                 $userId = Auth::id();
-                $tempCode = 'preview_' . time() . '_' . Str::random(8);
-                $uploadPath = "temp/{$userId}/{$tempCode}";
-                Log::info('Generating DOCX in preview mode', ['userId' => $userId, 'tempCode' => $tempCode]);
+                if ($storeForSubmit) {
+                    // Store in temp folder for later use in submit
+                    $tempCode = 'preview_' . time() . '_' . Str::random(8);
+                    $uploadPath = "temp/{$userId}/{$tempCode}";
+                    Log::info('Generating DOCX for submit optimization', ['userId' => $userId, 'tempCode' => $tempCode]);
+                } else {
+                    // Generate for immediate download
+                    $tempCode = 'download_' . time() . '_' . Str::random(8);
+                    $uploadPath = "temp/{$userId}/{$tempCode}";
+                    Log::info('Generating DOCX for download', ['userId' => $userId, 'tempCode' => $tempCode]);
+                }
             } else {
                 $userRequest = \App\Models\Request::find($reqId);
                 if (!$userRequest) {
@@ -1217,6 +1258,16 @@ class PublicationsController extends Controller
                 throw new \Exception('Generated file not found at: ' . $absolutePath);
             }
             
+            // If storing for submit, return file path instead of downloading
+            if ($storeForSubmit && $isPreview) {
+                return response()->json([
+                    'success' => true,
+                    'filePath' => $fullPath,
+                    'filename' => $filename
+                ]);
+            }
+            
+            // Otherwise, download the file
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';

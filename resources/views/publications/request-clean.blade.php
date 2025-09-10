@@ -258,9 +258,9 @@
                         console.log('Draft save - collecting form data from', inputs.length, 'inputs');
                         inputs.forEach(input => {
                             if (input.type === 'file') {
-                                if (input.files && input.files.length > 0) {
-                                    formData.append(input.name, input.files[0]);
-                                }
+                                // Skip files in auto-save to prevent multiple folder creation
+                                // Files will be saved only during final submission
+                                return;
                             } else if (input.type === 'checkbox' || input.type === 'radio') {
                                 if (input.checked) {
                                     formData.append(input.name, input.value);
@@ -547,6 +547,13 @@
                         return false;
                     }
                     
+                    // Populate hidden field with generated DOCX file paths
+                    const generatedFilesField = document.getElementById('generated-docx-files');
+                    if (generatedFilesField && window.generatedDocxFiles) {
+                        generatedFilesField.value = JSON.stringify(window.generatedDocxFiles);
+                        console.log('Including generated files in submission:', window.generatedDocxFiles);
+                    }
+                    
                     // Mark as submitting and disable submit button
                     this.isSubmitting = true;
                     const submitBtn = document.querySelector('#submit-btn');
@@ -752,6 +759,9 @@
                             autocomplete="on"
                         >
                             @csrf
+                            
+                            <!-- Hidden field for generated DOCX files -->
+                            <input type="hidden" name="generated_docx_files" id="generated-docx-files" value="">
                             
                             <!-- Tab Content -->
                             <div class="min-h-[500px] bg-white rounded-lg shadow-sm border border-gray-200 p-6">

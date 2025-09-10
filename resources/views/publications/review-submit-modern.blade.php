@@ -272,6 +272,75 @@ document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
 });
 
+// Store generated file paths for optimization
+window.generatedDocxFiles = {};
+
+// Function to generate and store DOCX for submit optimization
+function generateAndStoreDocx(type) {
+    const form = document.getElementById('publication-request-form');
+    if (!form) {
+        console.error('Form not found: publication-request-form');
+        alert('Error: Form not found. Please refresh the page and try again.');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    formData.append('docx_type', type);
+    formData.append('store_for_submit', 'true'); // Flag to store file for later use
+
+    // Show loading state
+    const button = event.target.closest('.cursor-pointer');
+    if (button) {
+        button.style.opacity = '0.6';
+        button.style.pointerEvents = 'none';
+        const originalText = button.querySelector('p').textContent;
+        button.querySelector('p').textContent = 'Storing...';
+    }
+
+    fetch('{{ route("publications.generateDocx") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.filePath) {
+            // Store file path for later use in submit
+            window.generatedDocxFiles[type] = data.filePath;
+            console.log('Stored file path for', type, ':', data.filePath);
+            
+            // Show success message
+            if (button) {
+                button.querySelector('p').textContent = 'Stored ✓';
+                setTimeout(() => {
+                    button.querySelector('p').textContent = originalText;
+                    button.style.opacity = '1';
+                    button.style.pointerEvents = 'auto';
+                }, 2000);
+            }
+        } else {
+            throw new Error(data.message || 'Failed to store file');
+        }
+    })
+    .catch(error => {
+        console.error('Error storing document:', error);
+        alert(`Error storing document: ${error.message}. Please try again.`);
+        if (button) {
+            button.querySelector('p').textContent = originalText;
+            button.style.opacity = '1';
+            button.style.pointerEvents = 'auto';
+        }
+    });
+}
+
+// Function to generate and download DOCX (original behavior)
 function generateDocx(type) {
     const form = document.getElementById('publication-request-form');
     if (!form) {
@@ -282,6 +351,7 @@ function generateDocx(type) {
     
     const formData = new FormData(form);
     formData.append('docx_type', type);
+    // Don't set store_for_submit by default - let user choose
 
     // Debug: Log form data
     console.log('Form data for', type, ':');
@@ -310,14 +380,11 @@ function generateDocx(type) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Check content type
-        const contentType = response.headers.get('content-type');
-        console.log('Response content type:', contentType);
-        
+        // For download mode, always expect a blob
         return response.blob();
     })
     .then(blob => {
-        // Check if blob is valid
+        // Handle blob download
         if (!blob || blob.size === 0) {
             throw new Error('Generated file is empty or corrupted');
         }
@@ -347,6 +414,12 @@ function generateDocx(type) {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }, 100);
+        
+        // Reset button state
+        if (button) {
+            button.style.opacity = '1';
+            button.style.pointerEvents = 'auto';
+        }
     })
     .catch(error => {
         console.error('Error generating document:', error);

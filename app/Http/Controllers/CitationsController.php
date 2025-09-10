@@ -84,6 +84,7 @@ class CitationsController extends Controller
         try {
             $data = $request->all();
             $docxType = $request->input('docx_type', 'incentive');
+            $storeForSubmit = $request->input('store_for_submit', false);
             $reqId = $request->input('request_id');
             
             $isPreview = !$reqId;
@@ -139,6 +140,16 @@ class CitationsController extends Controller
             
             Log::info('Citation DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
             
+            // If storing for submit, return file path instead of downloading
+            if ($storeForSubmit && $isPreview) {
+                return response()->json([
+                    'success' => true,
+                    'filePath' => $fullPath,
+                    'filename' => $filename
+                ]);
+            }
+            
+            // Otherwise, download the file
             return response()->download($fullPath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"'
@@ -503,13 +514,15 @@ class CitationsController extends Controller
             $docxPaths = [];
             if (!$isDraft) {
                 try {
-                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($request->all(), $uploadPath);
+                    $filtered = $this->mapIncentiveFields($request->all());
+                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath);
                     $docxPaths['incentive_application'] = $incentivePath;
                 } catch (\Exception $e) {
                     Log::error('Error generating incentive DOCX: ' . $e->getMessage());
                 }
                 try {
-                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($request->all(), $uploadPath);
+                    $filtered = $this->mapRecommendationFields($request->all());
+                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath);
                     $docxPaths['recommendation_letter'] = $recommendationPath;
                 } catch (\Exception $e) {
                     Log::error('Error generating recommendation DOCX: ' . $e->getMessage());

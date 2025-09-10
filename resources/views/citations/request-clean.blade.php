@@ -84,7 +84,7 @@
                     
                     // Special handling for upload tab
                     if (currentTab === 'upload') {
-                        const requiredFiles = ['recommendation_letter', 'published_article', 'peer_review'];
+                        const requiredFiles = ['recommendation_letter', 'citing_article', 'cited_article'];
                         
                         for (let fileName of requiredFiles) {
                             const fileInput = document.querySelector(`input[name="${fileName}"]`);
@@ -205,9 +205,9 @@
                         console.log('Draft save - collecting form data from', inputs.length, 'inputs');
                         inputs.forEach(input => {
                             if (input.type === 'file') {
-                                if (input.files && input.files.length > 0) {
-                                    formData.append(input.name, input.files[0]);
-                                }
+                                // Skip files in auto-save to prevent multiple folder creation
+                                // Files will be saved only during final submission
+                                return;
                             } else if (input.type === 'checkbox' || input.type === 'radio') {
                                 if (input.checked) {
                                     formData.append(input.name, input.value);
