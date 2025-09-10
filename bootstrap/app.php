@@ -14,11 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Global middleware
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
-        // $middleware->append(\App\Http\Middleware\MobileRedirect::class); // Temporarily disabled
-        // Privacy enforcement now handled client-side with localStorage
         
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'mobile.restrict' => \App\Http\Middleware\MobileRestriction::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

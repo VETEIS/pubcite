@@ -55,20 +55,16 @@
                         <p class="text-xs text-maroon-200">User Dashboard</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('publications.request') }}" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition">
-                        Publications
-                    </a>
-                    @if(\App\Models\Setting::get('citations_request_enabled', '1') == '1')
-                    <a href="{{ route('citations.request') }}" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition">
-                        Citations
-                    </a>
-                    @endif
-                    @if(Auth::user() && Auth::user()->isSignatory())
-                    <a href="{{ route('signing.index') }}" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition">
-                        Signatures
-                    </a>
-                    @endif
+                <div class="flex items-center">
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            Logout
+                        </button>
+                    </form>
                 </div>
             </div>
             

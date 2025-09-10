@@ -105,7 +105,7 @@
                     <div class="flex justify-between h-16">
                         <div class="flex items-center gap-3">
                             <a href="{{ url('/') }}" class="flex items-center gap-3 hover:opacity-80 transition duration-150">
-                                <img src="/images/usep.png" alt="USEP Logo" class="h-10 w-10 object-contain rounded-full" loading="eager" />
+                                <img src="/images/usep.png" alt="USEP Logo" class="hidden sm:block h-10 w-10 object-contain rounded-full pointer-events-none" loading="eager" aria-hidden="true" />
                                 <span class="text-white text-lg font-semibold tracking-wide whitespace-nowrap">
                                     PubCite
                                 </span>
@@ -124,7 +124,7 @@
                         @endauth
 
                         <!-- Quick Links Dropdown -->
-                        <div class="relative" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false">
+                        <div class="relative hidden sm:block pointer-events-none" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false" aria-hidden="true">
                             <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition" x-cloak>
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
                                 Quick Links
@@ -157,7 +157,7 @@
                         </div>
 
                         <!-- Announcements Dropdown -->
-                        <div class="relative" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false">
+                        <div class="relative hidden sm:block pointer-events-none" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false" aria-hidden="true">
                             <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition" x-cloak>
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
@@ -196,7 +196,7 @@
                         
                         @if (Route::has('login'))
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition">
+                                <a href="{{ url('/dashboard') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition pointer-events-none" aria-hidden="true">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 3l9 6.75V20a1.5 1.5 0 01-1.5 1.5H15a1.5 1.5 0 01-1.5-1.5v-4.5H10.5V20A1.5 1.5 0 019 21.5H4.5A1.5 1.5 0 013 20V9.75z" />
                                     </svg>

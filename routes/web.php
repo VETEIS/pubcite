@@ -14,10 +14,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-// Mobile redirect page
-Route::get('/mobile-redirect', function () {
-    return view('mobile-redirect');
-})->name('mobile.redirect');
 
 // Privacy acceptance handled client-side with localStorage
 
@@ -25,6 +21,7 @@ Route::get('/mobile-redirect', function () {
 Route::get('/debug', function () {
     return view('debug');
 })->name('debug');
+
 
 // Draft management routes
 Route::get('/api/drafts', [App\Http\Controllers\DraftController::class, 'apiIndex'])->name('drafts.api');
@@ -60,14 +57,14 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request');
-    Route::post('/publications/submit', [\App\Http\Controllers\PublicationsController::class, 'submitPublicationRequest'])->name('publications.submit');
-    Route::get('/citations/request', [\App\Http\Controllers\CitationsController::class, 'create'])->name('citations.request');
-    Route::post('/citations/submit', [\App\Http\Controllers\CitationsController::class, 'submitCitationRequest'])->name('citations.submit');
-    Route::post('/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate');
-    Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success');
+    Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request')->middleware('mobile.restrict');
+    Route::post('/publications/submit', [\App\Http\Controllers\PublicationsController::class, 'submitPublicationRequest'])->name('publications.submit')->middleware('mobile.restrict');
+    Route::get('/citations/request', [\App\Http\Controllers\CitationsController::class, 'create'])->name('citations.request')->middleware('mobile.restrict');
+    Route::post('/citations/submit', [\App\Http\Controllers\CitationsController::class, 'submitCitationRequest'])->name('citations.submit')->middleware('mobile.restrict');
+    Route::post('/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate')->middleware('mobile.restrict');
+    Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success')->middleware('mobile.restrict');
     // Add a single endpoint for all publication DOCX generations
-    Route::post('/publications/generate-docx', [\App\Http\Controllers\PublicationsController::class, 'generateDocx'])->name('publications.generateDocx');
+    Route::post('/publications/generate-docx', [\App\Http\Controllers\PublicationsController::class, 'generateDocx'])->name('publications.generateDocx')->middleware('mobile.restrict');
     // Nudge a pending request (user action)
     Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
     // Signing for signatories

@@ -12,8 +12,8 @@
             @endphp
             
             <!-- Compact Status Filter -->
-            <div class="relative group">
-                <button class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 h-8 w-32 justify-between">
+            <div class="relative" id="status-filter-container">
+                <button id="status-filter-button" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 h-8 w-32 justify-between">
                     <svg class="w-3.5 h-3.5 text-maroon-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -22,7 +22,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                <div class="absolute top-full left-0 mt-1 bg-white text-md font-semibold border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[120px]">
+                <div id="status-filter-dropdown" class="absolute top-full left-0 mt-1 bg-white text-md font-semibold border border-gray-200 rounded-lg shadow-lg hidden z-50 min-w-[120px]">
                     <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => null])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ !$currentStatus ? 'bg-maroon-50 text-maroon-700' : '' }}">All Status</a>
                     <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => 'pending'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'pending' ? 'bg-maroon-50 text-maroon-700' : '' }}">Pending</a>
                     <a href="{{ route('dashboard', array_merge(request()->except('status', 'page'), ['status' => 'endorsed'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'endorsed' ? 'bg-maroon-50 text-maroon-700' : '' }}">Endorsed</a>
@@ -85,6 +85,56 @@
 </div>
 
 <script>
+// Initialize status filter dropdown - works with both regular page loads and Turbo
+function initializeStatusFilterDropdown() {
+    const statusFilterButton = document.getElementById('status-filter-button');
+    const statusFilterDropdown = document.getElementById('status-filter-dropdown');
+    
+    if (!statusFilterButton) return; // Exit if not on a page with filters
+    
+    // Skip if already initialized for this page
+    if (statusFilterButton.dataset.initialized === 'true') {
+        return;
+    }
+    
+    statusFilterButton.dataset.initialized = 'true';
+    let isOpen = false;
+    
+    // Toggle dropdown
+    statusFilterButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (isOpen) {
+            closeStatusFilterDropdown();
+        } else {
+            openStatusFilterDropdown();
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (isOpen && !statusFilterButton.contains(e.target) && !statusFilterDropdown.contains(e.target)) {
+            closeStatusFilterDropdown();
+        }
+    });
+    
+    // Close dropdown on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isOpen) {
+            closeStatusFilterDropdown();
+        }
+    });
+    
+    function openStatusFilterDropdown() {
+        isOpen = true;
+        statusFilterDropdown.classList.remove('hidden');
+    }
+    
+    function closeStatusFilterDropdown() {
+        isOpen = false;
+        statusFilterDropdown.classList.add('hidden');
+    }
+}
+
 // Initialize draft dropdown - works with both regular page loads and Turbo
 function initializeDraftDropdown() {
     const draftsButton = document.getElementById('drafts-button');
@@ -241,8 +291,14 @@ function initializeDraftDropdown() {
 }
 
 // Initialize on both regular page loads and Turbo navigation
-document.addEventListener('DOMContentLoaded', initializeDraftDropdown);
-document.addEventListener('turbo:load', initializeDraftDropdown);
+document.addEventListener('DOMContentLoaded', function() {
+    initializeStatusFilterDropdown();
+    initializeDraftDropdown();
+});
+document.addEventListener('turbo:load', function() {
+    initializeStatusFilterDropdown();
+    initializeDraftDropdown();
+});
 </script>
 
 

@@ -581,7 +581,7 @@
                         }">
 
                         <!-- Quick Links Dropdown -->
-                        <div class="relative hidden sm:block">
+                        <div class="relative hidden sm:block pointer-events-none" aria-hidden="true">
                             <button @click="toggleQuickLinks()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
                                 Quick Links
@@ -614,7 +614,7 @@
                         </div>
 
                         <!-- Announcements Dropdown -->
-                        <div class="relative hidden sm:block">
+                        <div class="relative hidden sm:block pointer-events-none" aria-hidden="true">
                             <button @click="toggleAnnouncements()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
@@ -679,10 +679,10 @@
             </nav>
 
             <!-- Main Content -->
-            <div class="main-content relative z-10 pt-16 bg-transparent">
+            <div class="main-content relative z-10 pt-8 sm:pt-16 bg-transparent">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-16 flex items-center hero-hidden" style="min-height: 100vh; min-height: calc(100vh - 4rem);">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center hero-hidden" style="min-height: 100vh; min-height: calc(100vh - 4rem);">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -771,7 +771,7 @@
                                              </div>
                                 @endguest
                                          </div>
-                            <div class="hidden lg:flex justify-end relative">
+                            <div class="hidden lg:flex justify-end relative pointer-events-none" aria-hidden="true">
                                 <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 pointer-events-none" style="width: 60vh; height: 60vh; background: radial-gradient(closest-side, rgba(255,255,255,0.28), rgba(255,255,255,0.12), transparent 70%); filter: blur(16px); border-radius: 9999px;"></div>
                                 <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="cursor-pointer hover:scale-105 transition-all duration-300 group">
                                     <img src="/images/art.webp" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none hero-art-glow" />
