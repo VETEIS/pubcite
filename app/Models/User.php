@@ -21,7 +21,7 @@ class User extends Authenticatable
     use TwoFactorAuthenticatable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'signatory_type', 'profile_photo_path', 'auth_provider',
+        'name', 'email', 'password', 'role', 'signatory_type', 'profile_photo_path', 'auth_provider', 'privacy_accepted_at',
     ];
 
     protected $hidden = [
@@ -32,13 +32,22 @@ class User extends Authenticatable
 
     protected function casts(): array
     {
-        return [ 'email_verified_at' => 'datetime', 'password' => 'hashed', ];
+        return [ 
+            'email_verified_at' => 'datetime', 
+            'password' => 'hashed',
+            'privacy_accepted_at' => 'datetime',
+        ];
     }
 
     public function isAdmin(): bool { return $this->role === 'admin'; }
     public function isUser(): bool { return $this->role === 'user'; }
     public function isSignatory(): bool { return $this->role === 'signatory'; }
     public function signatoryType(): ?string { return $this->signatory_type; }
+    
+    public function hasAcceptedPrivacy(): bool 
+    { 
+        return !is_null($this->privacy_accepted_at); 
+    }
 
     public function requests()
     {

@@ -12,6 +12,11 @@ class GoogleController extends Controller
 
     public function redirectToGoogle()
     {
+        // Check if privacy was accepted in session (from welcome page)
+        if (session('privacy_accepted') !== true) {
+            return redirect()->route('welcome')->withErrors(['privacy' => 'You must accept the privacy policy before logging in. Please visit the homepage first.']);
+        }
+
         return Socialite::driver('google')
             ->with(['prompt' => 'select_account'])
             ->redirect();
@@ -32,8 +37,15 @@ class GoogleController extends Controller
                 'password' => bcrypt(uniqid()),
                 'role' => 'user',
                 'auth_provider' => 'google',
+                'privacy_accepted_at' => now(),
             ]
         );
+
+        // Update privacy acceptance for existing users
+        if (!$user->hasAcceptedPrivacy()) {
+            $user->update(['privacy_accepted_at' => now()]);
+            \Log::info('Privacy acceptance recorded for Google user: ' . $googleUser->getEmail());
+        }
 
         if ($googleUser->getAvatar()) {
             $avatarUrl = $googleUser->getAvatar();

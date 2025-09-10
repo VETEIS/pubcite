@@ -17,8 +17,9 @@
             </div>
         @endsession
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" id="login-form">
             @csrf
+            <input type="hidden" name="privacy_accepted" value="true">
 
             <div>
                 <x-label for="email" value="{{ __('Email') }}" class="text-base text-gray-900 font-medium drop-shadow-sm" />
@@ -55,7 +56,7 @@
             </div>
 
             <div class="flex justify-center mt-4">
-                <a href="{{ route('google.login') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
+                <a href="{{ route('google.login') }}" id="google-login-btn" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
                     <img src="/images/google-logo.png" alt="Google logo" class="w-5 h-5 mr-2">
                     Sign in with Google
                 </a>

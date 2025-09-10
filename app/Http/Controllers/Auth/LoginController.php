@@ -24,6 +24,13 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
+        // Check if privacy was accepted in session (from welcome page)
+        if (session('privacy_accepted') !== true) {
+            throw ValidationException::withMessages([
+                'email' => 'You must accept the privacy policy before logging in. Please visit the homepage first.'
+            ]);
+        }
+
         // Restrict to @usep.edu.ph emails only
         if (!str_ends_with($request->email, '@usep.edu.ph')) {
             throw ValidationException::withMessages([
@@ -52,6 +59,12 @@ class LoginController extends Controller
         
         Log::info('Password verified for user: ' . $request->email);
 
+        // Update privacy acceptance timestamp (privacy was already accepted on welcome page)
+        if (!$user->hasAcceptedPrivacy()) {
+            $user->update(['privacy_accepted_at' => now()]);
+            Log::info('Privacy acceptance recorded for user: ' . $request->email);
+        }
+
         Auth::login($user, $request->boolean('remember'));
         Log::info('User logged in successfully: ' . $request->email);
 
@@ -64,5 +77,19 @@ class LoginController extends Controller
         } else {
             return redirect()->route('dashboard');
         }
+    }
+
+    public function acceptPrivacy(Request $request)
+    {
+        $request->validate([
+            'accepted' => 'required|boolean'
+        ]);
+
+        if ($request->accepted) {
+            session(['privacy_accepted' => true]);
+            return response()->json(['status' => 'success']);
+        }
+
+        return response()->json(['status' => 'error'], 400);
     }
 } 

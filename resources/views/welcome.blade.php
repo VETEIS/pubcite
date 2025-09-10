@@ -375,6 +375,75 @@
     <body>
         <div class="min-h-screen bg-white relative font-sans text-gray-900 antialiased">
 
+            <!-- Privacy Modal -->
+            <div id="privacy-modal" class="fixed inset-0 bg-gradient-to-br from-maroon-900/95 via-maroon-800/90 to-maroon-900/95 backdrop-blur-md overflow-y-auto h-full w-full z-[9999] hidden">
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-4xl">
+                        <!-- Main Card - Wide Layout -->
+                        <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                            <div class="flex flex-col lg:flex-row">
+                                <!-- Left Side - Header & Icon -->
+                                <div class="bg-gradient-to-br from-maroon-600 to-maroon-700 px-8 py-12 lg:py-16 flex flex-col items-center justify-center text-center lg:w-2/5">
+                                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                        </svg>
+                                    </div>
+                                    <h2 class="text-3xl font-bold text-white mb-3">Privacy Agreement</h2>
+                                    <p class="text-maroon-100 text-lg">University of Southeastern Philippines</p>
+                                </div>
+
+                                <!-- Right Side - Content & Actions -->
+                                <div class="px-8 pt-8 pb-4 lg:pt-10 lg:pb-6 flex flex-col justify-center lg:w-3/5">
+                                    <div class="mb-8">
+                                        <p class="text-gray-700 leading-relaxed mb-6 text-lg text-justify">
+                                            By continuing, you agree to the 
+                                            <a href="https://www.usep.edu.ph/usep-data-privacy-statement/" 
+                                               target="_blank" 
+                                               class="text-maroon-600 hover:text-maroon-700 underline font-semibold transition-colors duration-200">
+                                                data privacy statement
+                                            </a> 
+                                            of the University of Southeastern Philippines and acknowledge that your personal information will be collected and processed in accordance with the Data Privacy Act of 2012 (R.A. 10173).
+                                        </p>
+                                        
+                                        <div class="bg-maroon-50 border border-maroon-200 rounded-xl p-5">
+                                            <div class="flex items-start space-x-3">
+                                                <svg class="w-6 h-6 text-maroon-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <p class="text-maroon-800 font-medium">
+                                                    This agreement is required to access the application. You can review the complete privacy policy by clicking the link above.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="flex flex-col sm:flex-row gap-4">
+                                        <button type="button" id="privacy-modal-decline" class="flex-1 bg-gray-100 text-gray-700 py-4 px-8 rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300/50 transition-all duration-200 font-medium">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                                <span>Decline</span>
+                                            </div>
+                                        </button>
+                                        <button type="button" id="privacy-modal-accept" class="flex-1 bg-gradient-to-r from-maroon-600 to-maroon-700 text-white py-4 px-8 rounded-xl hover:from-maroon-700 hover:to-maroon-800 focus:outline-none focus:ring-2 focus:ring-maroon-500/50 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                                <span>Accept</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- How It Works Modal -->
             <div id="howItWorksModal" class="glassmorphism-modal hidden">
                 <div class="glassmorphism-card">
@@ -1107,6 +1176,48 @@ function scrollResearchers(direction) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Privacy Modal Logic
+    const privacyModal = document.getElementById('privacy-modal');
+    const privacyAcceptBtn = document.getElementById('privacy-modal-accept');
+    const privacyDeclineBtn = document.getElementById('privacy-modal-decline');
+
+    // Show privacy modal on page load
+    privacyModal.classList.remove('hidden');
+
+    // Privacy modal handlers
+    function closePrivacyModal() {
+        privacyModal.classList.add('hidden');
+    }
+
+    privacyAcceptBtn.addEventListener('click', function() {
+        closePrivacyModal();
+        // Store acceptance in session storage
+        sessionStorage.setItem('privacy_accepted', 'true');
+        // Set server-side session
+        fetch('/privacy/accept', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({accepted: true})
+        }).catch(error => console.log('Privacy session set'));
+        
+        // Start counting animation after privacy acceptance
+        animateJournalCounts();
+    });
+
+    privacyDeclineBtn.addEventListener('click', function() {
+        // Redirect to external page or show message
+        window.location.href = 'https://www.usep.edu.ph/';
+    });
+
+    // Check if privacy was already accepted
+    if (sessionStorage.getItem('privacy_accepted') === 'true') {
+        closePrivacyModal();
+        // Start counting animation immediately if already accepted
+        animateJournalCounts();
+    }
 
     // Animate journal count badges
     function animateJournalCounts() {
@@ -1148,9 +1259,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCount();
         });
     }
-
-    // Start the counting animation
-    animateJournalCounts();
 
     const researchersContainer = document.getElementById('researchers-container');
     const researchersScrollLeft = document.getElementById('scroll-left-researchers');

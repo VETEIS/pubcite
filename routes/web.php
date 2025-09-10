@@ -46,6 +46,7 @@ Route::get('/test', function () {
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
+Route::post('/privacy/accept', [LoginController::class, 'acceptPrivacy'])->name('privacy.accept');
 
 // Registration disabled for security - users must use Google OAuth
 
