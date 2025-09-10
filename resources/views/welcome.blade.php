@@ -1213,17 +1213,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSection = document.getElementById('hero');
     const body = document.body;
 
-    // Check if privacy was already accepted
-    if (sessionStorage.getItem('privacy_accepted') === 'true') {
-        // Privacy already accepted, show content immediately
-        body.classList.remove('privacy-pending');
-        heroSection.classList.remove('hero-hidden');
-        privacyModal.classList.add('hidden');
-        animateJournalCounts();
-    } else {
-        // Privacy not accepted, ensure modal is visible
-        body.classList.add('privacy-pending');
-    }
+    // Always show privacy modal on welcome page - server will handle actual privacy acceptance
+    // This ensures users always see the modal after logout/login cycles
+    body.classList.add('privacy-pending');
+    
+    // Clear any existing sessionStorage to ensure clean state
+    sessionStorage.removeItem('privacy_accepted');
 
     // Privacy modal handlers
     function closePrivacyModal() {
@@ -1257,12 +1252,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'https://www.usep.edu.ph/';
     });
 
-    // Check if privacy was already accepted
-    if (sessionStorage.getItem('privacy_accepted') === 'true') {
-        closePrivacyModal();
-        // Start counting animation immediately if already accepted
-        animateJournalCounts();
-    }
 
     // Animate journal count badges
     function animateJournalCounts() {

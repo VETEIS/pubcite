@@ -136,6 +136,18 @@
         
         <!-- Alpine.js x-cloak styles -->
         <style>[x-cloak]{display:none!important}</style>
+        
+        <!-- Clear sessionStorage on logout -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Clear sessionStorage when any logout form is submitted
+                document.addEventListener('submit', function(e) {
+                    if (e.target.action && e.target.action.includes('logout')) {
+                        sessionStorage.removeItem('privacy_accepted');
+                    }
+                });
+            });
+        </script>
     </head>
     <body class="font-sans antialiased bg-white">
         <!-- Mobile-Only Portrait Orientation Message -->
