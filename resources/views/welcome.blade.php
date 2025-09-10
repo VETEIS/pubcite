@@ -388,26 +388,31 @@
                         <div class="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-white/20">
                             <div class="flex flex-col lg:flex-row">
                                 <!-- Left Side - Header Only -->
-                                <div class="bg-gradient-to-br from-maroon-600 to-maroon-700 px-6 py-6 flex flex-col items-center justify-center text-center lg:w-2/5">
-                                    <h1 class="text-2xl font-bold text-white mb-1 whitespace-nowrap">PubCite</h1>
-                                    <h2 class="text-lg font-bold text-white mb-2 whitespace-nowrap">Data Privacy Agreement</h2>
-                                    <p class="text-maroon-100 text-xs whitespace-nowrap">University of Southeastern Philippines</p>
-                                    <p class="text-maroon-100 text-xs whitespace-nowrap">Publication Unit</p>
+                                <div class="bg-gradient-to-br from-maroon-600 to-maroon-700 px-6 py-6 flex flex-col items-center justify-center text-center lg:w-2/5 relative overflow-hidden">
+                                    <!-- Hero Art Background -->
+                                    <div class="absolute inset-0 pointer-events-none">
+                                        <img src="/images/privacy_art.webp" alt="Hero Art" class="w-full h-full object-cover opacity-30" />
+                                    </div>
+                                    <div class="relative z-10">
+                                        <h1 class="text-2xl font-bold text-white whitespace-nowrap">PubCite</h1>
+                                        <h2 class="text-lg font-bold text-white mb-1 whitespace-nowrap">Data Privacy Agreement</h2>
+                                        <p class="text-maroon-100 text-xs whitespace-nowrap">University of Southeastern Philippines</p>
+                                        <p class="text-maroon-100 text-xs whitespace-nowrap">Publication Unit System 2025</p>
+                                    </div>
                                 </div>
 
                                 <!-- Right Side - Content & Actions -->
                                 <div class="px-6 py-6 flex flex-col justify-center lg:w-3/5">
                                     <div class="mb-6">
-                                        <p class="text-gray-700 leading-relaxed mb-4 text-sm text-justify">
-                                            By continuing, you agree to the 
+                                         <p class="text-gray-700 leading-relaxed mb-4 text-sm text-justify" style="text-indent: 2em;">
+                                             By continuing, you agree to the
                                             <a href="https://www.usep.edu.ph/usep-data-privacy-statement/" 
                                                target="_blank" 
                                                class="text-maroon-600 hover:text-maroon-700 underline font-semibold transition-colors duration-200">
-                                                data privacy statement
+                                                DATA PRIVACY
                                             </a> 
-                                            of the University of Southeastern Philippines and acknowledge that your personal information will be collected and processed in accordance with the Data Privacy Act of 2012 (R.A. 10173).
+                                            statement of the University of Southeastern Philippines and acknowledge that your personal information will be collected and processed in accordance with the Data Privacy Act of 2012 (R.A. 10173).
                                         </p>
-                                        
                                         <div class="bg-maroon-50 border border-maroon-200 rounded-lg p-3">
                                             <div class="flex items-start space-x-2">
                                                 <svg class="w-4 h-4 text-maroon-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
