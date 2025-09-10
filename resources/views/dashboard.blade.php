@@ -5,7 +5,6 @@
         errorTimer: null,
         activeTab: 'dashboard',
         searchOpen: false,
-        userMenuOpen: false,
         showError(message) {
             this.errorMessage = message;
             if (this.errorTimer) clearTimeout(this.errorTimer);
@@ -44,9 +43,9 @@
         <!-- Main Content -->
         <div class="flex-1 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
-            <main class="max-w-7xl mx-auto px-4 pt-2 min-h-[calc(100vh-2rem)]">
+            <main class="max-w-7xl mx-auto px-4 pt-2 pb-4 h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-2">
+                <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Overview Header -->
                     <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -67,75 +66,84 @@
                     }
                 @endphp
 
-                <!-- Requests Table -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center gap-1">
-                                            ID
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center gap-1">
-                                            Name
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center gap-1">
-                                            Type
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center gap-1">
-                                            Date
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center gap-1">
-                                            Status
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Action
-                                    </th>
-                                        </tr>
-                                    </thead>
-                                                        <tbody class="bg-white divide-y divide-gray-200">
-                                        @if($filteredRequests->isEmpty())
-                                            <tr>
-                                        <td colspan="6" class="px-6 py-12 text-center">
-                                            <div class="flex flex-col items-center justify-center gap-3">
-                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
-                                                        </svg>
-                                                </div>
-                                                <div>
-                                                    <h4 class="text-lg font-semibold text-gray-900">No requests yet</h4>
-                                                    <p class="text-gray-500">Start by submitting your first publication or citation request.</p>
-                                                </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @else
+                <!-- Requests Table Container -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                    <!-- Table Header (Fixed) -->
+                    <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                ID
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Name
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Type
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Date
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Status
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Table Body (Scrollable) -->
+                    <div class="flex-1 overflow-y-auto table-scroll-area">
+                        @if($filteredRequests->isEmpty())
+                            <!-- Empty State (Centered) -->
+                            <div class="h-full flex items-center justify-center">
+                                <div class="flex flex-col items-center justify-center gap-3 text-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">No requests yet</h4>
+                                        <p class="text-gray-500">Start by submitting your first publication or citation request.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($filteredRequests as $index => $request)
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -217,13 +225,14 @@
                                                 </td>
                                             </tr>
                                             @endforeach
-                                        @endif
                                     </tbody>
                                 </table>
                             </div>
+                        @endif
+                    </div>
                     
-                    <!-- Pagination -->
-                    <div class="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+                    <!-- Pagination (Fixed at bottom) -->
+                    <div class="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
                         <div class="text-sm text-gray-700">
                             Showing <span class="font-medium">1</span> to <span class="font-medium">{{ $filteredRequests->count() }}</span> of <span class="font-medium">{{ $requests->count() }}</span> results
                         </div>
@@ -279,9 +288,47 @@
             scrollbar-color: #cbd5e1 #f1f5f9;
         }
         
-        /* Ensure minimum content height to trigger scrollbar */
-        .force-scrollbar > * {
-            min-height: calc(100vh + 1px);
+        /* Table scrollbar styling */
+        .table-scroll-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox table scrollbar */
+        .table-scroll-area {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Ensure table takes full height with proper padding */
+        .table-container {
+            height: calc(100vh - 140px); /* Adjust based on navbar height + padding */
+        }
+        
+        /* Ensure main content has proper bottom spacing */
+        .main-content {
+            padding-bottom: 1rem; /* 16px bottom padding */
+        }
+        
+        /* Ensure proper flex layout */
+        .flex-1 {
+            flex: 1 1 0%;
+        }
+        
+        .flex-shrink-0 {
+            flex-shrink: 0;
         }
     </style>
 </x-app-layout>

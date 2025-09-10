@@ -9,7 +9,6 @@
                 errorTimer: null,
                 activeTab: 'incentive',
                 searchOpen: false,
-                userMenuOpen: false,
                 savingDraft: false,
                 lastSaved: null,
                 autoSaveTimer: null,

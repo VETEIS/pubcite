@@ -1388,10 +1388,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         `;
                                          } else {
-                         detailsEl.innerHTML = monthMarks.map((m, index) => {
-                             const ds = m.date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-                             return `
-                                 <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/60 hover:bg-white/80 transition-all duration-200 shadow-sm hover:shadow-md marked-date-card" data-date="${m.date.toISOString().split('T')[0]}" style="margin: 0.5rem 0;">
+                        detailsEl.innerHTML = monthMarks.map((m, index) => {
+                            const ds = m.date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+                            return `
+                                <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/60 hover:bg-white/80 transition-all duration-200 shadow-sm hover:shadow-md marked-date-card" data-date="${m.date.toISOString().split('T')[0]}" style="margin: 0.5rem 0;">
                                     <div class="flex items-start gap-3">
                                         <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
                                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

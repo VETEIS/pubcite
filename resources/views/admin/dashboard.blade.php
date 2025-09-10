@@ -101,6 +101,74 @@
             overflow-x: auto;
             overflow-y: scroll;
         }
+        
+        /* Force scrollbar to always be visible to prevent layout shifts */
+        .force-scrollbar {
+            scrollbar-gutter: stable;
+            overflow-y: scroll !important;
+        }
+        
+        /* Ensure scrollbar is always visible even on short content */
+        .force-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox */
+        .force-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Table scrollbar styling */
+        .table-scroll-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox table scrollbar */
+        .table-scroll-area {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Ensure main content has proper bottom spacing */
+        .main-content {
+            padding-bottom: 1rem; /* 16px bottom padding */
+        }
+        
+        /* Ensure proper flex layout */
+        .flex-1 {
+            flex: 1 1 0%;
+        }
+        
+        .flex-shrink-0 {
+            flex-shrink: 0;
+        }
     </style>
     <div x-data="{ 
         loading: false,
@@ -251,17 +319,11 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
-            <style>
-                .flex-1::-webkit-scrollbar {
-                    display: none;
-                }
-            </style>
-            
+        <div class="flex-1 ml-4 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg">
+            <main class="p-4 rounded-bl-lg h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-4">
+                <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Date Range Display -->
                     <div class="flex items-center gap-4">
                         <!-- Overview Header -->
@@ -371,19 +433,20 @@
                         <div class="w-px h-8 bg-gray-200"></div>
                         
                         <!-- Notification Bell (like user dashboard) -->
-                        <div class="relative" x-data="notificationBell()">
+                        <div class="relative" x-data="notificationBell()" x-cloak>
                             <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
-                                <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
-                                </svg>
+                            <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+                            </svg>
                                 <!-- Notification Badge -->
                                 <div x-show="unreadCount > 0" 
                                      x-text="unreadCount" 
                                      class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse"></div>
-                            </button>
+                        </button>
                             
                             <!-- Notification Dropdown -->
                             <div x-show="showDropdown" 
+                                 x-cloak
                                  x-transition:enter="transition ease-out duration-200"
                                  x-transition:enter-start="opacity-0 scale-95"
                                  x-transition:enter-end="opacity-100 scale-100"
@@ -442,57 +505,103 @@
                         </div>
                         
                         <!-- Enhanced Search Button (like user dashboard) -->
-                        <button class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group">
-                            <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                    </svg>
-                                </button>
-                         
-                        <!-- Enhanced User Avatar Dropdown -->
-                         <div class="relative">
-                            <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
-                                 @if(Auth::user()->profile_photo_path)
-                                    <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
-                                 @else
-                                    <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
-                                         {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                                     </div>
-                                 @endif
-                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-300" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                    </svg>
-                                                </button>
-                             
-                            <!-- Enhanced User Dropdown Menu -->
-                            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
-                                 <div class="py-2">
-                                     <div class="px-4 py-2 border-b border-gray-100">
-                                         <div class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'Admin' }}</div>
-                                         <div class="text-xs text-gray-500">Administrator</div>
-                                     </div>
-                                     <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                         </svg>
-                                         Profile
-                                     </a>
-                                     <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100">
-                                                    @csrf
-                                         <button type="submit" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                                        </svg>
-                                             Sign Out
-                                                    </button>
-                                                </form>
+                        <div class="relative" x-data="{ searchOpen: false }">
+                            <button @click="searchOpen = !searchOpen" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group">
+                                <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- Search Dropdown -->
+                            <div x-show="searchOpen" 
+                                 x-cloak
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 @click.away="searchOpen = false"
+                                 class="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                                
+                                <!-- Search Header -->
+                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                                    <h3 class="text-sm font-semibold text-gray-900">Search Requests</h3>
+                                </div>
+                                
+                                <!-- Search Form -->
+                                <div class="p-4">
+                                    <form method="GET" action="{{ route('admin.dashboard') }}" class="space-y-4">
+                                        <!-- Search Input -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Search Term</label>
+                                            <input type="text" 
+                                                   name="search" 
+                                                   value="{{ request('search') }}"
+                                                   placeholder="Search by request code, user name, or email..."
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
+                                        </div>
+                                        
+                                        <!-- Filter Options -->
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                                <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
+                                                    <option value="">All Types</option>
+                                                    <option value="Publication" {{ request('type') == 'Publication' ? 'selected' : '' }}>Publication</option>
+                                                    <option value="Citation" {{ request('type') == 'Citation' ? 'selected' : '' }}>Citation</option>
+                                                </select>
                                             </div>
-                    </div>
-                         </div>
+                                            
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
+                                                    <option value="">All Status</option>
+                                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="endorsed" {{ request('status') == 'endorsed' ? 'selected' : '' }}>Endorsed</option>
+                                                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Action Buttons -->
+                                        <div class="flex items-center justify-between pt-4">
+                                            <button type="button" 
+                                                    @click="searchOpen = false"
+                                                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                                                Cancel
+                                            </button>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ route('admin.dashboard') }}" 
+                                                   class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                                                    Clear
+                                                </a>
+                                                <button type="submit" 
+                                                        class="px-4 py-2 bg-maroon-600 text-white text-sm rounded-md hover:bg-maroon-700 transition-colors">
+                                                    Search
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                         
+                        <!-- User Profile Button -->
+                        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
+                            @if(Auth::user()->profile_photo_path)
+                                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
+                                    {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                                </div>
+                            @endif
+                        </a>
                      </div>
                 </div>
 
                 <!-- Charts and Activity Log Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 flex-shrink-0">
                     <!-- Charts Card -->
                     <div class="bg-white border border-gray-200 rounded-lg shadow py-4 pl-4 flex flex-col md:flex-row items-stretch justify-center overflow-y-auto min-h-[220px] gap-4">
                         <!-- Request Stats (Line Chart) -->
@@ -668,15 +777,13 @@
                         </div>
                                 </div>
 
-                <!-- Requests Card -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-
-                                <!-- Requests Table -->
-                    <div class="table-container stable-layout">
-                    <div class="overflow-x-auto table-scroll-area always-scroll scrollbar-gutter-stable">
-                        <div class="table-content">
-                            <table class="w-full divide-y divide-gray-200 requests-table">
-                            <thead class="bg-gray-50 sticky top-0 z-10">
+                <!-- Requests Table Container -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                    <!-- Table Header (Fixed) -->
+                    <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
                                 <tr>
                                     @php
                                         $currentSort = request('sort', 'requested_at');
@@ -772,46 +879,32 @@
                                         Actions
                                     </th>
                                 </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @if($filteredRequests->isEmpty())
-                                    <tr>
-                                        <td class="w-32 px-6 py-4"></td>
-                                        <td class="w-32 px-6 py-4"></td>
-                                        <td class="w-48 px-6 py-4"></td>
-                                        <td class="w-24 px-6 py-4"></td>
-                                        <td class="w-28 px-6 py-4"></td>
-                                        <td class="w-24 px-6 py-4"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="w-32 px-6 py-4"></td>
-                                        <td class="w-32 px-6 py-4"></td>
-                                        <td class="w-48 px-6 py-4"></td>
-                                        <td class="w-24 px-6 py-4"></td>
-                                        <td class="w-28 px-6 py-4"></td>
-                                        <td class="w-24 px-6 py-4"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="w-32 px-6 py-4"></td>
-                                        <td class="w-32 px-6 py-4"></td>
-                                        <td class="w-48 px-6 py-4">
-                                            <div class="flex flex-col items-center justify-center gap-3">
-                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
-                                                    </svg>
-                                        </div>
-                                                <div class="text-center">
-                                                    <h4 class="text-lg font-semibold text-gray-900">No requests found</h4>
-                                                    <p class="text-gray-500">No requests match your current filters.</p>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Table Body (Scrollable) -->
+                    <div class="flex-1 overflow-y-auto table-scroll-area">
+                        @if($filteredRequests->isEmpty())
+                            <!-- Empty State (Centered) -->
+                            <div class="h-full flex items-center justify-center">
+                                <div class="flex flex-col items-center justify-center gap-3 text-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
+                                        </svg>
                                     </div>
-                                            </div>
-                                        </td>
-                                        <td class="w-24 px-6 py-4"></td>
-                                        <td class="w-28 px-6 py-4"></td>
-                                        <td class="w-24 px-6 py-4"></td>
-                                    </tr>
-                                @else
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">No requests yet</h4>
+                                        <p class="text-gray-500">No requests have been submitted yet.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="w-full divide-y divide-gray-200">
+                                    <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($filteredRequests as $index => $request)
                                     <tr class="hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer group">
                                         <td class="w-32 px-6 py-3 text-sm text-gray-900 overflow-hidden">
@@ -889,14 +982,14 @@
                                         </td>
                                     </tr>
                                         @endforeach
-                                                                @endif
-                            </tbody>
-                        </table>
-                                    </div>
-                                </div>
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
                     
-                                        <!-- Pagination -->
-                    <div class="bg-white px-4 py-2 border-t border-gray-200 flex items-center justify-between pagination-container">
+                    <!-- Pagination (Fixed at bottom) -->
+                    <div class="bg-white px-4 py-2 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
                         <div class="text-sm text-gray-700 min-w-0">
                             <span class="whitespace-nowrap">Showing <span class="font-medium w-8 inline-block text-center">1</span> to <span class="font-medium w-8 inline-block text-center">{{ $filteredRequests->count() }}</span> of <span class="font-medium w-8 inline-block text-center">{{ $requests->count() }}</span> results</span>
                             </div>
@@ -1294,11 +1387,66 @@ function showUpdateNotification() {
                 // Calculate total values to determine which dataset has higher counts
                 const pubTotal = pubData.reduce((sum, val) => sum + val, 0);
                 const citTotal = citData.reduce((sum, val) => sum + val, 0);
+                const totalData = pubTotal + citTotal;
                 
-                console.log('Totals:', { pubTotal, citTotal });
+                console.log('Totals:', { pubTotal, citTotal, totalData });
                 
+                // If no data at all, show grayed-out chart
+                if (totalData === 0) {
+                    monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: months.length > 0 ? months : ['No Data'],
+                            datasets: [{
+                                label: 'No Data Available',
+                                data: months.length > 0 ? new Array(months.length).fill(0) : [0],
+                                backgroundColor: 'rgba(156, 163, 175, 0.3)',
+                                borderColor: 'rgba(156, 163, 175, 0.6)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                borderDash: [5, 5]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 1000,
+                                easing: 'easeInOutQuart'
+                            },
+                            plugins: {
+                                legend: { display: true },
+                                tooltip: { 
+                                    enabled: true,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return 'No data available';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { 
+                                    beginAtZero: true, 
+                                    ticks: { precision: 0 },
+                                    animation: { duration: 1000 }
+                                },
+                                x: { 
+                                    grid: { display: false },
+                                    animation: { duration: 1000 }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Create datasets based on available data and filter
                 let datasets = [];
-                if (!typeFilter || typeFilter === 'Publication' || typeFilter === 'Publications') {
+                    
+                    // Show publications if no filter or filter matches
+                    if ((!typeFilter || typeFilter === 'Publication' || typeFilter === 'Publications') && pubTotal > 0) {
                     datasets.push({
                         label: 'Publications',
                         data: pubData,
@@ -1310,7 +1458,9 @@ function showUpdateNotification() {
                         order: pubTotal > citTotal ? 1 : 0,
                     });
                 }
-                if (!typeFilter || typeFilter === 'Citation' || typeFilter === 'Citations') {
+                    
+                    // Show citations if no filter or filter matches
+                    if ((!typeFilter || typeFilter === 'Citation' || typeFilter === 'Citations') && citTotal > 0) {
                     datasets.push({
                         label: 'Citations',
                         data: citData,
@@ -1320,6 +1470,23 @@ function showUpdateNotification() {
                         fill: true,
                         tension: 0.3,
                         order: citTotal > pubTotal ? 1 : 0,
+                    });
+                }
+                    
+                    // If filtered data has no results, show grayed-out chart for that type
+                    if (datasets.length === 0) {
+                        const filteredType = typeFilter === 'Publication' || typeFilter === 'Publications' ? 'Publications' : 'Citations';
+                        datasets.push({
+                            label: `No ${filteredType} Data`,
+                            data: months.length > 0 ? new Array(months.length).fill(0) : [0],
+                            backgroundColor: 'rgba(156, 163, 175, 0.3)',
+                            borderColor: 'rgba(156, 163, 175, 0.6)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHoverRadius: 0,
+                            borderDash: [5, 5]
                     });
                 }
                 
@@ -1405,6 +1572,7 @@ function showUpdateNotification() {
                         }
                     }
                 });
+                }
             }
             
             // Update Status Donut Chart with smooth transition
@@ -1454,30 +1622,30 @@ function showUpdateNotification() {
                         }
                     });
                 } else {
-                    statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Pending', 'Endorsed', 'Rejected'],
-                            datasets: [{
-                                data: statusCounts,
-                                backgroundColor: [
-                                    'rgba(245, 158, 11, 0.8)',
-                                    'rgba(34, 197, 94, 0.8)',
-                                    'rgba(239, 68, 68, 0.8)'
-                                ],
-                                borderColor: [
-                                    'rgba(245, 158, 11, 1)',
-                                    'rgba(34, 197, 94, 1)',
-                                    'rgba(239, 68, 68, 1)'
-                                ],
-                                borderWidth: 2,
-                                hoverBackgroundColor: [
-                                    'rgba(245, 158, 11, 1)',
-                                    'rgba(34, 197, 94, 1)',
-                                    'rgba(239, 68, 68, 1)'
-                                ]
-                            }]
-                        },
+                statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pending', 'Endorsed', 'Rejected'],
+                        datasets: [{
+                            data: statusCounts,
+                            backgroundColor: [
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(34, 197, 94, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(245, 158, 11, 1)',
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ],
+                            borderWidth: 2,
+                            hoverBackgroundColor: [
+                                'rgba(245, 158, 11, 1)',
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ]
+                        }]
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,

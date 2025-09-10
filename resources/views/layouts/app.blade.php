@@ -67,6 +67,9 @@
 
         <!-- Livewire Styles -->
         @livewireStyles
+        
+        <!-- Alpine.js x-cloak styles -->
+        <style>[x-cloak]{display:none!important}</style>
     </head>
     <body class="font-sans antialiased bg-white">
         <div class="min-h-screen bg-white">

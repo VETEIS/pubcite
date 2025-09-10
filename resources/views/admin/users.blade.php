@@ -1,7 +1,6 @@
 <x-app-layout>
     <div x-data="{ 
-        searchOpen: false,
-        userMenuOpen: false
+        searchOpen: false
     }" 
     x-init="
         // Initialize notification bell
@@ -122,16 +121,11 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
-            <style>
-                .flex-1::-webkit-scrollbar {
-                    display: none;
-                }
-            </style>
+        <div class="flex-1 ml-4 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg">
+            <main class="p-4 rounded-bl-lg h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-4">
+                <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Page Title -->
                     <div class="flex items-center gap-4">
                         <!-- User Management Title -->
@@ -184,11 +178,11 @@
                         <div class="w-px h-8 bg-gray-200"></div>
                         
                         <!-- Notification Bell (like user dashboard) -->
-                        <div class="relative" x-data="notificationBell()">
+                        <div class="relative" x-data="notificationBell()" x-cloak>
                             <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
-                                <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
-                                </svg>
+                            <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+                                                    </svg>
                                 <!-- Notification Badge -->
                                 <div x-show="unreadCount > 0" 
                                      x-text="unreadCount" 
@@ -197,6 +191,7 @@
                             
                             <!-- Notification Dropdown -->
                             <div x-show="showDropdown" 
+                                 x-cloak
                                  x-transition:enter="transition ease-out duration-200"
                                  x-transition:enter-start="opacity-0 scale-95"
                                  x-transition:enter-end="opacity-100 scale-100"
@@ -214,7 +209,7 @@
                                                 x-show="unreadCount > 0"
                                                 class="text-xs text-maroon-600 hover:text-maroon-800 font-medium">
                                             Mark all as read
-                                        </button>
+                                                </button>
                                     </div>
                                 </div>
                                 
@@ -255,63 +250,107 @@
                         </div>
                         
                         <!-- Enhanced Search Button (like user dashboard) -->
-                        <button class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group">
+                        <div class="relative" x-data="{ searchOpen: false }">
+                            <button @click="searchOpen = !searchOpen" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group">
                             <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </button>
-                         
-                        <!-- Enhanced User Avatar Dropdown -->
-                        <div class="relative">
-                            <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
-                                @if(Auth::user()->profile_photo_path)
-                                    <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
-                                @else
-                                    <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
-                                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                                    </div>
-                                @endif
-                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-300" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
                             
-                            <!-- Enhanced User Dropdown Menu -->
-                            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
-                                <div class="py-2">
-                                    <div class="px-4 py-2 border-b border-gray-100">
-                                        <div class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'Admin' }}</div>
-                                        <div class="text-xs text-gray-500">Administrator</div>
+                            <!-- Search Dropdown -->
+                            <div x-show="searchOpen" 
+                                 x-cloak
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 @click.away="searchOpen = false"
+                                 class="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                                
+                                <!-- Search Header -->
+                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                                    <h3 class="text-sm font-semibold text-gray-900">Search Users</h3>
                                 </div>
-                                    <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                        Profile
-                                    </a>
-                                    <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                            </svg>
-                                            Sign Out
-                                        </button>
+                                
+                                <!-- Search Form -->
+                                <div class="p-4">
+                                    <form method="GET" action="{{ route('admin.users.index') }}" class="space-y-4">
+                                        <!-- Search Input -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Search Term</label>
+                                            <input type="text" 
+                                                   name="search" 
+                                                   value="{{ request('search') }}"
+                                                   placeholder="Search by name, email, or role..."
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
+                                        </div>
+                                        
+                                        <!-- Filter Options -->
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                                                <select name="role" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
+                                                    <option value="">All Roles</option>
+                                                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                                    <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Signatory Type</label>
+                                                <select name="signatory_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
+                                                    <option value="">All Types</option>
+                                                    <option value="faculty" {{ request('signatory_type') == 'faculty' ? 'selected' : '' }}>Faculty</option>
+                                                    <option value="staff" {{ request('signatory_type') == 'staff' ? 'selected' : '' }}>Staff</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Action Buttons -->
+                                        <div class="flex items-center justify-between pt-4">
+                                            <button type="button" 
+                                                    @click="searchOpen = false"
+                                                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                                                Cancel
+                                            </button>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ route('admin.users.index') }}" 
+                                                   class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                                                    Clear
+                                                </a>
+                                                <button type="submit" 
+                                                        class="px-4 py-2 bg-maroon-600 text-white text-sm rounded-md hover:bg-maroon-700 transition-colors">
+                                                    Search
+                                                </button>
+                                            </div>
+                                        </div>
                                     </form>
                                 </div>
                             </div>
                         </div>
+                         
+                        <!-- User Profile Button -->
+                        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
+                            @if(Auth::user()->profile_photo_path)
+                                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
+                                    {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                                </div>
+                            @endif
+                        </a>
                     </div>
                 </div>
 
-                <!-- Users Table -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <!-- Users Table -->
-                    <div class="table-container stable-layout">
-                        <div class="overflow-x-auto table-scroll-area always-scroll scrollbar-gutter-stable">
-                            <div class="table-content">
-                                <table class="w-full divide-y divide-gray-200 requests-table">
-                            <thead class="bg-gray-50 sticky top-0 z-10">
+                <!-- Users Table Container -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                    <!-- Table Header (Fixed) -->
+                    <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-fixed">
+                                <thead>
                                 <tr>
                                             @php
                                                 $currentSort = request('sort', 'name');
@@ -408,37 +447,31 @@
                                             </th>
                                             </tr>
                                         </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Table Body (Scrollable) -->
+                        <div class="flex-1 overflow-y-auto table-scroll-area">
                                         @if($users->isEmpty())
-                                            <tr>
-                                                <td class="w-20 px-6 py-4"></td>
-                                                <td class="w-48 px-6 py-4"></td>
-                                                <td class="w-64 px-6 py-4"></td>
-                                                <td class="w-32 px-6 py-4"></td>
-                                                <td class="w-40 px-6 py-4"></td>
-                                                <td class="w-32 px-6 py-4"></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="w-20 px-6 py-4"></td>
-                                                <td class="w-48 px-6 py-4"></td>
-                                                <td class="w-64 px-6 py-4"></td>
-                                                <td class="w-32 px-6 py-4"></td>
-                                                <td class="w-40 px-6 py-4">
-                                                    <div class="flex flex-col items-center justify-center gap-3">
+                                <!-- Empty State (Centered) -->
+                                <div class="h-full flex items-center justify-center">
+                                    <div class="flex flex-col items-center justify-center gap-3 text-center">
                                                         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                                             <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
                                                             </svg>
                                                         </div>
-                                                        <div class="text-center">
-                                                            <h4 class="text-lg font-semibold text-gray-900">No users found</h4>
-                                                            <p class="text-gray-500">No users match your current filters.</p>
+                                        <div>
+                                            <h4 class="text-lg font-semibold text-gray-900">No users yet</h4>
+                                            <p class="text-gray-500">No users have been created yet.</p>
+                                        </div>
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td class="w-32 px-6 py-4"></td>
-                                            </tr>
                                         @else
+                                <div class="overflow-x-auto">
+                                    <table class="w-full table-fixed divide-y divide-gray-200">
+                                        <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($users as $user)
                                                 <tr class="hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer group">
                                                     <td class="w-20 px-6 py-3 text-center">
@@ -495,15 +528,14 @@
                                                 </td>
                                             </tr>
                                         @endforeach
-                                        @endif
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        @endif
                             </div>
                     
-                    <!-- Pagination -->
-                    <div class="bg-white px-6 py-3 border-t border-gray-200 pagination-container">
+                    <!-- Pagination (Fixed at bottom) -->
+                    <div class="bg-white px-6 py-3 border-t border-gray-200 flex-shrink-0">
                         {{ $users->links() }}
                     </div>
                 </div>
@@ -511,6 +543,83 @@
         </div>
     </div>
     
-
-
+    <style>
+        /* Force scrollbar to always be visible to prevent layout shifts */
+        .force-scrollbar {
+            scrollbar-gutter: stable;
+            overflow-y: scroll !important;
+        }
+        
+        /* Ensure table column alignment */
+        .table-fixed {
+            table-layout: fixed;
+        }
+        
+        .table-fixed th,
+        .table-fixed td {
+            box-sizing: border-box;
+        }
+        
+        /* Ensure scrollbar is always visible even on short content */
+        .force-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .force-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox */
+        .force-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Table scrollbar styling */
+        .table-scroll-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox table scrollbar */
+        .table-scroll-area {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Ensure main content has proper bottom spacing */
+        .main-content {
+            padding-bottom: 1rem; /* 16px bottom padding */
+        }
+        
+        /* Ensure proper flex layout */
+        .flex-1 {
+            flex: 1 1 0%;
+        }
+        
+        .flex-shrink-0 {
+            flex-shrink: 0;
+        }
+    </style>
 </x-app-layout> 

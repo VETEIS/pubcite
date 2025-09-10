@@ -72,18 +72,14 @@
     <div class="relative flex items-center">
         <!-- Subtle separator -->
         <div class="w-px h-6 bg-gray-200 mr-3"></div>
-        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 p-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 hover:from-maroon-600 hover:to-maroon-700 transition-all duration-200 group border border-gray-200/50 hover:border-maroon-500/50">
+        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
             @if(Auth::user()->profile_photo_path)
-                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-7 h-7 rounded-full object-cover ring-2 ring-white shadow-sm">
+                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
             @else
-                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-maroon-500 to-maroon-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
                     {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                 </div>
             @endif
-                <div class="flex items-center gap-1.5">
-                    <div class="text-sm font-medium text-gray-700 group-hover:text-white transition-colors">{{ Auth::user()->name ?? 'User' }}</div>
-                    <div class="w-2 h-2 bg-green-500 group-hover:bg-green-300 rounded-full shadow-sm"></div>
-                </div>
         </a>
     </div>
 </div>

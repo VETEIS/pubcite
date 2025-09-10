@@ -3,7 +3,6 @@
         loading: false,
         errorMessage: null,
         errorTimer: null,
-        userMenuOpen: false,
         showError(message) {
             this.errorMessage = message;
             if (this.errorTimer) clearTimeout(this.errorTimer);

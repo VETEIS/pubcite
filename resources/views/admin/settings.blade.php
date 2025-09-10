@@ -1,7 +1,6 @@
 <x-app-layout>
     <div x-data="{ 
-        searchOpen: false,
-        userMenuOpen: false
+        searchOpen: false
     }" 
     x-init="
         // Initialize notification bell
@@ -149,11 +148,11 @@
                     <div class="flex items-center gap-4">
                         
                         <!-- Notification Bell (like user dashboard) -->
-                        <div class="relative" x-data="notificationBell()">
+                        <div class="relative" x-data="notificationBell()" x-cloak>
                             <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
-                                <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
-                                </svg>
+                            <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+                            </svg>
                                 <!-- Notification Badge -->
                                 <div x-show="unreadCount > 0" 
                                      x-text="unreadCount" 
@@ -162,6 +161,7 @@
                             
                             <!-- Notification Dropdown -->
                             <div x-show="showDropdown" 
+                                 x-cloak
                                  x-transition:enter="transition ease-out duration-200"
                                  x-transition:enter-start="opacity-0 scale-95"
                                  x-transition:enter-end="opacity-100 scale-100"
@@ -179,7 +179,7 @@
                                                 x-show="unreadCount > 0"
                                                 class="text-xs text-maroon-600 hover:text-maroon-800 font-medium">
                                             Mark all as read
-                                        </button>
+                        </button>
                                     </div>
                                 </div>
                                 
@@ -226,9 +226,8 @@
                             </svg>
                         </button>
                          
-                        <!-- Enhanced User Avatar Dropdown -->
-                        <div class="relative">
-                            <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
+                        <!-- User Profile Button -->
+                        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
                                 @if(Auth::user()->profile_photo_path)
                                     <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
                                 @else
@@ -236,221 +235,309 @@
                                         {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
                                     </div>
                                 @endif
-                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-300" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                             
-                            <!-- Enhanced User Dropdown Menu -->
-                            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
-                                <div class="py-2">
-                                    <div class="px-4 py-2 border-b border-gray-100">
-                                        <div class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'Admin' }}</div>
-                                        <div class="text-xs text-gray-500">Administrator</div>
-                                    </div>
-                                    <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                        Profile
-                                    </a>
-                                    <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                            </svg>
-                                            Sign Out
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
                 
-                <div class="max-w-6xl mx-auto space-y-8">
+                <!-- Modern Settings Layout -->
+                <div class="max-w-7xl mx-auto">
+
                     
-                    <form id="settings-form" method="POST" action="{{ route('admin.settings.update') }}" class="space-y-8">
+                    <form id="settings-form" method="POST" action="{{ route('admin.settings.update') }}">
                         @csrf
                         @method('PUT')
                         
-                        <!-- Official Information Section -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div class="px-8 py-6 border-b border-gray-200 bg-gray-50">
-                                <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- General Settings Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+                                <!-- Header -->
+                                <div class="px-6 py-4 bg-gradient-to-r from-maroon-50 to-red-50 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     </div>
-                                    Official Information
-                                </h3>
-                                <p class="text-gray-600 mt-1">Configure official names and titles for document generation</p>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-gray-900">Official Information</h3>
+                                                <p class="text-sm text-gray-600 mt-1">Configure official names and titles for document generation</p>
+                                            </div>
                             </div>
-                            <div class="p-8">
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Deputy Director Row -->
-                                    <div class="space-y-2">
-                                        <label class="block text-sm font-semibold text-gray-700">Deputy Director Name</label>
-                                        <input type="text" name="official_deputy_director_name" value="{{ old('official_deputy_director_name', $official_deputy_director_name) }}" 
-                                               class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" required>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="block text-sm font-semibold text-gray-700">Deputy Director Title</label>
-                                        <input type="text" name="official_deputy_director_title" value="{{ old('official_deputy_director_title', $official_deputy_director_title) }}" 
-                                               class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" required>
-                                    </div>
-                                    
-                                    <!-- RDD Director Row -->
-                                    <div class="space-y-2">
-                                        <label class="block text-sm font-semibold text-gray-700">RDD Director Name</label>
-                                        <input type="text" name="official_rdd_director_name" value="{{ old('official_rdd_director_name', $official_rdd_director_name) }}" 
-                                               class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" required>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="block text-sm font-semibold text-gray-700">RDD Director Title</label>
-                                        <input type="text" name="official_rdd_director_title" value="{{ old('official_rdd_director_title', $official_rdd_director_title) }}" 
-                                               class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" required>
+                                        <button type="submit" name="save_official_info" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                disabled>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save Changes
+                                        </button>
                                     </div>
                                 </div>
                                 
-                                <!-- Official Information Save Button -->
-                                <div class="flex items-center justify-end pt-6 border-t border-gray-200 mt-6">
-                                    <button type="submit" name="save_official_info" class="inline-flex items-center gap-2 px-6 py-3 bg-maroon-600 text-white rounded-lg hover:bg-maroon-700 transition-colors font-semibold">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Save Official Information
-                                    </button>
+                                <!-- Content -->
+                                <div class="p-6">
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <!-- Deputy Director Card -->
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <div class="flex items-center gap-2 mb-3">
+                                                <div class="w-6 h-6 bg-maroon-100 rounded flex items-center justify-center">
+                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                </div>
+                                                <h4 class="text-sm font-semibold text-gray-900">Deputy Director</h4>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+                                                    <input type="text" name="official_deputy_director_name" value="{{ old('official_deputy_director_name', $official_deputy_director_name) }}" 
+                                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                           placeholder="Enter deputy director's full name" required>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Official Title</label>
+                                        <input type="text" name="official_deputy_director_title" value="{{ old('official_deputy_director_title', $official_deputy_director_title) }}" 
+                                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                           placeholder="Enter deputy director's title" required>
+                                                </div>
+                                            </div>
+                                    </div>
+                                    
+                                        <!-- RDD Director Card -->
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <div class="flex items-center gap-2 mb-3">
+                                                <div class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                                                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                </div>
+                                                <h4 class="text-sm font-semibold text-gray-900">RDD Director</h4>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+                                        <input type="text" name="official_rdd_director_name" value="{{ old('official_rdd_director_name', $official_rdd_director_name) }}" 
+                                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                           placeholder="Enter RDD director's full name" required>
+                                    </div>
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Official Title</label>
+                                        <input type="text" name="official_rdd_director_title" value="{{ old('official_rdd_director_title', $official_rdd_director_title) }}" 
+                                                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                           placeholder="Enter RDD director's title" required>
+                                                </div>
+                                            </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Welcome Page Calendar Section -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div class="px-8 py-6 border-b border-gray-200 bg-gray-50">
-                                <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <!-- Features Settings Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+                                <!-- Header -->
+                                <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
-                                    Welcome Page Calendar
-                                </h3>
-                                <p class="text-gray-600 mt-1">Add multiple marked dates with notes to show on the welcome page</p>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-gray-900">Feature Controls</h3>
+                                                <p class="text-sm text-gray-600 mt-1">Manage feature availability and system behavior</p>
                             </div>
-                            <div class="p-8">
-                                <div id="marksRepeater" class="space-y-4">
-                                    @php($marks = old('calendar_marks', $calendar_marks ?? []))
-                                    @if(empty($marks))
-                                        @php($marks = [[ 'date' => '', 'note' => '' ]])
-                                    @endif
-                                    @foreach($marks as $idx => $mark)
-                                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                                        <div class="md:col-span-2">
-                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                                            <input type="date" name="calendar_marks[{{ $idx }}][date]" value="{{ $mark['date'] ?? '' }}" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
                                         </div>
-                                        <div class="md:col-span-3">
-                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Note</label>
-                                            <input type="text" name="calendar_marks[{{ $idx }}][note]" value="{{ $mark['note'] ?? '' }}" placeholder="e.g., Call for Papers deadline" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
+                                        <button type="submit" name="save_application_controls" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                disabled>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="p-6 space-y-6">
+                                    <!-- Citations Request Feature -->
+                                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-3">
+                                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-gray-900">Citations Request Feature</h4>
+                                                        <div class="flex items-center gap-2 mt-1">
+                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}" id="status-badge">
+                                                                {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'Currently Enabled' : 'Currently Disabled' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                         </div>
-                                        <div class="md:col-span-1 flex gap-2">
-                                            <button type="button" class="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors" onclick="removeMarkRow(this)" title="Remove">
-                                                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                <p class="text-sm text-gray-600 mb-3">Control whether users and signatories can access the "Apply for Citations" feature</p>
+                                                <div class="bg-white rounded-md p-3 border border-gray-200">
+                                                    <div class="flex items-start gap-2">
+                                                        <div class="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                            <svg class="w-2 h-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-xs font-medium text-gray-900 mb-1">When disabled:</p>
+                                                            <p class="text-xs text-gray-600">The citations button will be grayed out and users will be redirected with an error message if they try to access the feature.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4 ml-6">
+                                                <div class="text-center">
+                                                    <label class="relative inline-flex items-center cursor-pointer">
+                                                        <input type="hidden" name="citations_request_enabled" value="0">
+                                                        <input type="checkbox" name="citations_request_enabled" value="1" class="sr-only peer" {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'checked' : '' }}>
+                                                        <div class="w-12 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                                    </label>
+                                                    <span class="text-xs font-medium text-gray-900 mt-1 block" id="toggle-text">
+                                                        {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'Enabled' : 'Disabled' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Publications Request Feature (Coming Soon) -->
+                                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200 opacity-60">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-3">
+                                                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-gray-500">Publications Request Feature</h4>
+                                                        <div class="flex items-center gap-2 mt-1">
+                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                                                Coming Soon
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p class="text-sm text-gray-500 mb-3">Control access to the publications request feature</p>
+                                            </div>
+                                            <div class="flex items-center gap-4 ml-6">
+                                                <div class="text-center">
+                                                    <div class="w-12 h-6 bg-gray-200 rounded-full cursor-not-allowed"></div>
+                                                    <span class="text-xs font-medium text-gray-400 mt-1 block">Disabled</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Calendar Settings Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                                <!-- Header -->
+                                <div class="px-6 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-gray-900">Welcome Page Calendar</h3>
+                                                <p class="text-sm text-gray-600 mt-1">Add multiple marked dates with notes to show on the welcome page</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" onclick="addMarkRow()" 
+                                                    class="w-8 h-8 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center justify-center" 
+                                                    title="Add Event">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
+                                            <button type="submit" name="save_calendar" 
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                    disabled>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Save Changes
                                             </button>
                                         </div>
                                     </div>
-                                    @endforeach
-                                </div>
-                                <div class="mt-6 flex items-center justify-between">
-                                    <button type="button" onclick="addMarkRow()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Add Mark
-                                    </button>
-                                    
-                                    <!-- Calendar Save Button -->
-                                    <button type="submit" name="save_calendar" class="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-semibold">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Save Calendar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Application Controls Section -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div class="px-8 py-6 border-b border-gray-200 bg-gray-50">
-                                <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    </div>
-                                    Application Controls
-                                </h3>
-                                <p class="text-gray-600 mt-1">Manage feature availability and system behavior</p>
-                            </div>
-                            <div class="p-8 space-y-6">
-                                
-                                <!-- Citations Request Toggle -->
-                                <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-3 mb-2">
-                                                <h4 class="text-lg font-semibold text-gray-900">Citations Request Feature</h4>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}" id="status-badge">
-                                                    {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'Currently Enabled' : 'Currently Disabled' }}
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 mb-3">Control whether users and signatories can access the "Apply for Citations" feature</p>
-                                            <div class="text-xs text-gray-500">
-                                                <strong>When disabled:</strong> The citations button will be grayed out and users will be redirected with an error message if they try to access the feature.
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-4">
-                                            <label class="relative inline-flex items-center cursor-pointer">
-                                                <input type="hidden" name="citations_request_enabled" value="0">
-                                                <input type="checkbox" name="citations_request_enabled" value="1" class="sr-only peer" {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'checked' : '' }}>
-                                                <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
-                                            </label>
-                                            <span class="text-sm font-medium text-gray-900" id="toggle-text">
-                                                {{ old('citations_request_enabled', $citations_request_enabled) == '1' ? 'Enabled' : 'Disabled' }}
-                                            </span>
-                                        </div>
-                                    </div>
                                 </div>
                                 
-                                <!-- Placeholder for future settings -->
-                                <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-3 mb-2">
-                                                <h4 class="text-lg font-semibold text-gray-500">Publications Request Feature</h4>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                                    Coming Soon
-                                                </span>
+                                <!-- Content -->
+                                <div class="p-6">
+                                    <div class="mb-4">                                        
+                                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                            <div class="overflow-x-auto">
+                                                <table class="w-full">
+                                                    <thead class="bg-gray-50 border-b border-gray-200">
+                                                        <tr>
+                                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </th>
+                                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Date</th>
+                                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="marksRepeater" class="bg-white divide-y divide-gray-200">
+                                                        @php($marks = old('calendar_marks', $calendar_marks ?? []))
+                                                        @if(empty($marks))
+                                                            @php($marks = [[ 'date' => '', 'note' => '' ]])
+                                                        @endif
+                                                        @foreach($marks as $idx => $mark)
+                                                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                                <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                </div>
+                                                            </td>
+                                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                                <input type="date" name="calendar_marks[{{ $idx }}][date]" value="{{ $mark['date'] ?? '' }}" 
+                                                                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                                                            </td>
+                                                            <td class="px-6 py-4">
+                                                                <input type="text" name="calendar_marks[{{ $idx }}][note]" value="{{ $mark['note'] ?? '' }}" 
+                                                                       placeholder="Enter event description" 
+                                                                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                                                            </td>
+                                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                                <button type="button" onclick="removeMarkRow(this)" 
+                                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                                        title="Remove Event">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                    </svg>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                            <p class="text-sm text-gray-500 mb-3">Control access to the publications request feature</p>
-                                        </div>
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-14 h-7 bg-gray-200 rounded-full cursor-not-allowed"></div>
-                                            <span class="text-sm font-medium text-gray-400">Disabled</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-
                     </form>
                 </div>
             </main>
@@ -460,6 +547,118 @@
     <script>
         (function() {
             'use strict';
+            
+            // Global variables for change detection
+            let originalValues = {};
+            
+            // Update save button state
+            function updateSaveButton(button, hasChanges) {
+                if (!button) return;
+                
+                if (hasChanges) {
+                    button.disabled = false;
+                    button.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg';
+                } else {
+                    button.disabled = true;
+                    button.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm';
+                }
+            }
+            
+            // Check for changes in official information section
+            function checkOfficialChanges() {
+                const deputyName = document.querySelector('input[name="official_deputy_director_name"]');
+                const deputyTitle = document.querySelector('input[name="official_deputy_director_title"]');
+                const rddName = document.querySelector('input[name="official_rdd_director_name"]');
+                const rddTitle = document.querySelector('input[name="official_rdd_director_title"]');
+                
+                if (!deputyName || !deputyTitle || !rddName || !rddTitle) return;
+                
+                const currentValues = {
+                    deputy_name: deputyName.value,
+                    deputy_title: deputyTitle.value,
+                    rdd_name: rddName.value,
+                    rdd_title: rddTitle.value
+                };
+                
+                const hasChanges = Object.keys(currentValues).some(key => 
+                    currentValues[key] !== originalValues.official[key]
+                );
+                
+                const saveBtn = document.querySelector('button[name="save_official_info"]');
+                updateSaveButton(saveBtn, hasChanges);
+            }
+            
+            // Check for changes in features section
+            function checkFeaturesChanges() {
+                const checkbox = document.querySelector('input[name="citations_request_enabled"][type="checkbox"]');
+                if (!checkbox) return;
+                
+                const currentValue = checkbox.checked;
+                const hasChanges = currentValue !== originalValues.features.citations_enabled;
+                
+                const saveBtn = document.querySelector('button[name="save_application_controls"]');
+                updateSaveButton(saveBtn, hasChanges);
+            }
+            
+            // Check for changes in calendar section
+            function checkCalendarChanges() {
+                const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
+                if (!calendarInputs.length) return;
+                
+                const currentMarks = Array.from(calendarInputs).map(input => input.value);
+                const hasChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalValues.calendar.marks);
+                
+                const saveBtn = document.querySelector('button[name="save_calendar"]');
+                updateSaveButton(saveBtn, hasChanges);
+            }
+            
+            // Initialize form change detection
+            function initFormChangeDetection() {
+                // Store original values
+                const deputyName = document.querySelector('input[name="official_deputy_director_name"]');
+                const deputyTitle = document.querySelector('input[name="official_deputy_director_title"]');
+                const rddName = document.querySelector('input[name="official_rdd_director_name"]');
+                const rddTitle = document.querySelector('input[name="official_rdd_director_title"]');
+                const citationsCheckbox = document.querySelector('input[name="citations_request_enabled"][type="checkbox"]');
+                const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
+                
+                originalValues = {
+                    official: {
+                        deputy_name: deputyName ? deputyName.value : '',
+                        deputy_title: deputyTitle ? deputyTitle.value : '',
+                        rdd_name: rddName ? rddName.value : '',
+                        rdd_title: rddTitle ? rddTitle.value : ''
+                    },
+                    features: {
+                        citations_enabled: citationsCheckbox ? citationsCheckbox.checked : false
+                    },
+                    calendar: {
+                        marks: Array.from(calendarInputs).map(input => input.value)
+                    }
+                };
+                
+                // Add event listeners
+                if (deputyName) deputyName.addEventListener('input', checkOfficialChanges);
+                if (deputyTitle) deputyTitle.addEventListener('input', checkOfficialChanges);
+                if (rddName) rddName.addEventListener('input', checkOfficialChanges);
+                if (rddTitle) rddTitle.addEventListener('input', checkOfficialChanges);
+                
+                // Citations checkbox change is handled by updateCheckboxUI function
+                
+                calendarInputs.forEach(input => {
+                    input.addEventListener('input', checkCalendarChanges);
+                });
+                
+                // Make functions globally available
+                window.checkOfficialChanges = checkOfficialChanges;
+                window.checkFeaturesChanges = checkFeaturesChanges;
+                window.checkCalendarChanges = checkCalendarChanges;
+                
+                // Check initial state
+                checkOfficialChanges();
+                checkFeaturesChanges();
+                checkCalendarChanges();
+            }
             
             // Initialize checkbox UI
             function initCheckbox() {
@@ -482,54 +681,98 @@
                 if (checkbox.checked) {
                     toggleText.textContent = 'Enabled';
                     statusBadge.textContent = 'Currently Enabled';
-                    statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                    statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
                 } else {
                     toggleText.textContent = 'Disabled';
                     statusBadge.textContent = 'Currently Disabled';
-                    statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+                    statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                }
+                
+                // Also trigger change detection when UI is updated
+                if (window.checkFeaturesChanges) {
+                    checkFeaturesChanges();
                 }
             }
             
             // Initialize when DOM is ready
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initCheckbox);
+                document.addEventListener('DOMContentLoaded', function() {
+                    initCheckbox();
+                    initFormChangeDetection();
+                });
             } else {
                 initCheckbox();
+                initFormChangeDetection();
             }
         })();
 
-        // Simple repeater for calendar marks
+        // Enhanced repeater for calendar marks
         function addMarkRow() {
             const container = document.getElementById('marksRepeater');
             if (!container) return;
-            const index = container.querySelectorAll('.grid').length;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'grid grid-cols-1 md:grid-cols-6 gap-4 items-end';
-            wrapper.innerHTML = `
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                    <input type="date" name="calendar_marks[${index}][date]" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
+            const index = container.querySelectorAll('tr').length;
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors duration-150';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                 </div>
-                <div class="md:col-span-3">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Note</label>
-                    <input type="text" name="calendar_marks[${index}][note]" placeholder="e.g., Call for Papers deadline" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
-                </div>
-                <div class="md:col-span-1 flex gap-2">
-                    <button type="button" class="px-3 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors" onclick="removeMarkRow(this)" title="Remove">
-                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="date" name="calendar_marks[${index}][date]" 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                </td>
+                <td class="px-6 py-4">
+                    <input type="text" name="calendar_marks[${index}][note]" 
+                           placeholder="Enter event description" 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button type="button" onclick="removeMarkRow(this)" 
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                            title="Remove Event">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
-                </div>
+                </td>
             `;
-            container.appendChild(wrapper);
+            
+            // Insert at the top instead of bottom
+            if (container.firstChild) {
+                container.insertBefore(row, container.firstChild);
+            } else {
+                container.appendChild(row);
+            }
+            
+            // Add event listeners to new inputs
+            row.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', function() {
+                    // Trigger calendar change detection
+                    if (window.checkCalendarChanges) {
+                        window.checkCalendarChanges();
+                    }
+                });
+            });
+            
+            // Trigger change detection immediately since we added a new row
+            if (window.checkCalendarChanges) {
+                window.checkCalendarChanges();
+            }
         }
 
         function removeMarkRow(btn) {
-            const row = btn.closest('.grid');
+            const row = btn.closest('tr');
             const container = document.getElementById('marksRepeater');
             if (row && container && container.children.length > 1) {
                 row.remove();
+                // Trigger calendar change detection
+                if (window.checkCalendarChanges) {
+                    window.checkCalendarChanges();
+                }
             }
         }
     </script>

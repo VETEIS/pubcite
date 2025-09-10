@@ -1,7 +1,6 @@
 <x-app-layout>
     <div x-data="{ 
-        searchOpen: false,
-        userMenuOpen: false
+        searchOpen: false
     }" class="h-screen bg-gray-50 flex overflow-hidden" style="scrollbar-gutter: stable;">
         
         <!-- Hidden notification divs for global notification system -->
@@ -44,46 +43,16 @@
                             </button>
                         </form>
                         
-                        <!-- User Avatar Dropdown -->
-                        <div class="relative">
-                            <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1 transition-colors">
-                                @if(Auth::user()->profile_photo_path)
-                                    <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover">
-                                @else
-                                    <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold">
-                                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                                    </div>
-                                @endif
-                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            
-                            <!-- User Dropdown Menu -->
-                            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                                <div class="py-2">
-                                    <div class="px-4 py-2 border-b border-gray-100">
-                                        <div class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'Admin' }}</div>
-                                        <div class="text-xs text-gray-500">Administrator</div>
-                                    </div>
-                                    <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                        Profile
-                                    </a>
-                                    <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                            </svg>
-                                            Sign Out
-                                        </button>
-                                    </form>
+                        <!-- User Profile Button -->
+                        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1 transition-colors">
+                            @if(Auth::user()->profile_photo_path)
+                                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold">
+                                    {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
                                 </div>
-                            </div>
-                        </div>
+                            @endif
+                        </a>
                     </div>
                 </div>
 
