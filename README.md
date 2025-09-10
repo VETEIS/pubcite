@@ -2,9 +2,14 @@
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue.svg)](https://postgresql.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4+-38B2AC.svg)](https://tailwindcss.com)
+[![Alpine.js](https://img.shields.io/badge/Alpine.js-3.13+-77C3D8.svg)](https://alpinejs.dev)
+[![Livewire](https://img.shields.io/badge/Livewire-3.0+-4E56A6.svg)](https://livewire.laravel.com)
+[![Vite](https://img.shields.io/badge/Vite-6.2+-646CFF.svg)](https://vitejs.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-PubCite: A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows. Features full mobile responsiveness, privacy compliance, and role-based access control.
+A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows. Features full mobile responsiveness, privacy compliance, and role-based access control.
 
 ## Features
 
@@ -142,7 +147,7 @@ PubCite: A comprehensive web application for the University of Southeastern Phil
    docker run -p 10000:10000 pubcite
    ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables
 
