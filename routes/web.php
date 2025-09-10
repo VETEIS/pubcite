@@ -14,6 +14,11 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+// Mobile redirect page
+Route::get('/mobile-redirect', function () {
+    return view('mobile-redirect');
+})->name('mobile.redirect');
+
 // Privacy acceptance handled client-side with localStorage
 
 // Debug route for troubleshooting

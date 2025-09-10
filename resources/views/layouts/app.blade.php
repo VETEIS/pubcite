@@ -24,6 +24,48 @@
         <!-- Scripts and Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        <!-- Mobile Detection Script -->
+        <script>
+            // Client-side screen size detection
+            function checkScreenSize() {
+                try {
+                    // Only redirect if not already on mobile redirect page
+                    if (window.location.pathname === '/mobile-redirect') {
+                        return;
+                    }
+                    
+                    // Check if bypass parameter is present
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('bypass_mobile') === '1') {
+                        return;
+                    }
+                    
+                    // Check if already redirected to prevent loops
+                    if (urlParams.get('mobile_redirected') === '1') {
+                        return;
+                    }
+                    
+                    if (window.innerWidth < 1024) { // Desktop breakpoint
+                        const currentUrl = window.location.href;
+                        const mobileRedirectUrl = '{{ route("mobile.redirect") }}?redirect=' + encodeURIComponent(currentUrl) + '&mobile_redirected=1';
+                        
+                        // Use replace instead of assign to avoid back button issues
+                        window.location.replace(mobileRedirectUrl);
+                    }
+                } catch (error) {
+                    console.warn('Mobile detection error:', error);
+                }
+            }
+            
+            // Check on load and resize with debouncing
+            let resizeTimeout;
+            window.addEventListener('load', checkScreenSize);
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(checkScreenSize, 100);
+            });
+        </script>
+
         <!-- Fallback for when Vite assets are not available -->
         <script>
             // Check if Vite assets loaded, if not, load built assets
