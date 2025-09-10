@@ -114,6 +114,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Admin notifications endpoints
     Route::get('/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');
     Route::post('/notifications/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.mark-all-read');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     
     // Admin request management routes
     Route::patch('/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');

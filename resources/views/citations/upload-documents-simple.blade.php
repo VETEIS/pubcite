@@ -2,11 +2,6 @@
 <div class="space-y-6">
     <!-- Header Section -->
     <div class="text-center py-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-            </svg>
-        </div>
         <h2 class="text-2xl font-bold text-blue-800 mb-2">Upload Required Documents</h2>
         <p class="text-sm text-blue-600">Please upload all required PDF documents for your citation request</p>
     </div>

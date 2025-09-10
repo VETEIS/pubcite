@@ -142,4 +142,23 @@ class AdminUserController extends Controller
         AdminNotification::where('user_id', $admin->id)->whereNull('read_at')->update(['read_at' => now()]);
         return response()->json(['success' => true]);
     }
+
+    public function markNotificationAsRead($id)
+    {
+        $admin = Auth::user();
+        if (!$admin || $admin->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        $notification = AdminNotification::where('id', $id)
+            ->where('user_id', $admin->id)
+            ->first();
+            
+        if (!$notification) {
+            return response()->json(['error' => 'Notification not found'], 404);
+        }
+        
+        $notification->update(['read_at' => now()]);
+        return response()->json(['success' => true]);
+    }
 } 

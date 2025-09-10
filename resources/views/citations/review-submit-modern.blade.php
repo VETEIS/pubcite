@@ -2,11 +2,6 @@
 <div class="space-y-6">
     <!-- Header Section -->
     <div class="text-center py-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-        </div>
         <h2 class="text-2xl font-bold text-green-800 mb-2">Review Your Submission</h2>
         <p class="text-sm text-green-600">Please review all information before submitting your citation request</p>
     </div>
@@ -118,7 +113,7 @@
                     Please review all information above. Once submitted, your citation request will be sent to the administrators for review.
                 </p>
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="confirm-submission" class="w-4 h-4 text-maroon-600 border-gray-300 rounded focus:ring-maroon-500">
+                    <input type="checkbox" id="confirm-submission" x-model="confirmChecked" class="w-4 h-4 text-maroon-600 border-gray-300 rounded focus:ring-maroon-500">
                     <label for="confirm-submission" class="text-sm text-green-800">
                         I confirm that all information is accurate and complete
                     </label>

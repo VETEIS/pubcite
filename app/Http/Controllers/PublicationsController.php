@@ -404,15 +404,17 @@ class PublicationsController extends Controller
         
         if (isset($request->user_id) && isset($request->request_code)) {
             $dir = "requests/{$request->user_id}/{$request->request_code}";
-            $fullDir = Storage::disk('public')->path($dir);
-            if (is_dir($fullDir)) {
-                $files = glob($fullDir . '/*');
-                foreach ($files as $file) {
-                    if (is_file($file)) {
-                        unlink($file);
-                    }
-                }
-                rmdir($fullDir);
+            
+            // Delete from local storage
+            if (Storage::disk('local')->exists($dir)) {
+                Storage::disk('local')->deleteDirectory($dir);
+                Log::info('Deleted request folder from local storage', ['dir' => $dir]);
+            }
+            
+            // Delete from public storage
+            if (Storage::disk('public')->exists($dir)) {
+                Storage::disk('public')->deleteDirectory($dir);
+                Log::info('Deleted request folder from public storage', ['dir' => $dir]);
             }
         }
         
@@ -736,6 +738,24 @@ class PublicationsController extends Controller
                 'requestId' => $userRequest->id,
                 'requestCode' => $requestCode
             ]);
+
+            // Create admin notifications for new submission
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\AdminNotification::create([
+                    'user_id' => $admin->id,
+                    'request_id' => $userRequest->id,
+                    'type' => 'submission',
+                    'title' => 'New Publication Request',
+                    'message' => $user->name . ' submitted a new publication request: ' . $requestCode,
+                    'data' => [
+                        'request_code' => $requestCode,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                        'type' => 'Publication'
+                    ]
+                ]);
+            }
 
             // Only send emails for final submission, not for drafts
             if (!$isDraft) {

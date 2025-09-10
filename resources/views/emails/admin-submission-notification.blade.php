@@ -126,7 +126,7 @@
                 <td class="value" colspan="3">{{ $user->name }} ({{ $user->email }})</td>
             </tr>
         </table>
-        <a href="{{ route('dashboard') }}" class="btn">Review Request</a>
+        <a href="{{ route('admin.dashboard') }}" class="btn">Review Request</a>
         <div style="margin-top:10px; font-size:13px; color:#555;">
             Please review this request in the admin dashboard.
         </div>

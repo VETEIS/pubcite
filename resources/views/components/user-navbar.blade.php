@@ -232,6 +232,8 @@ function initializeDraftDropdown() {
             if (data.success) {
                 drafts = drafts.filter(draft => draft.id !== draftId);
                 renderDrafts();
+                // Reload the page to reflect the updated state
+                window.location.reload();
             } else {
                 alert('Failed to delete draft: ' + (data.message || 'Unknown error'));
             }

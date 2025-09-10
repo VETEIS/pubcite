@@ -260,7 +260,11 @@ class DashboardController extends Controller
                 $statusCounts[$row->status] = $row->count;
             }
             $recentApplications = \App\Models\Request::with('user')->where('status', '!=', 'draft')->orderByDesc('requested_at')->limit(5)->get();
-            $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
+            $activityLogs = \App\Models\ActivityLog::with('user')
+                ->whereNotIn('action', ['created']) // Exclude submission requests
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get();
             return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
         } catch (\Exception $e) {
             Log::error('Admin dashboard error: ' . $e->getMessage(), [
@@ -692,7 +696,11 @@ class DashboardController extends Controller
                     }
                     
                     try {
-                        $activityLogs = \App\Models\ActivityLog::with('user')->orderByDesc('created_at')->limit(10)->get();
+                        $activityLogs = \App\Models\ActivityLog::with('user')
+                ->whereNotIn('action', ['created']) // Exclude submission requests
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get();
                     } catch (\Exception $e) {
                         Log::error('SSE Stream Error: ' . $e->getMessage());
                     }

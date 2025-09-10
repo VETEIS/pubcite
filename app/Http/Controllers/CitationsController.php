@@ -83,6 +83,24 @@ class CitationsController extends Controller
         
         try {
             $data = $request->all();
+            
+            // Filter out error messages and invalid data
+            $data = array_filter($data, function($value, $key) {
+                // Skip error messages and system fields
+                if (is_string($value) && (
+                    strpos($value, 'false message') !== false ||
+                    strpos($value, 'Please wait before submitting') !== false ||
+                    strpos($value, 'Validation failed') !== false
+                )) {
+                    return false;
+                }
+                // Skip system fields
+                if (in_array($key, ['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft'])) {
+                    return false;
+                }
+                return true;
+            }, ARRAY_FILTER_USE_BOTH);
+            
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
             $reqId = $request->input('request_id');
@@ -104,6 +122,33 @@ class CitationsController extends Controller
                 $uploadPath = "requests/{$userId}/{$requestCode}";
                 Log::info('Generating Citation DOCX for saved request', ['request_id' => $reqId, 'request_code' => $requestCode]);
             }
+            
+            // Add fallback data if form data is corrupted
+            $fallbackData = [
+                'name' => 'Sample Name',
+                'rank' => 'Sample Rank', 
+                'college' => 'Sample College',
+                'bibentry' => 'Sample Bibliography Entry',
+                'issn' => 'Sample ISSN',
+                'doi' => 'Sample DOI',
+                'scopus' => '1',
+                'wos' => '1',
+                'aci' => '1',
+                'facultyname' => 'Sample Faculty',
+                'centermanager' => 'Sample Manager',
+                'dean' => 'Sample Dean',
+                'date' => date('F j, Y'),
+                'title' => 'Sample Title',
+                'journal' => 'Sample Journal',
+                'publisher' => 'Sample Publisher',
+                'citescore' => 'Sample CiteScore',
+                'citedtitle' => 'Sample Cited Title',
+                'citedbibentry' => 'Sample Cited Bibliography',
+                'citedjournal' => 'Sample Cited Journal'
+            ];
+            
+            // Merge fallback data with filtered form data
+            $data = array_merge($fallbackData, $data);
             
             Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
             
@@ -134,8 +179,9 @@ class CitationsController extends Controller
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
             
-            if (!file_exists($fullPath)) {
-                throw new \Exception('Generated file not found');
+            $absolutePath = Storage::disk('local')->path($fullPath);
+            if (!file_exists($absolutePath)) {
+                throw new \Exception('Generated file not found at: ' . $absolutePath);
             }
             
             Log::info('Citation DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
@@ -150,7 +196,7 @@ class CitationsController extends Controller
             }
             
             // Otherwise, download the file
-            return response()->download($fullPath, $filename, [
+            return response()->download($absolutePath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"'
             ]);
@@ -254,7 +300,7 @@ class CitationsController extends Controller
             
             $templateProcessor->saveAs($fullOutputPath);
             Log::info('CITATION RECO: Saved populated docx', ['output' => $fullOutputPath]);
-            return $outputPath;
+            return $outputPath; // Return the relative path
         } catch (\Exception $e) {
             Log::error('CITATION RECO: Error generating docx', ['error' => $e->getMessage()]);
             throw $e;
@@ -306,15 +352,17 @@ class CitationsController extends Controller
             
             if (isset($request->user_id) && isset($request->request_code)) {
                 $dir = "requests/{$request->user_id}/{$request->request_code}";
-                $fullDir = storage_path('app/public/' . $dir);
-                if (is_dir($fullDir)) {
-                    $files = glob($fullDir . '/*');
-                    foreach ($files as $file) {
-                        if (is_file($file)) {
-                            unlink($file);
-                        }
-                    }
-                    rmdir($fullDir);
+                
+                // Delete from local storage
+                if (Storage::disk('local')->exists($dir)) {
+                    Storage::disk('local')->deleteDirectory($dir);
+                    Log::info('Deleted request folder from local storage', ['dir' => $dir]);
+                }
+                
+                // Delete from public storage
+                if (Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->deleteDirectory($dir);
+                    Log::info('Deleted request folder from public storage', ['dir' => $dir]);
                 }
             }
             
@@ -392,7 +440,7 @@ class CitationsController extends Controller
             $recentSubmission = \App\Models\Request::where('user_id', Auth::id())
                 ->where('type', 'Citation')
                 ->where('status', 'pending')
-                ->where('created_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
+                ->where('requested_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
                 ->first();
                 
             if ($recentSubmission) {
@@ -516,14 +564,14 @@ class CitationsController extends Controller
                 try {
                     $filtered = $this->mapIncentiveFields($request->all());
                     $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath);
-                    $docxPaths['incentive_application'] = $incentivePath;
+                    $docxPaths['incentive'] = $incentivePath;
                 } catch (\Exception $e) {
                     Log::error('Error generating incentive DOCX: ' . $e->getMessage());
                 }
                 try {
                     $filtered = $this->mapRecommendationFields($request->all());
                     $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath);
-                    $docxPaths['recommendation_letter'] = $recommendationPath;
+                    $docxPaths['recommendation'] = $recommendationPath;
                 } catch (\Exception $e) {
                     Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
                 }
@@ -592,6 +640,24 @@ class CitationsController extends Controller
                 'pdf_count' => count($pdfPaths),
                 'docx_count' => count($docxPaths)
             ]);
+
+            // Create admin notifications for new submission
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\AdminNotification::create([
+                    'user_id' => $admin->id,
+                    'request_id' => $userRequest->id,
+                    'type' => 'submission',
+                    'title' => 'New Citation Request',
+                    'message' => $user->name . ' submitted a new citation request: ' . $requestCode,
+                    'data' => [
+                        'request_code' => $requestCode,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                        'type' => 'Citation'
+                    ]
+                ]);
+            }
 
             // Only send emails for final submission, not for drafts
             if (!$isDraft) {

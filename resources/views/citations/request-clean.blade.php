@@ -1,4 +1,7 @@
 <x-app-layout>
+    <!-- Global Notifications -->
+    <x-global-notifications />
+    
     <script>
         function citationRequestData() {
             return {
@@ -14,6 +17,7 @@
                 lastSaved: null,
                 autoSaveTimer: null,
                 tabStatesRefreshed: 0,
+                confirmChecked: false,
                 
                 showError(message) {
                     this.errorMessage = message;
@@ -76,6 +80,15 @@
                     }
                     
                     this.activeTab = targetTab;
+                    
+                    // Display uploaded files when switching to review tab
+                    if (targetTab === 'review') {
+                        setTimeout(() => {
+                            if (typeof displayUploadedFiles === 'function') {
+                                displayUploadedFiles();
+                            }
+                        }, 100);
+                    }
                 },
                 
                 // Validate current tab - simple and reliable
@@ -471,13 +484,22 @@
                 updateSubmitButton() {
                     const submitBtn = document.querySelector('#submit-btn');
                     if (submitBtn) {
-                        const formValid = this.validateForm();
                         const confirmChecked = document.querySelector('#confirm-submission')?.checked || false;
-                        submitBtn.disabled = !(formValid && confirmChecked);
+                        submitBtn.disabled = !confirmChecked;
                     }
                     
                     // Also refresh tab states when form changes
                     this.refreshTabStates();
+                },
+
+                // Reset submit button after submission
+                resetSubmitButton() {
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit';
+                        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
                 },
                 
                 // Refresh tab enabled/disabled states
@@ -544,6 +566,17 @@
                     
                     // Setup real-time validation
                     this.setupRealTimeValidation();
+                    
+                    // Reset submitting state on page unload or navigation
+                    window.addEventListener('beforeunload', () => {
+                        this.isSubmitting = false;
+                    });
+                    
+                    // Reset submitting state on form errors
+                    window.addEventListener('error', () => {
+                        this.isSubmitting = false;
+                        this.resetSubmitButton();
+                    });
                 },
                 
                 // Setup real-time validation with debouncing
@@ -610,6 +643,25 @@
         <!-- Error message overlay -->
         <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
             <span x-text="errorMessage"></span>
+        </div>
+
+        <!-- Submission Loading Overlay -->
+        <div x-show="isSubmitting" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center"
+             style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl px-8 py-6 flex items-center gap-4 max-w-sm mx-4">
+                <div class="animate-spin h-8 w-8 border-4 border-maroon-600 border-t-transparent rounded-full"></div>
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">Submitting Request</h3>
+                    <p class="text-sm text-gray-600">Please wait while we process your submission...</p>
+                </div>
+            </div>
         </div>
         
         <!-- Loading overlay -->
@@ -799,12 +851,13 @@
                                     Next
                                 </button>
                                 <button x-show="activeTab === 'review'"
-                                    @click="submitForm()"
-                                    :disabled="!validateForm()"
-                                    :class="!validateForm()
+                                    id="submit-btn"
+                                    @click="document.getElementById('citation-request-form').submit()"
+                                    :disabled="!confirmChecked"
+                                    :class="!confirmChecked
                                         ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
                                         : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20'"
-                                    class="transition-colors">
+                                    class="transition-colors text-center">
                                     Submit
                                 </button>
                             </div>
