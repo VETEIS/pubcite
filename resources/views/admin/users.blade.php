@@ -44,14 +44,14 @@
                         const data = await response.json();
                         const currentUnreadCount = data.unread || 0;
                         
-                        // If there are new unread notifications, reload the page
-                        if (currentUnreadCount > this.unreadCount) {
-                            console.log('New notifications detected, reloading page...');
-                            window.location.reload();
+                        // Update the count silently without reloading
+                        if (currentUnreadCount !== this.unreadCount) {
+                            this.unreadCount = currentUnreadCount;
+                            // Optionally update notifications list if dropdown is open
+                            if (this.showDropdown) {
+                                this.notifications = data.items || [];
+                            }
                         }
-                        
-                        // Update the count silently
-                        this.unreadCount = currentUnreadCount;
                     } catch (error) {
                         console.error('Failed to check for new notifications:', error);
                     }
@@ -256,7 +256,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </button>
-                            
+                         
                             <!-- Search Dropdown -->
                             <div x-show="searchOpen" 
                                  x-cloak
@@ -323,7 +323,7 @@
                                                 <button type="submit" 
                                                         class="px-4 py-2 bg-maroon-600 text-white text-sm rounded-md hover:bg-maroon-700 transition-colors">
                                                     Search
-                                                </button>
+                                        </button>
                                             </div>
                                         </div>
                                     </form>

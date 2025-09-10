@@ -227,14 +227,14 @@
                         const data = await response.json();
                         const currentUnreadCount = data.unread || 0;
                         
-                        // If there are new unread notifications, reload the page
-                        if (currentUnreadCount > this.unreadCount) {
-                            console.log('New notifications detected, reloading page...');
-                            window.location.reload();
+                        // Update the count silently without reloading
+                        if (currentUnreadCount !== this.unreadCount) {
+                            this.unreadCount = currentUnreadCount;
+                            // Optionally update notifications list if dropdown is open
+                            if (this.showDropdown) {
+                                this.notifications = data.items || [];
+                            }
                         }
-                        
-                        // Update the count silently
-                        this.unreadCount = currentUnreadCount;
                     } catch (error) {
                         console.error('Failed to check for new notifications:', error);
                     }
@@ -656,7 +656,16 @@
                                                         <span class="font-semibold truncate">{{ $label }}</span>
                                                     </td>
                                                     <td class="py-1 text-center font-semibold">{{ $statusCounts[strtolower($label)] ?? 0 }}</td>
-                                                    <td class="py-1 text-right text-gray-500">@if($total > 0){{ number_format(100 * ($statusCounts[strtolower($label)] ?? 0) / $total, 1) }}%@else 0%@endif</td>
+                                                    <td class="py-1 text-right text-gray-500">
+                                                        @if($total > 0)
+                                                            @php
+                                                                $percentage = 100 * ($statusCounts[strtolower($label)] ?? 0) / $total;
+                                                                echo $percentage == 100 ? '100' : number_format($percentage, 1);
+                                                            @endphp
+                                                        @else
+                                                            0
+                                                        @endif%
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -1335,7 +1344,8 @@ function showUpdateNotification() {
                     <tbody>
                         ${statusLabels.map((label, i) => {
                             const count = statusCounts[label.toLowerCase()] || 0;
-                            const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
+                            const rawPercentage = total > 0 ? (count / total) * 100 : 0;
+                            const percentage = rawPercentage === 100 ? '100' : rawPercentage.toFixed(1);
                             
                             return `
                                 <tr class="hover:bg-gray-50 transition-all duration-300">

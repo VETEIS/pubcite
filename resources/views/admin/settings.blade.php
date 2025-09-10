@@ -44,14 +44,14 @@
                         const data = await response.json();
                         const currentUnreadCount = data.unread || 0;
                         
-                        // If there are new unread notifications, reload the page
-                        if (currentUnreadCount > this.unreadCount) {
-                            console.log('New notifications detected, reloading page...');
-                            window.location.reload();
+                        // Update the count silently without reloading
+                        if (currentUnreadCount !== this.unreadCount) {
+                            this.unreadCount = currentUnreadCount;
+                            // Optionally update notifications list if dropdown is open
+                            if (this.showDropdown) {
+                                this.notifications = data.items || [];
+                            }
                         }
-                        
-                        // Update the count silently
-                        this.unreadCount = currentUnreadCount;
                     } catch (error) {
                         console.error('Failed to check for new notifications:', error);
                     }
