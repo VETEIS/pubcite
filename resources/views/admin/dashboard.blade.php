@@ -788,141 +788,133 @@
 
                 <!-- Requests Table Container -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
-                    <!-- Table Header (Fixed) -->
-                    <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                <tr>
-                                    @php
-                                        $currentSort = request('sort', 'requested_at');
-                                        $currentOrder = request('order', 'desc');
-                                    @endphp
-                                    
-                                    <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'requested_at', 'order' => $currentSort === 'requested_at' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1">
-                                            Date
-                                            @if($currentSort === 'requested_at')
-                                                @if($currentOrder === 'asc')
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                    </svg>
-                                                @endif
-                                            @else
-                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                </svg>
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'request_code', 'order' => $currentSort === 'request_code' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1">
-                                            Request Code
-                                            @if($currentSort === 'request_code')
-                                                @if($currentOrder === 'asc')
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                    </svg>
-                                                @endif
-                                            @else
-                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                </svg>
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="w-48 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center gap-1">
-                                            Applicant
-                                        </div>
-                                    </th>
-                                    <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" style="width: 96px; max-width: 96px; min-width: 96px;">
-                                        <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'type', 'order' => $currentSort === 'type' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center justify-center gap-1">
-                                            Type
-                                            @if($currentSort === 'type')
-                                                @if($currentOrder === 'asc')
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                    </svg>
-                                                @endif
-                                            @else
-                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                </svg>
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                        <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'status', 'order' => $currentSort === 'status' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center justify-center gap-1">
-                                            Status
-                                            @if($currentSort === 'status')
-                                                @if($currentOrder === 'asc')
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                    </svg>
-                                                @endif
-                                            @else
-                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                </svg>
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Table Body (Scrollable) -->
+                    <!-- Table (Combined Header and Body) -->
                     <div class="flex-1 overflow-y-auto table-scroll-area">
-                                @if($filteredRequests->isEmpty())
+                        @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
                             <div class="h-full flex items-center justify-center">
                                 <div class="flex flex-col items-center justify-center gap-3 text-center">
-                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
-                                                    </svg>
-                                        </div>
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
+                                        </svg>
+                                    </div>
                                     <div>
                                         <h4 class="text-lg font-semibold text-gray-900">No requests yet</h4>
                                         <p class="text-gray-500">No requests have been submitted yet.</p>
                                     </div>
-                                            </div>
+                                </div>
                             </div>
-                                @else
+                        @else
                             <div class="overflow-x-auto">
                                 <table class="w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50 sticky top-0 z-10">
+                                        <tr>
+                                            @php
+                                                $currentSort = request('sort', 'requested_at');
+                                                $currentOrder = request('order', 'desc');
+                                            @endphp
+                                            
+                                            <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'requested_at', 'order' => $currentSort === 'requested_at' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1">
+                                                    Date
+                                                    @if($currentSort === 'requested_at')
+                                                        @if($currentOrder === 'asc')
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+                                                            </svg>
+                                                        @else
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                                            </svg>
+                                                        @endif
+                                                    @else
+                                                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    @endif
+                                                </a>
+                                            </th>
+                                            <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'request_code', 'order' => $currentSort === 'request_code' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1">
+                                                    Request Code
+                                                    @if($currentSort === 'request_code')
+                                                        @if($currentOrder === 'asc')
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+                                                            </svg>
+                                                        @else
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                                            </svg>
+                                                        @endif
+                                                    @else
+                                                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    @endif
+                                                </a>
+                                            </th>
+                                            <th class="w-48 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <div class="flex items-center gap-1">
+                                                    Applicant
+                                                </div>
+                                            </th>
+                                            <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" style="width: 96px; max-width: 96px; min-width: 96px;">
+                                                <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'type', 'order' => $currentSort === 'type' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center justify-center gap-1">
+                                                    Type
+                                                    @if($currentSort === 'type')
+                                                        @if($currentOrder === 'asc')
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+                                                            </svg>
+                                                        @else
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                                            </svg>
+                                                        @endif
+                                                    @else
+                                                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    @endif
+                                                </a>
+                                            </th>
+                                            <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <a href="{{ route('admin.dashboard', array_merge(request()->except(['sort', 'order', 'page']), ['sort' => 'status', 'order' => $currentSort === 'status' && $currentOrder === 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center justify-center gap-1">
+                                                    Status
+                                                    @if($currentSort === 'status')
+                                                        @if($currentOrder === 'asc')
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+                                                            </svg>
+                                                        @else
+                                                            <svg class="w-3 h-3 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                                            </svg>
+                                                        @endif
+                                                    @else
+                                                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                        </svg>
+                                                    @endif
+                                                </a>
+                                            </th>
+                                            <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($filteredRequests as $index => $request)
                                     <tr class="hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer group">
-                                        <td class="w-32 px-6 py-3 text-sm text-gray-900 overflow-hidden">
+                                        <td class="w-32 px-6 py-3 text-sm text-gray-900 overflow-hidden text-left">
                                             <div class="truncate">{{ \Carbon\Carbon::parse($request->requested_at)->format('M d, Y H:i') }}</div>
                                         </td>
-                                        <td class="w-32 px-6 py-3 overflow-hidden">
+                                        <td class="w-32 px-6 py-3 overflow-hidden text-left">
                                             <div class="text-sm font-medium text-gray-900 truncate">{{ $request->request_code }}</div>
                                         </td>
-                                        <td class="w-48 px-6 py-3 overflow-hidden">
+                                        <td class="w-48 px-6 py-3 overflow-hidden text-left">
                                             <div class="flex items-center w-full">
                                                 @if($request->user->profile_photo_path)
                                                     <img src="{{ $request->user->profile_photo_url }}" alt="{{ $request->user->name }}" class="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0">
@@ -937,7 +929,7 @@
                                     </div>
                                                 </div>
                                         </td>
-                                        <td class="w-24 px-6 py-3 overflow-hidden" style="width: 96px; max-width: 96px; min-width: 96px;">
+                                        <td class="w-24 px-6 py-3 overflow-hidden text-center" style="width: 96px; max-width: 96px; min-width: 96px;">
                                             <div class="w-full flex justify-center">
                                                 <span class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium w-20 justify-center truncate overflow-hidden
                                                     {{ $request->type === 'Publication' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
@@ -945,7 +937,7 @@
                                                 </span>
                                                 </div>
                                         </td>
-                                        <td class="w-28 px-6 py-3 overflow-hidden">
+                                        <td class="w-28 px-6 py-3 overflow-hidden text-center">
                                             <div class="w-full flex justify-center">
                                                 @if($request->status === 'endorsed')
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 w-20 justify-center">

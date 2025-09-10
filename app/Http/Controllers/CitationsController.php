@@ -641,26 +641,25 @@ class CitationsController extends Controller
                 'docx_count' => count($docxPaths)
             ]);
 
-            // Create admin notifications for new submission
-            $admins = \App\Models\User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                \App\Models\AdminNotification::create([
-                    'user_id' => $admin->id,
-                    'request_id' => $userRequest->id,
-                    'type' => 'submission',
-                    'title' => 'New Citation Request',
-                    'message' => $user->name . ' submitted a new citation request: ' . $requestCode,
-                    'data' => [
-                        'request_code' => $requestCode,
-                        'user_name' => $user->name,
-                        'user_email' => $user->email,
-                        'type' => 'Citation'
-                    ]
-                ]);
-            }
-
-            // Only send emails for final submission, not for drafts
+            // Only send emails and create notifications for final submission, not for drafts
             if (!$isDraft) {
+                // Create admin notifications for final submission
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \App\Models\AdminNotification::create([
+                        'user_id' => $admin->id,
+                        'request_id' => $userRequest->id,
+                        'type' => 'submission',
+                        'title' => 'New Citation Request',
+                        'message' => $user->name . ' submitted a new citation request: ' . $requestCode,
+                        'data' => [
+                            'request_code' => $requestCode,
+                            'user_name' => $user->name,
+                            'user_email' => $user->email,
+                            'type' => 'Citation'
+                        ]
+                    ]);
+                }
                 try {
                     Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
                     $adminUsers = \App\Models\User::where('role', 'admin')->get();
@@ -683,7 +682,14 @@ class CitationsController extends Controller
                     'request_code' => $userRequest->request_code,
                     'form_data' => $userRequest->form_data
                 ]);
-                return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+                
+                // Check if this is an AJAX request (auto-save) or form submission (manual draft save)
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+                } else {
+                    // For manual draft saves via form submission, redirect with success message
+                    return redirect()->route('citations.request')->with('success', 'Draft saved successfully!');
+                }
             } else {
                 return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
             }

@@ -739,26 +739,25 @@ class PublicationsController extends Controller
                 'requestCode' => $requestCode
             ]);
 
-            // Create admin notifications for new submission
-            $admins = \App\Models\User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                \App\Models\AdminNotification::create([
-                    'user_id' => $admin->id,
-                    'request_id' => $userRequest->id,
-                    'type' => 'submission',
-                    'title' => 'New Publication Request',
-                    'message' => $user->name . ' submitted a new publication request: ' . $requestCode,
-                    'data' => [
-                        'request_code' => $requestCode,
-                        'user_name' => $user->name,
-                        'user_email' => $user->email,
-                        'type' => 'Publication'
-                    ]
-                ]);
-            }
-
-            // Only send emails for final submission, not for drafts
+            // Only send emails and create notifications for final submission, not for drafts
             if (!$isDraft) {
+                // Create admin notifications for final submission
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \App\Models\AdminNotification::create([
+                        'user_id' => $admin->id,
+                        'request_id' => $userRequest->id,
+                        'type' => 'submission',
+                        'title' => 'New Publication Request',
+                        'message' => $user->name . ' submitted a new publication request: ' . $requestCode,
+                        'data' => [
+                            'request_code' => $requestCode,
+                            'user_name' => $user->name,
+                            'user_email' => $user->email,
+                            'type' => 'Publication'
+                        ]
+                    ]);
+                }
                 try {
                     Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
                     
@@ -783,7 +782,14 @@ class PublicationsController extends Controller
                     'request_code' => $userRequest->request_code,
                     'form_data' => $userRequest->form_data
                 ]);
-                return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+                
+                // Check if this is an AJAX request (auto-save) or form submission (manual draft save)
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+                } else {
+                    // For manual draft saves via form submission, redirect with success message
+                    return redirect()->route('publications.request')->with('success', 'Draft saved successfully!');
+                }
             } else {
                 return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
             }
