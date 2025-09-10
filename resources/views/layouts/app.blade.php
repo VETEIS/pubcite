@@ -5,10 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         
-        <!-- Force portrait orientation on mobile -->
-        <meta name="screen-orientation" content="portrait">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="mobile-web-app-orientation" content="portrait">
 
         <!-- Security Headers -->
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -29,9 +25,10 @@
         <!-- Scripts and Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
-        <!-- Portrait Orientation Lock CSS -->
+        <!-- Mobile-Only Portrait Orientation Lock -->
         <style>
-            @media screen and (orientation: landscape) and (max-width: 768px) {
+            /* Mobile-only orientation lock - desktop completely unaffected */
+            @media screen and (max-width: 768px) and (orientation: landscape) {
                 body {
                     transform: rotate(90deg);
                     transform-origin: left top;
@@ -43,7 +40,7 @@
                     left: 0;
                 }
                 
-                .orientation-message {
+                .mobile-orientation-message {
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -59,36 +56,38 @@
                     z-index: 9999;
                 }
                 
-                .orientation-message h2 {
+                .mobile-orientation-message h2 {
                     font-size: 1.5rem;
                     font-weight: 600;
                     margin-bottom: 1rem;
                 }
                 
-                .orientation-message p {
+                .mobile-orientation-message p {
                     font-size: 1rem;
                     opacity: 0.9;
                 }
                 
-                .orientation-message svg {
+                .mobile-orientation-message svg {
                     width: 4rem;
                     height: 4rem;
                     margin-bottom: 1rem;
-                    animation: rotate 2s linear infinite;
+                    animation: mobile-rotate 2s linear infinite;
                 }
                 
-                @keyframes rotate {
+                @keyframes mobile-rotate {
                     from { transform: rotate(0deg); }
                     to { transform: rotate(360deg); }
                 }
             }
             
-            @media screen and (orientation: portrait) and (max-width: 768px) {
-                .orientation-message {
+            /* Hide message on desktop and mobile portrait */
+            @media screen and (min-width: 769px), screen and (max-width: 768px) and (orientation: portrait) {
+                .mobile-orientation-message {
                     display: none;
                 }
             }
         </style>
+        
 
 
         <!-- Fallback for when Vite assets are not available -->
@@ -139,8 +138,8 @@
         <style>[x-cloak]{display:none!important}</style>
     </head>
     <body class="font-sans antialiased bg-white">
-        <!-- Portrait Orientation Message -->
-        <div class="orientation-message">
+        <!-- Mobile-Only Portrait Orientation Message -->
+        <div class="mobile-orientation-message">
             <div>
                 <svg class="mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>

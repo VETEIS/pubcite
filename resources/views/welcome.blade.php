@@ -1183,18 +1183,28 @@ function scrollResearchers(direction) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Set mobile viewport height
+    // Mobile-only viewport height fix - desktop completely unaffected
     function setMobileViewportHeight() {
-        const heroSection = document.getElementById('hero');
-        if (heroSection && window.innerWidth < 768) {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-            heroSection.style.minHeight = `calc(var(--vh, 1vh) * 100 - 4rem)`;
+        if (window.innerWidth < 768) { // Mobile only
+            const heroSection = document.getElementById('hero');
+            if (heroSection) {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+                heroSection.style.minHeight = `calc(var(--vh, 1vh) * 100 - 4rem)`;
+            }
         }
     }
     
     // Initialize mobile viewport height
     setMobileViewportHeight();
+    
+    // Update viewport height on mobile resize and orientation change
+    window.addEventListener('resize', setMobileViewportHeight);
+    window.addEventListener('orientationchange', function() {
+        if (window.innerWidth < 768) { // Mobile only
+            setTimeout(setMobileViewportHeight, 100);
+        }
+    });
     
     // Privacy Modal Logic
     const privacyModal = document.getElementById('privacy-modal');
@@ -1900,11 +1910,6 @@ document.addEventListener('DOMContentLoaded', () => {
         researcherSearch.addEventListener('input', filterResearchers);
     }
 
-    // Update viewport height on resize and orientation change
-    window.addEventListener('resize', setMobileViewportHeight);
-    window.addEventListener('orientationchange', function() {
-        setTimeout(setMobileViewportHeight, 100);
-    });
 
 });
 </script> 

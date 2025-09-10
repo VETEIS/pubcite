@@ -37,14 +37,14 @@
             </div>
         </div>
 
-        <!-- Sidebar - Hidden on mobile -->
+        <!-- Sidebar - Hidden on mobile, visible on desktop -->
         <div class="hidden lg:block">
             @include('components.user-sidebar')
         </div>
 
         <!-- Main Content -->
         <div class="flex-1 h-screen overflow-y-auto force-scrollbar">
-            <!-- Mobile Header - Only visible on mobile -->
+            <!-- Mobile Header - Only visible on mobile, desktop completely unaffected -->
             <div class="lg:hidden bg-gradient-to-r from-maroon-800 to-maroon-900 text-white px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
