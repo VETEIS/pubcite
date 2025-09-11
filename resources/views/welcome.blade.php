@@ -88,7 +88,7 @@
             /* Mobile hero logo above title */
             .mobile-hero-logo {
                 display: block !important;
-                margin: 0 auto 2rem auto !important;
+                margin: 0 auto 0.75rem auto !important;
                 max-width: 280px !important;
                 height: auto !important;
                 visibility: visible !important;
