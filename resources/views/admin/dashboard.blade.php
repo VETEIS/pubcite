@@ -79,6 +79,24 @@
             overflow-y: scroll !important;
         }
         
+        /* Prevent FOUC - hide content until ready */
+        .fouc-prevent {
+            visibility: hidden;
+        }
+        
+        .fouc-ready {
+            visibility: visible;
+        }
+        
+        /* Prevent table layout shifts */
+        .requests-table tbody tr {
+            min-height: 60px;
+        }
+        
+        .requests-table td {
+            vertical-align: middle;
+        }
+        
         /* Hide scrollbar when not needed but maintain space */
         .scrollbar-gutter-stable {
             scrollbar-gutter: stable;
@@ -321,7 +339,7 @@
         <!-- Main Content -->
         <div class="flex-1 ml-4 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg h-full flex flex-col main-content">
+            <main class="p-4 rounded-bl-lg h-full flex flex-col main-content fouc-prevent" id="mainContent">
                 <!-- Dashboard Header with Modern Compact Filters -->
                 <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Date Range Display -->
@@ -603,7 +621,7 @@
                 <!-- Charts and Activity Log Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 flex-shrink-0">
                     <!-- Charts Card -->
-                    <div class="bg-white border border-gray-200 rounded-lg shadow py-4 pl-4 flex flex-col md:flex-row items-stretch justify-center overflow-y-auto min-h-[220px] gap-4">
+                    <div class="bg-white border border-gray-200 rounded-lg shadow py-4 pl-4 flex flex-col md:flex-row items-stretch justify-center overflow-y-auto min-h-[280px] gap-4">
                         <!-- Request Stats (Line Chart) -->
                         <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden pl-2 pr-0 relative">
                             <h2 class="text-sm font-semibold mb-2 text-left w-full flex items-center gap-2">
@@ -612,7 +630,7 @@
                                 </svg>
                                 <span id="chartTitle">Request Stats (Last 12 Months)</span>
                             </h2>
-                            <div class="w-full flex-1 flex items-center justify-center relative">
+                            <div class="w-full h-48 flex items-center justify-center relative overflow-hidden">
                                 <!-- Loading Overlay for Line Chart -->
                                 <div id="lineChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
                                     <div class="flex flex-col items-center gap-3">
@@ -620,12 +638,12 @@
                                         <p class="text-sm text-gray-600 font-medium">Loading chart...</p>
                                     </div>
                                 </div>
-                                <canvas id="monthlyChart" class="w-full h-48 max-h-[200px] transition-opacity duration-500" style="max-height:200px;"></canvas>
+                                <canvas id="monthlyChart" class="w-full h-48 max-h-[200px] transition-opacity duration-500 opacity-0" style="max-height:200px;"></canvas>
                             </div>
                         </div>
                                                  <!-- Status Breakdown (Donut Chart + Legend) -->
                          <div class="flex-[1_1_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden border-t md:border-t-0 md:border-l border-gray-200 p-4 relative">
-                             <div class="w-full max-w-xs mx-auto flex flex-col items-center justify-center">
+                             <div class="w-full max-w-xs mx-auto h-64 flex flex-col items-center justify-center relative overflow-hidden">
                                  <!-- Loading Overlay for Pie Chart -->
                                  <div id="pieChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
                                      <div class="flex flex-col items-center gap-3">
@@ -633,7 +651,7 @@
                                          <p class="text-sm text-gray-600 font-medium">Loading chart...</p>
                                      </div>
                                  </div>
-                                 <canvas id="statusChart" class="w-28 h-28 max-w-[112px] max-h-[112px] transition-opacity duration-500" style="max-width:112px;max-height:112px;"></canvas>
+                                 <canvas id="statusChart" class="w-28 h-28 max-w-[112px] max-h-[112px] transition-opacity duration-500 opacity-0" style="max-width:112px;max-height:112px;"></canvas>
                                  <div id="statusLegend" class="mt-2 w-full transition-all duration-500">
                                     <table class="w-full text-xs min-w-0 table-fixed">
                                         <thead>
@@ -1264,7 +1282,7 @@ function showUpdateNotification() {
             
             console.log('Loading elements opacity set to 0');
             
-            // Fade in charts
+            // Fade in charts smoothly
             const charts = document.querySelectorAll('#monthlyChart, #statusChart');
             charts.forEach(chart => {
                 chart.style.opacity = '1';
@@ -1815,6 +1833,13 @@ window.addEventListener('beforeunload', function() {
         document.addEventListener('turbo:load', () => {
             console.log('Turbo load event fired - fetching charts...');
             
+            // Show content when ready to prevent FOUC
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.classList.remove('fouc-prevent');
+                mainContent.classList.add('fouc-ready');
+            }
+            
             // Set initial chart title based on current URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const period = urlParams.get('period');
@@ -1905,6 +1930,13 @@ window.addEventListener('beforeunload', function() {
         
         // Call on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Show content when ready to prevent FOUC
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.classList.remove('fouc-prevent');
+                mainContent.classList.add('fouc-ready');
+            }
+            
             setTimeout(fixScrollbarLayout, 100);
         });
         
@@ -1944,87 +1976,93 @@ window.addEventListener('beforeunload', function() {
                         <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
                             <!-- Left Column - Combined Request/Applicant/Signatories Card -->
                             <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col h-full">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-6 h-6 bg-maroon-100 rounded-lg flex items-center justify-center">
-                                        <svg class="w-3 h-3 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    </div>
-                                    <h3 class="text-xs font-semibold text-gray-900">Request Information</h3>
+                                <div class="flex items-center gap-2">
+                                    
                                     </div>
                                 
-                                <!-- Summary and Signatories Card -->
-                                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0">
-                                    <!-- Summary Section -->
-                                    <div class="mb-3 flex-1 flex flex-col min-h-0">
-                                        <h4 class="text-xs font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">Summary</h4>
-                                        <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
-                                            <style>
-                                                .summary-table td {
-                                                    white-space: nowrap;
-                                                    overflow: hidden;
-                                                    text-overflow: ellipsis;
-                                                }
-                                            </style>
-                                            <table class="w-full h-full text-xs summary-table" style="table-layout: fixed;">
-                                                <tbody class="divide-y divide-gray-300">
-                                                    <tr class="bg-gray-50">
-                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Request Code</td>
-                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalRequestCode" title="">-</td>
+                                <!-- Summary Section -->
+                                <div class="mb-3 flex-1 flex flex-col min-h-0">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-6 h-6 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <h4 class="text-xs font-semibold text-gray-800 border-gray-200">Summary</h4>
+                                    </div>
+                                    <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
+                                        <style>
+                                            .summary-table td {
+                                                white-space: nowrap;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                            }
+                                        </style>
+                                        <table class="w-full h-full text-xs summary-table" style="table-layout: fixed;">
+                                            <tbody class="divide-y divide-gray-300">
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Request Code</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalRequestCode" title="">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Type</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalType" title="">-</td>
+                                                </tr>
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Status</td>
+                                                    <td class="px-2 py-0.5 w-1/2 truncate">
+                                                        <div id="modalStatus" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full" title="">-</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Submitted</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalDate" title="">-</td>
+                                                </tr>
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Full Name</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserName" title="">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Email Address</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserEmail" title="">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <!-- Signatories Section -->
+                                <div class="flex-1 flex flex-col min-h-0">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-6 h-6 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                            </svg>
+                                        </div>
+                                        <h4 class="text-xs font-semibold text-gray-800 border-gray-200">Signatories</h4>
+                                    </div>
+                                    <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
+                                        <style>
+                                            .signatories-table td {
+                                                white-space: nowrap;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                            }
+                                        </style>
+                                        <table class="w-full h-full text-xs signatories-table" style="table-layout: fixed;">
+                                                <tbody class="divide-y divide-gray-300" id="modalFormData">
+                                                    <!-- Dynamic Signatories will be populated here -->
+                                                    <!-- Fixed Directors -->
+                                                    <tr class="bg-gray-50 fixed-director">
+                                                        <td class="px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</td>
                                                     </tr>
-                                                    <tr>
-                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Type</td>
-                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalType" title="">-</td>
-                                                    </tr>
-                                                    <tr class="bg-gray-50">
-                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Status</td>
-                                                        <td class="px-2 py-0.5 w-1/2 truncate">
-                                                            <div id="modalStatus" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full" title="">-</div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Submitted</td>
-                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalDate" title="">-</td>
-                                                    </tr>
-                                                    <tr class="bg-gray-50">
-                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Full Name</td>
-                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserName" title="">-</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Email Address</td>
-                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserEmail" title="">-</td>
+                                                    <tr class="fixed-director">
+                                                        <td class="px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Signatories Section -->
-                                    <div class="flex-1 flex flex-col min-h-0">
-                                        <h4 class="text-xs font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">Signatories</h4>
-                                        <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
-                                            <style>
-                                                .signatories-table td {
-                                                    white-space: nowrap;
-                                                    overflow: hidden;
-                                                    text-overflow: ellipsis;
-                                                }
-                                            </style>
-                                            <table class="w-full h-full text-xs signatories-table" style="table-layout: fixed;">
-                                                    <tbody class="divide-y divide-gray-300" id="modalFormData">
-                                                        <!-- Dynamic Signatories will be populated here -->
-                                                        <!-- Fixed Directors -->
-                                                        <tr class="bg-gray-50 fixed-director">
-                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</td>
-                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</td>
-                                                        </tr>
-                                                        <tr class="fixed-director">
-                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</td>
-                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2150,7 +2188,10 @@ function closeReviewModal() {
     document.getElementById('modalDate').textContent = '-';
     document.getElementById('modalUserName').textContent = '-';
     document.getElementById('modalUserEmail').textContent = '-';
-    document.getElementById('modalFormData').innerHTML = '';
+    // Clear only dynamic signatories, preserve fixed directors
+    const formDataContainer = document.getElementById('modalFormData');
+    const dynamicRows = formDataContainer.querySelectorAll('tr:not(.fixed-director)');
+    dynamicRows.forEach(row => row.remove());
     document.getElementById('modalFiles').innerHTML = '';
 }
 
@@ -2201,7 +2242,7 @@ function populateModal(data) {
             
             // Position in column 1
             const positionCell = document.createElement('td');
-            positionCell.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300';
+            positionCell.className = 'px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300';
             positionCell.textContent = signatory.role || 'N/A';
             positionCell.title = signatory.role || 'N/A';
             
@@ -2220,7 +2261,7 @@ function populateModal(data) {
         noDataRow.className = 'bg-gray-50';
         
         const noDataCell1 = document.createElement('td');
-        noDataCell1.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300';
+        noDataCell1.className = 'px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300';
         noDataCell1.textContent = 'No signatories found';
         
         const noDataCell2 = document.createElement('td');
