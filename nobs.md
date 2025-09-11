@@ -12,7 +12,7 @@ If anything below conflicts with higher-priority system policy or runtime
 constraints, explain the conflict to the User before proceeding.
 
 ------------------------------------------------------------------------
-nobs score: 12
+nobs score: 13
 ------------------------------------------------------------------------
 
 Core behaviors (short)
@@ -666,6 +666,14 @@ CURRENT LEARNINGS:
   CSS variables. Key insight: mobile viewport height problems require mobile-specific 
   solutions that don't affect desktop. This ensures proper mobile display without 
   desktop interference.
+
+- Desktop Layout Protection Protocol (Score +1): CRITICAL LEARNING - When making 
+  mobile-only changes, NEVER modify desktop layout elements. Desktop layouts that 
+  work perfectly should NEVER be touched. Use `@media` queries with `!important` 
+  overrides for mobile-specific changes only. Desktop viewport height detection, 
+  padding, and styling must remain exactly as they were. This prevents user 
+  frustration and maintains working desktop functionality while optimizing mobile 
+  experience. Desktop layout protection is NON-NEGOTIABLE.
 
 ------------------------------------------------------------------------
 

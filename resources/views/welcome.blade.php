@@ -29,7 +29,7 @@
         .hero-hidden { display: none !important; }
         
         /* Mobile-specific responsive design */
-        @media (max-width: 639px) {
+        @media (max-width: 640px) {
             /* Hero section full viewport */
             .main-content {
                 padding-top: 0 !important;
@@ -76,6 +76,43 @@
                 font-size: 0.75rem !important;
                 line-height: 1.2 !important;
             }
+            
+            /* Mobile text truncation */
+            .journal-text {
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 100% !important;
+            }
+            
+            /* Mobile hero logo above title */
+            .mobile-hero-logo {
+                display: block !important;
+                margin: 0 auto 2rem auto !important;
+                max-width: 280px !important;
+                height: auto !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            /* Force mobile logo visibility with more specific selector */
+            .text-center .mobile-hero-logo {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            /* Hide navbar on mobile */
+            nav {
+                display: none !important;
+            }
+        }
+        
+        /* Desktop text display (default) - no truncation needed */
+        
+        /* Hide mobile hero logo on desktop */
+        .mobile-hero-logo {
+            display: none !important;
         }
         
         /* Privacy modal overlay - content remains visible */
@@ -728,10 +765,10 @@
             </nav>
 
             <!-- Main Content -->
-            <div class="main-content relative z-10 sm:pt-16 bg-transparent" x-cloak x-init="$el.removeAttribute('x-cloak')">
+            <div class="main-content relative z-10 pt-8 sm:pt-16 bg-transparent" x-cloak x-init="$el.removeAttribute('x-cloak')">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center" style="min-height: 100vh; min-height: 100dvh;" x-cloak x-init="$el.removeAttribute('x-cloak')">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center" style="min-height: 100vh; min-height: calc(100vh - 4rem); min-height: calc(100dvh - 4rem);" x-cloak x-init="$el.removeAttribute('x-cloak')">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -740,6 +777,9 @@
                     <div class="max-w-7xl mx-auto px-6 relative z-10">
                         <div class="grid md:grid-cols-2 gap-8 items-center">
                             <div class="text-center">
+                                <!-- Mobile-only hero logo -->
+                                <img src="/images/publication_logo.webp" alt="Publication Logo" class="mobile-hero-logo">
+                                
                                 <h1 class="hero-title text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
                                     USeP Publication Unit
                                 </h1>
