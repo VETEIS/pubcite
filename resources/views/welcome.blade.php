@@ -1116,10 +1116,10 @@
                 </div>
                 </section>
         </main>
-        </div>
 
         <div class="relative z-30">
             <x-footer />
+        </div>
         </div>
         </div>
 
