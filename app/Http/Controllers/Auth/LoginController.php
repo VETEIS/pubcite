@@ -94,7 +94,9 @@ class LoginController extends Controller
         ]);
 
         if ($request->accepted) {
+            // Set session flag for this browser session
             session(['privacy_accepted' => true]);
+            
             return response()->json(['status' => 'success']);
         }
 

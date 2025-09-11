@@ -28,8 +28,7 @@
         [x-cloak] { display: none !important; }
         .hero-hidden { display: none !important; }
         
-        /* Prevent white flash by hiding content until privacy is handled */
-        .privacy-pending .main-content { display: none !important; }
+        /* Privacy modal overlay - content remains visible */
         .privacy-pending .privacy-modal { display: block !important; }
         
         .scrollbar-hide {
@@ -377,15 +376,15 @@
         }
     </style>
     </head>
-    <body class="privacy-pending" style="background: linear-gradient(135deg, #7c2d12 0%, #991b1b 50%, #7c2d12 100%);">
+    <body style="background: linear-gradient(135deg, #7c2d12 0%, #991b1b 50%, #7c2d12 100%);">
         <div class="min-h-screen relative font-sans text-gray-900 antialiased" style="background: linear-gradient(135deg, #7c2d12 0%, #991b1b 50%, #7c2d12 100%);">
 
             <!-- Privacy Modal -->
-            <div id="privacy-modal" class="fixed inset-0 bg-gradient-to-br from-maroon-900/95 via-maroon-800/90 to-maroon-900/95 backdrop-blur-md overflow-y-auto h-full w-full z-[9999]">
+            <div id="privacy-modal" class="fixed inset-0 bg-black/20 backdrop-blur-sm overflow-y-auto h-full w-full z-[9999] transition-opacity duration-300 {{ session('privacy_accepted') ? 'opacity-0 pointer-events-none' : 'opacity-100' }}">
                 <div class="min-h-screen flex items-center justify-center p-4">
                     <div class="w-full max-w-2xl">
                         <!-- Main Card - Compact Layout -->
-                        <div class="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+                        <div class="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-white/20 transform transition-all duration-300 {{ session('privacy_accepted') ? 'scale-95 opacity-0' : 'scale-100 opacity-100' }}">
                             <div class="flex flex-col lg:flex-row">
                                 <!-- Left Side - Header Only -->
                                 <div class="bg-gradient-to-br from-maroon-600 to-maroon-700 px-6 py-6 flex flex-col items-center justify-center text-center lg:w-2/5 relative overflow-hidden">
@@ -679,10 +678,10 @@
             </nav>
 
             <!-- Main Content -->
-            <div class="main-content relative z-10 pt-8 sm:pt-16 bg-transparent">
+            <div class="main-content relative z-10 pt-8 sm:pt-16 bg-transparent" x-cloak x-init="$el.removeAttribute('x-cloak')">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center hero-hidden" style="min-height: 100vh; min-height: calc(100vh - 4rem); min-height: calc(100dvh - 4rem);">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center" style="min-height: 100vh; min-height: calc(100vh - 4rem); min-height: calc(100dvh - 4rem);" x-cloak x-init="$el.removeAttribute('x-cloak')">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -1213,26 +1212,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSection = document.getElementById('hero');
     const body = document.body;
 
-    // Always show privacy modal on welcome page - server will handle actual privacy acceptance
-    // This ensures users always see the modal after logout/login cycles
-    body.classList.add('privacy-pending');
+    // Check if privacy has been accepted in this session
+    const clientPrivacyAccepted = sessionStorage.getItem('privacy_accepted') === 'true';
     
-    // Clear any existing sessionStorage to ensure clean state
-    sessionStorage.removeItem('privacy_accepted');
+    // Debug logging
+    console.log('Privacy check:', {
+        clientPrivacyAccepted,
+        sessionStorageValue: sessionStorage.getItem('privacy_accepted'),
+        bodyClasses: body.className
+    });
+    
+    // Check privacy acceptance and show/hide modal accordingly
+    if (clientPrivacyAccepted) {
+        // Privacy accepted - hide modal and start animation
+        console.log('Privacy already accepted, showing main content');
+        closePrivacyModal();
+        animateJournalCounts();
+    } else {
+        // Privacy not accepted - show modal
+        console.log('Privacy not accepted, showing modal');
+        showPrivacyModal();
+    }
 
     // Privacy modal handlers
     function closePrivacyModal() {
-        privacyModal.classList.add('hidden');
+        // Fade out the modal smoothly
+        privacyModal.style.opacity = '0';
+        privacyModal.style.pointerEvents = 'none';
+        
+        // Fade out the modal card
+        const modalCard = privacyModal.querySelector('.bg-white\\/95');
+        if (modalCard) {
+            modalCard.style.transform = 'scale(0.95)';
+            modalCard.style.opacity = '0';
+        }
+        
+        // Hide modal after animation completes
+        setTimeout(() => {
+            privacyModal.classList.add('hidden');
+        }, 300);
+    }
+    
+    function showPrivacyModal() {
+        // Show modal and start fade in
+        privacyModal.classList.remove('hidden');
+        privacyModal.style.opacity = '1';
+        privacyModal.style.pointerEvents = 'auto';
+        
+        // Fade in the modal card
+        const modalCard = privacyModal.querySelector('.bg-white\\/95');
+        if (modalCard) {
+            modalCard.style.transform = 'scale(1)';
+            modalCard.style.opacity = '1';
+        }
     }
 
     privacyAcceptBtn.addEventListener('click', function() {
-        closePrivacyModal();
-        // Remove privacy-pending class to show main content
-        body.classList.remove('privacy-pending');
-        // Show the main content
-        heroSection.classList.remove('hero-hidden');
+        console.log('Privacy accept button clicked');
+        
         // Store acceptance in session storage
         sessionStorage.setItem('privacy_accepted', 'true');
+        console.log('Privacy accepted, sessionStorage set to:', sessionStorage.getItem('privacy_accepted'));
+        
         // Set server-side session
         fetch('/privacy/accept', {
             method: 'POST',
@@ -1241,7 +1282,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({accepted: true})
-        }).catch(error => console.log('Privacy session set'));
+        }).then(response => {
+            if (response.ok) {
+                console.log('Privacy acceptance recorded on server');
+            }
+        }).catch(error => console.log('Privacy session set error:', error));
+        
+        // Close modal with smooth animation
+        closePrivacyModal();
         
         // Start counting animation after privacy acceptance
         animateJournalCounts();
