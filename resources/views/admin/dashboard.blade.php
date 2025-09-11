@@ -1920,126 +1920,182 @@ window.addEventListener('beforeunload', function() {
     <div id="reviewModal" class="fixed inset-0 z-50 hidden">
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
-            <div class="w-full max-w-5xl max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col">
+            <div class="w-[95vw] h-[90vh] max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col">
                 <!-- Header -->
                 <div class="flex items-center justify-between p-4 bg-maroon-800 text-white flex-shrink-0">
                     <h2 class="text-lg font-bold">Request Review</h2>
-                    <button onclick="closeReviewModal()" class="text-white/80 hover:text-white text-xl font-bold transition-colors">&times;</button>
+                    <button onclick="closeReviewModal()" class="px-4 py-2 text-white/80 hover:text-white font-medium transition-colors rounded-lg hover:bg-white/10 text-sm">
+                        Cancel
+                    </button>
                 </div>
                 
                 <!-- Loading State -->
-                <div id="modalLoading" class="p-8 text-center flex-shrink-0">
-                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-maroon-700 mx-auto"></div>
-                    <p class="mt-3 text-gray-600 font-medium">Loading request details...</p>
+                <div id="modalLoading" class="flex-1 flex items-center justify-center p-8">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-maroon-700 mx-auto"></div>
+                        <p class="mt-3 text-gray-600 font-medium">Loading request details...</p>
+                    </div>
                 </div>
                 
                 <!-- Content -->
-                <div id="modalContent" class="hidden flex-1 overflow-y-auto">
-                    <div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <!-- Left Column -->
-                        <div class="space-y-3">
-                            <!-- Request Info -->
-                            <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                                <h3 class="text-base font-semibold text-maroon-800 mb-3 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div id="modalContent" class="hidden flex-1 overflow-hidden">
+                    <div class="p-4 h-full flex flex-col space-y-4">
+                        <!-- Main Content Grid -->
+                        <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
+                            <!-- Left Column - Combined Request/Applicant/Signatories Card -->
+                            <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col h-full">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-6 h-6 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-3 h-3 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    Request Information
-                                </h3>
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span class="text-gray-600 font-medium">Request Code:</span>
-                                        <div class="font-semibold text-gray-900 mt-1" id="modalRequestCode">-</div>
                                     </div>
-                                    <div>
-                                        <span class="text-gray-600 font-medium">Type:</span>
-                                        <div class="font-semibold text-gray-900 mt-1" id="modalType">-</div>
+                                    <h3 class="text-xs font-semibold text-gray-900">Request Information</h3>
                                     </div>
-                                    <div>
-                                        <span class="text-gray-600 font-medium">Status:</span>
-                                        <div id="modalStatus" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1">-</div>
+                                
+                                <!-- Summary and Signatories Card -->
+                                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0">
+                                    <!-- Summary Section -->
+                                    <div class="mb-3 flex-1 flex flex-col min-h-0">
+                                        <h4 class="text-xs font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">Summary</h4>
+                                        <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
+                                            <style>
+                                                .summary-table td {
+                                                    white-space: nowrap;
+                                                    overflow: hidden;
+                                                    text-overflow: ellipsis;
+                                                }
+                                            </style>
+                                            <table class="w-full h-full text-xs summary-table" style="table-layout: fixed;">
+                                                <tbody class="divide-y divide-gray-300">
+                                                    <tr class="bg-gray-50">
+                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Request Code</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalRequestCode" title="">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Type</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalType" title="">-</td>
+                                                    </tr>
+                                                    <tr class="bg-gray-50">
+                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Status</td>
+                                                        <td class="px-2 py-0.5 w-1/2 truncate">
+                                                            <div id="modalStatus" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full" title="">-</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Submitted</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalDate" title="">-</td>
+                                                    </tr>
+                                                    <tr class="bg-gray-50">
+                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Full Name</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserName" title="">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-2 py-0.5 font-medium text-gray-700 border-r border-gray-300 w-1/2 truncate">Email Address</td>
+                                                        <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserEmail" title="">-</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span class="text-gray-600 font-medium">Submitted:</span>
-                                        <div class="font-semibold text-gray-900 mt-1" id="modalDate">-</div>
+                                    
+                                    <!-- Signatories Section -->
+                                    <div class="flex-1 flex flex-col min-h-0">
+                                        <h4 class="text-xs font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">Signatories</h4>
+                                        <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
+                                            <style>
+                                                .signatories-table td {
+                                                    white-space: nowrap;
+                                                    overflow: hidden;
+                                                    text-overflow: ellipsis;
+                                                }
+                                            </style>
+                                            <table class="w-full h-full text-xs signatories-table" style="table-layout: fixed;">
+                                                    <tbody class="divide-y divide-gray-300" id="modalFormData">
+                                                        <!-- Dynamic Signatories will be populated here -->
+                                                        <!-- Fixed Directors -->
+                                                        <tr class="bg-gray-50 fixed-director">
+                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</td>
+                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</td>
+                                                        </tr>
+                                                        <tr class="fixed-director">
+                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</td>
+                                                            <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Applicant Info -->
-                            <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                                <h3 class="text-base font-semibold text-maroon-800 mb-3 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            <!-- Right Column - Files & Admin Comment Cards -->
+                            <div class="flex flex-col space-y-3 min-h-0">
+                                <!-- Files Section Card -->
+                                <div class="bg-white rounded-xl p-3 border border-gray-200 shadow-sm flex-1 min-h-0 flex flex-col">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    Applicant Information
-                                </h3>
-                                <div class="space-y-3 text-sm">
-                                    <div>
-                                        <span class="text-gray-600 font-medium">Name:</span>
-                                        <div class="font-semibold text-gray-900 mt-1" id="modalUserName">-</div>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 font-medium">Email:</span>
-                                        <div class="font-semibold text-gray-900 mt-1" id="modalUserEmail">-</div>
-                                    </div>
-                                </div>
                             </div>
-                            
-                            <!-- Admin Comment -->
-                            <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                                <label class="block text-maroon-800 font-semibold mb-2 flex items-center gap-2" for="adminComment">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                                    Admin Comment
-                                </label>
-                                <textarea id="adminComment" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" rows="2" placeholder="Optional note to include with status update..."></textarea>
-                            </div>
+                                            <h3 class="text-xs font-semibold text-gray-900">Submitted Files</h3>
                         </div>
-                        
-                        <!-- Right Column -->
-                        <div class="space-y-3">
-                            <!-- Files Section -->
-                            <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                                <h3 class="text-base font-semibold text-maroon-800 mb-3 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    Files
-                                </h3>
-                                <div id="modalFiles" class="space-y-2"></div>
-                                <div class="mt-4">
-                                    <button id="downloadZipBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 hover:shadow-md transition-all duration-300 text-sm font-medium">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <button id="downloadZipBtn" class="inline-flex items-center gap-1 px-2 py-1 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 hover:shadow-md transition-all duration-300 text-xs font-medium">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                         </svg>
-                                        Download ZIP
+                                            Download Zip
                                     </button>
+                                </div>
+                                    <div id="modalFiles" class="flex-1 overflow-y-auto space-y-1 text-xs">
+                                        <!-- Files will be populated here -->
                                 </div>
                             </div>
                             
-                            <!-- Signatories -->
-                            <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                                <h3 class="text-base font-semibold text-maroon-800 mb-3 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                <!-- Admin Comment Card -->
+                                <div class="bg-white rounded-xl p-3 border border-gray-200 shadow-sm flex-1 min-h-0 flex flex-col">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
-                                    Signatories
-                                </h3>
-                                <div id="modalFormData" class="space-y-2"></div>
+                            </div>
+                                        <h3 class="text-xs font-semibold text-gray-900">Admin Comment (Optional)</h3>
+                                    </div>
+                                    <div class="flex-1 flex flex-col">
+                                        <textarea id="adminComment" 
+                                            class="flex-1 w-full border border-gray-300 rounded-lg px-2 py-1 text-xs focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all resize-none" 
+                                            placeholder="Add your review notes or comments here..."></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Footer Actions -->
-                <div class="flex justify-between items-center p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-                    <div class="text-sm text-gray-600 font-medium">Review all information before making a decision.</div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="closeReviewModal()" class="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors">Close</button>
-                        <button id="rejectBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:shadow-md transition-all duration-300 font-medium">Reject</button>
-                        <button id="endorseBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-md transition-all duration-300 font-medium">Endorse</button>
+                <div id="modalFooter" class="flex justify-between items-center p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <span class="font-medium">Review all information before making a decision.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="rejectBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:shadow-md transition-all duration-300 font-medium flex items-center gap-1 text-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Reject
+                        </button>
+                        <button id="endorseBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-md transition-all duration-300 font-medium flex items-center gap-1 text-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Endorse
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2057,6 +2113,7 @@ function openReviewModal(requestId) {
     document.getElementById('reviewModal').classList.remove('hidden');
     document.getElementById('modalLoading').classList.remove('hidden');
     document.getElementById('modalContent').classList.add('hidden');
+    document.getElementById('modalFooter').classList.add('hidden');
             
     fetch(`/admin/requests/${requestId}/data`)
         .then(response => {
@@ -2080,6 +2137,7 @@ function openReviewModal(requestId) {
         .finally(() => {
             document.getElementById('modalLoading').classList.add('hidden');
             document.getElementById('modalContent').classList.remove('hidden');
+            document.getElementById('modalFooter').classList.remove('hidden');
         });
 }
 
@@ -2098,16 +2156,29 @@ function closeReviewModal() {
 
 function populateModal(data) {
     // Populate basic info
-    document.getElementById('modalRequestCode').textContent = data.request_code || 'N/A';
-    document.getElementById('modalType').textContent = data.type || 'N/A';
-    document.getElementById('modalDate').textContent = formatDate(data.requested_at);
-    document.getElementById('modalUserName').textContent = data.user?.name || 'N/A';
-    document.getElementById('modalUserEmail').textContent = data.user?.email || 'N/A';
+    const requestCode = data.request_code || 'N/A';
+    const type = data.type || 'N/A';
+    const date = formatDate(data.requested_at);
+    const userName = data.user?.name || 'N/A';
+    const userEmail = data.user?.email || 'N/A';
+    
+    document.getElementById('modalRequestCode').textContent = requestCode;
+    document.getElementById('modalRequestCode').title = requestCode;
+    document.getElementById('modalType').textContent = type;
+    document.getElementById('modalType').title = type;
+    document.getElementById('modalDate').textContent = date;
+    document.getElementById('modalDate').title = date;
+    document.getElementById('modalUserName').textContent = userName;
+    document.getElementById('modalUserName').title = userName;
+    document.getElementById('modalUserEmail').textContent = userEmail;
+    document.getElementById('modalUserEmail').title = userEmail;
             
     // Status
     const statusElement = document.getElementById('modalStatus');
-    statusElement.textContent = data.status || 'N/A';
-            statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium';
+    const status = data.status || 'N/A';
+    statusElement.textContent = status;
+    statusElement.title = status;
+    statusElement.className = 'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full';
     if (data.status === 'pending') {
                 statusElement.classList.add('bg-yellow-100', 'text-yellow-800');
     } else if (data.status === 'endorsed') {
@@ -2118,17 +2189,47 @@ function populateModal(data) {
             
     // Signatories
     const formDataContainer = document.getElementById('modalFormData');
-    formDataContainer.innerHTML = '';
+    
+    // Clear only dynamic signatories (first 3 rows), preserve fixed directors
+    const dynamicRows = formDataContainer.querySelectorAll('tr:not(.fixed-director)');
+    dynamicRows.forEach(row => row.remove());
+    
     if (data.signatories && data.signatories.length > 0) {
-        data.signatories.forEach(signatory => {
-            const fieldDiv = document.createElement('div');
-                    fieldDiv.className = 'text-sm';
-                    const roleLabel = signatory.role ? `<div class="text-gray-600 text-xs">${signatory.role}</div>` : '';
-                    fieldDiv.innerHTML = `${roleLabel}<div class="font-medium text-gray-900">${signatory.name}</div>`;
-            formDataContainer.appendChild(fieldDiv);
+        data.signatories.forEach((signatory, index) => {
+            const row = document.createElement('tr');
+            row.className = index % 2 === 0 ? 'bg-gray-50' : '';
+            
+            // Position in column 1
+            const positionCell = document.createElement('td');
+            positionCell.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300';
+            positionCell.textContent = signatory.role || 'N/A';
+            positionCell.title = signatory.role || 'N/A';
+            
+            // Name in column 2
+            const nameCell = document.createElement('td');
+            nameCell.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate';
+            nameCell.textContent = signatory.name || 'N/A';
+            nameCell.title = signatory.name || 'N/A';
+            
+            row.appendChild(positionCell);
+            row.appendChild(nameCell);
+            formDataContainer.insertBefore(row, formDataContainer.querySelector('.fixed-director'));
         });
     } else {
-                formDataContainer.innerHTML = '<div class="text-gray-500 text-sm">No signatories found</div>';
+        const noDataRow = document.createElement('tr');
+        noDataRow.className = 'bg-gray-50';
+        
+        const noDataCell1 = document.createElement('td');
+        noDataCell1.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate border-r border-gray-300';
+        noDataCell1.textContent = 'No signatories found';
+        
+        const noDataCell2 = document.createElement('td');
+        noDataCell2.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate';
+        noDataCell2.textContent = '';
+        
+        noDataRow.appendChild(noDataCell1);
+        noDataRow.appendChild(noDataCell2);
+        formDataContainer.insertBefore(noDataRow, formDataContainer.querySelector('.fixed-director'));
     }
             
     // Files
@@ -2137,7 +2238,7 @@ function populateModal(data) {
     if (data.files && data.files.length > 0) {
         data.files.forEach(file => {
             const fileDiv = document.createElement('div');
-                    fileDiv.className = 'flex items-center justify-between bg-white rounded border border-gray-200 p-3';
+                    fileDiv.className = 'flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3';
             const type = file.type;
             const key = file.key;
             
@@ -2168,7 +2269,7 @@ function populateModal(data) {
                                 <svg class="w-4 h-4 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <span class="text-sm text-gray-900">${file.name}</span>
+                                <span class="text-xs text-gray-900">${file.name}</span>
                             </div>
                             <span class="text-xs text-gray-500">(${file.size})</span>
                 </div>
@@ -2180,7 +2281,7 @@ function populateModal(data) {
             filesContainer.appendChild(fileDiv);
         });
     } else {
-                filesContainer.innerHTML = '<div class="text-gray-500 text-sm">No files uploaded for this request</div>';
+                filesContainer.innerHTML = '<div class="text-gray-500 text-xs">No files uploaded for this request</div>';
     }
 }
 

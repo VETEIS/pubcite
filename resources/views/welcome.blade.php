@@ -13,8 +13,11 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Preload hero art for faster paint -->
-        <link rel="preload" as="image" href="/images/art.webp" fetchpriority="high">
+        <!-- Preload hero art for faster paint - desktop only -->
+        <link rel="preload" as="image" href="/images/art.webp" media="(min-width: 641px)" fetchpriority="high">
+        
+        <!-- Preload mobile hero logo to prevent layout shifts - mobile only -->
+        <link rel="preload" as="image" href="/images/publication_logo.webp" media="(max-width: 640px)" fetchpriority="high">
 
         <!-- Scripts -->
             @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -93,6 +96,22 @@
                 height: auto !important;
                 visibility: visible !important;
                 opacity: 1 !important;
+            }
+            
+            /* Mobile hero content fade-in effect */
+            .mobile-hero-content[x-cloak] {
+                display: none !important;
+            }
+            
+            .mobile-hero-content {
+                opacity: 0 !important;
+                transform: translateY(20px) !important;
+                transition: opacity 0.8s ease-out, transform 0.8s ease-out !important;
+            }
+            
+            .mobile-hero-content.fade-in {
+                opacity: 1 !important;
+                transform: translateY(0) !important;
             }
             
             /* Force mobile logo visibility with more specific selector */
@@ -788,11 +807,13 @@
                         <div class="grid md:grid-cols-2 gap-8 items-center">
                             <div class="text-center">
                                 <!-- Mobile-only hero logo -->
-                                <img src="/images/publication_logo.webp" alt="Publication Logo" class="mobile-hero-logo">
+                                <img src="/images/publication_logo.webp" alt="Publication Logo" class="mobile-hero-logo" id="mobile-hero-logo">
                                 
-                                <h1 class="hero-title text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
-                                    USeP Publication Unit
-                                </h1>
+                                <!-- Mobile hero content that fades in after logo loads -->
+                                <div class="mobile-hero-content" id="mobile-hero-content" x-cloak x-init="$el.removeAttribute('x-cloak')">
+                                    <h1 class="hero-title text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
+                                        USeP Publication Unit
+                                    </h1>
                                 <h2 class="text-sm sm:text-xl md:text-2xl font-normal text-white/90 mb-8 leading-relaxed">
                                     Suggested List of Indexed University Journals
                                 </h2>
@@ -869,6 +890,7 @@
                                         </a>
                                              </div>
                                 @endguest
+                                </div> <!-- End mobile-hero-content -->
                                          </div>
                             <div class="mobile-hidden lg:flex justify-end relative pointer-events-none" aria-hidden="true">
                                 <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 pointer-events-none" style="width: 60vh; height: 60vh; background: radial-gradient(closest-side, rgba(255,255,255,0.28), rgba(255,255,255,0.12), transparent 70%); filter: blur(16px); border-radius: 9999px;"></div>
@@ -2047,6 +2069,23 @@ document.addEventListener('DOMContentLoaded', () => {
         researcherSearch.addEventListener('input', filterResearchers);
     }
 
+    // Mobile hero content fade-in - simplified since logo is preloaded
+    function initMobileHeroFadeIn() {
+        if (window.innerWidth < 768) { // Mobile only
+            const content = document.getElementById('mobile-hero-content');
+            
+            if (content) {
+                // Since logo is preloaded, we can fade in content immediately
+                // Add a small delay to ensure smooth visual effect
+                setTimeout(function() {
+                    content.classList.add('fade-in');
+                }, 100);
+            }
+        }
+    }
+    
+    // Initialize mobile hero fade-in
+    initMobileHeroFadeIn();
 
 });
 </script> 

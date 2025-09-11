@@ -340,6 +340,27 @@
             padding-bottom: 1rem; /* 16px bottom padding */
         }
         
+        /* Mobile-specific table card viewport height */
+        @media (max-width: 640px) {
+            .main-content {
+                height: 100vh !important;
+                height: 100dvh !important;
+                padding-bottom: 2rem !important;
+            }
+            
+            .bg-white.rounded-lg.shadow-sm {
+                height: calc(100vh - 8rem) !important;
+                height: calc(100dvh - 8rem) !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            .table-scroll-area {
+                flex: 1 !important;
+                overflow-y: auto !important;
+            }
+        }
+        
         /* Ensure proper flex layout */
         .flex-1 {
             flex: 1 1 0%;

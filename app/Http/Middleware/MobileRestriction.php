@@ -16,7 +16,7 @@ class MobileRestriction
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->isMobileDevice($request)) {
-            return redirect()->route('dashboard')->with('error', 'This feature is not available on mobile devices.');
+            return redirect()->route('welcome')->with('error', 'This feature is not available on mobile devices.');
         }
 
         return $next($request);
