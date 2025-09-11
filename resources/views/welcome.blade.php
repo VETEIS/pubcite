@@ -106,6 +106,16 @@
             nav {
                 display: none !important;
             }
+            
+            /* Move scroll indicator to top on mobile */
+            #scrollHint {
+                position: fixed !important;
+                top: 20px !important;
+                left: 50% !important;
+                bottom: auto !important;
+                transform: translateX(-50%) !important;
+                z-index: 1000 !important;
+            }
         }
         
         /* Desktop text display (default) - no truncation needed */
