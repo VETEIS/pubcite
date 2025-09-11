@@ -148,11 +148,8 @@ function initializeDraftDropdown() {
     
     // Skip if already initialized for this page
     if (draftsButton.dataset.initialized === 'true') {
-        console.log('Draft dropdown already initialized for this page');
         return;
     }
-    
-    console.log('Initializing draft dropdown...');
     draftsButton.dataset.initialized = 'true';
     
     let drafts = [];
@@ -200,24 +197,20 @@ function initializeDraftDropdown() {
     }
     
     function loadDrafts() {
-        console.log('Loading drafts...');
         draftsLoading.classList.remove('hidden');
         draftsEmpty.classList.add('hidden');
         draftsList.classList.add('hidden');
         
         fetch('/api/drafts')
             .then(response => {
-                console.log('Draft API response:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log('Draft API data:', data);
                 drafts = data.drafts || [];
                 renderDrafts();
                 draftsLoading.classList.add('hidden');
             })
             .catch(error => {
-                console.error('Error loading drafts:', error);
                 drafts = [];
                 renderDrafts();
                 draftsLoading.classList.add('hidden');

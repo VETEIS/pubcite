@@ -11,9 +11,9 @@
             <div id="error-notification" class="hidden">{{ session('error') }}</div>
         @endif
 
-            @include('admin.partials.sidebar')
-            
-            <!-- Main Content -->
+        @include('admin.partials.sidebar')
+        
+        <!-- Main Content -->
         <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
             <style>
                 .flex-1::-webkit-scrollbar {

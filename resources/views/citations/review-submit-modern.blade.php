@@ -257,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function generateDocx(type) {
     const form = document.getElementById('citation-request-form');
     if (!form) {
-        console.error('Form not found: citation-request-form');
         alert('Error: Form not found. Please refresh the page and try again.');
         return;
     }
@@ -265,11 +264,6 @@ function generateDocx(type) {
     const formData = new FormData(form);
     formData.append('docx_type', type);
 
-    // Debug: Log form data
-    console.log('Form data for', type, ':');
-    for (let [key, value] of formData.entries()) {
-        console.log(key, ':', value);
-    }
 
     // Show loading state with simple UI feedback
     const button = event.target.closest('.cursor-pointer');
@@ -294,7 +288,6 @@ function generateDocx(type) {
         
         // Check content type
         const contentType = response.headers.get('content-type');
-        console.log('Response content type:', contentType);
         
         return response.blob();
     })
@@ -304,8 +297,6 @@ function generateDocx(type) {
             throw new Error('Generated file is empty or corrupted');
         }
         
-        console.log('Generated blob size:', blob.size, 'bytes');
-        console.log('Generated blob type:', blob.type);
         
         // Ensure proper MIME type for DOCX
         const docxBlob = new Blob([blob], { 
@@ -329,7 +320,6 @@ function generateDocx(type) {
         }, 100);
     })
     .catch(error => {
-        console.error('Error generating document:', error);
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
     })
     .finally(() => {

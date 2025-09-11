@@ -642,9 +642,6 @@ function tabNav() {
                 'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean'
             ];
             
-            // Debug: Log field validation
-            console.log('=== TAB VALIDATION DEBUG ===');
-            console.log('Current tab:', this.tab);
             
             // Wait a bit for DOM to be ready if we're on incentive tab
             if (this.tab === 'incentive') {
@@ -680,28 +677,23 @@ function tabNav() {
                 let isValid = false;
                 
                 if (!element) {
-                    console.log(`❌ Field "${field}" not found in DOM`);
                     return false;
                 }
                 
                 if (element.type === 'radio') {
                     const checked = document.querySelector(`[name="${field}"]:checked`);
                     isValid = !!checked;
-                    console.log(`📻 Radio "${field}": ${isValid ? '✅' : '❌'} (checked: ${checked ? checked.value : 'none'})`);
                 } else if (element.type === 'checkbox') {
                     const checked = this.getFieldElements(field);
                     const checkedCount = Array.from(checked).filter(cb => cb.checked).length;
                     isValid = checkedCount > 0;
-                    console.log(`☑️ Checkbox "${field}": ${isValid ? '✅' : '❌'} (checked: ${checkedCount} items)`);
                 } else {
                     isValid = element.value.trim() !== '';
-                    console.log(`📝 Text "${field}": ${isValid ? '✅' : '❌'} (value: "${element.value.trim()}")`);
                 }
                 
                 return isValid;
             });
             
-            console.log(`🎯 Incentive tab complete: ${this.tabCompletion.incentive ? '✅' : '❌'}`);
 
             // Check recommendation tab completion
             const recommendationFields = [
@@ -710,11 +702,9 @@ function tabNav() {
             this.tabCompletion.recommendation = recommendationFields.every(field => {
                 const element = document.querySelector(`[name="${field}"]`);
                 if (!element) {
-                    console.log(`❌ Recommendation field "${field}" not found in DOM`);
                     return false;
                 }
                 const isValid = element.value.trim() !== '';
-                console.log(`📝 Recommendation field "${field}": ${isValid ? '✅' : '❌'} (value: "${element.value.trim()}")`);
                 return isValid;
             });
 
@@ -743,25 +733,7 @@ function tabNav() {
             this.allComplete = this.tabCompletion.incentive && this.tabCompletion.recommendation && 
                               this.tabCompletion.terminal && this.tabCompletion.upload;
 
-            // Debug: Log overall completion status
-            console.log('📊 Tab completion status:', {
-                incentive: this.tabCompletion.incentive,
-                recommendation: this.tabCompletion.recommendation,
-                terminal: this.tabCompletion.terminal,
-                upload: this.tabCompletion.upload,
-                review: this.tabCompletion.review,
-                allComplete: this.allComplete
-            });
             
-            // Debug: Log all recommendation field values
-            if (this.tab === 'recommendation') {
-                console.log('🔍 Recommendation field values:');
-                ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'].forEach(field => {
-                    const element = document.querySelector(`[name="${field}"]`);
-                    console.log(`  ${field}: "${element ? element.value : 'NOT FOUND'}"`);
-                });
-            }
-            console.log('=== END DEBUG ===');
 
             // Update review display
             this.updateReviewDisplay();
@@ -915,7 +887,6 @@ function tabNav() {
                 }
             })
             .catch(error => {
-                console.error('Error generating DOCX:', error);
                 if (!silent) {
                     alert('Error generating document. Please try again.');
                 }
@@ -959,7 +930,6 @@ function tabNav() {
                 document.addEventListener(eventType, (e) => {
                     // Only run validation if the event is on a form element
                     if (e.target && typeof e.target.matches === 'function' && e.target.matches('input, textarea, select')) {
-                        console.log(`🔄 Event triggered: ${eventType} on ${e.target.name}`);
                         this.checkTabs();
                     }
                 });
@@ -973,7 +943,6 @@ function tabNav() {
                         if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
                             const target = mutation.target;
                             if (target.name && ['rec_facultyname', 'dean'].includes(target.name)) {
-                                console.log(`🔄 Signatory field changed: ${target.name} = "${target.value}"`);
                                 this.checkTabs();
                             }
                         }

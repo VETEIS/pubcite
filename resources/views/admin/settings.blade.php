@@ -32,7 +32,7 @@
                         this.notifications = data.items || [];
                         this.unreadCount = data.unread || 0;
                     } catch (error) {
-                        console.error('Failed to load notifications:', error);
+                        // Silent fail for notifications
                     } finally {
                         this.loading = false;
                     }
@@ -53,7 +53,7 @@
                             }
                         }
                     } catch (error) {
-                        console.error('Failed to check for new notifications:', error);
+                        // Silent fail for notification check
                     }
                 },
                 
@@ -74,7 +74,7 @@
                         }
                         this.unreadCount = Math.max(0, this.unreadCount - 1);
                     } catch (error) {
-                        console.error('Failed to mark notification as read:', error);
+                        // Silent fail for mark as read
                     }
                 },
                 
@@ -92,7 +92,7 @@
                         this.notifications.forEach(n => n.read_at = new Date().toISOString());
                         this.unreadCount = 0;
                     } catch (error) {
-                        console.error('Failed to mark all notifications as read:', error);
+                        // Silent fail for mark all as read
                     }
                 },
                 

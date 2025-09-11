@@ -100,10 +100,8 @@
                         
                         for (let fileName of requiredFiles) {
                             const fileInput = document.querySelector(`input[name="${fileName}"]`);
-                            console.log('Checking file:', fileName, 'Found:', !!fileInput, 'Files:', fileInput?.files?.length);
                             
                             if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                                console.log('No files selected for:', fileName);
                                 return false;
                             }
                         }
@@ -124,19 +122,16 @@
                     // Check each required field
                     for (let fieldName of requiredFields) {
                         const field = document.querySelector(`[name="${fieldName}"]`);
-                        console.log('Checking field:', fieldName, 'Found:', !!field, 'Type:', field?.type, 'Value:', field?.value);
                         
                         if (!field) continue;
                         
                         // Check if field is valid
                         if (field.type === 'checkbox' || field.type === 'radio') {
                             if (!field.checked) {
-                                console.log('Field not checked:', fieldName);
                                 return false;
                             }
                         } else {
                             if (!field.value || field.value.trim() === '') {
-                                console.log('Field is empty:', fieldName);
                                 return false;
                             }
                         }
@@ -169,18 +164,14 @@
                     const currentIndex = tabs.indexOf(this.activeTab);
                     const targetIndex = tabs.indexOf(tabName);
                     
-                    console.log('Checking if tab is enabled:', tabName, 'Current tab:', this.activeTab);
-                    
                     // Always allow current tab and previous tabs
                     if (targetIndex <= currentIndex) {
-                        console.log('Tab enabled (current or previous):', tabName);
                         return true;
                     }
                     
                     // For next tab, check if current tab is complete
                     if (targetIndex === currentIndex + 1) {
                         const isValid = this.validateCurrentTab();
-                        console.log('Next tab validation result:', tabName, '=', isValid);
                         return isValid;
                     }
                     
@@ -194,13 +185,11 @@
                         const isComplete = this.validateCurrentTab();
                         this.activeTab = originalTab;
                         
-                        if (!isComplete) {
-                            console.log('Previous tab not complete:', previousTab);
-                            return false;
-                        }
+                            if (!isComplete) {
+                                return false;
+                            }
                     }
                     
-                    console.log('All previous tabs complete, enabling:', tabName);
                     return true;
                 },
                 
@@ -214,7 +203,6 @@
                         // Collect ALL form data from ALL tabs
                         const inputs = form.querySelectorAll('input, textarea, select');
                         
-                        console.log('Draft save - collecting form data from', inputs.length, 'inputs');
                         
                         // Track if we have meaningful data to save
                         let hasData = false;
@@ -233,10 +221,6 @@
                                 // Only save fields that have actual content
                                 const value = input.value || '';
                                 if (value.trim() !== '') {
-                                    // Debug signatory fields specifically
-                                    if (input.name.includes('faculty_name') || input.name.includes('center_manager') || input.name.includes('dean_name') || input.name.includes('rec_faculty_name') || input.name.includes('rec_dean_name')) {
-                                        console.log('Saving signatory field:', input.name, '=', value);
-                                    }
                                     formData.append(input.name, value);
                                     hasData = true;
                                 }
@@ -245,7 +229,6 @@
                         
                         // Don't save if no meaningful data
                         if (!hasData) {
-                            console.log('No meaningful data to save, skipping auto-save');
                             return;
                         }
                         
@@ -262,7 +245,6 @@
                         }
                         // Silent save - no error notifications for auto-save
                     } catch (error) {
-                        console.error('Auto-save error:', error);
                         // Silent error - don't show notifications for auto-save
                     } finally {
                         this.savingDraft = false;
@@ -294,7 +276,6 @@
                         clearTimeout(this.autoSaveTimer);
                         this.autoSaveTimer = null;
                     }
-                    console.log('Auto-save disabled after form submission');
                 },
                 
                 // Load draft data into form
@@ -313,7 +294,6 @@
                         return;
                     }
                     
-                    console.log('Loading citation draft data:', draftData);
                     
                     // Set timestamp to show draft was loaded
                     this.lastSaved = 'Draft loaded';
@@ -348,7 +328,6 @@
                         if (data.success && data.draft) {
                             // form_data is already an object from the API
                             const draftData = data.draft.form_data;
-                            console.log('Loading specific draft:', draftData);
                             
                             // Set timestamp to show draft was loaded
                             this.lastSaved = 'Draft loaded';
@@ -376,11 +355,9 @@
                             // Clear the sessionStorage
                             sessionStorage.removeItem('loadDraftId');
                         } else {
-                            console.error('Failed to load draft:', data.message);
                             this.lastSaved = 'Never';
                         }
                     } catch (error) {
-                        console.error('Error loading specific draft:', error);
                         this.lastSaved = 'Never';
                     }
                 },
@@ -394,7 +371,6 @@
                     
                     signatoryFields.forEach(fieldName => {
                         const value = draftData[fieldName];
-                        console.log('Loading signatory field:', fieldName, 'Value:', value);
                         if (value) {
                             // Use multiple selectors to find the component
                             const selectors = [
@@ -407,7 +383,6 @@
                             for (const selector of selectors) {
                                 component = document.querySelector(selector);
                                 if (component) {
-                                    console.log('Found component for', fieldName, 'using selector:', selector);
                                     break;
                                 }
                             }
@@ -415,8 +390,6 @@
                             if (component) {
                                 // Robust restoration with multiple attempts
                                 this.restoreSignatoryValue(component, fieldName, value, 0);
-                            } else {
-                                console.log('Component not found for', fieldName, 'with any selector');
                             }
                         }
                     });
@@ -427,21 +400,19 @@
                     const maxAttempts = 10;
                     const delay = Math.min(100 * Math.pow(1.5, attempt), 2000); // Exponential backoff, max 2s
                     
-                    console.log(`Attempt ${attempt + 1}/${maxAttempts} to restore ${fieldName} = ${value}`);
                     
                     // Try to find Alpine.js data
                     let alpineData = null;
                     try {
                         alpineData = Alpine.$data(component);
                     } catch (e) {
-                        console.log('Alpine.$data failed for', fieldName, ':', e.message);
+                        // Alpine.$data failed
                     }
                     
                     if (alpineData && alpineData.selectedName !== undefined) {
                         // Alpine.js component is ready
                         alpineData.selectedName = value;
                         alpineData.query = value;
-                        console.log('Successfully restored signatory:', fieldName, '=', value);
                         
                         // Trigger validation
                         setTimeout(() => {
@@ -455,13 +426,10 @@
                             this.restoreSignatoryValue(component, fieldName, value, attempt + 1);
                         }, delay);
                     } else {
-                        console.error('Failed to restore signatory after', maxAttempts, 'attempts:', fieldName);
-                        
                         // Fallback: Set the hidden input value directly
                         const hiddenInput = component.querySelector('input[type="hidden"]');
                         if (hiddenInput) {
                             hiddenInput.value = value;
-                            console.log('Fallback: Set hidden input value for', fieldName, '=', value);
                         }
                     }
                 },
@@ -503,12 +471,10 @@
                 
                 // Refresh tab enabled/disabled states
                 refreshTabStates() {
-                    console.log('Refreshing tab states for current tab:', this.activeTab);
                     // Force Alpine.js to re-evaluate the tab states
                     this.$nextTick(() => {
                         // Trigger validation for current tab
                         const currentTabValid = this.validateCurrentTab();
-                        console.log('Current tab validation result:', currentTabValid);
                         
                         // Force Alpine.js to re-render by updating a reactive property
                         // This will cause isTabEnabled() to be called for all tabs

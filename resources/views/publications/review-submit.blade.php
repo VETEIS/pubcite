@@ -274,7 +274,6 @@ function generateDocx(type) {
         document.body.removeChild(a);
     })
     .catch(error => {
-        console.error('Error:', error);
         alert('Error generating document. Please try again.');
     })
     .finally(() => {

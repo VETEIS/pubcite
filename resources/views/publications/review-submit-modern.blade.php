@@ -162,7 +162,6 @@
 <script>
 // Display uploaded files when page loads
 function displayUploadedFiles() {
-    console.log('displayUploadedFiles called');
     const fileFields = [
         { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
         { fieldName: 'published_article', elementId: 'review-published-article' },
@@ -173,13 +172,11 @@ function displayUploadedFiles() {
     fileFields.forEach(({ fieldName, elementId }) => {
         // Look for the actual file input in the upload tab
         const input = document.querySelector(`[name="${fieldName}"]`);
-        console.log(`Checking field ${fieldName}:`, input, input ? input.files : 'no input');
         
         if (input && input.files && input.files.length > 0) {
             const fileName = input.files[0].name;
             const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
             
-            console.log(`Found file for ${fieldName}:`, fileName);
             
             const element = document.getElementById(elementId);
             if (element) {
@@ -190,7 +187,6 @@ function displayUploadedFiles() {
             }
         } else {
             // Reset display if no file
-            console.log(`No file found for ${fieldName}`);
             const element = document.getElementById(elementId);
             if (element) {
                 element.textContent = 'No file uploaded';
@@ -279,7 +275,6 @@ window.generatedDocxFiles = {};
 function generateAndStoreDocx(type) {
     const form = document.getElementById('publication-request-form');
     if (!form) {
-        console.error('Form not found: publication-request-form');
         alert('Error: Form not found. Please refresh the page and try again.');
         return;
     }
@@ -314,7 +309,6 @@ function generateAndStoreDocx(type) {
         if (data.success && data.filePath) {
             // Store file path for later use in submit
             window.generatedDocxFiles[type] = data.filePath;
-            console.log('Stored file path for', type, ':', data.filePath);
             
             // Show success message
             if (button) {
@@ -330,7 +324,6 @@ function generateAndStoreDocx(type) {
         }
     })
     .catch(error => {
-        console.error('Error storing document:', error);
         alert(`Error storing document: ${error.message}. Please try again.`);
         if (button) {
             button.querySelector('p').textContent = originalText;
@@ -344,7 +337,6 @@ function generateAndStoreDocx(type) {
 function generateDocx(type) {
     const form = document.getElementById('publication-request-form');
     if (!form) {
-        console.error('Form not found: publication-request-form');
         alert('Error: Form not found. Please refresh the page and try again.');
         return;
     }
@@ -353,11 +345,6 @@ function generateDocx(type) {
     formData.append('docx_type', type);
     // Don't set store_for_submit by default - let user choose
 
-    // Debug: Log form data
-    console.log('Form data for', type, ':');
-    for (let [key, value] of formData.entries()) {
-        console.log(key, ':', value);
-    }
 
     // Show loading state with simple UI feedback
     const button = event.target.closest('.cursor-pointer');
@@ -389,8 +376,6 @@ function generateDocx(type) {
             throw new Error('Generated file is empty or corrupted');
         }
         
-        console.log('Generated blob size:', blob.size, 'bytes');
-        console.log('Generated blob type:', blob.type);
         
         // Ensure proper MIME type for DOCX
         const docxBlob = new Blob([blob], { 
@@ -422,7 +407,6 @@ function generateDocx(type) {
         }
     })
     .catch(error => {
-        console.error('Error generating document:', error);
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
     })
     .finally(() => {

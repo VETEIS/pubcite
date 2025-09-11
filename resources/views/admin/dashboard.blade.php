@@ -233,7 +233,7 @@
                         this.notifications = data.items || [];
                         this.unreadCount = data.unread || 0;
                     } catch (error) {
-                        console.error('Failed to load notifications:', error);
+                        // Silent fail for notifications
                     } finally {
                         this.loading = false;
                     }
@@ -254,7 +254,7 @@
                             }
                         }
                     } catch (error) {
-                        console.error('Failed to check for new notifications:', error);
+                        // Silent fail for notification check
                     }
                 },
                 
@@ -275,7 +275,7 @@
                         }
                         this.unreadCount = Math.max(0, this.unreadCount - 1);
                     } catch (error) {
-                        console.error('Failed to mark notification as read:', error);
+                        // Silent fail for mark as read
                     }
                 },
                 
@@ -293,7 +293,7 @@
                         this.notifications.forEach(n => n.read_at = new Date().toISOString());
                         this.unreadCount = 0;
                     } catch (error) {
-                        console.error('Failed to mark all notifications as read:', error);
+                        // Silent fail for mark all as read
                     }
                 },
                 
@@ -1046,18 +1046,17 @@ function initializeRealTimeUpdates() {
             const data = JSON.parse(event.data);
             updateDashboard(data);
         } catch (error) {
-            console.error('Error parsing SSE data:', error);
+            // Silent fail for SSE data parsing
         }
     };
     
     eventSource.onerror = function(error) {
-        console.error('SSE connection error:', error);
         // Reconnect after 5 seconds
         setTimeout(initializeRealTimeUpdates, 5000);
     };
     
     eventSource.onopen = function() {
-        console.log('Real-time updates connected');
+        // Real-time updates connected
     };
 }
 
@@ -1243,7 +1242,6 @@ function showUpdateNotification() {
 }
 
         function showChartsLoading() {
-            console.log('Showing charts loading...');
             const lineChartLoading = document.getElementById('lineChartLoading');
             const pieChartLoading = document.getElementById('pieChartLoading');
             
@@ -1256,18 +1254,14 @@ function showUpdateNotification() {
                 pieChartLoading.style.pointerEvents = 'auto';
             }
             
-            console.log('Loading elements opacity set to 1');
-            
             // Fade out charts
             const charts = document.querySelectorAll('#monthlyChart, #statusChart');
             charts.forEach(chart => {
                 chart.style.opacity = '0.3';
             });
-            console.log('Charts faded out');
         }
 
         function hideChartsLoading() {
-            console.log('Hiding charts loading...');
             const lineChartLoading = document.getElementById('lineChartLoading');
             const pieChartLoading = document.getElementById('pieChartLoading');
             
@@ -1280,14 +1274,11 @@ function showUpdateNotification() {
                 pieChartLoading.style.pointerEvents = 'none';
             }
             
-            console.log('Loading elements opacity set to 0');
-            
             // Fade in charts smoothly
             const charts = document.querySelectorAll('#monthlyChart, #statusChart');
             charts.forEach(chart => {
                 chart.style.opacity = '1';
             });
-            console.log('Charts faded in');
         }
 
         function updateChartTitle(period) {
@@ -1374,10 +1365,6 @@ function showUpdateNotification() {
         }
 
         function updateChartsWithData(data) {
-            // Debug logging
-            console.log('updateChartsWithData called with:', data);
-            console.log('Chart data received:', data);
-            
             // Show loading state
             showChartsLoading();
             
@@ -1386,7 +1373,6 @@ function showUpdateNotification() {
             
             // Update Monthly Chart with smooth transition
             const monthlyChartElement = document.getElementById('monthlyChart');
-            console.log('Monthly chart element found:', !!monthlyChartElement);
             if (monthlyChartElement) {
                 if (monthlyChartInstance) {
                     monthlyChartInstance.destroy();
@@ -1397,19 +1383,10 @@ function showUpdateNotification() {
                 const citData = Object.values(data.monthlyCounts?.Citation || {});
                 const typeFilter = data.type;
                 
-                console.log('Chart data processed:', {
-                    months: months,
-                    pubData: pubData,
-                    citData: citData,
-                    typeFilter: typeFilter
-                });
-                
                 // Calculate total values to determine which dataset has higher counts
                 const pubTotal = pubData.reduce((sum, val) => sum + val, 0);
                 const citTotal = citData.reduce((sum, val) => sum + val, 0);
                 const totalData = pubTotal + citTotal;
-                
-                console.log('Totals:', { pubTotal, citTotal, totalData });
                 
                 // If no data at all, show grayed-out chart
                 if (totalData === 0) {
@@ -1510,8 +1487,6 @@ function showUpdateNotification() {
                     });
                 }
                 
-                console.log('Datasets created:', datasets);
-                
                 monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
                     type: 'line',
                     data: {
@@ -1597,7 +1572,6 @@ function showUpdateNotification() {
             
             // Update Status Donut Chart with smooth transition
             const statusChartElement = document.getElementById('statusChart');
-            console.log('Status chart element found:', !!statusChartElement);
             if (statusChartElement) {
                 if (statusChartInstance) {
                     statusChartInstance.destroy();
@@ -1711,35 +1685,20 @@ function showUpdateNotification() {
             return filters;
         }
 
-        function testCharts() {
-            console.log('Testing charts manually...');
-            fetchAndUpdateCharts(getCurrentFilters());
-        }
 
                 function fetchAndUpdateCharts(filters) {
-            console.log('fetchAndUpdateCharts called with filters:', filters);
-            
             // Check if we're on the admin dashboard page
             const monthlyChartElement = document.querySelector('#monthlyChart');
             const statusChartElement = document.querySelector('#statusChart');
             
-            console.log('Chart elements found:', {
-                monthlyChart: !!monthlyChartElement,
-                statusChart: !!statusChartElement
-            });
-            
             if (!monthlyChartElement) {
-                console.log('Chart elements not found, skipping chart fetch');
                 return;
             }
-            
-            console.log('Fetching charts with filters:', filters);
             
             // Show loading state
             showChartsLoading();
             
             const params = new URLSearchParams(filters).toString();
-            console.log('Fetching from URL:', `/admin/dashboard/data?${params}`);
             
             fetch(`/admin/dashboard/data?${params}`)
                 .then(res => {
@@ -1749,16 +1708,10 @@ function showUpdateNotification() {
                     return res.json();
                 })
                 .then(data => {
-                    console.log('Raw chart data received:', data);
-                    
                     if (!data.months || !data.monthlyCounts || !data.statusCounts) {
-                        console.error('Chart data missing keys:', data);
                         hideChartsLoading();
                         return;
                     }
-                    
-                    console.log('Chart data validation passed, updating charts...');
-                    console.log('Total records in filtered data:', data.totalRecords);
                     updateChartsWithData({
                         months: data.months,
                         monthlyCounts: data.monthlyCounts,
@@ -1769,9 +1722,8 @@ function showUpdateNotification() {
                     });
                 })
                 .catch(err => {
-                    console.error('Error fetching chart data:', err);
                     hideChartsLoading();
-                    // Don't show error to user, just log it
+                    // Silent fail for chart data fetch
                 });
 }
 
@@ -1787,8 +1739,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Wait a bit to ensure the page is fully loaded and authenticated
             setTimeout(() => {
                 try {
-    // Temporarily disable SSE to prevent database errors
-    // initializeRealTimeUpdates();
+            // SSE disabled for stability
     
     // Add data attributes to period stat cards for easy updating
     document.querySelectorAll('[href*="period="]').forEach(link => {
@@ -1817,7 +1768,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
                 } catch (error) {
-                    console.error('Error initializing dashboard:', error);
+                    // Silent fail for dashboard initialization
                 }
             }, 500); // Wait 500ms to ensure everything is loaded
 });
@@ -1831,7 +1782,6 @@ window.addEventListener('beforeunload', function() {
 
         // Turbo lifecycle integration for charts and SSE
         document.addEventListener('turbo:load', () => {
-            console.log('Turbo load event fired - fetching charts...');
             
             // Show content when ready to prevent FOUC
             const mainContent = document.getElementById('mainContent');
@@ -1847,8 +1797,7 @@ window.addEventListener('beforeunload', function() {
                 updateChartTitle(period);
             }
             
-            // Temporarily disable SSE to prevent database errors
-            // initializeRealTimeUpdates();
+            // SSE disabled for stability
             // Defer to allow layout to settle
             setTimeout(() => fetchAndUpdateCharts(getCurrentFilters()), 0);
             
@@ -2098,8 +2047,8 @@ window.addEventListener('beforeunload', function() {
                                         <div class="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
                                             <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                            </div>
+                                            </svg>
+                                        </div>
                                         <h3 class="text-xs font-semibold text-gray-900">Admin Comment (Optional)</h3>
                                     </div>
                                     <div class="flex-1 flex flex-col">
@@ -2144,7 +2093,6 @@ window.addEventListener('beforeunload', function() {
         // Review modal functions
 function openReviewModal(requestId) {
     if (!requestId) {
-        console.error('No request ID provided');
         return;
     }
     window.__currentReviewRequestId = requestId;
@@ -2169,7 +2117,6 @@ function openReviewModal(requestId) {
             updateActionButtonsState(data.status);
         })
         .catch(error => {
-            console.error('Error loading request data:', error);
                     alert('Failed to load request data. Please try again.');
         })
         .finally(() => {
@@ -2359,7 +2306,6 @@ function submitStatusUpdate(requestId, newStatus) {
         window.location.reload();
     })
     .catch(err => {
-        console.error('Status update error:', err);
         alert('Failed to update status. Please try again.');
     });
 }

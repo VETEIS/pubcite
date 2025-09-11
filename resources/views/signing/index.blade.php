@@ -266,14 +266,12 @@
         let currentRequestId = null;
 
         function downloadRequestFiles(requestId) {
-            console.log('Downloading files for request:', requestId);
             
             // Use direct GET request like admin does
             window.location.href = `/signing/download-files/${requestId}`;
         }
 
         function openUploadModal(requestId) {
-            console.log('Opening upload modal for request:', requestId);
             
             // Check if request is already signed
             const request = window.requestsData?.find(r => r.id == requestId);
@@ -443,7 +441,6 @@
         
         // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing signatory functionality...');
             
             // Set up file input change event for upload modal
             const signedDocumentsInput = document.getElementById('signedDocuments');
@@ -454,10 +451,7 @@
             // Bind confirm buttons
             const confirmUploadBtn = document.getElementById('confirmUploadBtn');
             if (confirmUploadBtn) {
-                console.log('Confirm upload button found, binding click event');
                 confirmUploadBtn.onclick = confirmUpload;
-            } else {
-                console.error('Confirm upload button not found!');
             }
         });
     </script>

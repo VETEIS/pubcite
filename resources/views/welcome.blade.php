@@ -1337,22 +1337,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if privacy has been accepted in this session
     const clientPrivacyAccepted = sessionStorage.getItem('privacy_accepted') === 'true';
     
-    // Debug logging
-    console.log('Privacy check:', {
-        clientPrivacyAccepted,
-        sessionStorageValue: sessionStorage.getItem('privacy_accepted'),
-        bodyClasses: body.className
-    });
     
     // Check privacy acceptance and show/hide modal accordingly
     if (clientPrivacyAccepted) {
         // Privacy accepted - hide modal and start animation
-        console.log('Privacy already accepted, showing main content');
         closePrivacyModal();
         animateJournalCounts();
     } else {
         // Privacy not accepted - show modal
-        console.log('Privacy not accepted, showing modal');
         showPrivacyModal();
     }
 
@@ -1390,11 +1382,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     privacyAcceptBtn.addEventListener('click', function() {
-        console.log('Privacy accept button clicked');
         
         // Store acceptance in session storage
         sessionStorage.setItem('privacy_accepted', 'true');
-        console.log('Privacy accepted, sessionStorage set to:', sessionStorage.getItem('privacy_accepted'));
         
         // Set server-side session
         fetch('/privacy/accept', {
@@ -1406,9 +1396,10 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({accepted: true})
         }).then(response => {
             if (response.ok) {
-                console.log('Privacy acceptance recorded on server');
             }
-        }).catch(error => console.log('Privacy session set error:', error));
+        }).catch(error => {
+            // Silent fail for privacy session
+        });
         
         // Close modal with smooth animation
         closePrivacyModal();
@@ -1820,7 +1811,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     } catch (e) {
-        console.error('Failed to rebuild calendar section:', e);
+        // Silent fail for calendar rebuild
     }
 
     // Randomized hero shapes animation

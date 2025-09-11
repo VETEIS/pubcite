@@ -492,7 +492,6 @@
             document.body.removeChild(a);
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Error generating document. Please try again.');
         })
         .finally(() => {
@@ -634,15 +633,9 @@
                 this.tabCompletion.recommendation = recommendationFields.every(field => {
                     const element = document.querySelector(`[name="${field}"]`);
                     if (!element) {
-                        console.log(`Recommendation field not found: ${field}`);
                         return false;
                     }
                     const isFilled = element.value.trim() !== '';
-                    if (!isFilled) {
-                        console.log(`Recommendation field not filled: ${field}, value: "${element.value}", element:`, element);
-                    } else {
-                        console.log(`Recommendation field filled: ${field}, value: "${element.value}"`);
-                    }
                     return isFilled;
                 });
                 
@@ -660,15 +653,6 @@
                 
                 // All complete if all tabs are complete
                 this.allComplete = this.tabCompletion.incentive && this.tabCompletion.recommendation && this.tabCompletion.upload;
-                
-                // Debug logging
-                console.log('Tab completion status:', {
-                    incentive: this.tabCompletion.incentive,
-                    recommendation: this.tabCompletion.recommendation,
-                    upload: this.tabCompletion.upload,
-                    review: this.tabCompletion.review,
-                    allComplete: this.allComplete
-                });
             },
             validateCurrentTab() {
                 this.checkTabs();

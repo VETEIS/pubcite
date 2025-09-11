@@ -32,7 +32,7 @@
                         this.notifications = data.items || [];
                         this.unreadCount = data.unread || 0;
                     } catch (error) {
-                        console.error('Failed to load notifications:', error);
+                        // Silent fail for notifications
                     } finally {
                         this.loading = false;
                     }
@@ -53,7 +53,7 @@
                             }
                         }
                     } catch (error) {
-                        console.error('Failed to check for new notifications:', error);
+                        // Silent fail for notification check
                     }
                 },
                 
@@ -74,7 +74,7 @@
                         }
                         this.unreadCount = Math.max(0, this.unreadCount - 1);
                     } catch (error) {
-                        console.error('Failed to mark notification as read:', error);
+                        // Silent fail for mark as read
                     }
                 },
                 
@@ -92,7 +92,7 @@
                         this.notifications.forEach(n => n.read_at = new Date().toISOString());
                         this.unreadCount = 0;
                     } catch (error) {
-                        console.error('Failed to mark all notifications as read:', error);
+                        // Silent fail for mark all as read
                     }
                 },
                 
@@ -174,6 +174,15 @@
                             </a>
                         </div>
 
+                        <!-- Add User Button -->
+                        <a href="{{ route('admin.users.create') }}" 
+                           class="inline-flex items-center gap-2 px-3 py-2 bg-maroon-600 text-white text-xs font-medium rounded-lg hover:bg-maroon-700 hover:shadow-md transition-all duration-200 h-8">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add User
+                        </a>
+                        
                         <!-- Subtle Separator -->
                         <div class="w-px h-8 bg-gray-200"></div>
                         
