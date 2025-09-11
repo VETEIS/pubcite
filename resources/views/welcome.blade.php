@@ -28,6 +28,56 @@
         [x-cloak] { display: none !important; }
         .hero-hidden { display: none !important; }
         
+        /* Mobile-specific responsive design */
+        @media (max-width: 639px) {
+            /* Hero section full viewport */
+            .main-content {
+                padding-top: 0 !important;
+            }
+            #hero {
+                height: 100vh !important;
+                height: 100dvh !important;
+                min-height: 100vh !important;
+                min-height: 100dvh !important;
+                padding: 0 !important;
+            }
+            
+            /* Hide elements on mobile */
+            .mobile-hidden {
+                display: none !important;
+            }
+            
+            /* Mobile-only orientation lock */
+            body {
+                orientation: portrait !important;
+            }
+            
+            /* Mobile journal group adjustments */
+            .journal-group {
+                gap: 0.25rem !important;
+                justify-content: center !important;
+            }
+            
+            .journal-item {
+                padding: 0.25rem !important;
+            }
+            
+            .journal-circle {
+                width: 4rem !important;
+                height: 4rem !important;
+            }
+            
+            .journal-image {
+                width: 2.5rem !important;
+                height: 2.5rem !important;
+            }
+            
+            .journal-text {
+                font-size: 0.75rem !important;
+                line-height: 1.2 !important;
+            }
+        }
+        
         /* Privacy modal overlay - content remains visible */
         .privacy-pending .privacy-modal { display: block !important; }
         
@@ -580,7 +630,7 @@
                         }">
 
                         <!-- Quick Links Dropdown -->
-                        <div class="relative hidden sm:block pointer-events-none" aria-hidden="true">
+                        <div class="relative mobile-hidden pointer-events-none" aria-hidden="true">
                             <button @click="toggleQuickLinks()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
                                 Quick Links
@@ -613,7 +663,7 @@
                         </div>
 
                         <!-- Announcements Dropdown -->
-                        <div class="relative hidden sm:block pointer-events-none" aria-hidden="true">
+                        <div class="relative mobile-hidden pointer-events-none" aria-hidden="true">
                             <button @click="toggleAnnouncements()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
@@ -678,10 +728,10 @@
             </nav>
 
             <!-- Main Content -->
-            <div class="main-content relative z-10 pt-8 sm:pt-16 bg-transparent" x-cloak x-init="$el.removeAttribute('x-cloak')">
+            <div class="main-content relative z-10 sm:pt-16 bg-transparent" x-cloak x-init="$el.removeAttribute('x-cloak')">
                 <main>
                 <!-- Hero Section -->
-                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center" style="min-height: 100vh; min-height: calc(100vh - 4rem); min-height: calc(100dvh - 4rem);" x-cloak x-init="$el.removeAttribute('x-cloak')">
+                <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 py-8 sm:py-16 flex items-center" style="min-height: 100vh; min-height: 100dvh;" x-cloak x-init="$el.removeAttribute('x-cloak')">
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
                     <div class="hero-shape"></div>
@@ -690,60 +740,60 @@
                     <div class="max-w-7xl mx-auto px-6 relative z-10">
                         <div class="grid md:grid-cols-2 gap-8 items-center">
                             <div class="text-center">
-                                <h1 class="hero-title text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
+                                <h1 class="hero-title text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
                                     USeP Publication Unit
                                 </h1>
-                                <h2 class="text-xl md:text-2xl font-normal text-white/90 mb-8 leading-relaxed">
+                                <h2 class="text-sm sm:text-xl md:text-2xl font-normal text-white/90 mb-8 leading-relaxed">
                                     Suggested List of Indexed University Journals
                                 </h2>
                                 
                                 <div class="mb-6">
                                     <!--<h3 class="text-md font-medium text-white mb-3">Suggested Journals:</h3>-->
-                                    <div class="flex gap-0 justify-start items-stretch sm:gap-2">
-                                        <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0">
-                                            <div class="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                    <div class="journal-group flex gap-1 justify-center items-stretch sm:gap-2">
+                                        <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
                                                 <div class="journal-badge" id="scopus-count" data-target="2847">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
-                                                    <img src="/images/scopus.webp" alt="Scopus" class="h-12 w-12 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                    <img src="/images/scopus.webp" alt="Scopus" class="journal-image h-10 w-10 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
                                             </div>
-                                            <span class="text-white font-medium text-xs text-center">Scopus</span>
+                                            <span class="journal-text text-white font-medium text-xs text-center leading-tight">Scopus</span>
                                         </a>
                                         
-                                        <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0">
-                                            <div class="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                        <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
                                                 <div class="journal-badge" id="wos-count" data-target="1923">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
-                                                    <img src="/images/wos.webp" alt="Web of Science" class="h-12 w-12 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                    <img src="/images/wos.webp" alt="Web of Science" class="journal-image h-10 w-10 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
                                             </div>
-                                            <span class="text-white font-medium text-xs text-center">Web of Science</span>
+                                            <span class="journal-text text-white font-medium text-xs text-center leading-tight">Web of Science</span>
                                         </a>
                                         
-                                        <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0">
-                                            <div class="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                        <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
                                                 <div class="journal-badge" id="aci-count" data-target="856">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
-                                                    <img src="/images/aci.webp" alt="ACI" class="h-10 w-10 sm:h-20 sm:w-20 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                    <img src="/images/aci.webp" alt="ACI" class="journal-image h-8 w-8 sm:h-20 sm:w-20 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
                                             </div>
-                                            <span class="text-white font-medium text-xs text-center">Scopus-ACI</span>
+                                            <span class="journal-text text-white font-medium text-xs text-center leading-tight">Scopus-ACI</span>
                                         </a>
                                         
-                                        <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0">
-                                            <div class="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                        <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
                                                 <div class="journal-badge" id="peer-count" data-target="3421">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
-                                                    <img src="/images/peer.webp" alt="Peer Review" class="h-12 w-12 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
+                                                    <img src="/images/peer.webp" alt="Peer Review" class="journal-image h-10 w-10 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
                                             </div>
-                                            <span class="text-white font-medium text-xs text-center">Peer Review</span>
+                                            <span class="journal-text text-white font-medium text-xs text-center leading-tight">Peer Review</span>
                                         </a>
                                     </div>
                                 </div>
                                 @guest
                                     <div class="flex flex-col sm:flex-row gap-4 items-center sm:items-start max-w-3xl">
-                                        <button onclick="showHowItWorks()" class="hidden sm:inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-full hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 flex-1">
+                                        <button onclick="showHowItWorks()" class="mobile-hidden inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-full hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 flex-1">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
@@ -770,7 +820,7 @@
                                              </div>
                                 @endguest
                                          </div>
-                            <div class="hidden lg:flex justify-end relative pointer-events-none" aria-hidden="true">
+                            <div class="mobile-hidden lg:flex justify-end relative pointer-events-none" aria-hidden="true">
                                 <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 pointer-events-none" style="width: 60vh; height: 60vh; background: radial-gradient(closest-side, rgba(255,255,255,0.28), rgba(255,255,255,0.12), transparent 70%); filter: blur(16px); border-radius: 9999px;"></div>
                                 <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="cursor-pointer hover:scale-105 transition-all duration-300 group">
                                     <img src="/images/art.webp" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none hero-art-glow" />
