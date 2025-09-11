@@ -7,6 +7,16 @@
 [![Alpine.js](https://img.shields.io/badge/Alpine.js-3.13+-77C3D8.svg)](https://alpinejs.dev)
 [![Livewire](https://img.shields.io/badge/Livewire-3.0+-4E56A6.svg)](https://livewire.laravel.com)
 [![Vite](https://img.shields.io/badge/Vite-6.2+-646CFF.svg)](https://vitejs.dev)
+[![Laravel Jetstream](https://img.shields.io/badge/Laravel_Jetstream-5.3+-FF2D20.svg)](https://jetstream.laravel.com)
+[![Laravel Sanctum](https://img.shields.io/badge/Laravel_Sanctum-4.0+-FF2D20.svg)](https://laravel.com/docs/sanctum)
+[![Laravel Socialite](https://img.shields.io/badge/Laravel_Socialite-5.21+-FF2D20.svg)](https://laravel.com/docs/socialite)
+[![Chart.js](https://img.shields.io/badge/Chart.js-CDN-FF6384.svg)](https://chartjs.org)
+[![PhpWord](https://img.shields.io/badge/PhpWord-1.4+-00B4DB.svg)](https://github.com/PHPOffice/PHPWord)
+[![DomPDF](https://img.shields.io/badge/DomPDF-3.1+-FF6B6B.svg)](https://github.com/barryvdh/laravel-dompdf)
+[![FPDF](https://img.shields.io/badge/FPDF-1.8+-FF6B6B.svg)](https://github.com/Setasign/FPDF)
+[![FPDI](https://img.shields.io/badge/FPDI-2.6+-FF6B6B.svg)](https://github.com/Setasign/FPDI)
+[![Turbo](https://img.shields.io/badge/Hotwired_Turbo-8.0+-FF6B35.svg)](https://turbo.hotwired.dev)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows. Features full mobile responsiveness, privacy compliance, and role-based access control.
