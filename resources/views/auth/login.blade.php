@@ -56,10 +56,10 @@
             </div>
 
             <div class="flex justify-center mt-4">
-                <a href="{{ route('google.login') }}" id="google-login-btn" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
+                <button type="button" id="google-login-btn" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
                     <img src="/images/google-logo.png" alt="Google logo" class="w-5 h-5 mr-2">
                     Sign in with Google
-                </a>
+                </button>
             </div>
 
             <div class="mt-6 text-center">
@@ -69,4 +69,41 @@
             </div>
         </form>
     </x-authentication-card>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const googleLoginBtn = document.getElementById('google-login-btn');
+            
+            googleLoginBtn.addEventListener('click', function() {
+                // Check if privacy was accepted in sessionStorage
+                const privacyAccepted = sessionStorage.getItem('privacy_accepted') === 'true';
+                
+                if (privacyAccepted) {
+                    // Privacy already accepted, set server session and proceed with Google login
+                    fetch('{{ route("google.privacy.check") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            window.location.href = data.redirect_url;
+                        } else {
+                            window.location.href = '{{ route("welcome") }}';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        window.location.href = '{{ route("welcome") }}';
+                    });
+                } else {
+                    // Privacy not accepted, redirect to welcome page
+                    window.location.href = '{{ route("welcome") }}';
+                }
+            });
+        });
+    </script>
 </x-guest-layout>

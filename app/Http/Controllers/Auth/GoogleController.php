@@ -6,9 +6,20 @@ use App\Http\Controllers\Controller;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class GoogleController extends Controller
 {
+
+    public function checkPrivacyBeforeGoogle(Request $request)
+    {
+        // Set privacy session if not already set
+        if (session('privacy_accepted') !== true) {
+            session(['privacy_accepted' => true]);
+        }
+        
+        return response()->json(['status' => 'success', 'redirect_url' => route('google.login')]);
+    }
 
     public function redirectToGoogle()
     {

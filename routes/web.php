@@ -93,6 +93,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
+// Route to set privacy session before Google login
+Route::post('auth/google/privacy-check', [GoogleController::class, 'checkPrivacyBeforeGoogle'])->name('google.privacy.check');
+
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Main admin dashboard page
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
