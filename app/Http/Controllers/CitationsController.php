@@ -165,15 +165,15 @@ class CitationsController extends Controller
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
                     Log::info('Filtered data for incentive', ['filtered' => $filtered]);
-                    $filename = "Incentive_Application_Form.docx";
-                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, $filename);
+                    $filename = "Incentive_Application_Form.pdf";
+                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, $filename, true); // Enable PDF conversion
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
                     Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
-                    $filename = "Recommendation_Letter_Form.docx";
-                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, $filename);
+                    $filename = "Recommendation_Letter_Form.pdf";
+                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, $filename, true); // Enable PDF conversion
                     break;
                     
                 default:
@@ -197,8 +197,13 @@ class CitationsController extends Controller
             }
             
             // Otherwise, download the file
+            // Determine content type based on file extension
+            $contentType = str_ends_with($filename, '.pdf') 
+                ? 'application/pdf' 
+                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                
             return response()->download($absolutePath, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'Content-Type' => $contentType,
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"'
             ]);
             

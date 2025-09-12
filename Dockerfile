@@ -20,13 +20,23 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install pandoc for DOCX to PDF conversion (lighter alternative)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    pandoc \
-    texlive-latex-base \
-    texlive-fonts-recommended \
+# Install LibreOffice headless with minimal dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    --no-install-suggests \
+    libreoffice-writer \
+    libreoffice-calc \
+    libreoffice-impress \
+    libreoffice-pdfimport \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Alternative: If you only need basic document conversion, use this instead:
+# RUN apt-get update && apt-get install -y \
+#     --no-install-recommends \
+#     unoconv \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
 
 # Install PostgreSQL extensions
 RUN apt-get update && apt-get install -y libpq-dev \

@@ -77,14 +77,16 @@ php artisan view:cache
 echo "Creating storage link..."
 php artisan storage:link
 
-# Verify pandoc installation
-echo "Verifying pandoc installation..."
-if command -v pandoc >/dev/null 2>&1; then
-    echo "✅ Pandoc found: $(pandoc --version 2>&1 | head -n1)"
+# Verify LibreOffice installation
+echo "Verifying LibreOffice installation..."
+if command -v libreoffice >/dev/null 2>&1; then
+    echo "✅ LibreOffice found: $(libreoffice --version 2>&1 | head -n1)"
+elif command -v soffice >/dev/null 2>&1; then
+    echo "✅ LibreOffice found: $(soffice --version 2>&1 | head -n1)"
 else
-    echo "❌ Pandoc not found - PDF conversion will fail"
+    echo "❌ LibreOffice not found - PDF conversion will fail"
     echo "Available commands:"
-    which -a pandoc 2>/dev/null || echo "No pandoc command found"
+    which -a libreoffice soffice 2>/dev/null || echo "No LibreOffice commands found"
 fi
 
 # Set proper permissions

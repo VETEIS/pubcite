@@ -174,7 +174,7 @@ class DocumentSigningService
     }
 
     /**
-     * Convert DOCX to PDF using pandoc
+     * Convert DOCX to PDF using LibreOffice (preserves layout perfectly)
      */
     private function convertDocxToPdf(string $docxPath, Request $request): ?string
     {
@@ -189,23 +189,29 @@ class DocumentSigningService
             
             $outputPath = $outputDir . '/' . pathinfo(basename($docxPath), PATHINFO_FILENAME) . '.pdf';
             
-            // Check if pandoc is available
-            if (!$this->isPandocAvailable()) {
-                throw new \Exception('Pandoc is not available. Please ensure it is installed and accessible from command line.');
+            // Check if LibreOffice is available
+            if (!$this->isLibreOfficeAvailable()) {
+                throw new \Exception('LibreOffice is not available. Please ensure it is installed and accessible from command line.');
             }
             
-            // Use pandoc to convert DOCX to PDF
-            $command = "pandoc \"$fullDocxPath\" -o \"$outputPath\" --pdf-engine=pdflatex 2>&1";
+            // Use LibreOffice to convert DOCX to PDF (preserves layout perfectly)
+            $libreOfficePath = $this->getLibreOfficePath();
+            if (!$libreOfficePath) {
+                throw new \Exception('LibreOffice path not found');
+            }
+            
+            // Use silent flags to prevent CMD popup and ensure full automation
+            $command = "\"$libreOfficePath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --convert-to pdf --outdir \"$outputDir\" \"$fullDocxPath\" 2>&1";
             $output = shell_exec($command);
             
-            Log::info('Pandoc conversion output', [
+            Log::info('LibreOffice conversion output', [
                 'request_id' => $request->id,
                 'command' => $command,
                 'output' => $output
             ]);
 
             if (!file_exists($outputPath)) {
-                throw new \Exception('PDF conversion failed - output file not created. Pandoc output: ' . $output);
+                throw new \Exception('PDF conversion failed - output file not created. LibreOffice output: ' . $output);
             }
             
             // Return the relative path for storage
@@ -221,7 +227,6 @@ class DocumentSigningService
 
         } catch (\Exception $e) {
             Log::error('Error converting DOCX to PDF', [
-                'request_id' => $request->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -230,37 +235,39 @@ class DocumentSigningService
     }
 
     /**
-     * Check if pandoc is available
+     * Check if LibreOffice is available
      */
-    private function isPandocAvailable(): bool
+    private function isLibreOfficeAvailable(): bool
     {
-        return $this->getPandocPath() !== null;
+        return $this->getLibreOfficePath() !== null;
     }
 
     /**
-     * Get the path to pandoc executable
+     * Get the path to LibreOffice executable
      */
-    private function getPandocPath(): ?string
+    private function getLibreOfficePath(): ?string
     {
-        // Try multiple possible pandoc paths
+        // Try multiple possible LibreOffice paths
         $possiblePaths = [
-            'pandoc', // Try PATH first
-            'C:\\Program Files\\Pandoc\\pandoc.exe', // Windows default path
-            'C:\\Program Files (x86)\\Pandoc\\pandoc.exe', // Windows 32-bit
-            '/usr/bin/pandoc', // Linux default
-            '/usr/local/bin/pandoc', // Linux local
-            '/opt/homebrew/bin/pandoc', // macOS Homebrew
+            'soffice', // Try PATH first
+            'libreoffice', // Try libreoffice command
+            'C:\\Program Files\\LibreOffice\\program\\soffice.exe', // Windows default path
+            'C:\\Program Files\\LibreOffice\\program\\soffice', // Without .exe
+            '/usr/bin/libreoffice', // Linux default
+            '/usr/bin/soffice', // Linux soffice
+            '/usr/local/bin/libreoffice', // Linux local
+            '/usr/local/bin/soffice', // Linux local soffice
         ];
         
         foreach ($possiblePaths as $path) {
             $output = shell_exec("\"$path\" --version 2>&1");
-            if ($output !== null && strpos($output, 'pandoc') !== false) {
-                Log::info('Pandoc found at path', ['path' => $path, 'version_output' => $output]);
+            if ($output !== null && strpos($output, 'LibreOffice') !== false) {
+                Log::info('LibreOffice found at path', ['path' => $path, 'version_output' => $output]);
                 return $path;
             }
         }
         
-        Log::warning('Pandoc not found in any of the expected paths', [
+        Log::warning('LibreOffice not found in any of the expected paths', [
             'environment' => app()->environment(),
             'os_family' => PHP_OS_FAMILY
         ]);
