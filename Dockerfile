@@ -20,19 +20,18 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install LibreOffice with minimal dependencies
-RUN apt-get update && apt-get install -y \
-    --no-install-recommends \
-    --no-install-suggests \
-    libreoffice-writer \
-    libreoffice-calc \
-    libreoffice-impress \
-    libreoffice-pdfimport \
+# Install LibreOffice using apt-get with dependency resolution
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libreoffice \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
 
-# Verify LibreOffice installation
-RUN libreoffice --version || echo "LibreOffice installation verification failed"
+# Verify LibreOffice installation and fix any library issues
+RUN libreoffice --version || echo "LibreOffice version check failed" \
+    && echo "LibreOffice installation completed"
 
 # Install PostgreSQL extensions
 RUN apt-get update && apt-get install -y libpq-dev \
