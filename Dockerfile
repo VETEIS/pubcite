@@ -20,16 +20,15 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install LibreOffice headless with minimal dependencies
+# Install LibreOffice headless (full package for reliability)
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
-    --no-install-suggests \
-    libreoffice-writer \
-    libreoffice-calc \
-    libreoffice-impress \
-    libreoffice-pdfimport \
+    libreoffice \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/lib/libreoffice/share/gallery \
+    && rm -rf /usr/lib/libreoffice/share/template \
+    && find /usr/lib/libreoffice -name "*.so" -not -path "*/core/*" -delete
 
 # Alternative: If you only need basic document conversion, use this instead:
 # RUN apt-get update && apt-get install -y \
