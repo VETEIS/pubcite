@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
-use App\Services\TemplateCacheService;
+// use App\Services\TemplateCacheService; // Temporarily disabled for production fix
 // use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
@@ -236,9 +236,8 @@ class CitationsController extends Controller
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use template caching for better performance
-            $templateCacheService = new TemplateCacheService();
-            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);

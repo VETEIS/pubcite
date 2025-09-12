@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Request as UserRequest;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
-use App\Services\TemplateCacheService;
+// use App\Services\TemplateCacheService; // Temporarily disabled for production fix
 // use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -117,9 +117,8 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use template caching for better performance
-            $templateCacheService = new TemplateCacheService();
-            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
@@ -189,9 +188,8 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use template caching for better performance
-            $templateCacheService = new TemplateCacheService();
-            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
@@ -251,9 +249,8 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Terminal_Report_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use template caching for better performance
-            $templateCacheService = new TemplateCacheService();
-            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);

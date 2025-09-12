@@ -91,6 +91,28 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Signatories lookup for authenticated users (handles both admin and non-admin)
     Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('signatories.index');
+    
+    // Debug route for testing generateDocx
+    Route::get('/debug-generate', function() {
+        try {
+            $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
+            $exists = file_exists($templatePath);
+            $service = new \App\Services\TemplateCacheService();
+            $processor = $service->getTemplateProcessor($templatePath);
+            return response()->json([
+                'template_path' => $templatePath,
+                'file_exists' => $exists,
+                'service_works' => true,
+                'processor_created' => $processor ? true : false
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
+    });
 });
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
