@@ -17,14 +17,14 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Services\TemplateCacheService;
-use App\Http\Controllers\Traits\DraftSessionManager;
+// use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 
 class CitationsController extends Controller
 {
-    use DraftSessionManager;
+    // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
@@ -585,13 +585,30 @@ class CitationsController extends Controller
 
             $userId = $user->id;
             
-            // Check for existing draft with session validation
-            $draftSession = $this->getDraftSession($userId, 'Citation');
-            $existingDraft = $draftSession['draft'];
+            // Check for existing draft first (with session optimization)
+            $existingDraft = null;
             
-            // If session is invalid or empty, try to find existing draft
-            if (!$draftSession['isValid']) {
-                $existingDraft = $this->findExistingDraft($userId, 'Citation');
+            // First check session for draft ID (faster than database query)
+            $draftId = session("draft_citation_{$userId}");
+            if ($draftId) {
+                $existingDraft = \App\Models\Request::where('id', $draftId)
+                    ->where('user_id', $userId)
+                    ->where('type', 'Citation')
+                    ->where('status', 'draft')
+                    ->first();
+            }
+            
+            // Fallback to database query if session doesn't have draft ID
+            if (!$existingDraft) {
+                $existingDraft = \App\Models\Request::where('user_id', $userId)
+                    ->where('type', 'Citation')
+                    ->where('status', 'draft')
+                    ->first();
+                
+                // Store draft ID in session for future requests
+                if ($existingDraft) {
+                    session(["draft_citation_{$userId}" => $existingDraft->id]);
+                }
             }
             
             if ($existingDraft && $isDraft) {
@@ -710,7 +727,7 @@ class CitationsController extends Controller
                 
                 // Store new draft ID in session
                 if ($isDraft) {
-                    $this->setDraftSession($userId, 'Citation', $userRequest->id);
+                    session(["draft_citation_{$userId}" => $userRequest->id]);
                 }
             }
 
@@ -779,7 +796,7 @@ class CitationsController extends Controller
                 }
             } else {
                 // Clear draft session when submitting final request
-                $this->clearDraftSession($userId, 'Citation');
+                session()->forget("draft_citation_{$userId}");
                 return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
             }
         } catch (\Exception $e) {

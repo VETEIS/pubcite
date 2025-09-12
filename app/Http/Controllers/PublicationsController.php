@@ -9,7 +9,7 @@ use App\Models\Request as UserRequest;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use App\Services\TemplateCacheService;
-use App\Http\Controllers\Traits\DraftSessionManager;
+// use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
@@ -25,7 +25,7 @@ use App\Services\DocxToPdfConverter;
 
 class PublicationsController extends Controller
 {
-    use DraftSessionManager;
+    // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
         // Check for existing draft
@@ -669,13 +669,30 @@ class PublicationsController extends Controller
         try {
             $userId = $user->id;
             
-            // Check for existing draft with session validation
-            $draftSession = $this->getDraftSession($userId, 'Publication');
-            $existingDraft = $draftSession['draft'];
+            // Check for existing draft first (with session optimization)
+            $existingDraft = null;
             
-            // If session is invalid or empty, try to find existing draft
-            if (!$draftSession['isValid']) {
-                $existingDraft = $this->findExistingDraft($userId, 'Publication');
+            // First check session for draft ID (faster than database query)
+            $draftId = session("draft_publication_{$userId}");
+            if ($draftId) {
+                $existingDraft = \App\Models\Request::where('id', $draftId)
+                    ->where('user_id', $userId)
+                    ->where('type', 'Publication')
+                    ->where('status', 'draft')
+                    ->first();
+            }
+            
+            // Fallback to database query if session doesn't have draft ID
+            if (!$existingDraft) {
+                $existingDraft = \App\Models\Request::where('user_id', $userId)
+                    ->where('type', 'Publication')
+                    ->where('status', 'draft')
+                    ->first();
+                
+                // Store draft ID in session for future requests
+                if ($existingDraft) {
+                    session(["draft_publication_{$userId}" => $existingDraft->id]);
+                }
             }
             
             if ($existingDraft && $isDraft) {
@@ -834,7 +851,7 @@ class PublicationsController extends Controller
                 
                 // Store new draft ID in session
                 if ($isDraft) {
-                    $this->setDraftSession($userId, 'Publication', $userRequest->id);
+                    session(["draft_publication_{$userId}" => $userRequest->id]);
                 }
             }
 
@@ -901,7 +918,7 @@ class PublicationsController extends Controller
                 }
             } else {
                 // Clear draft session when submitting final request
-                $this->clearDraftSession($userId, 'Publication');
+                session()->forget("draft_publication_{$userId}");
                 return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
             }
 
