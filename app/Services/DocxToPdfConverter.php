@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 class DocxToPdfConverter
 {
     /**
-     * Convert a DOCX file to PDF using LibreOffice
+     * Convert a DOCX file to PDF using pandoc
      *
      * @param string $docxPath Relative path to the DOCX file
      * @param string $outputDir Directory where PDF should be saved
@@ -27,27 +27,21 @@ class DocxToPdfConverter
             
             $outputPath = $fullOutputDir . '/' . pathinfo(basename($docxPath), PATHINFO_FILENAME) . '.pdf';
             
-            // Check if LibreOffice is available
-            if (!$this->isLibreOfficeAvailable()) {
-                Log::error('LibreOffice is not available for DOCX to PDF conversion', [
+            // Check if pandoc is available
+            if (!$this->isPandocAvailable()) {
+                Log::error('Pandoc is not available for DOCX to PDF conversion', [
                     'docx_path' => $docxPath,
                     'output_dir' => $outputDir,
                     'environment' => app()->environment()
                 ]);
-                throw new \Exception('LibreOffice is not available. Please ensure it is installed and accessible from command line.');
+                throw new \Exception('Pandoc is not available. Please ensure it is installed and accessible from command line.');
             }
             
-            // Use LibreOffice to convert DOCX to PDF (preserves layout perfectly)
-            $libreOfficePath = $this->getLibreOfficePath();
-            if (!$libreOfficePath) {
-                throw new \Exception('LibreOffice path not found');
-            }
-            
-            // Use silent flags to prevent CMD popup and ensure full automation
-            $command = "\"$libreOfficePath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --convert-to pdf --outdir \"$fullOutputDir\" \"$fullDocxPath\" 2>&1";
+            // Use pandoc to convert DOCX to PDF
+            $command = "pandoc \"$fullDocxPath\" -o \"$outputPath\" --pdf-engine=pdflatex 2>&1";
             $output = shell_exec($command);
             
-            Log::info('LibreOffice DOCX to PDF conversion', [
+            Log::info('Pandoc DOCX to PDF conversion', [
                 'docx_path' => $docxPath,
                 'output_dir' => $outputDir,
                 'command' => $command,
@@ -55,7 +49,7 @@ class DocxToPdfConverter
             ]);
 
             if (!file_exists($outputPath)) {
-                throw new \Exception('PDF conversion failed - output file not created. LibreOffice output: ' . $output);
+                throw new \Exception('PDF conversion failed - output file not created. Pandoc output: ' . $output);
             }
             
             // Return the relative path for storage
@@ -79,71 +73,59 @@ class DocxToPdfConverter
     }
 
     /**
-     * Check if LibreOffice is available on the system
+     * Check if pandoc is available on the system
      */
-    private function isLibreOfficeAvailable(): bool
+    private function isPandocAvailable(): bool
     {
-        $libreOfficePath = $this->getLibreOfficePath();
-        if (!$libreOfficePath) {
+        $pandocPath = $this->getPandocPath();
+        if (!$pandocPath) {
             return false;
         }
         
-        // Test if LibreOffice can run in headless mode
-        $testCommand = "\"$libreOfficePath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --version 2>&1";
+        // Test if pandoc can run
+        $testCommand = "\"$pandocPath\" --version 2>&1";
         $output = shell_exec($testCommand);
         
-        return strpos($output, 'LibreOffice') !== false;
+        return strpos($output, 'pandoc') !== false;
     }
 
     /**
-     * Get the path to LibreOffice executable
+     * Get the path to pandoc executable
      */
-    private function getLibreOfficePath(): ?string
+    private function getPandocPath(): ?string
     {
-        // Common LibreOffice installation paths
+        // Common pandoc installation paths
         $possiblePaths = [
             // Windows paths
-            'C:\\Program Files\\LibreOffice\\program\\soffice.com',
-            'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.com',
-            'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
-            'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
+            'C:\\Program Files\\Pandoc\\pandoc.exe',
+            'C:\\Program Files (x86)\\Pandoc\\pandoc.exe',
             
             // Linux paths (including Docker/container environments)
-            '/usr/bin/libreoffice',
-            '/usr/local/bin/libreoffice',
-            '/opt/libreoffice/program/soffice',
-            '/usr/bin/soffice',
-            '/usr/local/bin/soffice',
+            '/usr/bin/pandoc',
+            '/usr/local/bin/pandoc',
             
             // macOS paths
-            '/Applications/LibreOffice.app/Contents/MacOS/soffice',
+            '/usr/local/bin/pandoc',
+            '/opt/homebrew/bin/pandoc',
         ];
         
         foreach ($possiblePaths as $path) {
             if (file_exists($path) && is_executable($path)) {
-                Log::info('LibreOffice found at path', ['path' => $path]);
+                Log::info('Pandoc found at path', ['path' => $path]);
                 return $path;
             }
         }
         
-        // Try to find LibreOffice in PATH
+        // Try to find pandoc in PATH
         $whichCommand = PHP_OS_FAMILY === 'Windows' ? 'where' : 'which';
-        $output = shell_exec("$whichCommand soffice 2>&1");
+        $output = shell_exec("$whichCommand pandoc 2>&1");
         if ($output && !empty(trim($output))) {
             $path = trim($output);
-            Log::info('LibreOffice found in PATH', ['path' => $path]);
+            Log::info('Pandoc found in PATH', ['path' => $path]);
             return $path;
         }
         
-        // Try to find libreoffice command in PATH
-        $output = shell_exec("$whichCommand libreoffice 2>&1");
-        if ($output && !empty(trim($output))) {
-            $path = trim($output);
-            Log::info('LibreOffice found in PATH (libreoffice command)', ['path' => $path]);
-            return $path;
-        }
-        
-        Log::warning('LibreOffice not found in any expected paths', [
+        Log::warning('Pandoc not found in any expected paths', [
             'environment' => app()->environment(),
             'os_family' => PHP_OS_FAMILY
         ]);

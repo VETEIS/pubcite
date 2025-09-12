@@ -16,10 +16,17 @@ RUN apt-get update && apt-get install -y \
     libmcrypt-dev \
     fonts-liberation \
     libfontconfig1 \
-    libreoffice \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
+
+# Install pandoc for DOCX to PDF conversion (lighter alternative)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pandoc \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PostgreSQL extensions
 RUN apt-get update && apt-get install -y libpq-dev \
