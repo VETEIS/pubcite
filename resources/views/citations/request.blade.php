@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-global-notifications />
 <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 pb-20">
     <div class="w-full max-w-4xl mx-auto">
         <!-- Main Form Card - Fixed Height for Consistency -->
@@ -259,54 +260,8 @@
     </div>
     </div>
 
-    <!-- Loading Overlay - Removed: Now handled by LoadingManager -->
+    <!-- Loading Overlay - Now handled by simple loading system -->
 
-    <!-- Success/Error Notifications -->
-    <div x-data="{ 
-        showNotification: false, 
-        notificationType: 'success', 
-        notificationMessage: '',
-        init() {
-            // Check for Laravel session messages
-            @if(session('success'))
-                this.showNotification = true;
-                this.notificationType = 'success';
-                this.notificationMessage = '{{ session('success') }}';
-                setTimeout(() => this.showNotification = false, 5000);
-            @endif
-            @if(session('error'))
-                this.showNotification = true;
-                this.notificationType = 'error';
-                this.notificationMessage = '{{ session('error') }}';
-                setTimeout(() => this.showNotification = false, 5000);
-            @endif
-        }
-    }" 
-    x-show="showNotification" 
-    x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0 transform translate-x-full"
-    x-transition:enter-end="opacity-100 transform translate-x-0"
-    x-transition:leave="transition ease-in duration-300"
-    x-transition:leave-start="opacity-100 transform translate-x-0"
-    x-transition:leave-end="opacity-0 transform translate-x-full"
-    class="fixed top-20 right-4 z-[60]">
-        <div :class="notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'" class="text-white px-4 py-2 rounded shadow-lg backdrop-blur border" :class="notificationType === 'success' ? 'border-green-500/20' : 'border-red-500/20'">
-            <div class="flex items-center">
-                <svg x-show="notificationType === 'success'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <svg x-show="notificationType === 'error'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                </svg>
-                <span x-text="notificationMessage"></span>
-                <button @click="showNotification = false" class="ml-4 text-white hover:text-gray-200">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L10 11.414l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
 <div
@@ -359,7 +314,7 @@
     </div>
 </div>
 
-<!-- DOCX Spinner - Removed: Now handled by LoadingManager -->
+<!-- DOCX Spinner - Now handled by simple loading system -->
 
 <script>
     function citationForm() {
@@ -373,10 +328,10 @@
     }
     
     function submitCitationForm(event) {
-        // Prevent double submission
-        if (window.loadingManager && window.loadingManager.isLoading()) {
-            return false;
-        }
+    // Prevent double submission
+    if (document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
+        return false;
+    }
         
         // Validate all tabs before submission
         const tabNav = Alpine.store('tabNav');
@@ -391,35 +346,46 @@
             }
         }
         
-        // Show comprehensive loading state
+        // Show comprehensive loading state with progress tracking
         const operationId = `submit-citation-${Date.now()}`;
-        if (window.loadingManager) {
-            window.loadingManager.show(operationId, {
-                title: 'Submitting Request',
-                message: 'Please wait while we process your citation request...',
-                showOverlay: true,
-                disableButtons: true
-            });
-        } else {
-            // Fallback: Basic button disabling
-            const submitBtn = event && event.target ? event.target : null;
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        }
         
-        // Submit the form after a microtask so the overlay paints first
-        const form = document.getElementById('citation-request-form');
-        if (form) {
-            if (window.queueMicrotask) {
-                queueMicrotask(() => form.submit());
-            } else {
-                Promise.resolve().then(() => form.submit());
-            }
-        }
+        // Define progress steps for submission
+        const progressSteps = [
+            'Validating form data...',
+            'Processing uploaded files...',
+            'Generating documents...',
+            'Saving to database...',
+            'Sending notifications...',
+            'Finalizing submission...'
+        ];
         
-        return false; // Prevent default form submission
+        // Show loading screen
+        window.showLoading('Submitting Request', 'Please wait while we process your citation request...', progressSteps);
+        
+        // Simulate progress updates
+        let currentStep = 0;
+        const progressInterval = setInterval(() => {
+            if (currentStep < progressSteps.length - 1) {
+                currentStep++;
+                window.updateProgress(currentStep, progressSteps);
+            }
+        }, 800);
+        
+        // Store interval for cleanup
+        window[`progress_${operationId}`] = progressInterval;
+        
+        // Let Turbo handle the form submission naturally
+        // Add cleanup when page navigation completes
+        document.addEventListener('turbo:before-cache', function cleanup() {
+            window.hideLoading();
+            if (window[`progress_${operationId}`]) {
+                clearInterval(window[`progress_${operationId}`]);
+                delete window[`progress_${operationId}`];
+            }
+            document.removeEventListener('turbo:before-cache', cleanup);
+        });
+        
+        return true; // Allow form submission
     }
     
     function updateReviewFile(type, input) {
@@ -454,15 +420,43 @@
         }
         // Preview mode: don't include request_id (will use temp directory)
 
-        // Show comprehensive loading state
+        // Show comprehensive loading state with progress tracking
         const operationId = `generate-citation-docx-${type}-${Date.now()}`;
+        
+        // Define progress steps for document generation
+        const progressSteps = [
+            'Preparing document template...',
+            'Processing form data...',
+            'Generating DOCX file...',
+            'Converting to PDF...',
+            'Finalizing document...'
+        ];
+        
         if (window.loadingManager) {
             window.loadingManager.show(operationId, {
                 title: 'Generating Document',
                 message: `Creating ${type} document, please wait...`,
                 showOverlay: true,
-                disableButtons: true
+                disableButtons: true,
+                progressSteps: progressSteps,
+                currentStep: 0
             });
+            
+            // Simulate progress updates
+            let currentStep = 0;
+            const progressInterval = setInterval(() => {
+                if (currentStep < progressSteps.length - 1) {
+                    currentStep++;
+                    if (window.loadingManager && typeof window.loadingManager.updateProgress === 'function') {
+                        window.loadingManager.updateProgress(operationId, currentStep, progressSteps);
+                    } else {
+                        console.warn('Loading system not available');
+                    }
+                }
+            }, 1000); // Update every second
+            
+            // Store interval for cleanup
+            window[`progress_${operationId}`] = progressInterval;
         } else {
             // Fallback: Basic button disabling
             const button = event.target;
@@ -506,12 +500,22 @@
             alert('Error generating document. Please try again.');
             // Hide loading state
             if (window.loadingManager) {
+                // Clear progress interval
+                if (window[`progress_${operationId}`]) {
+                    clearInterval(window[`progress_${operationId}`]);
+                    delete window[`progress_${operationId}`];
+                }
                 window.loadingManager.hide(operationId);
             }
         })
         .finally(() => {
             // Hide loading state
             if (window.loadingManager) {
+                // Clear progress interval
+                if (window[`progress_${operationId}`]) {
+                    clearInterval(window[`progress_${operationId}`]);
+                    delete window[`progress_${operationId}`];
+                }
                 window.loadingManager.hide(operationId);
             }
         });
@@ -745,6 +749,28 @@
         // Add event listeners for file input validation
         document.querySelectorAll('input[type="file"]').forEach(function(input) {
             input.addEventListener('change', function() { validateFileSize(this); });
+        });
+    });
+
+    // Loading screens are now handled directly in fetch operations
+    // No Turbo event listeners needed
+    
+    // Preload templates for faster generation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Preload templates in the background
+        fetch('/citations/preload-templates', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Templates preloaded successfully');
+            }
+        }).catch(error => {
+            console.log('Template preload failed (non-critical):', error);
         });
     });
 </script>

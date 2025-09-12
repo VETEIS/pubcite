@@ -723,6 +723,7 @@
                             autocomplete="on"
                         >
                             @csrf
+                            <input type="hidden" id="request_id" name="request_id" value="{{ $request->id }}">
                             
                             <!-- Tab Content -->
                             <div class="min-h-[500px] bg-white rounded-lg shadow-sm border border-gray-200 p-6">

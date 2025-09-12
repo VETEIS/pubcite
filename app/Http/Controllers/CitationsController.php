@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
-// use App\Services\TemplateCacheService; // Temporarily disabled for production fix
+// use App\Services\TemplateCacheService; // Disabled due to serialization issues with TemplateProcessor
+use App\Services\TemplatePreloader;
 // use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
@@ -53,6 +54,11 @@ class CitationsController extends Controller
         $request->id = $existingDraft ? $existingDraft->id : null;
         $request->request_code = $existingDraft ? $existingDraft->request_code : null;
         $request->form_data = $existingDraft ? (is_string($existingDraft->form_data) ? json_decode($existingDraft->form_data, true) : $existingDraft->form_data) : [];
+        
+        // Show notification if draft was loaded
+        if ($existingDraft) {
+            return view('citations.request-clean', compact('request'))->with('success', 'Draft loaded successfully!');
+        }
         
         return view('citations.request-clean', compact('request'));
     }
@@ -168,15 +174,15 @@ class CitationsController extends Controller
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
                     Log::info('Filtered data for incentive', ['filtered' => $filtered]);
-                    $filename = "Incentive_Application_Form.pdf";
-                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, $filename, true); // Enable PDF conversion
+                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
+                    $filename = 'Incentive_Application_Form.docx';
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
                     Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
-                    $filename = "Recommendation_Letter_Form.pdf";
-                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, $filename, true); // Enable PDF conversion
+                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
+                    $filename = 'Recommendation_Letter_Form.docx';
                     break;
                     
                 default:
@@ -200,13 +206,8 @@ class CitationsController extends Controller
             }
             
             // Otherwise, download the file
-            // Determine content type based on file extension
-            $contentType = str_ends_with($filename, '.pdf') 
-                ? 'application/pdf' 
-                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-                
             return response()->download($absolutePath, $filename, [
-                'Content-Type' => $contentType,
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"'
             ]);
             
@@ -219,7 +220,7 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename = 'Incentive_Application_Form.docx', $convertToPdf = false)
+    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
             Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
@@ -233,10 +234,11 @@ class CitationsController extends Controller
             }
             
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
+            $filename = 'Incentive_Application_Form.docx';
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
@@ -293,7 +295,7 @@ class CitationsController extends Controller
         }
     }
 
-    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Recommendation_Letter_Form.docx', $convertToPdf = false)
+    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
             Log::info('CITATION RECO: Raw data', $data);
@@ -308,9 +310,11 @@ class CitationsController extends Controller
             }
             
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
+            $filename = 'Recommendation_Letter_Form.docx';
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
+            // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
@@ -478,6 +482,12 @@ class CitationsController extends Controller
     {
         $user = Auth::user();
         
+        Log::info('Citation request submission started', [
+            'user_id' => $user->id,
+            'has_files' => $request->hasFile('recommendation_letter'),
+            'is_draft' => $request->has('save_draft')
+        ]);
+        
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
         
         if ($citations_request_enabled !== '1') {
@@ -570,6 +580,10 @@ class CitationsController extends Controller
             $validator = Validator::make($request->all(), $validationRules);
 
             if ($validator->fails()) {
+                Log::info('Citation request validation failed', [
+                    'errors' => $validator->errors()->toArray()
+                ]);
+                
                 // Return JSON response for draft saves, HTML redirect for regular submissions
                 if ($isDraft) {
                     return response()->json([
@@ -658,7 +672,7 @@ class CitationsController extends Controller
             if (!$isDraft) {
                 try {
                     $filtered = $this->mapIncentiveFields($request->all());
-                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, 'Incentive_Application_Form.docx', true);
+                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, true);
                     if ($incentivePath) {
                         $docxPaths['incentive'] = [
                             'path' => $incentivePath,
@@ -670,7 +684,7 @@ class CitationsController extends Controller
                 }
                 try {
                     $filtered = $this->mapRecommendationFields($request->all());
-                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, 'Recommendation_Letter_Form.docx', true);
+                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, true);
                     if ($recommendationPath) {
                         $docxPaths['recommendation'] = [
                             'path' => $recommendationPath,
@@ -733,8 +747,9 @@ class CitationsController extends Controller
             // Activity log creation removed - now handled by notification bell system
 
             Log::info('Citation request submitted successfully', [
-                'request_code' => $requestCode,
-                'user_id' => $userId,
+                'requestId' => $userRequest->id,
+                'requestCode' => $requestCode,
+                'isDraft' => $isDraft,
                 'pdf_count' => count($pdfPaths),
                 'docx_count' => count($docxPaths)
             ]);
@@ -790,13 +805,13 @@ class CitationsController extends Controller
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
                 } else {
-                    // For manual draft saves via form submission, redirect with success message
-                    return redirect()->route('citations.request')->with('success', 'Draft saved successfully!');
+                    // For manual draft saves via form submission, redirect without notification
+                    return redirect()->route('citations.request');
                 }
             } else {
                 // Clear draft session when submitting final request
                 session()->forget("draft_citation_{$userId}");
-                return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
+                return redirect()->route('dashboard')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
             }
         } catch (\Exception $e) {
             Log::error('Error submitting citation request: ' . $e->getMessage());
@@ -1046,5 +1061,28 @@ class CitationsController extends Controller
             'dean' => $data['rec_dean_name'] ?? '',
             'date' => $data['date'] ?? now()->format('Y-m-d'),
         ];
+    }
+    
+    /**
+     * Preload templates for faster generation
+     */
+    public function preloadTemplates()
+    {
+        try {
+            $preloader = new TemplatePreloader();
+            $preloader->preloadAllTemplates();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Templates preloaded successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Template preload failed', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Template preload failed'
+            ], 500);
+        }
     }
 } 

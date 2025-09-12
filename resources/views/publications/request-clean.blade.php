@@ -786,6 +786,7 @@
                             autocomplete="on"
                         >
                             @csrf
+                            <input type="hidden" id="request_id" name="request_id" value="{{ $request->id }}">
                             
                             <!-- Hidden field for generated DOCX files -->
                             <input type="hidden" name="generated_docx_files" id="generated-docx-files" value="">

@@ -68,6 +68,8 @@ Route::middleware([
     Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success')->middleware('mobile.restrict');
     // Add a single endpoint for all publication DOCX generations
     Route::post('/publications/generate-docx', [\App\Http\Controllers\PublicationsController::class, 'generateDocx'])->name('publications.generateDocx')->middleware('mobile.restrict');
+    Route::post('/publications/preload-templates', [\App\Http\Controllers\PublicationsController::class, 'preloadTemplates'])->name('publications.preloadTemplates')->middleware('mobile.restrict');
+    Route::post('/citations/preload-templates', [\App\Http\Controllers\CitationsController::class, 'preloadTemplates'])->name('citations.preloadTemplates')->middleware('mobile.restrict');
     // Nudge a pending request (user action)
     Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
     // Signing for signatories

@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Request as UserRequest;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
-// use App\Services\TemplateCacheService; // Temporarily disabled for production fix
+// use App\Services\TemplateCacheService; // Disabled due to serialization issues with TemplateProcessor
+use App\Services\TemplatePreloader;
 // use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +29,12 @@ class PublicationsController extends Controller
     // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
+        $publications_request_enabled = \App\Models\Setting::get('publications_request_enabled', '1');
+        
+        if ($publications_request_enabled !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Publications requests are currently disabled by administrators.');
+        }
+        
         // Check for existing draft
         $existingDraft = \App\Models\Request::where('user_id', Auth::id())
             ->where('type', 'Publication')
@@ -48,6 +55,11 @@ class PublicationsController extends Controller
         $request->id = $existingDraft ? $existingDraft->id : null;
         $request->request_code = $existingDraft ? $existingDraft->request_code : null;
         $request->form_data = $existingDraft ? (is_string($existingDraft->form_data) ? json_decode($existingDraft->form_data, true) : $existingDraft->form_data) : [];
+        
+        // Show notification if draft was loaded
+        if ($existingDraft) {
+            return view('publications.request-clean', compact('request'))->with('success', 'Draft loaded successfully!');
+        }
         
         return view('publications.request-clean', compact('request'));
     }
@@ -117,7 +129,7 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
@@ -188,7 +200,7 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
@@ -249,7 +261,7 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Terminal_Report_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            // Use direct TemplateProcessor (caching temporarily disabled for production fix)
+            // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
             foreach ($data as $key => $value) {
@@ -910,13 +922,13 @@ class PublicationsController extends Controller
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
                 } else {
-                    // For manual draft saves via form submission, redirect with success message
-                    return redirect()->route('publications.request')->with('success', 'Draft saved successfully!');
+                    // For manual draft saves via form submission, redirect without notification
+                    return redirect()->route('publications.request');
                 }
             } else {
                 // Clear draft session when submitting final request
                 session()->forget("draft_publication_{$userId}");
-                return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
+                return redirect()->route('dashboard')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
             }
 
         } catch (\Exception $e) {
@@ -1295,25 +1307,21 @@ class PublicationsController extends Controller
         return [
             'college' => $data['college'] ?? '',
             'name' => $data['name'] ?? '',
-            'academicrank' => $data['rank'] ?? '',
-            'papertitle' => $data['papertitle'] ?? '',
+            'academicrank' => $data['academicrank'] ?? '',
             'bibentry' => $data['bibentry'] ?? '',
-            'journaltitle' => $data['journaltitle'] ?? '',
             'issn' => $data['issn'] ?? '',
             'doi' => $data['doi'] ?? '',
-            'publisher' => $data['publisher'] ?? '',
-            'scopus' => (isset($data['scopus']) && $data['scopus'] === '1') ? '☑' : '☐',
-            'wos' => (isset($data['wos']) && $data['wos'] === '1') ? '☑' : '☐',
-            'aci' => (isset($data['aci']) && $data['aci'] === '1') ? '☑' : '☐',
-            'regional' => (isset($data['type']) && $data['type'] === 'Regional') ? '☑' : '☐',
-            'national' => (isset($data['type']) && $data['type'] === 'National') ? '☑' : '☐',
-            'international' => (isset($data['type']) && $data['type'] === 'International') ? '☑' : '☐',
-            'citescore' => $data['citescore'] ?? '',
+            'scopus' => isset($data['scopus']) ? '☑' : '☐',
+            'wos' => isset($data['wos']) ? '☑' : '☐',
+            'aci' => isset($data['aci']) ? '☑' : '☐',
+            'regional' => isset($data['regional']) ? '☑' : '☐',
+            'national' => isset($data['national']) ? '☑' : '☐',
+            'international' => isset($data['international']) ? '☑' : '☐',
             'particulars' => $data['particulars'] ?? '',
-            'faculty' => $data['faculty_name'] ?? '',
-            'facultyname' => $data['faculty_name'] ?? '',
-            'centermanager' => $data['center_manager'] ?? '',
-            'dean' => $data['dean_name'] ?? '',
+            'faculty' => $data['facultyname'] ?? '',
+            'facultyname' => $data['facultyname'] ?? '',
+            'centermanager' => $data['centermanager'] ?? '',
+            'dean' => $data['collegedean'] ?? '',
             'date' => $data['date'] ?? now()->format('Y-m-d'),
         ];
     }
@@ -1356,12 +1364,28 @@ class PublicationsController extends Controller
     }
     public function generateDocx(Request $request)
     {
-        Log::info('RAW REQUEST DATA', $request->all());
         try {
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
+            // Filter out error messages and invalid data
             $data = $request->all();
+            $data = array_filter($data, function($value, $key) {
+                // Skip error messages and system fields
+                if (is_string($value) && (
+                    strpos($value, 'false message') !== false ||
+                    strpos($value, 'Please wait before submitting') !== false ||
+                    strpos($value, 'Validation failed') !== false
+                )) {
+                    return false;
+                }
+                // Skip system fields
+                if (in_array($key, ['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft'])) {
+                    return false;
+                }
+                return true;
+            }, ARRAY_FILTER_USE_BOTH);
+            
             $isPreview = !$reqId;
             
             if ($isPreview) {
@@ -1392,19 +1416,16 @@ class PublicationsController extends Controller
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
-                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
                     $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
-                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
                     $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
-                    Log::info('Filtered data for terminal', ['filtered' => $filtered]);
                     $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Terminal_Report_Form.docx';
                     break;
@@ -1439,6 +1460,29 @@ class PublicationsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error generating document: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Preload templates for faster generation
+     */
+    public function preloadTemplates()
+    {
+        try {
+            $preloader = new TemplatePreloader();
+            $preloader->preloadAllTemplates();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Templates preloaded successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Template preload failed', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Template preload failed'
             ], 500);
         }
     }

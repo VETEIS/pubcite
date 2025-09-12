@@ -376,7 +376,7 @@
         </div>
     </div>
 
-    <!-- Loading Overlay - Removed: Now handled by LoadingManager -->
+    <!-- Loading Overlay - Now handled by simple loading system -->
 
 
     <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
@@ -441,7 +441,7 @@ function publicationForm() {
 
 function submitPublicationForm(event) {
     // Prevent double submission
-    if (window.loadingManager && window.loadingManager.isLoading()) {
+    if (document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
         return false;
     }
     
@@ -458,36 +458,46 @@ function submitPublicationForm(event) {
         }
     }
     
-    // Show comprehensive loading state
+    // Show comprehensive loading state with progress tracking
     const operationId = `submit-publication-${Date.now()}`;
-    if (window.loadingManager) {
-        window.loadingManager.show(operationId, {
-            title: 'Submitting Request',
-            message: 'Please wait while we process your publication request...',
-            showOverlay: true,
-            disableButtons: true
-        });
-    } else {
-        // Fallback: Basic button disabling
-        const submitBtn = event && event.target ? event.target : null;
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-    }
     
-    // Submit the form
-    const form = document.getElementById('publication-request-form');
-    if (form) {
-        // Use a microtask tick so the overlay paints before navigation
-        if (window.queueMicrotask) {
-            queueMicrotask(() => form.submit());
-        } else {
-            Promise.resolve().then(() => form.submit());
-        }
-    }
+    // Define progress steps for submission
+    const progressSteps = [
+        'Validating form data...',
+        'Processing uploaded files...',
+        'Generating documents...',
+        'Saving to database...',
+        'Sending notifications...',
+        'Finalizing submission...'
+    ];
     
-    return false; // Prevent default form submission
+    // Show loading screen
+    window.showLoading('Submitting Request', 'Please wait while we process your publication request...', progressSteps);
+    
+    // Simulate progress updates
+    let currentStep = 0;
+    const progressInterval = setInterval(() => {
+        if (currentStep < progressSteps.length - 1) {
+            currentStep++;
+            window.updateProgress(currentStep, progressSteps);
+        }
+    }, 800);
+    
+    // Store interval for cleanup
+    window[`progress_${operationId}`] = progressInterval;
+    
+    // Let Turbo handle the form submission naturally
+    // Add cleanup when page navigation completes
+    document.addEventListener('turbo:before-cache', function cleanup() {
+        window.hideLoading();
+        if (window[`progress_${operationId}`]) {
+            clearInterval(window[`progress_${operationId}`]);
+            delete window[`progress_${operationId}`];
+        }
+        document.removeEventListener('turbo:before-cache', cleanup);
+    });
+    
+    return true; // Allow form submission
 }
 
 function updateReviewFile(type, input) {
@@ -1014,6 +1024,28 @@ document.addEventListener('alpine:init', () => {
         }
     }));
     Alpine.store('tabNav', tabNav());
+});
+
+// Loading screens are now handled directly in fetch operations
+// No Turbo event listeners needed
+
+// Preload templates for faster generation
+document.addEventListener('DOMContentLoaded', function() {
+    // Preload templates in the background
+    fetch('/publications/preload-templates', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Templates preloaded successfully');
+        }
+    }).catch(error => {
+        console.log('Template preload failed (non-critical):', error);
+    });
 });
 </script>
 </x-app-layout> 

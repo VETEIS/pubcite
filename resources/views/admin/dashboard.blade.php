@@ -189,7 +189,7 @@
         }
     </style>
     <div x-data="{ 
-        // loading: false, // Removed: Now handled by LoadingManager
+        // loading: false, // Now handled by simple loading system
         errorMessage: null,
         errorTimer: null,
         activeTab: 'dashboard',
@@ -210,7 +210,7 @@
                 showDropdown: false,
                 notifications: [],
                 unreadCount: 0,
-                // loading: false, // Removed: Now handled by LoadingManager
+                // loading: false, // Now handled by simple loading system
                 
                 init() {
                     this.loadNotifications();
@@ -323,7 +323,7 @@
         <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
             <span x-text="errorMessage"></span>
         </div>
-        <!-- Loading overlay - Removed: Now handled by LoadingManager -->
+        <!-- Loading overlay - Now handled by simple loading system -->
 
         @include('admin.partials.sidebar')
 

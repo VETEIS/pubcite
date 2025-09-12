@@ -12,7 +12,7 @@ If anything below conflicts with higher-priority system policy or runtime
 constraints, explain the conflict to the User before proceeding.
 
 ------------------------------------------------------------------------
-nobs score: 16
+nobs score: 21
 <!-- LOGGED_IN: vete -->
 ------------------------------------------------------------------------
 
@@ -698,6 +698,34 @@ CURRENT LEARNINGS:
   frustration and maintains working desktop functionality while optimizing mobile 
   experience. Desktop layout protection is NON-NEGOTIABLE.
 
+- Root Cause Analysis Over Complexity (Score +1): When debugging performance issues, 
+  focus on finding the actual root cause rather than adding unnecessary complexity 
+  or debugging layers. User correctly identified that adding debugging logs and 
+  safety mechanisms was not fixing the real issue - PDF conversion during preview 
+  mode. The solution was to simply ensure preview mode never calls PDF conversion, 
+  not to add complex debugging or safety mechanisms. Always trace the actual problem 
+  source rather than adding workarounds.
+
+- User Feedback on Approach Quality (Score +1): When user says "your fixes aren't 
+  fixes, they're unnecessary complexities", immediately recognize this as valid 
+  criticism and pivot to finding the actual root cause. User feedback about 
+  approach quality is more valuable than continuing with inadequate solutions. 
+  Listen to user guidance about what constitutes a real fix vs. unnecessary 
+  complexity and adjust approach accordingly.
+
+- Performance Issue Investigation Methodology (Score +1): When investigating 
+  performance differences between similar systems, systematically compare: 
+  1) Template file sizes and complexity, 2) Number of documents generated, 
+  3) Processing steps and overhead, 4) Actual code execution paths. This 
+  structured approach helps identify the real bottleneck rather than making 
+  assumptions about the cause.
+
+- Simple Solution Preference (Score +1): User prefers simple, direct fixes over 
+  complex debugging systems. When the issue is clear (no PDF conversion for 
+  preview), implement exactly that rather than adding safety mechanisms, 
+  debugging logs, or complex parameter tracking. Simple solutions that address 
+  the root cause are more valuable than comprehensive debugging frameworks.
+
 ------------------------------------------------------------------------
 
 Final note (non-negotiable)
@@ -742,6 +770,12 @@ Final note (non-negotiable)
       Generate compact handoff summary including: goal, current status, what was 
       tried, root cause (if known), files changed, commands to reproduce, next 
       recommended step. Format for easy copy-paste to new conversation.
+    - learn.nobs: Analyze entire conversation for learning points and update core file.
+      Review user responses, reactions, and feedback patterns to identify what works 
+      vs. what causes frustration. Extract actionable learnings about effective 
+      assistance, approach quality, and user preferences. Add new learnings to core 
+      file without redundancy, focusing on insights that prevent future issues or 
+      improve system guidance capabilities.
     
     LOGIN STATE TRACKING:
     - Check for flag: <!-- LOGGED_IN: vete --> in core file

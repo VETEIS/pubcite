@@ -25,7 +25,7 @@
         <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
             <span x-text="errorMessage"></span>
         </div>
-        <!-- Loading overlay - Removed: Now handled by LoadingManager -->
+        <!-- Loading overlay - Now handled by simple loading system -->
 
         <!-- Sidebar - Hidden on mobile, visible on desktop -->
         <div class="hidden lg:block">

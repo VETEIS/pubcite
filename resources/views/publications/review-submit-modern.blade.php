@@ -342,7 +342,7 @@ function generateDocx(type) {
     }
     
     // Prevent double submission
-    if (window.loadingManager && window.loadingManager.isLoading()) {
+    if (document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
         return;
     }
     
@@ -350,28 +350,34 @@ function generateDocx(type) {
     formData.append('docx_type', type);
     // Don't set store_for_submit by default - let user choose
 
-    // Show comprehensive loading state
+    // Show comprehensive loading state with progress tracking
     const operationId = `generate-docx-${type}-${Date.now()}`;
     let originalText = '';
     let button = null;
     
-    if (window.loadingManager) {
-        window.loadingManager.show(operationId, {
-            title: 'Generating Document',
-            message: `Creating ${type} document, please wait...`,
-            showOverlay: true,
-            disableButtons: true
-        });
-    } else {
-        // Fallback: Basic button disabling
-        button = event.target.closest('.cursor-pointer');
-        if (button) {
-            button.style.opacity = '0.6';
-            button.style.pointerEvents = 'none';
-            originalText = button.querySelector('p').textContent;
-            button.querySelector('p').textContent = 'Generating...';
+    // Define progress steps for document generation
+    const progressSteps = [
+        'Preparing document template...',
+        'Processing form data...',
+        'Generating DOCX file...',
+        'Converting to PDF...',
+        'Finalizing document...'
+    ];
+    
+    // Show loading screen
+    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps);
+    
+    // Simulate progress updates
+    let currentStep = 0;
+    const progressInterval = setInterval(() => {
+        if (currentStep < progressSteps.length - 1) {
+            currentStep++;
+            window.updateProgress(currentStep, progressSteps);
         }
-    }
+    }, 1000);
+    
+    // Store interval for cleanup
+    window[`progress_${operationId}`] = progressInterval;
 
     fetch('{{ route("publications.generateDocx") }}', {
         method: 'POST',
@@ -419,29 +425,23 @@ function generateDocx(type) {
         }, 100);
         
         // Hide loading state
-        if (window.loadingManager) {
-            window.loadingManager.hide(operationId);
-        } else {
-            // Fallback: Restore button state
-            if (button && originalText) {
-                button.style.opacity = '1';
-                button.style.pointerEvents = 'auto';
-                button.querySelector('p').textContent = originalText;
-            }
+        window.hideLoading();
+        
+        // Clear progress interval
+        if (window[`progress_${operationId}`]) {
+            clearInterval(window[`progress_${operationId}`]);
+            delete window[`progress_${operationId}`];
         }
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
         // Hide loading state
-        if (window.loadingManager) {
-            window.loadingManager.hide(operationId);
-        } else {
-            // Fallback: Restore button state
-            if (button && originalText) {
-                button.style.opacity = '1';
-                button.style.pointerEvents = 'auto';
-                button.querySelector('p').textContent = originalText;
-            }
+        window.hideLoading();
+        
+        // Clear progress interval
+        if (window[`progress_${operationId}`]) {
+            clearInterval(window[`progress_${operationId}`]);
+            delete window[`progress_${operationId}`];
         }
     });
 }

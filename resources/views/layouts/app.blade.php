@@ -25,16 +25,6 @@
         <!-- Scripts and Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
-        <!-- Loading Manager -->
-        <script src="{{ asset('js/loading-manager.js') }}"></script>
-        <script>
-            // Initialize LoadingManager when DOM is ready
-            document.addEventListener('DOMContentLoaded', function() {
-                window.loadingManager = new LoadingManager();
-                console.log('LoadingManager initialized');
-            });
-        </script>
-        
         <!-- Mobile-Only Portrait Orientation Lock -->
         <style>
             /* Mobile-only orientation lock - desktop completely unaffected */
@@ -185,5 +175,8 @@
 
         <!-- Livewire Scripts - Single Instance -->
         @livewireScripts
+        
+        <!-- Loading System - Load after DOM is ready -->
+        <script src="{{ asset('js/loading.js') }}"></script>
     </body>
 </html>

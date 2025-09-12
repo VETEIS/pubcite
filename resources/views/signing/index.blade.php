@@ -252,7 +252,7 @@
         </div>
     </div>
 
-    <!-- Loading Overlay - Removed: Now handled by LoadingManager -->
+    <!-- Loading Overlay - Now handled by simple loading system -->
     
     
     <script>

@@ -239,7 +239,7 @@ function generateDocx(type) {
     const formData = new FormData(form);
     formData.append('docx_type', type);
 
-    // Show loading state - Now handled by LoadingManager
+    // Show loading state - Now handled by simple loading system
     if (window.loadingManager) {
         const operationId = `submit-review-${Date.now()}`;
         window.loadingManager.show(operationId, {
