@@ -46,6 +46,11 @@ class Request extends Model
         return $this->belongsTo(User::class, 'signed_by');
     }
 
+    public function signatures()
+    {
+        return $this->hasMany(RequestSignature::class);
+    }
+
     public function isSigned(): bool
     {
         return $this->signature_status === SignatureStatus::SIGNED;
@@ -67,5 +72,31 @@ class Request extends Model
             return base64_decode($this->pdf_content);
         }
         return null;
+    }
+
+    /**
+     * Check if a specific user has signed this request
+     */
+    public function hasBeenSignedBy($userId): bool
+    {
+        return $this->signatures()->where('user_id', $userId)->exists();
+    }
+
+    /**
+     * Get all signatories who have signed this request
+     */
+    public function getSignatories()
+    {
+        return $this->signatures()->with('user')->orderBy('signed_at')->get();
+    }
+
+    /**
+     * Check if all required signatories have signed this request
+     */
+    public function isFullySigned(): bool
+    {
+        // This would need to be implemented based on business logic
+        // For now, we'll consider it fully signed if at least one signatory has signed
+        return $this->signatures()->exists();
     }
 } 

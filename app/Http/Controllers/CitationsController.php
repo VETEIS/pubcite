@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
+use App\Services\DocxToPdfConverter;
 
 class CitationsController extends Controller
 {
@@ -36,7 +37,7 @@ class CitationsController extends Controller
             ->orderBy('id', 'desc')
             ->first();
             
-        \Log::info('Citations create - checking for draft', [
+        Log::info('Citations create - checking for draft', [
             'user_id' => Auth::id(),
             'found_draft' => $existingDraft ? true : false,
             'draft_id' => $existingDraft ? $existingDraft->id : null,
@@ -210,7 +211,7 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename = 'Incentive_Application_Form.docx')
+    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $filename = 'Incentive_Application_Form.docx', $convertToPdf = false)
     {
         try {
             Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
@@ -253,7 +254,26 @@ class CitationsController extends Controller
                 throw $e;
             }
             
-            return $outputPath; // Return the relative path for the controller to use
+            // Only convert to PDF if requested (for submission, not preview)
+            if ($convertToPdf) {
+                $converter = new DocxToPdfConverter();
+                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                
+                if ($pdfPath) {
+                    // Delete the original DOCX file
+                    Storage::disk('local')->delete($outputPath);
+                    Log::info('Converted DOCX to PDF and deleted original DOCX', [
+                        'original_docx' => $outputPath,
+                        'generated_pdf' => $pdfPath
+                    ]);
+                    return $pdfPath;
+                } else {
+                    Log::warning('PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
+                    return $outputPath;
+                }
+            }
+            
+            return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateCitationIncentiveDocxFromHtml: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -263,7 +283,7 @@ class CitationsController extends Controller
         }
     }
 
-    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Recommendation_Letter_Form.docx')
+    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $filename = 'Recommendation_Letter_Form.docx', $convertToPdf = false)
     {
         try {
             Log::info('CITATION RECO: Raw data', $data);
@@ -300,7 +320,27 @@ class CitationsController extends Controller
             
             $templateProcessor->saveAs($fullOutputPath);
             Log::info('CITATION RECO: Saved populated docx', ['output' => $fullOutputPath]);
-            return $outputPath; // Return the relative path
+            
+            // Only convert to PDF if requested (for submission, not preview)
+            if ($convertToPdf) {
+                $converter = new DocxToPdfConverter();
+                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                
+                if ($pdfPath) {
+                    // Delete the original DOCX file
+                    Storage::disk('local')->delete($outputPath);
+                    Log::info('CITATION RECO: Converted DOCX to PDF and deleted original DOCX', [
+                        'original_docx' => $outputPath,
+                        'generated_pdf' => $pdfPath
+                    ]);
+                    return $pdfPath;
+                } else {
+                    Log::warning('CITATION RECO: PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
+                    return $outputPath;
+                }
+            }
+            
+            return $outputPath;
         } catch (\Exception $e) {
             Log::error('CITATION RECO: Error generating docx', ['error' => $e->getMessage()]);
             throw $e;
@@ -426,6 +466,8 @@ class CitationsController extends Controller
 
     public function submitCitationRequest(Request $request)
     {
+        $user = Auth::user();
+        
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
         
         if ($citations_request_enabled !== '1') {
@@ -437,7 +479,7 @@ class CitationsController extends Controller
         
         // Prevent duplicate submissions (only for final submissions, not drafts)
         if (!$isDraft) {
-            $recentSubmission = \App\Models\Request::where('user_id', Auth::id())
+            $recentSubmission = \App\Models\Request::where('user_id', $user->id)
                 ->where('type', 'Citation')
                 ->where('status', 'pending')
                 ->where('requested_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
@@ -532,7 +574,7 @@ class CitationsController extends Controller
 
             // Generate unique request code
             $requestCode = 'CITE-' . date('Ymd') . '-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-            $userId = Auth::id();
+            $userId = $user->id;
             $uploadPath = "requests/{$userId}/{$requestCode}";
 
             // Store PDF files in per-request folder
@@ -563,15 +605,25 @@ class CitationsController extends Controller
             if (!$isDraft) {
                 try {
                     $filtered = $this->mapIncentiveFields($request->all());
-                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath);
-                    $docxPaths['incentive'] = $incentivePath;
+                    $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, 'Incentive_Application_Form.docx', true);
+                    if ($incentivePath) {
+                        $docxPaths['incentive'] = [
+                            'path' => $incentivePath,
+                            'original_name' => 'Incentive_Application_Form.pdf'
+                        ];
+                    }
                 } catch (\Exception $e) {
                     Log::error('Error generating incentive DOCX: ' . $e->getMessage());
                 }
                 try {
                     $filtered = $this->mapRecommendationFields($request->all());
-                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath);
-                    $docxPaths['recommendation'] = $recommendationPath;
+                    $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, 'Recommendation_Letter_Form.docx', true);
+                    if ($recommendationPath) {
+                        $docxPaths['recommendation'] = [
+                            'path' => $recommendationPath,
+                            'original_name' => 'Recommendation_Letter_Form.pdf'
+                        ];
+                    }
                 } catch (\Exception $e) {
                     Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
                 }
@@ -588,7 +640,10 @@ class CitationsController extends Controller
                 // Update existing draft - always update, never create new
                 $existingDraft->update([
                     'form_data' => json_encode($request->except(['_token', ...$fields])),
-                    'pdf_path' => json_encode(['pdfs' => $pdfPaths, 'docxs' => []]),
+                    'pdf_path' => json_encode([
+                        'pdfs' => array_merge($pdfPaths, $docxPaths),
+                        'docxs' => [], // Drafts don't have DOCX files
+                    ]),
                     'requested_at' => now(), // Update timestamp
                 ]);
                 $userRequest = $existingDraft;
@@ -600,7 +655,10 @@ class CitationsController extends Controller
                 $userRequest->type = 'Citation';
                 $userRequest->status = $isDraft ? 'draft' : 'pending';
                 $userRequest->requested_at = now(); // Always set requested_at, even for drafts
-                $userRequest->pdf_path = json_encode(['pdfs' => $pdfPaths, 'docxs' => $isDraft ? [] : $docxPaths]);
+                $userRequest->pdf_path = json_encode([
+                    'pdfs' => array_merge($pdfPaths, $docxPaths),
+                    'docxs' => [], // All files are now PDFs after conversion
+                ]);
                 $userRequest->form_data = json_encode($request->except(['_token', ...$fields]));
                 $userRequest->save();
             }

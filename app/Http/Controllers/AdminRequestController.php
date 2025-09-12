@@ -154,19 +154,33 @@ class AdminRequestController extends Controller
             
             if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
                 foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
-                    if (isset($fileInfo['path']) && is_string($fileInfo['path'])) {
-                        $fullPath = Storage::disk('local')->path($fileInfo['path']);
+                    // Handle both object format (new) and string format (old)
+                    $filePath = null;
+                    $originalName = null;
+                    
+                    if (is_array($fileInfo) && isset($fileInfo['path'])) {
+                        // New format: {"path": "...", "original_name": "..."}
+                        $filePath = $fileInfo['path'];
+                        $originalName = $fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf';
+                    } elseif (is_string($fileInfo)) {
+                        // Old format: "path/to/file.pdf"
+                        $filePath = $fileInfo;
+                        $originalName = ucfirst(str_replace('_', ' ', $key)) . '.pdf';
+                    }
+                    
+                    if ($filePath && is_string($filePath)) {
+                        $fullPath = Storage::disk('local')->path($filePath);
                         if (!file_exists($fullPath)) {
-                            $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                            $fullPath = storage_path('app/public/' . $filePath);
                         }
                         
                         if (file_exists($fullPath) && is_readable($fullPath)) {
-                            $secureFilename = base64_encode($request->id . '|' . ($fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf'));
+                            $secureFilename = base64_encode($request->id . '|' . $originalName);
                             $downloadUrl = route('admin.download.file', ['type' => 'pdf', 'filename' => $secureFilename]);
                             
                             $files[] = [
-                                'name' => $fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf',
-                                'path' => $fileInfo['path'],
+                                'name' => $originalName,
+                                'path' => $filePath,
                                 'type' => 'pdf',
                                 'size' => $this->formatFileSize(filesize($fullPath)),
                                 'full_path' => $fullPath,

@@ -19,6 +19,7 @@ use Carbon\Carbon;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
+use App\Services\DocxToPdfConverter;
 
 class PublicationsController extends Controller
 {
@@ -96,10 +97,10 @@ class PublicationsController extends Controller
     }
 
 
-    private function generateIncentiveDocxFromHtml($data, $uploadPath)
+    private function generateIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
-            Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
+            Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath, 'convertToPdf' => $convertToPdf]);
             
             $privateUploadPath = $uploadPath;
             $fullPath = Storage::disk('local')->path($privateUploadPath);
@@ -139,6 +140,25 @@ class PublicationsController extends Controller
                 throw $e;
             }
             
+            // Only convert to PDF if requested (for submission, not preview)
+            if ($convertToPdf) {
+                $converter = new DocxToPdfConverter();
+                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                
+                if ($pdfPath) {
+                    // Delete the original DOCX file
+                    Storage::disk('local')->delete($outputPath);
+                    Log::info('Converted DOCX to PDF and deleted original DOCX', [
+                        'original_docx' => $outputPath,
+                        'generated_pdf' => $pdfPath
+                    ]);
+                    return $pdfPath;
+                } else {
+                    Log::warning('PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
+                    return $outputPath;
+                }
+            }
+            
             return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateIncentiveDocxFromHtml: ' . $e->getMessage(), [
@@ -149,7 +169,7 @@ class PublicationsController extends Controller
         }
     }
 
-    private function generateRecommendationDocxFromHtml($data, $uploadPath)
+    private function generateRecommendationDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
             $privateUploadPath = $uploadPath;
@@ -181,6 +201,26 @@ class PublicationsController extends Controller
             }
             
             $templateProcessor->saveAs($fullOutputPath);
+            
+            // Only convert to PDF if requested (for submission, not preview)
+            if ($convertToPdf) {
+                $converter = new DocxToPdfConverter();
+                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                
+                if ($pdfPath) {
+                    // Delete the original DOCX file
+                    Storage::disk('local')->delete($outputPath);
+                    Log::info('Converted DOCX to PDF and deleted original DOCX', [
+                        'original_docx' => $outputPath,
+                        'generated_pdf' => $pdfPath
+                    ]);
+                    return $pdfPath;
+                } else {
+                    Log::warning('PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
+                    return $outputPath;
+                }
+            }
+            
             return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateRecommendationDocxFromHtml: ' . $e->getMessage());
@@ -188,7 +228,7 @@ class PublicationsController extends Controller
         }
     }
 
-    private function generateTerminalDocxFromHtml($data, $uploadPath)
+    private function generateTerminalDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
             $privateUploadPath = $uploadPath;
@@ -220,6 +260,26 @@ class PublicationsController extends Controller
             }
             
             $templateProcessor->saveAs($fullOutputPath);
+            
+            // Only convert to PDF if requested (for submission, not preview)
+            if ($convertToPdf) {
+                $converter = new DocxToPdfConverter();
+                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                
+                if ($pdfPath) {
+                    // Delete the original DOCX file
+                    Storage::disk('local')->delete($outputPath);
+                    Log::info('Converted DOCX to PDF and deleted original DOCX', [
+                        'original_docx' => $outputPath,
+                        'generated_pdf' => $pdfPath
+                    ]);
+                    return $pdfPath;
+                } else {
+                    Log::warning('PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
+                    return $outputPath;
+                }
+            }
+            
             return $outputPath;
         } catch (\Exception $e) {
             Log::error('Error in generateTerminalDocxFromHtml: ' . $e->getMessage());
@@ -461,8 +521,10 @@ class PublicationsController extends Controller
 
     public function submitPublicationRequest(Request $request)
     {
+        $user = Auth::user();
+        
         Log::info('Publication request submission started', [
-            'user_id' => Auth::id(),
+            'user_id' => $user->id,
             'has_files' => $request->hasFile('recommendation_letter'),
             'is_draft' => $request->has('save_draft')
         ]);
@@ -472,7 +534,7 @@ class PublicationsController extends Controller
         
         // Prevent duplicate submissions (only for final submissions, not drafts)
         if (!$isDraft) {
-            $recentSubmission = \App\Models\Request::where('user_id', Auth::id())
+            $recentSubmission = \App\Models\Request::where('user_id', $user->id)
                 ->where('type', 'Publication')
                 ->where('status', 'pending')
                 ->where('requested_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
@@ -593,7 +655,7 @@ class PublicationsController extends Controller
         $data = $validator->validated();
         
         try {
-            $userId = Auth::id();
+            $userId = $user->id;
             $requestCode = 'PUB-' . now()->format('Ymd-His');
             $uploadPath = "requests/{$userId}/{$requestCode}";
             
@@ -648,25 +710,46 @@ class PublicationsController extends Controller
                         
                         // Move file from temp to final location
                         Storage::disk('local')->move($tempPath, $finalPath);
-                        $docxPaths[$type] = $finalPath;
+                        $docxPaths[$type] = [
+                            'path' => $finalPath,
+                            'original_name' => $filename
+                        ];
                         
                         Log::info('Moved DOCX file', ['type' => $type, 'from' => $tempPath, 'to' => $finalPath]);
                     }
                 }
             }
             
-            // Generate any missing DOCX files
+            // Generate any missing DOCX files (convert to PDF for submission)
             if (!isset($docxPaths['incentive'])) {
                 $filtered = $this->mapIncentiveFields($data);
-                $docxPaths['incentive'] = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath);
+                $pdfPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, true);
+                if ($pdfPath) {
+                    $docxPaths['incentive'] = [
+                        'path' => $pdfPath,
+                        'original_name' => 'Incentive_Application_Form.pdf'
+                    ];
+                }
             }
             if (!isset($docxPaths['recommendation'])) {
                 $filtered = $this->mapRecommendationFields($data);
-                $docxPaths['recommendation'] = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath);
+                $pdfPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, true);
+                if ($pdfPath) {
+                    $docxPaths['recommendation'] = [
+                        'path' => $pdfPath,
+                        'original_name' => 'Recommendation_Letter_Form.pdf'
+                    ];
+                }
             }
             if (!isset($docxPaths['terminal'])) {
                 $filtered = $this->mapTerminalFields($data);
-                $docxPaths['terminal'] = $this->generateTerminalDocxFromHtml($filtered, $uploadPath);
+                $pdfPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, true);
+                if ($pdfPath) {
+                    $docxPaths['terminal'] = [
+                        'path' => $pdfPath,
+                        'original_name' => 'Terminal_Report_Form.pdf'
+                    ];
+                }
             }
 
             Log::info('Creating database entry', [
@@ -685,8 +768,8 @@ class PublicationsController extends Controller
                 $existingDraft->update([
                     'form_data' => json_encode($data), // Ensure proper JSON encoding
                     'pdf_path' => json_encode([
-                        'pdfs' => $attachments,
-                        'docxs' => [],
+                        'pdfs' => array_merge($attachments, $docxPaths),
+                        'docxs' => [], // Drafts don't have DOCX files
                     ]),
                     'requested_at' => now(), // Update timestamp
                 ]);
@@ -701,8 +784,8 @@ class PublicationsController extends Controller
                     'requested_at' => now(),
                     'form_data' => json_encode($data), // Ensure proper JSON encoding
                     'pdf_path' => json_encode([
-                        'pdfs' => $attachments,
-                        'docxs' => $isDraft ? [] : $docxPaths,
+                        'pdfs' => array_merge($attachments, $docxPaths),
+                        'docxs' => [], // All files are now PDFs after conversion
                     ]),
                 ]);
             }
@@ -1260,19 +1343,19 @@ class PublicationsController extends Controller
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
                     Log::info('Filtered data for incentive', ['filtered' => $filtered]);
-                    $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath);
+                    $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
                     Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
-                    $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath);
+                    $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
                     Log::info('Filtered data for terminal', ['filtered' => $filtered]);
-                    $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath);
+                    $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Terminal_Report_Form.docx';
                     break;
                 default:

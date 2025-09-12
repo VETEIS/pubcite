@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\Request as UserRequest;
+use App\Models\RequestSignature;
 use App\Models\Setting;
 use App\Models\User;
 use App\Enums\SignatureStatus;
@@ -24,7 +25,10 @@ class SigningController extends Controller
         $signatoryType = $user->signatoryType();
         $userName = trim($user->name ?? '');
 
-        $candidateRequests = UserRequest::orderByDesc('requested_at')->limit(200)->get();
+        $candidateRequests = UserRequest::where('status', '!=', 'draft')
+            ->orderByDesc('requested_at')
+            ->limit(200)
+            ->get();
         $needs = [];
 
         foreach ($candidateRequests as $req) {
@@ -139,11 +143,11 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($validated['request_id']);
 
-        // Check if request is already signed
-        if ($userRequest->signature_status === SignatureStatus::SIGNED) {
+        // Check if this specific signatory has already signed this request
+        if ($userRequest->hasBeenSignedBy($user->id)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This request has already been signed. You cannot upload signed documents multiple times.'
+                'message' => 'You have already signed this request. You cannot sign it multiple times.'
             ], 400);
         }
 
@@ -167,11 +171,24 @@ class SigningController extends Controller
                 ], 400);
             }
             
-            // Update request status only if files were successfully uploaded
+            // Create individual signature record
+            $signature = RequestSignature::create([
+                'request_id' => $userRequest->id,
+                'user_id' => $user->id,
+                'signatory_role' => $matchedRole,
+                'signatory_name' => $userName,
+                'signed_at' => now(),
+                'signed_document_path' => $uploadedFiles[0]['path'] ?? null, // Store first uploaded file path
+                'original_document_path' => null, // Could be populated if needed
+            ]);
+
+            // Update request's overall signature status
+            // For now, we'll mark it as signed when any signatory signs
+            // This could be changed to require all signatories based on business logic
             $userRequest->update([
                 'signature_status' => SignatureStatus::SIGNED,
                 'signed_at' => now(),
-                'signed_by' => $user->id,
+                'signed_by' => $user->id, // Keep the last signatory for backward compatibility
             ]);
 
             return response()->json([
@@ -568,21 +585,58 @@ class SigningController extends Controller
             abort(403, 'You are not authorized to revert this request');
         }
 
-        // Check if request can be reverted (within 24 hours)
-        if (!$userRequest->signed_at || \Carbon\Carbon::parse($userRequest->signed_at)->diffInHours(now()) >= 24) {
+        // Check if this specific signatory has signed this request
+        if (!$userRequest->hasBeenSignedBy($user->id)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This document can only be reverted within 24 hours of signing.'
+                'message' => 'You have not signed this request, so you cannot revert it.'
+            ], 400);
+        }
+
+        // Get the signature record for this user
+        $signature = RequestSignature::where('request_id', $userRequest->id)
+                                   ->where('user_id', $user->id)
+                                   ->first();
+
+        if (!$signature) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Signature record not found.'
+            ], 400);
+        }
+
+        // Check if signature can be reverted (within 24 hours)
+        if (\Carbon\Carbon::parse($signature->signed_at)->diffInHours(now()) >= 24) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This signature can only be reverted within 24 hours of signing.'
             ], 400);
         }
 
         try {
-            // Revert the signature status
-            $userRequest->update([
-                'signature_status' => SignatureStatus::PENDING,
-                'signed_at' => null,
-                'signed_by' => null,
-            ]);
+            // Delete the individual signature record
+            $signature->delete();
+
+            // Check if there are any remaining signatures for this request
+            $remainingSignatures = RequestSignature::where('request_id', $userRequest->id)->count();
+            
+            if ($remainingSignatures === 0) {
+                // No more signatures, revert the request status
+                $userRequest->update([
+                    'signature_status' => SignatureStatus::PENDING,
+                    'signed_at' => null,
+                    'signed_by' => null,
+                ]);
+            } else {
+                // Update to the most recent remaining signature
+                $latestSignature = RequestSignature::where('request_id', $userRequest->id)
+                                                  ->orderBy('signed_at', 'desc')
+                                                  ->first();
+                $userRequest->update([
+                    'signed_at' => $latestSignature->signed_at,
+                    'signed_by' => $latestSignature->user_id,
+                ]);
+            }
 
             Log::info('Document reverted successfully', [
                 'request_id' => $userRequest->id,
