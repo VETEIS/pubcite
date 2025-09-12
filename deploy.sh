@@ -73,6 +73,10 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Create storage link for public files
+echo "Creating storage link..."
+php artisan storage:link
+
 # Set proper permissions
 echo "Setting file permissions..."
 chmod -R 755 storage bootstrap/cache public/build

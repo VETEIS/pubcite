@@ -40,7 +40,6 @@ class AdminFileController extends Controller
                 abort(404, 'File not found');
             }
             
-            
             Log::info('Admin file download path construction', [
                 'type' => $type,
                 'actual_filename' => $actualFilename,
@@ -48,11 +47,20 @@ class AdminFileController extends Controller
                 'request_id' => $requestId
             ]);
 
-            $fullPath = Storage::disk('local')->path($filePath);
+            // Try public disk first (where files are actually stored)
+            $fullPath = Storage::disk('public')->path($filePath);
             if (!file_exists($fullPath)) {
-                $fullPath = Storage::disk('public')->path($filePath);
+                // Fallback to local disk
+                $fullPath = Storage::disk('local')->path($filePath);
                 if (!file_exists($fullPath)) {
-                    abort(404, 'File not found on disk');
+                    Log::error('File not found on any disk', [
+                        'file_path' => $filePath,
+                        'public_path' => Storage::disk('public')->path($filePath),
+                        'local_path' => Storage::disk('local')->path($filePath),
+                        'public_exists' => file_exists(Storage::disk('public')->path($filePath)),
+                        'local_exists' => file_exists(Storage::disk('local')->path($filePath))
+                    ]);
+                    abort(404, 'File not found on disk: ' . $filePath);
                 }
             }
 
@@ -96,10 +104,20 @@ class AdminFileController extends Controller
                 return $basePath . '/' . $filename;
             
             case 'signed':
-                return $request->signed_document_path;
+                // Remove storage/app/public/ prefix if present
+                $path = $request->signed_document_path;
+                if (str_starts_with($path, 'storage/app/public/')) {
+                    $path = substr($path, 19); // Remove 'storage/app/public/' prefix
+                }
+                return $path;
             
             case 'backup':
-                return $request->original_document_path;
+                // Remove storage/app/public/ prefix if present
+                $path = $request->original_document_path;
+                if (str_starts_with($path, 'storage/app/public/')) {
+                    $path = substr($path, 19); // Remove 'storage/app/public/' prefix
+                }
+                return $path;
             
             default:
                 return null;
