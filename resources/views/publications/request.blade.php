@@ -649,7 +649,7 @@ function tabNav() {
         checkTabs() {
             // Check incentive tab completion
             const incentiveFields = [
-                'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean'
+                'name', 'rank', 'college', 'bibentry', 'issn', 'doi', 'faculty_name', 'center_manager', 'dean_name'
             ];
             
             
@@ -682,7 +682,8 @@ function tabNav() {
         },
 
         performIncentiveValidation(incentiveFields) {
-            this.tabCompletion.incentive = incentiveFields.every(field => {
+            // Check basic required fields
+            const basicFieldsValid = incentiveFields.every(field => {
                 const element = this.getFieldElement(field);
                 let isValid = false;
                 
@@ -703,6 +704,15 @@ function tabNav() {
                 
                 return isValid;
             });
+            
+            // Check that at least one indexing option is selected
+            const indexingFields = ['scopus', 'wos', 'aci'];
+            const hasIndexingSelection = indexingFields.some(field => {
+                const element = this.getFieldElement(field);
+                return element && element.checked;
+            });
+            
+            this.tabCompletion.incentive = basicFieldsValid && hasIndexingSelection;
             
 
             // Check recommendation tab completion
@@ -849,17 +859,27 @@ function tabNav() {
             const sanitizedName = applicantName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
             const timestamp = new Date().toISOString().slice(0, 10);
             
-            // Generate DOCX via AJAX
+            // Generate DOCX via AJAX with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+            
+            console.log('Starting DOCX generation for type:', type);
+            console.log('User Agent:', navigator.userAgent);
+            console.log('CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
+            
             fetch('/publications/generate-docx', {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
+                },
+                signal: controller.signal
             })
             .then(response => {
+                clearTimeout(timeoutId);
+                console.log('Response received:', response.status, response.statusText);
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
                 }
                 
                 // Create filename following citations pattern
@@ -897,8 +917,18 @@ function tabNav() {
                 }
             })
             .catch(error => {
+                clearTimeout(timeoutId);
+                console.error('DOCX Generation Error:', error);
                 if (!silent) {
-                    alert('Error generating document. Please try again.');
+                    let errorMessage = 'Error generating document. Please try again.';
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Request timed out. The document generation is taking longer than expected. Please try again.';
+                    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        errorMessage = 'Network error: Unable to connect to server. Please check your internet connection and try again.';
+                    } else if (error.message) {
+                        errorMessage = `Error generating document: ${error.message}`;
+                    }
+                    alert(errorMessage);
                 }
             });
         },

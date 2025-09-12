@@ -189,7 +189,7 @@
         }
     </style>
     <div x-data="{ 
-        // loading: false, // Now handled by simple loading system
+        // loading: false, // loading.js
         errorMessage: null,
         errorTimer: null,
         activeTab: 'dashboard',
@@ -202,114 +202,7 @@
                 this.errorMessage = null;
             }, 3000);
         }
-    }" 
-    x-init="
-        // Initialize notification bell
-        window.notificationBell = function() {
-            return {
-                showDropdown: false,
-                notifications: [],
-                unreadCount: 0,
-                // loading: false, // Now handled by simple loading system
-                
-                init() {
-                    this.loadNotifications();
-                    // Poll for new notifications every 10 seconds
-                    setInterval(() => this.checkForNewNotifications(), 10000);
-                },
-                
-                toggleNotifications() {
-                    this.showDropdown = !this.showDropdown;
-                    if (this.showDropdown) {
-                        this.loadNotifications();
-                    }
-                },
-                
-                async loadNotifications() {
-                    this.loading = true;
-                    try {
-                        const response = await fetch('/admin/notifications');
-                        const data = await response.json();
-                        this.notifications = data.items || [];
-                        this.unreadCount = data.unread || 0;
-                    } catch (error) {
-                        // Silent fail for notifications
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async checkForNewNotifications() {
-                    try {
-                        const response = await fetch('/admin/notifications');
-                        const data = await response.json();
-                        const currentUnreadCount = data.unread || 0;
-                        
-                        // Update the count silently without reloading
-                        if (currentUnreadCount !== this.unreadCount) {
-                            this.unreadCount = currentUnreadCount;
-                            // Optionally update notifications list if dropdown is open
-                            if (this.showDropdown) {
-                                this.notifications = data.items || [];
-                            }
-                        }
-                    } catch (error) {
-                        // Silent fail for notification check
-                    }
-                },
-                
-                async markAsRead(notificationId) {
-                    try {
-                        await fetch(`/admin/notifications/${notificationId}/read`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        // Update local state
-                        const notification = this.notifications.find(n => n.id === notificationId);
-                        if (notification) {
-                            notification.read_at = new Date().toISOString();
-                        }
-                        this.unreadCount = Math.max(0, this.unreadCount - 1);
-                    } catch (error) {
-                        // Silent fail for mark as read
-                    }
-                },
-                
-                async markAllAsRead() {
-                    try {
-                        await fetch('/admin/notifications/mark-all-read', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        // Update local state
-                        this.notifications.forEach(n => n.read_at = new Date().toISOString());
-                        this.unreadCount = 0;
-                    } catch (error) {
-                        // Silent fail for mark all as read
-                    }
-                },
-                
-                formatTime(dateString) {
-                    const date = new Date(dateString);
-                    const now = new Date();
-                    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-                    
-                    if (diffInMinutes < 1) return 'Just now';
-                    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-                    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-                    return date.toLocaleDateString();
-                }
-            }
-        }
-    " class="h-screen bg-gray-50 flex overflow-hidden admin-dashboard-container" style="scrollbar-gutter: stable;">
+    }" class="h-screen bg-gray-50 flex overflow-hidden admin-dashboard-container" style="scrollbar-gutter: stable;">
         
         <!-- Hidden notification divs for global notification system -->
         @if(session('success'))
@@ -442,7 +335,7 @@
                         <div class="w-px h-8 bg-gray-200"></div>
                         
                         <!-- Notification Bell (like user dashboard) -->
-                        <div class="relative" x-data="notificationBell()" x-cloak>
+                        <div class="relative" x-data="notificationBell()" x-init="init()" x-cloak>
                             <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
                             <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
@@ -969,7 +862,7 @@
                                         <td class="w-24 px-6 py-3 text-center text-sm font-medium overflow-hidden">
                                             <div class="flex items-center justify-center gap-1 w-full">
                                                 <!-- Review Button -->
-                                                <button type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-blue-200" title="Review" onclick="openReviewModal({{ $request->id }})">
+                                                <button type="button" class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-blue-200" title="Review" onclick="openReviewModal({{ $request->id }})">
                                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -978,10 +871,10 @@
                                                 </button>
                                                 
                                                 <!-- Delete Button -->
-                                                <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this request?');" class="inline">
+                                                <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this request?');" class="flex-1">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-red-200" title="Delete">
+                                                    <button type="submit" class="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-red-200" title="Delete">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                         </svg>
@@ -1001,7 +894,7 @@
                     <!-- Pagination (Fixed at bottom) -->
                     <div class="bg-white px-4 py-2 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
                         <div class="text-sm text-gray-700 min-w-0">
-                            <span class="whitespace-nowrap">Showing <span class="font-medium w-8 inline-block text-center">1</span> to <span class="font-medium w-8 inline-block text-center">{{ $filteredRequests->count() }}</span> of <span class="font-medium w-8 inline-block text-center">{{ $requests->count() }}</span> results</span>
+                            <span class="whitespace-nowrap">Showing <span class="font-medium w-8 inline-block text-center">1</span> to <span class="font-medium w-8 inline-block text-center" data-count="filtered_count">{{ $filteredRequests->count() }}</span> of <span class="font-medium w-8 inline-block text-center" data-count="total_count">{{ $requests->count() }}</span> results</span>
                             </div>
                         <div class="flex items-center space-x-2 flex-shrink-0">
                             {{ $requests->links() }}
@@ -1019,6 +912,279 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+        // Initialize notification bell
+        window.notificationBell = function() {
+            return {
+                showDropdown: false,
+                notifications: [],
+                unreadCount: 0,
+                
+                init() {
+                    this.loadNotifications();
+                    // Poll for new notifications every 10 seconds
+                    setInterval(() => this.checkForNewNotifications(), 10000);
+                    
+                    // Initialize real-time dashboard updates
+                    this.initializeDashboardUpdates();
+                },
+                
+                toggleNotifications() {
+                    this.showDropdown = !this.showDropdown;
+                    if (this.showDropdown) {
+                        this.loadNotifications();
+                    }
+                },
+                
+                async loadNotifications() {
+                    this.loading = true;
+                    try {
+                        const response = await fetch('/admin/notifications');
+                        const data = await response.json();
+                        this.notifications = data.items || [];
+                        this.unreadCount = data.unread || 0;
+                    } catch (error) {
+                        // Silent fail for notifications
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async checkForNewNotifications() {
+                    try {
+                        const response = await fetch('/admin/notifications');
+                        const data = await response.json();
+                        const currentUnreadCount = data.unread || 0;
+                        
+                        // Update the count silently without reloading
+                        if (currentUnreadCount !== this.unreadCount) {
+                            this.unreadCount = currentUnreadCount;
+                            // Optionally update notifications list if dropdown is open
+                            if (this.showDropdown) {
+                                this.notifications = data.items || [];
+                            }
+                        }
+                    } catch (error) {
+                        // Silent fail for notification check
+                    }
+                },
+                
+                async markAsRead(notificationId) {
+                    try {
+                        await fetch(`/admin/notifications/${notificationId}/read`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        // Update local state
+                        const notification = this.notifications.find(n => n.id === notificationId);
+                        if (notification) {
+                            notification.read_at = new Date().toISOString();
+                        }
+                        this.unreadCount = Math.max(0, this.unreadCount - 1);
+                    } catch (error) {
+                        // Silent fail for mark as read
+                    }
+                },
+                
+                async markAllAsRead() {
+                    try {
+                        await fetch('/admin/notifications/mark-all-read', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        // Update local state
+                        this.notifications.forEach(n => n.read_at = new Date().toISOString());
+                        this.unreadCount = 0;
+                    } catch (error) {
+                        // Silent fail for mark all as read
+                    }
+                },
+                
+                formatTime(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                    
+                    if (diffInMinutes < 1) return 'Just now';
+                    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+                    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+                    return date.toLocaleDateString();
+                },
+                
+                // Real-time dashboard updates
+                initializeDashboardUpdates() {
+                    // Poll for dashboard data every 15 seconds
+                    setInterval(() => this.updateDashboardData(), 15000);
+                },
+                
+                async updateDashboardData() {
+                    try {
+                        // Get current filter values
+                        const currentFilters = this.getCurrentFilters();
+                        const params = new URLSearchParams(currentFilters).toString();
+                        
+                        const response = await fetch(`/admin/dashboard/data?${params}`);
+                        if (!response.ok) return;
+                        
+                        const data = await response.json();
+                        if (!data.months || !data.monthlyCounts || !data.statusCounts) return;
+                        
+                        // Update charts with new data
+                        this.updateChartsWithData({
+                            months: data.months,
+                            monthlyCounts: data.monthlyCounts,
+                            statusCounts: data.statusCounts,
+                            type: data.type || currentFilters.type,
+                            period: data.period || currentFilters.period,
+                            dateDetails: data.dateDetails || {}
+                        });
+                        
+                        // Update table data if needed
+                        this.updateTableData(data);
+                        
+                    } catch (error) {
+                        console.error('Error updating dashboard data:', error);
+                    }
+                },
+                
+                getCurrentFilters() {
+                    // Get current filter values from the page
+                    const typeFilter = document.querySelector('select[name="type"]')?.value || '';
+                    const periodFilter = document.querySelector('select[name="period"]')?.value || '12months';
+                    const statusFilter = document.querySelector('select[name="status"]')?.value || '';
+                    
+                    return {
+                        type: typeFilter,
+                        period: periodFilter,
+                        status: statusFilter
+                    };
+                },
+                
+                updateChartsWithData(data) {
+                    // Update chart title
+                    this.updateChartTitle(data.period);
+                    
+                    // Update Monthly Chart
+                    if (window.monthlyChartInstance) {
+                        window.monthlyChartInstance.data.labels = data.months;
+                        window.monthlyChartInstance.data.datasets[0].data = data.monthlyCounts;
+                        window.monthlyChartInstance.update('none'); // No animation for real-time updates
+                    }
+                    
+                    // Update Status Chart
+                    if (window.statusChartInstance) {
+                        const statusData = [
+                            data.statusCounts.pending || 0,
+                            data.statusCounts.endorsed || 0,
+                            data.statusCounts.rejected || 0
+                        ];
+                        
+                        window.statusChartInstance.data.datasets[0].data = statusData;
+                        window.statusChartInstance.update('none');
+                    }
+                    
+                    // Update status legend
+                    this.updateStatusLegend(data.statusCounts);
+                },
+                
+                updateChartTitle(period) {
+                    const titleElement = document.getElementById('chartTitle');
+                    if (!titleElement) return;
+                    
+                    let title = 'Request Stats';
+                    if (period) {
+                        switch(period) {
+                            case '7days': title += ' (Last 7 Days)'; break;
+                            case '30days': title += ' (Last 30 Days)'; break;
+                            case '12months': title += ' (Last 12 Months)'; break;
+                            case 'all': title += ' (All Time)'; break;
+                            default: title += ' (Last 12 Months)';
+                        }
+                    }
+                    titleElement.textContent = title;
+                },
+                
+                updateStatusLegend(statusCounts) {
+                    const legendElement = document.getElementById('statusLegend');
+                    if (!legendElement) return;
+                    
+                    const total = statusCounts.pending + statusCounts.endorsed + statusCounts.rejected;
+                    
+                    if (total === 0) {
+                        legendElement.innerHTML = `
+                            <div class="text-center py-4 text-gray-500">
+                                <div class="flex items-center justify-center mb-2">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-gray-400 mr-2"></span>
+                                    <span class="text-sm font-medium">No Data Available</span>
+                                </div>
+                                <p class="text-xs text-gray-400">No requests found for the selected period</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    const statusLabels = ['Pending', 'Endorsed', 'Rejected'];
+                    const statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
+                    const statusKeys = ['pending', 'endorsed', 'rejected'];
+                    
+                    let legendHTML = `
+                        <table class="w-full text-xs min-w-0 table-fixed">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-1 font-semibold text-gray-700 w-16">Status</th>
+                                    <th class="text-center py-1 font-semibold text-gray-700 w-12">Count</th>
+                                    <th class="text-right py-1 font-semibold text-gray-700 w-12">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    statusLabels.forEach((label, i) => {
+                        const count = statusCounts[statusKeys[i]] || 0;
+                        const percentage = total > 0 ? (count / total * 100) : 0;
+                        
+                        legendHTML += `
+                            <tr class="hover:bg-gray-50 transition-all duration-300">
+                                <td class="py-1 flex items-center truncate">
+                                    <span class="inline-block w-2 h-2 rounded-full ${statusColors[i]} mr-1 flex-shrink-0"></span>
+                                    <span class="font-semibold truncate">${label}</span>
+                                </td>
+                                <td class="py-1 text-center font-semibold">${count}</td>
+                                <td class="py-1 text-right text-gray-500">
+                                    ${percentage === 100 ? '100' : percentage.toFixed(1)}%
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    legendHTML += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    legendElement.innerHTML = legendHTML;
+                },
+                
+                updateTableData(data) {
+                    // Update table counts if they exist on the page
+                    const resultCountElements = document.querySelectorAll('[data-count]');
+                    resultCountElements.forEach(element => {
+                        const countType = element.getAttribute('data-count');
+                        if (data[countType] !== undefined) {
+                            element.textContent = data[countType];
+                        }
+                    });
+                }
+            };
+        };
+
         let monthlyChartInstance = null;
         let statusChartInstance = null;
 let eventSource;

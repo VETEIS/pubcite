@@ -533,6 +533,9 @@ class PublicationsController extends Controller
             'created_at' => now(),
         ]);
         
+        // Delete associated admin notifications for this request
+        \App\Models\AdminNotification::where('request_id', $request->id)->delete();
+        
         $request->delete();
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Request and files deleted successfully.']);
@@ -1307,7 +1310,7 @@ class PublicationsController extends Controller
         return [
             'college' => $data['college'] ?? '',
             'name' => $data['name'] ?? '',
-            'academicrank' => $data['academicrank'] ?? '',
+            'academicrank' => $data['academicrank'] ?? $data['rank'] ?? '', // Support both field names
             'bibentry' => $data['bibentry'] ?? '',
             'issn' => $data['issn'] ?? '',
             'doi' => $data['doi'] ?? '',
@@ -1318,10 +1321,10 @@ class PublicationsController extends Controller
             'national' => isset($data['national']) ? '☑' : '☐',
             'international' => isset($data['international']) ? '☑' : '☐',
             'particulars' => $data['particulars'] ?? '',
-            'faculty' => $data['facultyname'] ?? '',
-            'facultyname' => $data['facultyname'] ?? '',
-            'centermanager' => $data['centermanager'] ?? '',
-            'dean' => $data['collegedean'] ?? '',
+            'faculty' => $data['facultyname'] ?? $data['faculty_name'] ?? '', // Support both field names
+            'facultyname' => $data['facultyname'] ?? $data['faculty_name'] ?? '', // Support both field names
+            'centermanager' => $data['centermanager'] ?? $data['center_manager'] ?? '', // Support both field names
+            'dean' => $data['collegedean'] ?? $data['dean_name'] ?? '', // Support both field names
             'date' => $data['date'] ?? now()->format('Y-m-d'),
         ];
     }

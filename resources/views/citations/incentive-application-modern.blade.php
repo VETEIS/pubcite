@@ -145,6 +145,37 @@
                     </label>
                 </div>
             </div>
+            
+            <!-- Additional Citation Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Title of Cited Work <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="citedtitle" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
+                           placeholder="Enter the title of the cited work"
+                           value="{{ old('citedtitle', $request->form_data['citedtitle'] ?? '') }}">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Journal of Cited Work <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="citedjournal" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
+                           placeholder="Enter the journal name"
+                           value="{{ old('citedjournal', $request->form_data['citedjournal'] ?? '') }}">
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">
+                    Bibliographic Entry of Cited Work <span class="text-red-500">*</span>
+                </label>
+                <textarea name="citedbibentry" rows="2" required 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
+                          placeholder="Enter the bibliographic entry of the cited work">{{ old('citedbibentry', $request->form_data['citedbibentry'] ?? '') }}</textarea>
+            </div>
         </div>
     </div>
 

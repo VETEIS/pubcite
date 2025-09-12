@@ -81,7 +81,7 @@
                             <!-- Name Field -->
                 <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                                <input type="text" name="name" value="{{ old('name', $user->name) }}" required 
+                                <input type="text" name="name" id="name-input" value="{{ old('name', $user->name) }}" required 
                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all" 
                                        placeholder="Enter full name" />
                 </div>
@@ -163,16 +163,30 @@
 <script>
     const roleSelect = document.getElementById('role-select');
     const signatoryGroup = document.getElementById('signatory-type-group');
+    const nameInput = document.getElementById('name-input');
         
     function toggleSignatory() {
         if (roleSelect && signatoryGroup) {
             signatoryGroup.classList.toggle('hidden', roleSelect.value !== 'signatory');
         }
     }
+    
+    function convertNameToUppercase() {
+        if (roleSelect && nameInput && roleSelect.value === 'signatory') {
+            nameInput.value = nameInput.value.toUpperCase();
+        }
+    }
         
     if (roleSelect) {
-        roleSelect.addEventListener('change', toggleSignatory);
+        roleSelect.addEventListener('change', function() {
+            toggleSignatory();
+            convertNameToUppercase();
+        });
         toggleSignatory();
+    }
+    
+    if (nameInput) {
+        nameInput.addEventListener('input', convertNameToUppercase);
     }
 </script> 
 </x-app-layout> 

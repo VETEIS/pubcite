@@ -94,6 +94,13 @@ class LoginController extends Controller
         ]);
 
         if ($request->accepted) {
+            // Update user's privacy acceptance timestamp
+            $user = Auth::user();
+            if ($user && !$user->hasAcceptedPrivacy()) {
+                $user->update(['privacy_accepted_at' => now()]);
+                Log::info('Privacy acceptance recorded for user: ' . $user->email);
+            }
+            
             // Set session flag for this browser session
             session(['privacy_accepted' => true]);
             
@@ -101,6 +108,24 @@ class LoginController extends Controller
         }
 
         return response()->json(['status' => 'error'], 400);
+    }
+
+    public function getPrivacyStatus(Request $request)
+    {
+        $user = Auth::user();
+        
+        if ($user) {
+            // User is logged in - check their privacy acceptance
+            $privacyAccepted = $user->hasAcceptedPrivacy() || session('privacy_accepted', false);
+        } else {
+            // User is not logged in - check session only
+            $privacyAccepted = session('privacy_accepted', false);
+        }
+        
+        return response()->json([
+            'privacy_accepted' => $privacyAccepted,
+            'user_logged_in' => $user ? true : false
+        ]);
     }
 
     /**

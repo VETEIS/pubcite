@@ -49,6 +49,19 @@ class User extends Authenticatable
         return !is_null($this->privacy_accepted_at); 
     }
 
+    /**
+     * Mutator to automatically convert name to uppercase for signatories
+     */
+    public function setNameAttribute($value)
+    {
+        // Only convert to uppercase if the user is being set as a signatory
+        if ($this->role === 'signatory' || (request()->has('role') && request()->input('role') === 'signatory')) {
+            $this->attributes['name'] = strtoupper($value);
+        } else {
+            $this->attributes['name'] = $value;
+        }
+    }
+
     public function requests()
     {
         return $this->hasMany(Request::class);

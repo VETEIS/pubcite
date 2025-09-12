@@ -470,6 +470,9 @@ class CitationsController extends Controller
                 ]);
             }
             
+            // Delete associated admin notifications for this request
+            \App\Models\AdminNotification::where('request_id', $request->id)->delete();
+            
             $request->delete();
             return back()->with('success', 'Request and files deleted successfully.');
         } catch (\Exception $e) {
@@ -522,6 +525,9 @@ class CitationsController extends Controller
                     'rank' => 'nullable|string',
                     'college' => 'nullable|string',
                     'bibentry' => 'nullable|string',
+                    'citedtitle' => 'nullable|string',
+                    'citedjournal' => 'nullable|string',
+                    'citedbibentry' => 'nullable|string',
                     'issn' => 'nullable|string',
                     'doi' => 'nullable|string',
                     'scopus' => 'nullable',
@@ -544,6 +550,9 @@ class CitationsController extends Controller
                     'rank' => 'required|string',
                     'college' => 'required|string',
                     'bibentry' => 'required|string',
+                    'citedtitle' => 'required|string',
+                    'citedjournal' => 'required|string',
+                    'citedbibentry' => 'required|string',
                     'issn' => 'required|string',
                     'doi' => 'nullable|string',
                     'scopus' => 'nullable',
@@ -1042,9 +1051,10 @@ class CitationsController extends Controller
             'journal' => '',
             'publisher' => '',
             'citescore' => '',
-            'citedtitle' => '',
-            'citedbibentry' => '',
-            'citedjournal' => '',
+            // Citation detail fields from form data
+            'citedtitle' => $data['citedtitle'] ?? '',
+            'citedbibentry' => $data['citedbibentry'] ?? '',
+            'citedjournal' => $data['citedjournal'] ?? '',
             'facultyname' => $data['faculty_name'] ?? '',
             'centermanager' => $data['center_manager'] ?? '',
             'dean' => $data['dean_name'] ?? '',

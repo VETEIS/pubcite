@@ -560,6 +560,8 @@
                         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     }
                     
+                    // Loading screen will be handled by Turbo events
+                    
                     // Disable auto-save to prevent duplicate entries after submission
                     this.disableAutoSave();
                     

@@ -124,9 +124,38 @@
             document.addEventListener('DOMContentLoaded', function() {
                 quicklink.listen({
                     ignores: [
+                        // Authentication and logout routes
                         url => url.includes('logout'),
-                        url => url.startsWith('mailto:')
-                    ]
+                        url => url.startsWith('mailto:'),
+                        url => url.includes('privacy/'),
+                        
+                        // API and generation endpoints
+                        url => url.includes('generate-docx'),
+                        url => url.includes('generate'),
+                        url => url.includes('preload-templates'),
+                        url => url.includes('nudge'),
+                        url => url.includes('destroy'),
+                        
+                        // Admin routes (require authentication)
+                        url => url.includes('/admin/'),
+                        url => url.includes('/signing/'),
+                        
+                        // API routes
+                        url => url.includes('/api/'),
+                        url => url.includes('/notifications'),
+                        url => url.includes('/download'),
+                        url => url.includes('/debug'),
+                        
+                        // URLs with query parameters (likely dynamic content)
+                        url => url.includes('?'),
+                        
+                        // Any URL that looks like an API endpoint
+                        url => url.match(/\/[a-z-]+\/[a-z-]+\/(data|download|stream|debug|serve)$/i)
+                    ],
+                    // Only prefetch on hover, not on viewport entry
+                    priority: false,
+                    // Add timeout to prevent hanging requests
+                    timeoutFn: () => 3000
                 });
             });
         </script>

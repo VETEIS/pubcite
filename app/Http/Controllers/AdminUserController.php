@@ -63,13 +63,13 @@ class AdminUserController extends Controller
             'role' => ['required', Rule::in(['user', 'admin', 'signatory'])],
             'signatory_type' => ['nullable', Rule::in(['faculty','center_manager','college_dean'])],
         ]);
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'signatory_type' => $validated['role'] === 'signatory' ? ($validated['signatory_type'] ?? null) : null,
-        ]);
+        $user = new User();
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->password = Hash::make($validated['password']);
+        $user->role = $validated['role'];
+        $user->signatory_type = $validated['role'] === 'signatory' ? ($validated['signatory_type'] ?? null) : null;
+        $user->save();
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
@@ -95,9 +95,10 @@ class AdminUserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'signatory_type' => ['nullable', Rule::in(['faculty','center_manager','college_dean'])],
         ]);
+        // Set role first so the mutator can check it
+        $user->role = $validated['role'];
         $user->name = $validated['name'];
         $user->email = $validated['email'];
-        $user->role = $validated['role'];
         $user->signatory_type = $validated['role'] === 'signatory' ? ($validated['signatory_type'] ?? null) : null;
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);

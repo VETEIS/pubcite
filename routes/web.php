@@ -44,6 +44,7 @@ Route::get('/test', function () {
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/privacy/accept', [LoginController::class, 'acceptPrivacy'])->name('privacy.accept');
+Route::get('/privacy/status', [LoginController::class, 'getPrivacyStatus'])->name('privacy.status');
 
 // Custom logout with draft session cleanup
 Route::post('/logout', [\App\Http\Controllers\Auth\LogoutController::class, 'logout'])->name('logout');

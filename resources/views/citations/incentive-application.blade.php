@@ -70,6 +70,29 @@
                     </label>
                 </div>
             </div>
+            
+            <!-- Additional Citation Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="citedtitle" class="block text-sm font-medium text-gray-700 mb-1">Title of Cited Work</label>
+                    <input type="text" name="citedtitle" id="citedtitle" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                           placeholder="Enter the title of the cited work">
+                </div>
+                <div>
+                    <label for="citedjournal" class="block text-sm font-medium text-gray-700 mb-1">Journal of Cited Work</label>
+                    <input type="text" name="citedjournal" id="citedjournal" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                           placeholder="Enter the journal name">
+                </div>
+            </div>
+            
+            <div>
+                <label for="citedbibentry" class="block text-sm font-medium text-gray-700 mb-1">Bibliographic Entry of Cited Work</label>
+                <textarea name="citedbibentry" id="citedbibentry" rows="2" required 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                          placeholder="Enter the bibliographic entry of the cited work"></textarea>
+            </div>
         </div>
     </div>
     
@@ -145,7 +168,7 @@
                         <div class="h-1"></div>
                         <x-signatory-select name="faculty_name" type="faculty" placeholder="Search faculty..." />
                         <div class="border-b-2 border-gray-400 h-2 mb-2"></div>
-                        <p class="text-sm text-gray-600 text-center">SignatureAAAAAA over Printed Name of the Faculty</p>
+                        <p class="text-sm text-gray-600 text-center">Signature over Printed Name of the Faculty</p>
                     </div>
                     <div>
                         <div class="h-5"></div>

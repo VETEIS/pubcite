@@ -110,7 +110,7 @@
                     
                     // Define required fields for other tabs
                     const tabFields = {
-                        'incentive': ['name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
                         'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details']
                     };
                     
@@ -504,6 +504,8 @@
                         submitBtn.textContent = 'Submitting...';
                         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     }
+                    
+                    // Loading screen will be handled by Turbo events
                     
                     // Disable auto-save to prevent duplicate entries after submission
                     this.disableAutoSave();

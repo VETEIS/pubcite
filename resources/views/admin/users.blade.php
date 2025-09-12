@@ -354,7 +354,7 @@
                 </div>
 
                 <!-- Users Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col" style="height: calc(100vh - 8rem);">
                     <!-- Table Header (Fixed) -->
                     <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
                         <div class="overflow-x-auto">
@@ -516,18 +516,18 @@
                                                     @endif
                                                 </td>
                                                     <td class="w-32 px-6 py-3 text-center">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <a href="{{ route('admin.users.edit', $user) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:shadow-md transition-all duration-300 text-sm font-medium" title="Edit">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="flex items-center justify-center gap-1 w-full">
+                                            <a href="{{ route('admin.users.edit', $user) }}" class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:shadow-md transition-all duration-300 text-xs font-medium" title="Edit">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" />
                                                 </svg>
                                                 Edit
                                             </a>
-                                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" class="inline">
+                                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" class="flex-1">
                                                             @csrf
                                                             @method('DELETE')
-                                                <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md transition-all duration-300 text-sm font-medium" title="Delete">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <button type="submit" class="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md transition-all duration-300 text-xs font-medium" title="Delete">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
                                                     Delete
@@ -543,9 +543,16 @@
                         @endif
                             </div>
                     
-                    <!-- Pagination (Fixed at bottom) -->
+                    <!-- Pagination Footer (Fixed) -->
                     <div class="bg-white px-6 py-3 border-t border-gray-200 flex-shrink-0">
-                        {{ $users->links() }}
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-700">
+                                Showing <span class="font-medium">{{ $users->firstItem() ?? 0 }}</span> to <span class="font-medium">{{ $users->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $users->total() }}</span> results
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                {{ $users->links() }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -629,6 +636,27 @@
         
         .flex-shrink-0 {
             flex-shrink: 0;
+        }
+        
+        /* Mobile-specific table card viewport height */
+        @media (max-width: 640px) {
+            .main-content {
+                height: 100vh !important;
+                height: 100dvh !important;
+                padding-bottom: 2rem !important;
+            }
+            
+            .bg-white.rounded-lg.shadow-sm {
+                height: calc(100vh - 8rem) !important;
+                height: calc(100dvh - 8rem) !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            .table-scroll-area {
+                flex: 1 !important;
+                overflow-y: auto !important;
+            }
         }
     </style>
 </x-app-layout> 

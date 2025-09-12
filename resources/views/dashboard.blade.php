@@ -4,12 +4,26 @@
         errorTimer: null,
         activeTab: 'dashboard',
         searchOpen: false,
+        loading: false,
+        loadingTimer: null,
         showError(message) {
             this.errorMessage = message;
             if (this.errorTimer) clearTimeout(this.errorTimer);
             this.errorTimer = setTimeout(() => {
                 this.errorMessage = null;
             }, 3000);
+        },
+        setLoading(loading) {
+            this.loading = loading;
+            if (loading) {
+                // Reset loading after 10 seconds as fallback
+                if (this.loadingTimer) clearTimeout(this.loadingTimer);
+                this.loadingTimer = setTimeout(() => {
+                    this.loading = false;
+                }, 10000);
+            } else {
+                if (this.loadingTimer) clearTimeout(this.loadingTimer);
+            }
         }
     }" class="h-screen bg-gray-50 flex overflow-hidden">
         
@@ -46,9 +60,9 @@
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                    <form method="POST" action="{{ route('logout') }}" class="inline" @submit="setLoading(true)">
                         @csrf
-                        <button type="submit" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition flex items-center gap-2">
+                        <button type="submit" :disabled="loading" class="px-3 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
@@ -83,8 +97,64 @@
                 @endphp
 
                 <!-- Requests Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
-                    <!-- Table (Combined Header and Body) -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col" style="height: calc(100vh - 8rem);">
+                    
+                    <!-- Table Header (Fixed) -->
+                    <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-fixed">
+                                <thead>
+                                    <tr>
+                                        <th class="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center justify-center gap-1">
+                                                ID
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Name
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Type
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center gap-1">
+                                                Date
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center justify-center gap-1">
+                                                Status
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Table Body (Scrollable) -->
                     <div class="flex-1 overflow-y-auto table-scroll-area">
                         @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
@@ -103,61 +173,14 @@
                             </div>
                         @else
                             <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50 sticky top-0 z-10">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                <div class="flex items-center gap-1">
-                                                    ID
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                <div class="flex items-center gap-1">
-                                                    Name
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                <div class="flex items-center gap-1">
-                                                    Type
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                <div class="flex items-center gap-1">
-                                                    Date
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                <div class="flex items-center justify-center gap-1">
-                                                    Status
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
+                                <table class="w-full table-fixed divide-y divide-gray-200">
                                     <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($filteredRequests as $index => $request)
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="w-20 px-6 py-4 whitespace-nowrap text-center">
                                             <span class="text-sm font-medium text-gray-900">#{{ $request->id }}</span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="w-32 px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 @if(Auth::user()->profile_photo_path)
                                                     <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-8 h-8 rounded-full object-cover mr-3">
@@ -172,16 +195,16 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="w-24 px-6 py-4 whitespace-nowrap">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                                 {{ $request->type === 'Publication' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
                                                 {{ $request->type }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td class="w-24 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ \Carbon\Carbon::parse($request->requested_at)->format('M d, Y') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <td class="w-28 px-6 py-4 whitespace-nowrap text-center">
                                                     @if($request->status === 'endorsed')
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                     <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
@@ -199,7 +222,7 @@
                                                 </span>
                                                     @endif
                                                 </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            <td class="w-24 px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                     @if($request->status === 'pending')
                                                         @php
                                                             $recentNudge = \App\Models\ActivityLog::where('user_id', auth()->id())
@@ -210,7 +233,7 @@
                                                             $canNudge = !$recentNudge;
                                                         @endphp
                                                         @if($canNudge)
-                                                            <form method="POST" action="{{ route('requests.nudge', $request) }}" class="inline" @submit="loading = true">
+                                                            <form method="POST" action="{{ route('requests.nudge', $request) }}" class="inline" @submit="setLoading(true)">
                                                                 @csrf
                                                         <button type="submit" :disabled="loading" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium" title="Nudge admin">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -239,25 +262,20 @@
                         @endif
                     </div>
                     
-                    <!-- Pagination (Fixed at bottom) -->
-                    <div class="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
+                    <!-- Pagination Footer (Fixed) -->
+                    <div class="bg-white px-6 py-3 border-t border-gray-200 flex-shrink-0">
+                        <div class="flex items-center justify-between">
                         <div class="text-sm text-gray-700">
                             Showing <span class="font-medium">1</span> to <span class="font-medium">{{ $filteredRequests->count() }}</span> of <span class="font-medium">{{ $requests->count() }}</span> results
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button class="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                                </svg>
+                                <button class="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded-md cursor-not-allowed" disabled>
+                                    Previous
                             </button>
-                            <button class="px-3 py-1 text-sm bg-maroon-600 text-white rounded-md">1</button>
-                            <button class="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">2</button>
-                            <button class="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">3</button>
-                            <button class="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                                </svg>
+                                <button class="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded-md cursor-not-allowed" disabled>
+                                    Next
                             </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -320,14 +338,14 @@
             scrollbar-color: #cbd5e1 #f1f5f9;
         }
         
-        /* Ensure table takes full height with proper padding */
-        .table-container {
-            height: calc(100vh - 140px); /* Adjust based on navbar height + padding */
+        /* Ensure table column alignment */
+        .table-fixed {
+            table-layout: fixed;
         }
         
-        /* Ensure main content has proper bottom spacing */
-        .main-content {
-            padding-bottom: 1rem; /* 16px bottom padding */
+        .table-fixed th,
+        .table-fixed td {
+            box-sizing: border-box;
         }
         
         /* Mobile-specific table card viewport height */

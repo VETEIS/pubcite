@@ -590,6 +590,8 @@ class DashboardController extends Controller
                 'period' => $period,
                 'totalRecords' => $allRequests->count(),
                 'dateDetails' => $dateDetails,
+                'filtered_count' => $allRequests->count(),
+                'total_count' => \App\Models\Request::where('status', '!=', 'draft')->count(),
             ]);
             
         } catch (\Exception $e) {

@@ -1327,25 +1327,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Privacy Modal Logic
+    // Privacy Modal Logic - Robust against multiple user sessions
     const privacyModal = document.getElementById('privacy-modal');
     const privacyAcceptBtn = document.getElementById('privacy-modal-accept');
     const privacyDeclineBtn = document.getElementById('privacy-modal-decline');
     const heroSection = document.getElementById('hero');
     const body = document.body;
 
-    // Check if privacy has been accepted in this session
-    const clientPrivacyAccepted = sessionStorage.getItem('privacy_accepted') === 'true';
+    // Initialize privacy modal state
+    initializePrivacyModal();
     
+    function initializePrivacyModal() {
+        // Clear any stale session storage on page load
+        sessionStorage.removeItem('privacy_accepted');
+        
+        // Listen for storage changes (user logout/login in another tab)
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Check server-side privacy acceptance status
+        checkPrivacyStatus();
+    }
     
-    // Check privacy acceptance and show/hide modal accordingly
-    if (clientPrivacyAccepted) {
-        // Privacy accepted - hide modal and start animation
-        closePrivacyModal();
-        animateJournalCounts();
-    } else {
-        // Privacy not accepted - show modal
-        showPrivacyModal();
+    function handleStorageChange(event) {
+        // If privacy acceptance was cleared in another tab, recheck status
+        if (event.key === 'privacy_accepted' && event.newValue === null) {
+            checkPrivacyStatus();
+        }
+    }
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        // Clear session storage to prevent stale state
+        sessionStorage.removeItem('privacy_accepted');
+    });
+    
+    async function checkPrivacyStatus() {
+        try {
+            const response = await fetch('/privacy/status', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.privacy_accepted) {
+                    // Privacy already accepted - hide modal and start animation
+                    closePrivacyModal();
+                    animateJournalCounts();
+                } else {
+                    // Privacy not accepted - show modal
+                    showPrivacyModal();
+                }
+            } else {
+                // Fallback: show modal if we can't determine status
+                showPrivacyModal();
+            }
+        } catch (error) {
+            // Fallback: show modal on error
+            showPrivacyModal();
+        }
     }
 
     // Privacy modal handlers
@@ -1381,31 +1424,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    privacyAcceptBtn.addEventListener('click', function() {
+    privacyAcceptBtn.addEventListener('click', async function() {
+        // Disable button to prevent multiple clicks
+        privacyAcceptBtn.disabled = true;
+        privacyAcceptBtn.textContent = 'Accepting...';
         
-        // Store acceptance in session storage
-        sessionStorage.setItem('privacy_accepted', 'true');
-        
-        // Set server-side session
-        fetch('/privacy/accept', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({accepted: true})
-        }).then(response => {
+        try {
+            // Accept privacy on server-side
+            const response = await fetch('/privacy/accept', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({accepted: true})
+            });
+            
             if (response.ok) {
+                // Success - close modal and start animation
+                closePrivacyModal();
+                animateJournalCounts();
+            } else {
+                // Error - re-enable button and show error
+                privacyAcceptBtn.disabled = false;
+                privacyAcceptBtn.textContent = 'Accept';
+                console.error('Failed to accept privacy policy');
             }
-        }).catch(error => {
-            // Silent fail for privacy session
-        });
-        
-        // Close modal with smooth animation
-        closePrivacyModal();
-        
-        // Start counting animation after privacy acceptance
-        animateJournalCounts();
+        } catch (error) {
+            // Error - re-enable button
+            privacyAcceptBtn.disabled = false;
+            privacyAcceptBtn.textContent = 'Accept';
+            console.error('Error accepting privacy policy:', error);
+        }
     });
 
     privacyDeclineBtn.addEventListener('click', function() {

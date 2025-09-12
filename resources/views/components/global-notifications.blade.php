@@ -49,6 +49,10 @@
                 </div>`;
             document.body.appendChild(notification);
             activeNotifications.push({ id, element: notification, timer: null });
+            
+            // Set initial position immediately
+            repositionNotifications();
+            
             const delay = activeNotifications.length * 100;
             setTimeout(() => {
                 notification.classList.remove('opacity-0', 'translate-x-full');
@@ -77,7 +81,7 @@
         
         function repositionNotifications() {
             activeNotifications.forEach((n, idx) => {
-                n.element.style.top = `${20 + (idx * 80)}px`;
+                n.element.style.top = `${80 + (idx * 80)}px`;
             });
         }
         

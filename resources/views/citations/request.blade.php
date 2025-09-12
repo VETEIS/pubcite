@@ -589,7 +589,7 @@
                 let fields = [];
                 if (tab === 'incentive') {
                     fields = [
-                        'name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'dean_name'
+                        'name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'dean_name'
                     ]; // 'citescore' and 'doi' are optional
                 } else if (tab === 'recommendation') {
                     fields = ['rec_collegeheader', 'rec_faculty_name', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name'];
@@ -640,12 +640,23 @@
             checkTabs() {
                 // Check incentive tab completion
                 const incentiveFields = [
-                    'name', 'rank', 'college', 'bibentry', 'issn', 'faculty_name', 'dean_name'
+                    'name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'dean_name'
                 ]; // 'citescore' and 'doi' are optional
-                this.tabCompletion.incentive = incentiveFields.every(field => {
+                
+                // Check basic required fields
+                const basicFieldsValid = incentiveFields.every(field => {
                     const element = document.querySelector(`[name="${field}"]`);
                     return element && (element.type === 'checkbox' ? element.checked : (element.type === 'file' ? (element.files && element.files.length > 0) : element.value.trim() !== ''));
                 });
+                
+                // Check that at least one indexing option is selected
+                const indexingFields = ['scopus', 'wos', 'aci'];
+                const hasIndexingSelection = indexingFields.some(field => {
+                    const element = document.querySelector(`[name="${field}"]`);
+                    return element && element.checked;
+                });
+                
+                this.tabCompletion.incentive = basicFieldsValid && hasIndexingSelection;
                 
                 // Check recommendation tab completion
                 const recommendationFields = [

@@ -6,16 +6,11 @@
         @include('components.user-sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
-            <style>
-                .flex-1::-webkit-scrollbar {
-                    display: none;
-                }
-            </style>
+        <div class="flex-1 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg pb-8">
+            <main class="max-w-7xl mx-auto px-4 pt-2 pb-4 h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-4">
+                <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Overview Header with Request Counter -->
                     <div class="flex items-center gap-3 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -32,27 +27,24 @@
                     @include('components.user-navbar', ['showFilters' => false])
                 </div>
 
-                <!-- Full Width Content -->
-                <div class="max-w-7xl mx-auto">
-                    <!-- Signature Requests Table -->
-                    <div class="w-full">
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+                <!-- Signature Requests Table Container -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col" style="height: calc(100vh - 8rem);">
                             
-                            <!-- Card Content - Table -->
-                            <div class="flex-1 overflow-hidden">
-                                <div class="h-full overflow-y-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50 sticky top-0">
+                            <!-- Table Header (Fixed) -->
+                            <div class="bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full table-fixed">
+                                        <thead>
                                             <tr>
-                                                <th class="w-20 pl-4 pr-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                    <div class="flex items-center gap-1">
+                                                <th class="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center justify-center gap-1">
                                                         ID
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-24 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
                                                         Type
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -60,7 +52,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-32 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
                                                         Role
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -68,7 +60,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-24 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
                                                         Date
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -76,53 +68,61 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-28 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                    <div class="flex items-center gap-1">
+                                                <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center justify-center gap-1">
                                                         Request Status
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-28 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                    <div class="flex items-center gap-1">
+                                                <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center justify-center gap-1">
                                                         Signature Status
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-24 px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Action
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            @if(count($requests) > 0)
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Table Body (Scrollable) -->
+                            <div class="flex-1 overflow-y-auto table-scroll-area">
+                                @if(count($requests) > 0)
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full table-fixed divide-y divide-gray-200">
+                                            <tbody class="bg-white divide-y divide-gray-200">
                                                 @foreach($requests as $index => $request)
                                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                                        <td class="pl-4 pr-3 py-4 whitespace-nowrap">
+                                                        <td class="w-20 px-6 py-4 whitespace-nowrap text-center">
                                                             <span class="text-sm font-medium text-gray-900">{{ $request['request_code'] }}</span>
                                                         </td>
-                                                        <td class="px-3 py-4 whitespace-nowrap">
+                                                        <td class="w-24 px-6 py-4 whitespace-nowrap">
                                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                                                 {{ $request['type'] === 'Publication' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
                                                                 {{ $request['type'] }}
                                                             </span>
                                                         </td>
-                                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        <td class="w-32 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                             {{ ucfirst(str_replace('_', ' ', $request['matched_role'])) }}
                                                         </td>
-                                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        <td class="w-24 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                             {{ \Carbon\Carbon::parse($request['requested_at'])->format('M d, Y') }}
                                                         </td>
-                                                        <td class="px-3 py-4 whitespace-nowrap">
+                                                        <td class="w-28 px-6 py-4 whitespace-nowrap text-center">
                                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                                 <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
                                                                 Pending
                                                             </span>
                                                         </td>
-                                                        <td class="px-3 py-4 whitespace-nowrap">
+                                                        <td class="w-28 px-6 py-4 whitespace-nowrap text-center">
                                                             @if($request['signature_status'] === 'signed')
                                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                                     <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
@@ -135,7 +135,7 @@
                                                                 </span>
                                                             @endif
                                                         </td>
-                                                        <td class="px-3 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                        <td class="w-24 px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                             @if($request['signature_status'] === 'signed')
                                                                 <div class="flex flex-col gap-2">
                                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -172,30 +172,45 @@
                                                         </td>
                                                     </tr>
                                                 @endforeach
-                                            @else
-                                                <tr>
-                                                    <td colspan="6" class="px-6 py-12 text-center">
-                                                        <div class="flex flex-col items-center justify-center gap-3">
-                                                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                                                </svg>
-                                                            </div>
-                                                            <div>
-                                                                <h4 class="text-lg font-semibold text-gray-900">No pending requests</h4>
-                                                                <p class="text-gray-500">Signature requests will appear here when they need your attention.</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                    </tbody>
-                                </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <!-- Empty State (Centered) -->
+                                    <div class="h-full flex items-center justify-center">
+                                        <div class="flex flex-col items-center justify-center gap-3 text-center">
+                                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6m0 0l-3 3m3-3l3 3M4 6h16M4 10h16M4 14h16"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-lg font-semibold text-gray-900">No pending requests</h4>
+                                                <p class="text-gray-500">Signature requests will appear here when they need your attention.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            <!-- Pagination Footer (Fixed) -->
+                            <div class="bg-white px-6 py-3 border-t border-gray-200 flex-shrink-0">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm text-gray-700">
+                                        Showing <span class="font-medium">1</span> to <span class="font-medium">{{ count($requests) }}</span> of <span class="font-medium">{{ count($requests) }}</span> results
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded-md cursor-not-allowed" disabled>
+                                            Previous
+                                        </button>
+                                        <button class="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded-md cursor-not-allowed" disabled>
+                                            Next
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
             </main>
         </div>
     </div>
@@ -462,4 +477,61 @@
             }
         });
     </script>
+    
+    <style>
+        /* Table scrollbar styling to match dashboard */
+        .table-scroll-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .table-scroll-area::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* For Firefox table scrollbar */
+        .table-scroll-area {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Ensure table column alignment */
+        .table-fixed {
+            table-layout: fixed;
+        }
+        
+        .table-fixed th,
+        .table-fixed td {
+            box-sizing: border-box;
+        }
+        
+        /* Mobile-specific table card viewport height */
+        @media (max-width: 640px) {
+            .main-content {
+                height: 100vh !important;
+                height: 100dvh !important;
+                padding-bottom: 2rem !important;
+            }
+            
+            .bg-white.rounded-lg.shadow-sm {
+                height: calc(100vh - 8rem) !important;
+                height: calc(100dvh - 8rem) !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            .table-scroll-area {
+                flex: 1 !important;
+                overflow-y: auto !important;
+            }
+        }
+    </style>
 </x-app-layout> 
