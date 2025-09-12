@@ -788,9 +788,13 @@ class CitationsController extends Controller
             }
             
             $filePath = $pdfData['pdfs'][$key]['path'];
-            $fullPath = storage_path('app/public/' . $filePath);
             
-            if (!file_exists($fullPath)) {
+            // Check both local and public disks for generated PDFs
+            if (Storage::disk('local')->exists($filePath)) {
+                $fullPath = Storage::disk('local')->path($filePath);
+            } elseif (Storage::disk('public')->exists($filePath)) {
+                $fullPath = Storage::disk('public')->path($filePath);
+            } else {
                 return response()->json(['error' => 'File not found on disk'], 404);
             }
             
@@ -820,9 +824,13 @@ class CitationsController extends Controller
                 }
                 
                 $filePath = $pdfData['pdfs'][$key]['path'];
-                $fullPath = storage_path('app/public/' . $filePath);
                 
-                if (!file_exists($fullPath)) {
+                // Check both local and public disks for generated PDFs
+                if (Storage::disk('local')->exists($filePath)) {
+                    $fullPath = Storage::disk('local')->path($filePath);
+                } elseif (Storage::disk('public')->exists($filePath)) {
+                    $fullPath = Storage::disk('public')->path($filePath);
+                } else {
                     return response()->json(['error' => 'File not found on disk'], 404);
                 }
                 

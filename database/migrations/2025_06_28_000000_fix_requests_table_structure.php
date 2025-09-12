@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,7 +12,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop the existing table if it exists (this will be a fresh start)
+        // Check if table exists and has data before dropping
+        if (Schema::hasTable('requests') && DB::table('requests')->count() > 0) {
+            // Table has data - don't drop it, just modify structure
+            Schema::table('requests', function (Blueprint $table) {
+                // Add any missing columns or indexes here
+                if (!Schema::hasColumn('requests', 'token')) {
+                    $table->string('token')->nullable()->unique()->after('pdf_content');
+                }
+            });
+            return;
+        }
+        
+        // Only drop if table is empty or doesn't exist
         Schema::dropIfExists('requests');
         
         // Create the requests table with the correct structure

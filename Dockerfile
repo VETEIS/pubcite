@@ -20,22 +20,16 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install LibreOffice headless (full package for reliability)
+# Install LibreOffice and unoconv for reliable document conversion
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libreoffice \
+    unoconv \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /usr/lib/libreoffice/share/gallery \
-    && rm -rf /usr/lib/libreoffice/share/template \
-    && find /usr/lib/libreoffice -name "*.so" -not -path "*/core/*" -delete
+    && rm -rf /var/lib/apt/lists/*
 
-# Alternative: If you only need basic document conversion, use this instead:
-# RUN apt-get update && apt-get install -y \
-#     --no-install-recommends \
-#     unoconv \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/*
+# Verify installation
+RUN libreoffice --version && unoconv --version || echo "Installation verification failed"
 
 # Install PostgreSQL extensions
 RUN apt-get update && apt-get install -y libpq-dev \

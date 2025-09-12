@@ -1044,15 +1044,23 @@ class PublicationsController extends Controller
             }
 
             if ($fileType === 'pdf') {
-            if (!Storage::disk('public')->exists($filePath)) {
+                // Check both local and public disks for generated PDFs
+                if (Storage::disk('local')->exists($filePath)) {
+                    $fullPath = Storage::disk('local')->path($filePath);
+                } elseif (Storage::disk('public')->exists($filePath)) {
+                    $fullPath = Storage::disk('public')->path($filePath);
+                } else {
                     abort(404, 'PDF file not found on disk');
                 }
-                $fullPath = Storage::disk('public')->path($filePath);
             } else {
-                if (!file_exists(Storage::disk('public')->path($filePath))) {
+                // Check both local and public disks for DOCX files
+                if (Storage::disk('local')->exists($filePath)) {
+                    $fullPath = Storage::disk('local')->path($filePath);
+                } elseif (Storage::disk('public')->exists($filePath)) {
+                    $fullPath = Storage::disk('public')->path($filePath);
+                } else {
                     abort(404, 'DOCX file not found on disk');
                 }
-                $fullPath = Storage::disk('public')->path($filePath);
             }
 
             $userName = $request->user->name ?? 'user';
