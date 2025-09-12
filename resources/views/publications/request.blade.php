@@ -376,16 +376,7 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div x-data="{ isLoading: false }" x-show="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center">
-            <svg class="animate-spin h-8 w-8 text-maroon-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-            </svg>
-            <span class="text-maroon-700 font-medium">Submitting request...</span>
-        </div>
-    </div>
+    <!-- Loading Overlay - Removed: Now handled by LoadingManager -->
 
 
     <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
@@ -442,7 +433,6 @@
 <script>
 function publicationForm() {
     return {
-        isLoading: false,
         checkFilled() {
             // No-op, logic moved to tabNav or not needed
         }
@@ -450,6 +440,11 @@ function publicationForm() {
 }
 
 function submitPublicationForm(event) {
+    // Prevent double submission
+    if (window.loadingManager && window.loadingManager.isLoading()) {
+        return false;
+    }
+    
     // Validate all tabs before submission
     const tabNav = Alpine.store('tabNav');
     if (!tabNav.allComplete) {
@@ -463,17 +458,22 @@ function submitPublicationForm(event) {
         }
     }
     
-    // Show loading overlay
-    const loadingElement = document.querySelector('[x-data*="isLoading"]');
-    if (loadingElement && loadingElement.__x) {
-        loadingElement.__x.$data.isLoading = true;
-    }
-    
-    // Disable submit button to prevent double submission
-    const submitBtn = event && event.target ? event.target : null;
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    // Show comprehensive loading state
+    const operationId = `submit-publication-${Date.now()}`;
+    if (window.loadingManager) {
+        window.loadingManager.show(operationId, {
+            title: 'Submitting Request',
+            message: 'Please wait while we process your publication request...',
+            showOverlay: true,
+            disableButtons: true
+        });
+    } else {
+        // Fallback: Basic button disabling
+        const submitBtn = event && event.target ? event.target : null;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     }
     
     // Submit the form

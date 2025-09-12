@@ -189,7 +189,7 @@
         }
     </style>
     <div x-data="{ 
-        loading: false,
+        // loading: false, // Removed: Now handled by LoadingManager
         errorMessage: null,
         errorTimer: null,
         activeTab: 'dashboard',
@@ -210,7 +210,7 @@
                 showDropdown: false,
                 notifications: [],
                 unreadCount: 0,
-                loading: false,
+                // loading: false, // Removed: Now handled by LoadingManager
                 
                 init() {
                     this.loadNotifications();
@@ -323,16 +323,7 @@
         <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
             <span x-text="errorMessage"></span>
         </div>
-        <!-- Loading overlay -->
-        <div x-show="loading" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" style="display:none;">
-            <div class="bg-white rounded-lg shadow-xl px-6 py-5 flex items-center gap-3">
-                <svg class="animate-spin h-6 w-6 text-maroon-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                </svg>
-                <span class="text-maroon-900 font-semibold">Processing…</span>
-            </div>
-        </div>
+        <!-- Loading overlay - Removed: Now handled by LoadingManager -->
 
         @include('admin.partials.sidebar')
 

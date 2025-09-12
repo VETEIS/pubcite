@@ -25,6 +25,9 @@
         <!-- Scripts and Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
+        <!-- Loading Manager -->
+        <script src="{{ asset('js/loading-manager.js') }}"></script>
+        
         <!-- Mobile-Only Portrait Orientation Lock -->
         <style>
             /* Mobile-only orientation lock - desktop completely unaffected */

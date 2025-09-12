@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class SignatoryController extends Controller
 {
@@ -14,12 +15,25 @@ class SignatoryController extends Controller
         if (!Auth::check()) {
             return response()->json([]);
         }
+        
         $type = $request->query('type');
         $q = trim((string) $request->query('q', ''));
+        
+        // Create cache key based on parameters
+        $cacheKey = "signatories_{$type}_{$q}";
+        
+        // Return cached result if available (cache for 5 minutes)
+        $cachedResult = Cache::get($cacheKey);
+        if ($cachedResult !== null) {
+            return response()->json($cachedResult);
+        }
+        
         $query = User::query()->where('role', 'signatory');
+        
         if ($type) {
             $query->where('signatory_type', $type);
         }
+        
         if ($q !== '') {
             if (config('database.default') === 'pgsql') {
                 $query->where(function($sub) use ($q) {
@@ -33,7 +47,12 @@ class SignatoryController extends Controller
                 });
             }
         }
+        
         $items = $query->orderBy('name')->limit(20)->get(['id','name','email','signatory_type']);
+        
+        // Cache the result for 5 minutes
+        Cache::put($cacheKey, $items, 300);
+        
         return response()->json($items);
     }
 } 

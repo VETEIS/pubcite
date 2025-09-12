@@ -45,6 +45,9 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/privacy/accept', [LoginController::class, 'acceptPrivacy'])->name('privacy.accept');
 
+// Custom logout with draft session cleanup
+Route::post('/logout', [\App\Http\Controllers\Auth\LogoutController::class, 'logout'])->name('logout');
+
 // Registration disabled for security - users must use Google OAuth
 
 Route::get('/forgot-password', function () {
@@ -86,7 +89,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     
 
-    // Public signatories lookup for authenticated users (non-admin)
+    // Signatories lookup for authenticated users (handles both admin and non-admin)
     Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('signatories.index');
 });
 
@@ -115,7 +118,6 @@ Route::middleware(['auth', 'mobile.restrict'])->prefix('admin')->group(function 
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
     // Signatories API (admin-authenticated for now)
-    Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('admin.signatories');
     
     // Admin notifications endpoints
     Route::get('/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');

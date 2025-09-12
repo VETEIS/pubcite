@@ -341,19 +341,23 @@ function generateDocx(type) {
         return;
     }
     
+    // Prevent double submission
+    if (window.loadingManager.isLoading()) {
+        return;
+    }
+    
     const formData = new FormData(form);
     formData.append('docx_type', type);
     // Don't set store_for_submit by default - let user choose
 
-
-    // Show loading state with simple UI feedback
-    const button = event.target.closest('.cursor-pointer');
-    if (button) {
-        button.style.opacity = '0.6';
-        button.style.pointerEvents = 'none';
-        const originalText = button.querySelector('p').textContent;
-        button.querySelector('p').textContent = 'Generating...';
-    }
+    // Show comprehensive loading state
+    const operationId = `generate-docx-${type}-${Date.now()}`;
+    window.loadingManager.show(operationId, {
+        title: 'Generating Document',
+        message: `Creating ${type} document, please wait...`,
+        showOverlay: true,
+        disableButtons: true
+    });
 
     fetch('{{ route("publications.generateDocx") }}', {
         method: 'POST',
@@ -400,22 +404,13 @@ function generateDocx(type) {
             document.body.removeChild(a);
         }, 100);
         
-        // Reset button state
-        if (button) {
-            button.style.opacity = '1';
-            button.style.pointerEvents = 'auto';
-        }
+        // Hide loading state
+        window.loadingManager.hide(operationId);
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
-    })
-    .finally(() => {
-        // Restore button state
-        if (button) {
-            button.style.opacity = '1';
-            button.style.pointerEvents = 'auto';
-            button.querySelector('p').textContent = 'Click to generate DOCX';
-        }
+        // Hide loading state
+        window.loadingManager.hide(operationId);
     });
 }
 </script>

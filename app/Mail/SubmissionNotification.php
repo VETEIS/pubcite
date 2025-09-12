@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SubmissionNotification extends Mailable
+class SubmissionNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -26,6 +26,10 @@ class SubmissionNotification extends Mailable
         $this->request = $request;
         $this->user = $user;
         $this->isAdminNotification = $isAdminNotification;
+        
+        // Set queue configuration for better performance
+        $this->onQueue('emails');
+        $this->delay(now()->addSeconds(1)); // Small delay to ensure request is fully processed
     }
 
     /**

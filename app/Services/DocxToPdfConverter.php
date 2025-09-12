@@ -97,10 +97,19 @@ class DocxToPdfConverter
     }
 
     /**
-     * Get the path to LibreOffice executable or unoconv
+     * Get the path to LibreOffice executable (with caching)
      */
     private function getLibreOfficePath(): ?string
     {
+        // Check cache first
+        $cacheKey = 'libreoffice_path';
+        $cachedPath = cache()->get($cacheKey);
+        
+        if ($cachedPath && file_exists($cachedPath) && is_executable($cachedPath)) {
+            Log::info('LibreOffice path loaded from cache', ['path' => $cachedPath]);
+            return $cachedPath;
+        }
+
         // Common LibreOffice installation paths
         $possiblePaths = [
             // Windows paths
@@ -123,6 +132,8 @@ class DocxToPdfConverter
         foreach ($possiblePaths as $path) {
             if (file_exists($path) && is_executable($path)) {
                 Log::info('LibreOffice found at path', ['path' => $path]);
+                // Cache the found path for 1 hour
+                cache()->put($cacheKey, $path, 3600);
                 return $path;
             }
         }
@@ -133,6 +144,8 @@ class DocxToPdfConverter
         if ($output && !empty(trim($output))) {
             $path = trim($output);
             Log::info('LibreOffice found in PATH', ['path' => $path]);
+            // Cache the found path for 1 hour
+            cache()->put($cacheKey, $path, 3600);
             return $path;
         }
         
@@ -141,6 +154,8 @@ class DocxToPdfConverter
         if ($output && !empty(trim($output))) {
             $path = trim($output);
             Log::info('LibreOffice found in PATH (libreoffice command)', ['path' => $path]);
+            // Cache the found path for 1 hour
+            cache()->put($cacheKey, $path, 3600);
             return $path;
         }
         

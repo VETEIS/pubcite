@@ -239,10 +239,15 @@ function generateDocx(type) {
     const formData = new FormData(form);
     formData.append('docx_type', type);
 
-    // Show loading state
-    const loadingElement = document.querySelector('[x-data*="loading"]');
-    if (loadingElement && loadingElement.__x) {
-        loadingElement.__x.$data.loading = true;
+    // Show loading state - Now handled by LoadingManager
+    if (window.loadingManager) {
+        const operationId = `submit-review-${Date.now()}`;
+        window.loadingManager.show(operationId, {
+            title: 'Submitting Request',
+            message: 'Please wait while we process your submission...',
+            showOverlay: true,
+            disableButtons: true
+        });
     }
 
     fetch('{{ route("publications.generateDocx") }}', {
@@ -278,8 +283,8 @@ function generateDocx(type) {
     })
     .finally(() => {
         // Hide loading state
-        if (loadingElement && loadingElement.__x) {
-            loadingElement.__x.$data.loading = false;
+        if (window.loadingManager) {
+            window.loadingManager.hide(operationId);
         }
     });
 }

@@ -252,14 +252,7 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-1/2 transform -translate-y-1/2 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-maroon-600 mx-auto"></div>
-            <p class="mt-4 text-gray-700">Signing document...</p>
-            <p class="text-sm text-gray-500">Please wait while we apply your signature.</p>
-        </div>
-    </div>
+    <!-- Loading Overlay - Removed: Now handled by LoadingManager -->
     
     
     <script>
@@ -364,8 +357,16 @@
                 return;
             }
 
-            // Show loading overlay
-            document.getElementById('loadingOverlay').classList.remove('hidden');
+            // Show loading state
+            if (window.loadingManager) {
+                const operationId = `sign-document-${requestId}-${Date.now()}`;
+                window.loadingManager.show(operationId, {
+                    title: 'Signing Document',
+                    message: 'Please wait while we apply your signature...',
+                    showOverlay: true,
+                    disableButtons: true
+                });
+            }
             document.getElementById('uploadModal').classList.add('hidden');
 
             try {
@@ -394,12 +395,18 @@
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
                     window.notificationManager.error(data.message);
-                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    // Hide loading state
+                    if (window.loadingManager) {
+                        window.loadingManager.hide(operationId);
+                    }
                     document.getElementById('uploadModal').classList.remove('hidden');
                 }
             } catch (error) {
                 window.notificationManager.error('Failed to upload signed documents. Please try again.');
-                document.getElementById('loadingOverlay').classList.add('hidden');
+                // Hide loading state
+                if (window.loadingManager) {
+                    window.loadingManager.hide(operationId);
+                }
                 document.getElementById('uploadModal').classList.remove('hidden');
             }
         }

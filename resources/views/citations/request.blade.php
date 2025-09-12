@@ -259,16 +259,7 @@
     </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div x-data="{ isLoading: false }" x-show="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center">
-            <svg class="animate-spin h-8 w-8 text-burgundy-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-            </svg>
-            <span class="text-burgundy-700 font-medium">Submitting request...</span>
-        </div>
-    </div>
+    <!-- Loading Overlay - Removed: Now handled by LoadingManager -->
 
     <!-- Success/Error Notifications -->
     <div x-data="{ 
@@ -368,20 +359,11 @@
     </div>
 </div>
 
-<div id="docx-spinner" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center">
-        <svg class="animate-spin h-8 w-8 text-burgundy-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-        </svg>
-        <span class="text-burgundy-700 font-medium">Generating document…</span>
-    </div>
-</div>
+<!-- DOCX Spinner - Removed: Now handled by LoadingManager -->
 
 <script>
     function citationForm() {
         return {
-            isLoading: false,
             isFormComplete: false,
             
             checkFilled() {
@@ -391,6 +373,11 @@
     }
     
     function submitCitationForm(event) {
+        // Prevent double submission
+        if (window.loadingManager && window.loadingManager.isLoading()) {
+            return false;
+        }
+        
         // Validate all tabs before submission
         const tabNav = Alpine.store('tabNav');
         if (!tabNav.allComplete) {
@@ -404,17 +391,22 @@
             }
         }
         
-        // Show loading overlay
-        const loadingElement = document.querySelector('[x-data*="isLoading"]');
-        if (loadingElement && loadingElement.__x) {
-            loadingElement.__x.$data.isLoading = true;
-        }
-        
-        // Disable submit button to prevent double submission
-        const submitBtn = event && event.target ? event.target : null;
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        // Show comprehensive loading state
+        const operationId = `submit-citation-${Date.now()}`;
+        if (window.loadingManager) {
+            window.loadingManager.show(operationId, {
+                title: 'Submitting Request',
+                message: 'Please wait while we process your citation request...',
+                showOverlay: true,
+                disableButtons: true
+            });
+        } else {
+            // Fallback: Basic button disabling
+            const submitBtn = event && event.target ? event.target : null;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
         }
         
         // Submit the form after a microtask so the overlay paints first
@@ -442,6 +434,11 @@
     }
     
     function generateDocx(type) {
+        // Prevent double submission
+        if (window.loadingManager && window.loadingManager.isLoading()) {
+            return;
+        }
+        
         const form = document.getElementById('citation-request-form');
         const formData = new FormData(form);
         formData.append('docx_type', type);
@@ -457,9 +454,23 @@
         }
         // Preview mode: don't include request_id (will use temp directory)
 
-        // Show spinner
-        const spinner = document.getElementById('docx-spinner');
-        if (spinner) spinner.classList.remove('hidden');
+        // Show comprehensive loading state
+        const operationId = `generate-citation-docx-${type}-${Date.now()}`;
+        if (window.loadingManager) {
+            window.loadingManager.show(operationId, {
+                title: 'Generating Document',
+                message: `Creating ${type} document, please wait...`,
+                showOverlay: true,
+                disableButtons: true
+            });
+        } else {
+            // Fallback: Basic button disabling
+            const button = event.target;
+            if (button) {
+                button.disabled = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
 
         // Get user name for filename
         const applicantName = document.querySelector('[name="applicant_name"]')?.value || 'User';
@@ -493,10 +504,16 @@
         })
         .catch(error => {
             alert('Error generating document. Please try again.');
+            // Hide loading state
+            if (window.loadingManager) {
+                window.loadingManager.hide(operationId);
+            }
         })
         .finally(() => {
-            // Hide spinner
-            if (spinner) spinner.classList.add('hidden');
+            // Hide loading state
+            if (window.loadingManager) {
+                window.loadingManager.hide(operationId);
+            }
         });
     }
 

@@ -16,12 +16,15 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
+use App\Services\TemplateCacheService;
+use App\Http\Controllers\Traits\DraftSessionManager;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 
 class CitationsController extends Controller
 {
+    use DraftSessionManager;
     public function create()
     {
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
@@ -233,7 +236,10 @@ class CitationsController extends Controller
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            $templateProcessor = new TemplateProcessor($templatePath);
+            // Use template caching for better performance
+            $templateCacheService = new TemplateCacheService();
+            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
@@ -577,10 +583,36 @@ class CitationsController extends Controller
                 }
             }
 
-            // Generate unique request code
-            $requestCode = 'CITE-' . date('Ymd') . '-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
             $userId = $user->id;
-            $uploadPath = "requests/{$userId}/{$requestCode}";
+            
+            // Check for existing draft with session validation
+            $draftSession = $this->getDraftSession($userId, 'Citation');
+            $existingDraft = $draftSession['draft'];
+            
+            // If session is invalid or empty, try to find existing draft
+            if (!$draftSession['isValid']) {
+                $existingDraft = $this->findExistingDraft($userId, 'Citation');
+            }
+            
+            if ($existingDraft && $isDraft) {
+                // Reuse existing draft directory
+                $requestCode = $existingDraft->request_code;
+                $uploadPath = "requests/{$userId}/{$requestCode}";
+                Log::info('Reusing existing citation draft directory', [
+                    'request_id' => $existingDraft->id,
+                    'request_code' => $requestCode,
+                    'upload_path' => $uploadPath
+                ]);
+            } else {
+                // Generate new request code only for new requests
+                $requestCode = 'CITE-' . date('Ymd') . '-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                $uploadPath = "requests/{$userId}/{$requestCode}";
+                Log::info('Creating new citation request directory', [
+                    'request_code' => $requestCode,
+                    'upload_path' => $uploadPath,
+                    'is_draft' => $isDraft
+                ]);
+            }
 
             // Store PDF files in per-request folder
             $pdfPaths = [];
@@ -642,7 +674,7 @@ class CitationsController extends Controller
                 ->first();
                 
             if ($existingDraft && $isDraft) {
-                // Update existing draft - always update, never create new
+                // Update existing draft - reuse the same directory
                 $existingDraft->update([
                     'form_data' => json_encode($request->except(['_token', ...$fields])),
                     'pdf_path' => json_encode([
@@ -652,6 +684,10 @@ class CitationsController extends Controller
                     'requested_at' => now(), // Update timestamp
                 ]);
                 $userRequest = $existingDraft;
+                Log::info('Updated existing citation draft', [
+                    'request_id' => $existingDraft->id,
+                    'request_code' => $existingDraft->request_code
+                ]);
             } else {
                 // Create new request
                 $userRequest = new UserRequest();
@@ -666,36 +702,19 @@ class CitationsController extends Controller
                 ]);
                 $userRequest->form_data = json_encode($request->except(['_token', ...$fields]));
                 $userRequest->save();
-            }
-
-            // Activity log for creation
-            try {
-                \App\Models\ActivityLog::create([
-                    'user_id' => $userId,
+                Log::info('Created new citation request', [
                     'request_id' => $userRequest->id,
-                    'action' => 'created',
-                    'details' => [
-                        'request_code' => $userRequest->request_code,
-                        'type' => $userRequest->type,
-                        'created_at' => now()->toDateTimeString(),
-                    ],
-                    'created_at' => now(),
+                    'request_code' => $requestCode,
+                    'is_draft' => $isDraft
                 ]);
                 
-                Log::info('Activity log created successfully for citation request', [
-                    'request_id' => $userRequest->id,
-                    'request_code' => $userRequest->request_code,
-                    'user_id' => $userId
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create activity log for citation request: ' . $e->getMessage(), [
-                    'request_id' => $userRequest->id,
-                    'request_code' => $userRequest->request_code,
-                    'user_id' => $userId,
-                    'error' => $e->getMessage()
-                ]);
-                // Don't fail the request if activity logging fails
+                // Store new draft ID in session
+                if ($isDraft) {
+                    $this->setDraftSession($userId, 'Citation', $userRequest->id);
+                }
             }
+
+            // Activity log creation removed - now handled by notification bell system
 
             Log::info('Citation request submitted successfully', [
                 'request_code' => $requestCode,
@@ -723,19 +742,24 @@ class CitationsController extends Controller
                         ]
                     ]);
                 }
+                // Queue email notifications for better performance
                 try {
-                    Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    // Queue user notification
+                    Mail::to($userRequest->user->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    
+                    // Queue admin notifications
                     $adminUsers = \App\Models\User::where('role', 'admin')->get();
                     foreach ($adminUsers as $adminUser) {
-                        Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+                        Mail::to($adminUser->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, true));
                     }
-                    Log::info('Email notifications sent successfully', [
+                    
+                    Log::info('Email notifications queued successfully', [
                         'requestId' => $userRequest->id,
                         'userEmail' => $userRequest->user->email,
                         'adminEmails' => $adminUsers->pluck('email')->toArray()
                     ]);
                 } catch (\Exception $e) {
-                    Log::error('Error sending email notifications: ' . $e->getMessage());
+                    Log::error('Error queuing email notifications: ' . $e->getMessage());
                 }
             }
 
@@ -754,6 +778,8 @@ class CitationsController extends Controller
                     return redirect()->route('citations.request')->with('success', 'Draft saved successfully!');
                 }
             } else {
+                // Clear draft session when submitting final request
+                $this->clearDraftSession($userId, 'Citation');
                 return redirect()->route('citations.request')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
             }
         } catch (\Exception $e) {

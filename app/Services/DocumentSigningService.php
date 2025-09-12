@@ -243,10 +243,18 @@ class DocumentSigningService
     }
 
     /**
-     * Get the path to LibreOffice executable
+     * Get the path to LibreOffice executable (with caching)
      */
     private function getLibreOfficePath(): ?string
     {
+        // Check cache first
+        $cacheKey = 'libreoffice_path';
+        $cachedPath = cache()->get($cacheKey);
+        
+        if ($cachedPath && file_exists($cachedPath) && is_executable($cachedPath)) {
+            return $cachedPath;
+        }
+
         // Try multiple possible LibreOffice paths
         $possiblePaths = [
             'soffice', // Try PATH first
@@ -263,6 +271,8 @@ class DocumentSigningService
             $output = shell_exec("\"$path\" --version 2>&1");
             if ($output !== null && strpos($output, 'LibreOffice') !== false) {
                 Log::info('LibreOffice found at path', ['path' => $path, 'version_output' => $output]);
+                // Cache the found path for 1 hour
+                cache()->put($cacheKey, $path, 3600);
                 return $path;
             }
         }

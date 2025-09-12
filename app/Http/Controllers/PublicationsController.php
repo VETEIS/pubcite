@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Request as UserRequest;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
+use App\Services\TemplateCacheService;
+use App\Http\Controllers\Traits\DraftSessionManager;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
@@ -23,6 +25,7 @@ use App\Services\DocxToPdfConverter;
 
 class PublicationsController extends Controller
 {
+    use DraftSessionManager;
     public function create()
     {
         // Check for existing draft
@@ -114,7 +117,10 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            $templateProcessor = new TemplateProcessor($templatePath);
+            // Use template caching for better performance
+            $templateCacheService = new TemplateCacheService();
+            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
@@ -183,7 +189,10 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            $templateProcessor = new TemplateProcessor($templatePath);
+            // Use template caching for better performance
+            $templateCacheService = new TemplateCacheService();
+            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
@@ -242,7 +251,10 @@ class PublicationsController extends Controller
             $outputPath = $privateUploadPath . '/Terminal_Report_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
-            $templateProcessor = new TemplateProcessor($templatePath);
+            // Use template caching for better performance
+            $templateCacheService = new TemplateCacheService();
+            $templateProcessor = $templateCacheService->getTemplateProcessor($templatePath);
+            
             foreach ($data as $key => $value) {
                 $templateProcessor->setValue($key, $value);
             }
@@ -656,8 +668,35 @@ class PublicationsController extends Controller
         
         try {
             $userId = $user->id;
-            $requestCode = 'PUB-' . now()->format('Ymd-His');
-            $uploadPath = "requests/{$userId}/{$requestCode}";
+            
+            // Check for existing draft with session validation
+            $draftSession = $this->getDraftSession($userId, 'Publication');
+            $existingDraft = $draftSession['draft'];
+            
+            // If session is invalid or empty, try to find existing draft
+            if (!$draftSession['isValid']) {
+                $existingDraft = $this->findExistingDraft($userId, 'Publication');
+            }
+            
+            if ($existingDraft && $isDraft) {
+                // Reuse existing draft directory
+                $requestCode = $existingDraft->request_code;
+                $uploadPath = "requests/{$userId}/{$requestCode}";
+                Log::info('Reusing existing draft directory', [
+                    'request_id' => $existingDraft->id,
+                    'request_code' => $requestCode,
+                    'upload_path' => $uploadPath
+                ]);
+            } else {
+                // Generate new request code only for new requests
+                $requestCode = 'PUB-' . now()->format('Ymd-His');
+                $uploadPath = "requests/{$userId}/{$requestCode}";
+                Log::info('Creating new request directory', [
+                    'request_code' => $requestCode,
+                    'upload_path' => $uploadPath,
+                    'is_draft' => $isDraft
+                ]);
+            }
             
             Log::info('Processing file uploads', [
                 'requestCode' => $requestCode,
@@ -757,14 +796,9 @@ class PublicationsController extends Controller
                 'userId' => $userId
             ]);
 
-            // Check if this is an update to existing draft
-            $existingDraft = \App\Models\Request::where('user_id', $userId)
-                ->where('type', 'Publication')
-                ->where('status', 'draft')
-                ->first();
-                
+            // Update or create request based on existing draft
             if ($existingDraft && $isDraft) {
-                // Update existing draft - always update, never create new
+                // Update existing draft - reuse the same directory
                 $existingDraft->update([
                     'form_data' => json_encode($data), // Ensure proper JSON encoding
                     'pdf_path' => json_encode([
@@ -774,6 +808,10 @@ class PublicationsController extends Controller
                     'requested_at' => now(), // Update timestamp
                 ]);
                 $userRequest = $existingDraft;
+                Log::info('Updated existing draft', [
+                    'request_id' => $existingDraft->id,
+                    'request_code' => $existingDraft->request_code
+                ]);
             } else {
                 // Create new request (only if not a draft or no existing draft)
                 $userRequest = UserRequest::create([
@@ -788,34 +826,19 @@ class PublicationsController extends Controller
                         'docxs' => [], // All files are now PDFs after conversion
                     ]),
                 ]);
-            }
-
-            try {
-                \App\Models\ActivityLog::create([
-                    'user_id' => $userId,
+                Log::info('Created new request', [
                     'request_id' => $userRequest->id,
-                    'action' => 'created',
-                    'details' => [
-                        'request_code' => $userRequest->request_code,
-                        'type' => $userRequest->type,
-                        'created_at' => now()->toDateTimeString(),
-                    ],
-                    'created_at' => now(),
+                    'request_code' => $requestCode,
+                    'is_draft' => $isDraft
                 ]);
                 
-                Log::info('Activity log created successfully for publication request', [
-                    'request_id' => $userRequest->id,
-                    'request_code' => $userRequest->request_code,
-                    'user_id' => $userId
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create activity log for publication request: ' . $e->getMessage(), [
-                    'request_id' => $userRequest->id,
-                    'request_code' => $userRequest->request_code,
-                    'user_id' => $userId,
-                    'error' => $e->getMessage()
-                ]);
+                // Store new draft ID in session
+                if ($isDraft) {
+                    $this->setDraftSession($userId, 'Publication', $userRequest->id);
+                }
             }
+
+            // Activity log creation removed - now handled by notification bell system
 
             Log::info('Publication request submitted successfully', [
                 'requestId' => $userRequest->id,
@@ -841,21 +864,24 @@ class PublicationsController extends Controller
                         ]
                     ]);
                 }
+                // Queue email notifications for better performance
                 try {
-                    Mail::to($userRequest->user->email)->send(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    // Queue user notification
+                    Mail::to($userRequest->user->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, false));
                     
+                    // Queue admin notifications
                     $adminUsers = \App\Models\User::where('role', 'admin')->get();
                     foreach ($adminUsers as $adminUser) {
-                        Mail::to($adminUser->email)->send(new SubmissionNotification($userRequest, $userRequest->user, true));
+                        Mail::to($adminUser->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, true));
                     }
                     
-                    Log::info('Email notifications sent successfully', [
+                    Log::info('Email notifications queued successfully', [
                         'requestId' => $userRequest->id,
                         'userEmail' => $userRequest->user->email,
                         'adminEmails' => $adminUsers->pluck('email')->toArray()
                     ]);
                 } catch (\Exception $e) {
-                    Log::error('Error sending email notifications: ' . $e->getMessage());
+                    Log::error('Error queuing email notifications: ' . $e->getMessage());
                 }
             }
 
@@ -874,6 +900,8 @@ class PublicationsController extends Controller
                     return redirect()->route('publications.request')->with('success', 'Draft saved successfully!');
                 }
             } else {
+                // Clear draft session when submitting final request
+                $this->clearDraftSession($userId, 'Publication');
                 return redirect()->route('publications.request')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
             }
 
