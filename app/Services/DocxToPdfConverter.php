@@ -31,7 +31,8 @@ class DocxToPdfConverter
             if (!$this->isLibreOfficeAvailable()) {
                 Log::error('LibreOffice is not available for DOCX to PDF conversion', [
                     'docx_path' => $docxPath,
-                    'output_dir' => $outputDir
+                    'output_dir' => $outputDir,
+                    'environment' => app()->environment()
                 ]);
                 throw new \Exception('LibreOffice is not available. Please ensure it is installed and accessible from command line.');
             }
@@ -107,10 +108,12 @@ class DocxToPdfConverter
             'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
             'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
             
-            // Linux paths
+            // Linux paths (including Docker/container environments)
             '/usr/bin/libreoffice',
             '/usr/local/bin/libreoffice',
             '/opt/libreoffice/program/soffice',
+            '/usr/bin/soffice',
+            '/usr/local/bin/soffice',
             
             // macOS paths
             '/Applications/LibreOffice.app/Contents/MacOS/soffice',
@@ -118,6 +121,7 @@ class DocxToPdfConverter
         
         foreach ($possiblePaths as $path) {
             if (file_exists($path) && is_executable($path)) {
+                Log::info('LibreOffice found at path', ['path' => $path]);
                 return $path;
             }
         }
@@ -126,9 +130,23 @@ class DocxToPdfConverter
         $whichCommand = PHP_OS_FAMILY === 'Windows' ? 'where' : 'which';
         $output = shell_exec("$whichCommand soffice 2>&1");
         if ($output && !empty(trim($output))) {
-            return trim($output);
+            $path = trim($output);
+            Log::info('LibreOffice found in PATH', ['path' => $path]);
+            return $path;
         }
         
+        // Try to find libreoffice command in PATH
+        $output = shell_exec("$whichCommand libreoffice 2>&1");
+        if ($output && !empty(trim($output))) {
+            $path = trim($output);
+            Log::info('LibreOffice found in PATH (libreoffice command)', ['path' => $path]);
+            return $path;
+        }
+        
+        Log::warning('LibreOffice not found in any expected paths', [
+            'environment' => app()->environment(),
+            'os_family' => PHP_OS_FAMILY
+        ]);
         return null;
     }
 }

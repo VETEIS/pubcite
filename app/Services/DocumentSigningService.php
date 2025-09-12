@@ -250,19 +250,27 @@ class DocumentSigningService
         // Try multiple possible LibreOffice paths
         $possiblePaths = [
             'soffice', // Try PATH first
+            'libreoffice', // Try libreoffice command
             'C:\\Program Files\\LibreOffice\\program\\soffice.exe', // Windows default path
             'C:\\Program Files\\LibreOffice\\program\\soffice', // Without .exe
+            '/usr/bin/libreoffice', // Linux default
+            '/usr/bin/soffice', // Linux soffice
+            '/usr/local/bin/libreoffice', // Linux local
+            '/usr/local/bin/soffice', // Linux local soffice
         ];
         
         foreach ($possiblePaths as $path) {
             $output = shell_exec("\"$path\" --version 2>&1");
             if ($output !== null && strpos($output, 'LibreOffice') !== false) {
-                Log::info('LibreOffice found at path', ['path' => $path]);
+                Log::info('LibreOffice found at path', ['path' => $path, 'version_output' => $output]);
                 return $path;
             }
         }
         
-        Log::warning('LibreOffice not found in any of the expected paths');
+        Log::warning('LibreOffice not found in any of the expected paths', [
+            'environment' => app()->environment(),
+            'os_family' => PHP_OS_FAMILY
+        ]);
         return null;
     }
 

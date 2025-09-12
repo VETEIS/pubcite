@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libmcrypt-dev \
     fonts-liberation \
     libfontconfig1 \
+    libreoffice \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
