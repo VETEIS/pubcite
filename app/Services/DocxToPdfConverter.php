@@ -37,20 +37,14 @@ class DocxToPdfConverter
                 throw new \Exception('LibreOffice is not available. Please ensure it is installed and accessible from command line.');
             }
             
-            // Use LibreOffice or unoconv to convert DOCX to PDF
-            $converterPath = $this->getLibreOfficePath();
-            if (!$converterPath) {
-                throw new \Exception('Document converter not found (LibreOffice or unoconv)');
+            // Use LibreOffice to convert DOCX to PDF
+            $libreOfficePath = $this->getLibreOfficePath();
+            if (!$libreOfficePath) {
+                throw new \Exception('LibreOffice not found');
             }
             
-            // Check if we're using unoconv or LibreOffice
-            if (strpos($converterPath, 'unoconv') !== false) {
-                // Use unoconv (more reliable in Docker)
-                $command = "unoconv -f pdf -o \"$outputPath\" \"$fullDocxPath\" 2>&1";
-            } else {
-                // Use LibreOffice with silent flags
-                $command = "\"$converterPath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --convert-to pdf --outdir \"$fullOutputDir\" \"$fullDocxPath\" 2>&1";
-            }
+            // Use LibreOffice with silent flags
+            $command = "\"$libreOfficePath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --convert-to pdf --outdir \"$fullOutputDir\" \"$fullDocxPath\" 2>&1";
             
             $output = shell_exec($command);
             
@@ -86,27 +80,20 @@ class DocxToPdfConverter
     }
 
     /**
-     * Check if LibreOffice or unoconv is available on the system
+     * Check if LibreOffice is available on the system
      */
     private function isLibreOfficeAvailable(): bool
     {
-        $converterPath = $this->getLibreOfficePath();
-        if (!$converterPath) {
+        $libreOfficePath = $this->getLibreOfficePath();
+        if (!$libreOfficePath) {
             return false;
         }
         
-        // Test if converter can run
-        if (strpos($converterPath, 'unoconv') !== false) {
-            // Test unoconv
-            $testCommand = "unoconv --version 2>&1";
-            $output = shell_exec($testCommand);
-            return strpos($output, 'unoconv') !== false;
-        } else {
-            // Test LibreOffice
-            $testCommand = "\"$converterPath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --version 2>&1";
-            $output = shell_exec($testCommand);
-            return strpos($output, 'LibreOffice') !== false;
-        }
+        // Test if LibreOffice can run in headless mode
+        $testCommand = "\"$libreOfficePath\" --headless --invisible --nocrashreport --nodefault --nolockcheck --nologo --norestore --version 2>&1";
+        $output = shell_exec($testCommand);
+        
+        return strpos($output, 'LibreOffice') !== false;
     }
 
     /**
@@ -114,13 +101,8 @@ class DocxToPdfConverter
      */
     private function getLibreOfficePath(): ?string
     {
-        // Common LibreOffice and unoconv installation paths
+        // Common LibreOffice installation paths
         $possiblePaths = [
-            // unoconv (preferred for Docker)
-            '/usr/bin/unoconv',
-            '/usr/local/bin/unoconv',
-            
-            // LibreOffice paths
             // Windows paths
             'C:\\Program Files\\LibreOffice\\program\\soffice.com',
             'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.com',
@@ -145,16 +127,8 @@ class DocxToPdfConverter
             }
         }
         
-        // Try to find unoconv in PATH first (preferred for Docker)
-        $whichCommand = PHP_OS_FAMILY === 'Windows' ? 'where' : 'which';
-        $output = shell_exec("$whichCommand unoconv 2>&1");
-        if ($output && !empty(trim($output))) {
-            $path = trim($output);
-            Log::info('unoconv found in PATH', ['path' => $path]);
-            return $path;
-        }
-        
         // Try to find LibreOffice in PATH
+        $whichCommand = PHP_OS_FAMILY === 'Windows' ? 'where' : 'which';
         $output = shell_exec("$whichCommand soffice 2>&1");
         if ($output && !empty(trim($output))) {
             $path = trim($output);

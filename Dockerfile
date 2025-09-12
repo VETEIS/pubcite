@@ -20,16 +20,19 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install LibreOffice and unoconv for reliable document conversion
+# Install LibreOffice with minimal dependencies
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
-    libreoffice \
-    unoconv \
+    --no-install-suggests \
+    libreoffice-writer \
+    libreoffice-calc \
+    libreoffice-impress \
+    libreoffice-pdfimport \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify installation
-RUN libreoffice --version && unoconv --version || echo "Installation verification failed"
+# Verify LibreOffice installation
+RUN libreoffice --version || echo "LibreOffice installation verification failed"
 
 # Install PostgreSQL extensions
 RUN apt-get update && apt-get install -y libpq-dev \
