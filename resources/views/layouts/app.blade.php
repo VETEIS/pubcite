@@ -27,6 +27,13 @@
         
         <!-- Loading Manager -->
         <script src="{{ asset('js/loading-manager.js') }}"></script>
+        <script>
+            // Initialize LoadingManager when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                window.loadingManager = new LoadingManager();
+                console.log('LoadingManager initialized');
+            });
+        </script>
         
         <!-- Mobile-Only Portrait Orientation Lock -->
         <style>

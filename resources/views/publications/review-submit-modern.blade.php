@@ -342,7 +342,7 @@ function generateDocx(type) {
     }
     
     // Prevent double submission
-    if (window.loadingManager.isLoading()) {
+    if (window.loadingManager && window.loadingManager.isLoading()) {
         return;
     }
     
@@ -352,12 +352,26 @@ function generateDocx(type) {
 
     // Show comprehensive loading state
     const operationId = `generate-docx-${type}-${Date.now()}`;
-    window.loadingManager.show(operationId, {
-        title: 'Generating Document',
-        message: `Creating ${type} document, please wait...`,
-        showOverlay: true,
-        disableButtons: true
-    });
+    let originalText = '';
+    let button = null;
+    
+    if (window.loadingManager) {
+        window.loadingManager.show(operationId, {
+            title: 'Generating Document',
+            message: `Creating ${type} document, please wait...`,
+            showOverlay: true,
+            disableButtons: true
+        });
+    } else {
+        // Fallback: Basic button disabling
+        button = event.target.closest('.cursor-pointer');
+        if (button) {
+            button.style.opacity = '0.6';
+            button.style.pointerEvents = 'none';
+            originalText = button.querySelector('p').textContent;
+            button.querySelector('p').textContent = 'Generating...';
+        }
+    }
 
     fetch('{{ route("publications.generateDocx") }}', {
         method: 'POST',
@@ -405,12 +419,30 @@ function generateDocx(type) {
         }, 100);
         
         // Hide loading state
-        window.loadingManager.hide(operationId);
+        if (window.loadingManager) {
+            window.loadingManager.hide(operationId);
+        } else {
+            // Fallback: Restore button state
+            if (button && originalText) {
+                button.style.opacity = '1';
+                button.style.pointerEvents = 'auto';
+                button.querySelector('p').textContent = originalText;
+            }
+        }
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
         // Hide loading state
-        window.loadingManager.hide(operationId);
+        if (window.loadingManager) {
+            window.loadingManager.hide(operationId);
+        } else {
+            // Fallback: Restore button state
+            if (button && originalText) {
+                button.style.opacity = '1';
+                button.style.pointerEvents = 'auto';
+                button.querySelector('p').textContent = originalText;
+            }
+        }
     });
 }
 </script>
