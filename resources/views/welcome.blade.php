@@ -1338,8 +1338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializePrivacyModal();
     
     function initializePrivacyModal() {
-        // Clear any stale session storage on page load
-        sessionStorage.removeItem('privacy_accepted');
+        // Don't clear sessionStorage on page load - let it persist for login flow
         
         // Listen for storage changes (user logout/login in another tab)
         window.addEventListener('storage', handleStorageChange);
@@ -1355,11 +1354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', function() {
-        // Clear session storage to prevent stale state
-        sessionStorage.removeItem('privacy_accepted');
-    });
+    // Note: sessionStorage persists across page loads for login flow
     
     async function checkPrivacyStatus() {
         try {
