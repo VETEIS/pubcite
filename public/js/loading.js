@@ -10,36 +10,51 @@ if (typeof window.loadingSystemInitialized === 'undefined') {
     // Simple loading overlay
     let loadingOverlay = null;
 
-    function createLoadingOverlay() {
-        if (loadingOverlay) return;
+    function createLoadingOverlay(showFirstGenNotice = false) {
+        // Remove existing overlay if it exists and notice parameter is different
+        if (loadingOverlay) {
+            const existingNotice = loadingOverlay.querySelector('.bg-maroon-50');
+            const hasNotice = existingNotice !== null;
+            if (hasNotice !== showFirstGenNotice) {
+                loadingOverlay.remove();
+                loadingOverlay = null;
+            } else {
+                return; // Same configuration, reuse existing
+            }
+        }
         
         loadingOverlay = document.createElement('div');
         loadingOverlay.id = 'loading-overlay';
         loadingOverlay.className = 'fixed inset-0 flex items-center justify-center z-50 hidden backdrop-blur-md';
+        
+        const firstGenNotice = showFirstGenNotice ? `
+            <div class="bg-maroon-50 border border-maroon-200 rounded-lg p-3 mb-4">
+                <p class="text-xs text-maroon-800 font-medium">
+                    💡 <strong>Notice:</strong> First generation may be slower as templates are being optimized.
+                    Subsequent generations will be instant!
+                </p>
+            </div>
+        ` : '';
+        
         loadingOverlay.innerHTML = `
             <div class="bg-white rounded-xl shadow-2xl px-8 py-8 flex flex-col items-center max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="loading-card">
                 <div class="relative mb-6">
-                    <div class="w-16 h-16 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    <div class="w-16 h-16 border-4 border-gray-200 border-t-maroon-600 rounded-full animate-spin"></div>
                     <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full animate-pulse"></div>
+                        <div class="w-8 h-8 bg-maroon-600 rounded-full animate-pulse"></div>
                     </div>
                 </div>
                 <div class="text-center w-full">
                     <h3 class="text-xl font-bold text-gray-900 mb-2" id="loading-title">Processing...</h3>
                     <p class="text-sm text-gray-600 mb-2" id="loading-message">Please wait while we process your request</p>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                        <p class="text-xs text-blue-800 font-medium">
-                            💡 <strong>Notice:</strong> First generation may be slower as templates are being optimized.
-                            Subsequent generations will be instant!
-                        </p>
-                    </div>
+                    ${firstGenNotice}
                     <div class="space-y-2" id="progress-steps">
                         <div class="flex items-center justify-between text-xs text-gray-500">
                             <span id="current-step">Initializing...</span>
                             <span id="step-counter">1/5</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width: 0%"></div>
+                            <div class="bg-maroon-600 h-2 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -59,8 +74,8 @@ if (typeof window.loadingSystemInitialized === 'undefined') {
         }
     }
 
-    function showLoading(title, message, progressSteps = []) {
-        createLoadingOverlay();
+    function showLoading(title, message, progressSteps = [], showFirstGenNotice = false) {
+        createLoadingOverlay(showFirstGenNotice);
         
         // Wait for elements to be available with retry mechanism
         const updateContent = () => {

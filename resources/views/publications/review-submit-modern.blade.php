@@ -364,8 +364,8 @@ function generateDocx(type) {
         'Finalizing document...'
     ];
     
-    // Show loading screen
-    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps);
+    // Show loading screen with first generation notice for preview
+    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
     
     // Simulate progress updates
     let currentStep = 0;

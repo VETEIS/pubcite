@@ -1374,7 +1374,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.privacy_accepted) {
-                    // Privacy already accepted - hide modal and start animation
+                    // Privacy already accepted - set sessionStorage and hide modal
+                    sessionStorage.setItem('privacy_accepted', 'true');
                     closePrivacyModal();
                     animateJournalCounts();
                 } else {
@@ -1441,7 +1442,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (response.ok) {
-                // Success - close modal and start animation
+                // Success - set both server session and client sessionStorage
+                sessionStorage.setItem('privacy_accepted', 'true');
                 closePrivacyModal();
                 animateJournalCounts();
             } else {
