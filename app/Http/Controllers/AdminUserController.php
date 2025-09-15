@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
@@ -70,6 +71,15 @@ class AdminUserController extends Controller
         $user->role = $validated['role'];
         $user->signatory_type = $validated['role'] === 'signatory' ? ($validated['signatory_type'] ?? null) : null;
         $user->save();
+        
+        // Clear signatory cache when new signatory is created
+        if ($user->role === 'signatory') {
+            Cache::forget("signatories_faculty_");
+            Cache::forget("signatories_dean_");
+            Cache::forget("signatories_center_manager_");
+            Cache::forget("signatories_college_dean_");
+        }
+        
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
@@ -104,6 +114,15 @@ class AdminUserController extends Controller
             $user->password = Hash::make($validated['password']);
         }
         $user->save();
+        
+        // Clear signatory cache when role changes to/from signatory
+        if ($user->role === 'signatory' || $user->getOriginal('role') === 'signatory') {
+            Cache::forget("signatories_faculty_");
+            Cache::forget("signatories_dean_");
+            Cache::forget("signatories_center_manager_");
+            Cache::forget("signatories_college_dean_");
+        }
+        
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
@@ -113,7 +132,17 @@ class AdminUserController extends Controller
         if ($userAuth && $userAuth->id === $user->id) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account.');
         }
+        $wasSignatory = $user->role === 'signatory';
         $user->delete();
+        
+        // Clear signatory cache when signatory is deleted
+        if ($wasSignatory) {
+            Cache::forget("signatories_faculty_");
+            Cache::forget("signatories_dean_");
+            Cache::forget("signatories_center_manager_");
+            Cache::forget("signatories_college_dean_");
+        }
+        
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 

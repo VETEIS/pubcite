@@ -19,7 +19,7 @@
          :style="'top:' + popY + 'px; left:' + popX + 'px; min-width:' + popW + 'px'"
          @mouseenter="hovering = true" @mouseleave="hovering = false">
         <div class="p-1 border-b">
-<input type="text" x-model="query" @input.debounce.300ms="fetchOptions()" class="w-full px-2 py-1 text-sm border rounded" :placeholder="placeholderText" />
+        <input type="text" x-model="query" @input="fetchOptions()" class="w-full px-2 py-1 text-sm border rounded" :placeholder="placeholderText" />
         </div>
         <template x-if="loading"><div class="p-2 text-xs text-gray-500">Loading...</div></template>
         <template x-if="!loading">
@@ -35,8 +35,9 @@
 </span>
 @else
 <div x-data='signatorySelect({!! $typeJson !!}, {!! $nameJson !!}, false, {!! $phJson !!})' data-field="{{ $name }}" class="{{ $wrapperClass }}">
-    <input type="text" x-model="query" @focus="open = true; fetchOptions()" @blur="handleBlur" @input.debounce.300ms="fetchOptions()" :placeholder="placeholderText"
-           class="{{ $inputClass }}" autocomplete="off">
+    <input type="text" x-model="query" @focus="open = true; fetchOptions()" @blur="handleBlur" @input="fetchOptions()" :placeholder="placeholderText"
+           :class="isValidSelection ? '{{ $inputClass }}' : '{{ $inputClass }} border-red-500 bg-red-50'"
+           autocomplete="off">
     <input type="hidden" name="{{ $name }}" :value="selectedName" required>
     <div x-show="open" class="absolute left-0 z-30 mt-1 w-max min-w-48 max-w-80 max-h-40 overflow-auto bg-white border border-gray-200 rounded shadow" @mouseenter="hovering = true" @mouseleave="hovering = false">
         <template x-if="loading"><div class="p-2 text-xs text-gray-500">Loading...</div></template>
@@ -58,6 +59,7 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
         open: false,
         query: '',
         options: [],
+        allSignatories: [], // Preloaded signatories
         loading: false,
         selectedName: '',
         hovering: false,
@@ -65,6 +67,50 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
         popX: 0, popY: 0, popW: 200,
         cache: new Map(), // Client-side cache
         lastFetchTime: 0,
+        isValidSelection: true,
+        preloaded: false,
+        init() {
+            // Preload signatories on component initialization
+            this.preloadSignatories();
+        },
+        preloadSignatories() {
+            // Check if already preloaded globally
+            if (window.signatoryCache && window.signatoryCache[type]) {
+                this.allSignatories = window.signatoryCache[type];
+                this.preloaded = true;
+                return;
+            }
+            
+            // Preload all signatories for this type
+            this.fetchSignatoriesFromServer();
+        },
+        fetchSignatoriesFromServer() {
+            const params = new URLSearchParams({ type, q: '' });
+            fetch(`/signatories?${params.toString()}`, { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            })
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { 
+                this.allSignatories = Array.isArray(data) ? data : [];
+                this.preloaded = true;
+                
+                // Store in global cache for other components
+                if (!window.signatoryCache) window.signatoryCache = {};
+                window.signatoryCache[type] = this.allSignatories;
+            })
+            .catch(() => { 
+                this.allSignatories = [];
+                this.preloaded = true;
+            });
+        },
+        refreshCache() {
+            // Clear global cache and reload
+            if (window.signatoryCache) {
+                delete window.signatoryCache[type];
+            }
+            this.preloaded = false;
+            this.fetchSignatoriesFromServer();
+        },
         updatePosition() {
             if (!inlineMode) return;
             this.$nextTick(() => {
@@ -75,6 +121,28 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
             });
         },
         fetchOptions() {
+            // If preloaded, use client-side filtering for instant results
+            if (this.preloaded && this.allSignatories.length > 0) {
+                this.filterSignatories();
+                return;
+            }
+            
+            // Fallback to server request if not preloaded yet
+            this.fetchFromServer();
+        },
+        filterSignatories() {
+            if (!this.query || this.query.trim() === '') {
+                this.options = this.allSignatories.slice(0, 20); // Show first 20
+                return;
+            }
+            
+            const query = this.query.toLowerCase().trim();
+            this.options = this.allSignatories.filter(signatory => 
+                signatory.name.toLowerCase().includes(query) || 
+                signatory.email.toLowerCase().includes(query)
+            ).slice(0, 20); // Limit to 20 results
+        },
+        fetchFromServer() {
             // Check client-side cache first
             const cacheKey = `${type}_${this.query}`;
             const now = Date.now();
@@ -117,6 +185,7 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
         choose(opt) {
             this.selectedName = opt.name;
             this.query = opt.name;
+            this.isValidSelection = true;
             this.open = false;
             // Trigger validation after selection
             setTimeout(() => {
@@ -132,7 +201,47 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
             }, 100);
         },
         handleBlur() {
-            setTimeout(() => { if (!this.hovering) this.open = false; }, 150);
+            setTimeout(() => { 
+                if (!this.hovering) {
+                    this.open = false;
+                    // Validate that the typed text matches a valid option
+                    this.validateSelection();
+                }
+            }, 150);
+        },
+        validateSelection() {
+            // If there's a query but no valid selection, validate it
+            if (this.query && this.query !== this.selectedName) {
+                // Check if the query matches any of the available options
+                const isValidOption = this.options.some(opt => opt.name === this.query);
+                if (!isValidOption) {
+                    // Mark as invalid
+                    this.isValidSelection = false;
+                    // Clear invalid selection
+                    this.query = this.selectedName || '';
+                    this.selectedName = '';
+                    // Show error message or visual feedback
+                    this.showValidationError();
+                } else {
+                    this.isValidSelection = true;
+                }
+            } else if (this.query === this.selectedName) {
+                this.isValidSelection = true;
+            }
+        },
+        showValidationError() {
+            // Create a temporary error message
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+            errorMsg.textContent = 'Please select a valid signatory from the dropdown';
+            document.body.appendChild(errorMsg);
+            
+            // Remove error message after 3 seconds
+            setTimeout(() => {
+                if (errorMsg.parentNode) {
+                    errorMsg.parentNode.removeChild(errorMsg);
+                }
+            }, 3000);
         }
     }
 }

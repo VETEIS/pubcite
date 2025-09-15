@@ -207,5 +207,66 @@
         
         <!-- Loading System - Load after DOM is ready -->
         <script src="{{ asset('js/loading.js') }}"></script>
+        
+        <!-- Signatory Preloader -->
+        <script>
+            // Preload all signatory types on page load for instant dropdown performance
+            document.addEventListener('DOMContentLoaded', function() {
+                if (!window.signatoryCache) {
+                    window.signatoryCache = {};
+                }
+                
+                // Preload common signatory types
+                const signatoryTypes = ['faculty', 'dean', 'center_manager', 'college_dean'];
+                signatoryTypes.forEach(type => {
+                    if (!window.signatoryCache[type]) {
+                        fetch(`/signatories?type=${type}&q=`, { 
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+                        })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(data => { 
+                            window.signatoryCache[type] = Array.isArray(data) ? data : [];
+                        })
+                        .catch(() => { 
+                            window.signatoryCache[type] = [];
+                        });
+                    }
+                });
+            });
+            
+            // Global function to refresh signatory cache
+            window.refreshSignatoryCache = function() {
+                if (window.signatoryCache) {
+                    // Clear all cached data
+                    Object.keys(window.signatoryCache).forEach(key => {
+                        delete window.signatoryCache[key];
+                    });
+                }
+                
+                // Trigger refresh on all signatory components
+                document.querySelectorAll('[data-field*="faculty"], [data-field*="dean"], [data-field*="center_manager"]').forEach(element => {
+                    if (element._x_dataStack && element._x_dataStack[0] && element._x_dataStack[0].refreshCache) {
+                        element._x_dataStack[0].refreshCache();
+                    }
+                });
+                
+                // Also refresh global preloader
+                const signatoryTypes = ['faculty', 'dean', 'center_manager', 'college_dean'];
+                signatoryTypes.forEach(type => {
+                    fetch(`/signatories?type=${type}&q=`, { 
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+                    })
+                    .then(r => r.ok ? r.json() : [])
+                    .then(data => { 
+                        if (!window.signatoryCache) window.signatoryCache = {};
+                        window.signatoryCache[type] = Array.isArray(data) ? data : [];
+                    })
+                    .catch(() => { 
+                        if (!window.signatoryCache) window.signatoryCache = {};
+                        window.signatoryCache[type] = [];
+                    });
+                });
+            };
+        </script>
     </body>
 </html>

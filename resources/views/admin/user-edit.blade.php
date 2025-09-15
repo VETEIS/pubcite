@@ -188,5 +188,18 @@
     if (nameInput) {
         nameInput.addEventListener('input', convertNameToUppercase);
     }
+    
+    // Refresh signatory cache after successful form submission
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            // Add a small delay to allow the server to process the update
+            setTimeout(() => {
+                if (window.refreshSignatoryCache) {
+                    window.refreshSignatoryCache();
+                }
+            }, 1000);
+        });
+    }
 </script> 
 </x-app-layout> 
