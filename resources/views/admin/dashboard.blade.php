@@ -1522,6 +1522,7 @@ function updateStatsWithData(stats) {
             
             const statusLabels = ['PEN', 'END', 'REJ'];
             const statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
+            const statusKeys = ['pending', 'endorsed', 'rejected'];
             
             legendElement.innerHTML = `
                 <table class="w-full text-xs min-w-0">
@@ -1534,7 +1535,7 @@ function updateStatsWithData(stats) {
                     </thead>
                     <tbody>
                         ${statusLabels.map((label, i) => {
-                            const count = statusCounts[label.toLowerCase()] || 0;
+                            const count = statusCounts[statusKeys[i]] || 0;
                             const rawPercentage = total > 0 ? (count / total) * 100 : 0;
                             const percentage = rawPercentage === 100 ? '100' : rawPercentage.toFixed(1);
                             
