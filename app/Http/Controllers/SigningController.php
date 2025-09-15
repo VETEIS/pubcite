@@ -143,13 +143,8 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($validated['request_id']);
 
-        // Check if this specific signatory has already signed this request
-        if ($userRequest->hasBeenSignedBy($user->id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You have already signed this request. You cannot sign it multiple times.'
-            ], 400);
-        }
+        // Allow multiple signatures from the same signatory
+        // (Removed restriction: users can now sign the same request multiple times)
 
         // Verify user is authorized to sign this request
         $signatoryType = $user->signatoryType();

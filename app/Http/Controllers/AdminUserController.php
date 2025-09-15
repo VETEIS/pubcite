@@ -98,19 +98,28 @@ class AdminUserController extends Controller
         if ($userAuth && $userAuth->id === $user->id) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot change your own role.');
         }
-        $validated = $request->validate([
+        // Different validation rules based on auth provider
+        $validationRules = [
             'name' => 'required|string|max:255',
             'email' => ['required','email',Rule::unique('users')->ignore($user->id)],
             'role' => ['required', Rule::in(['user', 'admin', 'signatory'])],
-            'password' => 'nullable|string|min:8|confirmed',
             'signatory_type' => ['nullable', Rule::in(['faculty','center_manager','college_dean'])],
-        ]);
+        ];
+        
+        // Only add password validation for non-Google users
+        if ($user->auth_provider !== 'google') {
+            $validationRules['password'] = 'nullable|string|min:8|confirmed';
+        }
+        
+        $validated = $request->validate($validationRules);
         // Set role first so the mutator can check it
         $user->role = $validated['role'];
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->signatory_type = $validated['role'] === 'signatory' ? ($validated['signatory_type'] ?? null) : null;
-        if (!empty($validated['password'])) {
+        
+        // Only update password for non-Google users
+        if ($user->auth_provider !== 'google' && !empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
         $user->save();

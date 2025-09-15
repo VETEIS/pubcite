@@ -281,16 +281,7 @@
 
         function openUploadModal(requestId) {
             
-            // Check if request is already signed
-            const request = window.requestsData?.find(r => r.id == requestId);
-            if (request && request.signature_status === 'signed') {
-                if (window.notificationManager) {
-                    window.notificationManager.error('This request has already been signed. You cannot upload signed documents multiple times.');
-                } else {
-                    alert('This request has already been signed. You cannot upload signed documents multiple times.');
-                }
-                return;
-            }
+            // Allow multiple signatures - removed restriction
             
             currentRequestId = requestId;
             
@@ -351,16 +342,7 @@
                 return;
             }
 
-            // Double-check if request is already signed
-            const request = window.requestsData?.find(r => r.id == currentRequestId);
-            if (request && request.signature_status === 'signed') {
-                if (window.notificationManager) {
-                    window.notificationManager.error('This request has already been signed. You cannot upload signed documents multiple times.');
-                } else {
-                    alert('This request has already been signed. You cannot upload signed documents multiple times.');
-                }
-                return;
-            }
+            // Allow multiple signatures - removed restriction
 
             const fileInput = document.getElementById('signedDocuments');
             if (!fileInput.files || fileInput.files.length === 0) {

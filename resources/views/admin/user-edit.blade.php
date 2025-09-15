@@ -117,7 +117,8 @@
                     </select>
                 </div>
 
-                            <!-- Password Fields -->
+                            <!-- Password Fields (Only for non-Google users) -->
+                @if($user->auth_provider !== 'google')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
@@ -135,6 +136,20 @@
                                            placeholder="Confirm new password" />
                     </div>
                 </div>
+                @else
+                <!-- Google User Notice -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h4 class="text-sm font-semibold text-blue-800">Google Account</h4>
+                            <p class="text-sm text-blue-700 mt-1">This user signed in with Google. Password changes are not available for Google accounts.</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
                             <!-- Form Actions -->
                             <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
@@ -161,45 +176,60 @@
 </div>
 
 <script>
-    const roleSelect = document.getElementById('role-select');
-    const signatoryGroup = document.getElementById('signatory-type-group');
-    const nameInput = document.getElementById('name-input');
-        
-    function toggleSignatory() {
-        if (roleSelect && signatoryGroup) {
-            signatoryGroup.classList.toggle('hidden', roleSelect.value !== 'signatory');
-        }
-    }
-    
-    function convertNameToUppercase() {
-        if (roleSelect && nameInput && roleSelect.value === 'signatory') {
-            nameInput.value = nameInput.value.toUpperCase();
-        }
-    }
-        
-    if (roleSelect) {
-        roleSelect.addEventListener('change', function() {
-            toggleSignatory();
-            convertNameToUppercase();
-        });
-        toggleSignatory();
-    }
-    
-    if (nameInput) {
-        nameInput.addEventListener('input', convertNameToUppercase);
-    }
-    
-    // Refresh signatory cache after successful form submission
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function() {
-            // Add a small delay to allow the server to process the update
-            setTimeout(() => {
-                if (window.refreshSignatoryCache) {
-                    window.refreshSignatoryCache();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add a small delay to ensure all elements are rendered
+        setTimeout(function() {
+            const roleSelect = document.getElementById('role-select');
+            const signatoryGroup = document.getElementById('signatory-type-group');
+            const nameInput = document.getElementById('name-input');
+            
+        function toggleSignatory() {
+            if (roleSelect && signatoryGroup) {
+                // Use explicit show/hide instead of toggle for reliability
+                if (roleSelect.value === 'signatory') {
+                    signatoryGroup.classList.remove('hidden');
+                    console.log('Signatory group shown');
+                } else {
+                    signatoryGroup.classList.add('hidden');
+                    console.log('Signatory group hidden');
                 }
-            }, 1000);
-        });
-    }
+            } else {
+                console.error('Elements not found:', { roleSelect: !!roleSelect, signatoryGroup: !!signatoryGroup });
+            }
+        }
+        
+        function convertNameToUppercase() {
+            if (roleSelect && nameInput && roleSelect.value === 'signatory') {
+                nameInput.value = nameInput.value.toUpperCase();
+            }
+        }
+            
+        if (roleSelect) {
+            roleSelect.addEventListener('change', function() {
+                toggleSignatory();
+                convertNameToUppercase();
+            });
+            // Initialize on page load
+            toggleSignatory();
+        }
+        
+        if (nameInput) {
+            nameInput.addEventListener('input', convertNameToUppercase);
+        }
+        
+        // Refresh signatory cache after successful form submission
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                // Add a small delay to allow the server to process the update
+                setTimeout(() => {
+                    if (window.refreshSignatoryCache) {
+                        window.refreshSignatoryCache();
+                    }
+                }, 1000);
+            });
+        }
+        }, 100); // 100ms delay to ensure DOM is fully rendered
+    });
 </script> 
 </x-app-layout> 

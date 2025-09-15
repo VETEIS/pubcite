@@ -505,16 +505,22 @@
                 <!-- Charts and Activity Log Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 flex-shrink-0">
                     <!-- Charts Card -->
-                    <div class="bg-white border border-gray-200 rounded-lg shadow py-4 pl-4 flex flex-col md:flex-row items-stretch justify-center overflow-y-auto min-h-[280px] gap-4">
-                        <!-- Request Stats (Line Chart) -->
-                        <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden pl-2 pr-0 relative">
-                            <h2 class="text-sm font-semibold mb-2 text-left w-full flex items-center gap-2">
+                    <div class="bg-white border border-gray-200 rounded-lg shadow overflow-hidden min-h-[280px] flex flex-col">
+                        <!-- Card Header -->
+                        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                            <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                                 </svg>
                                 <span id="chartTitle">Request Stats (Last 12 Months)</span>
                             </h2>
-                            <div class="w-full h-48 flex items-center justify-center relative overflow-hidden">
+                        </div>
+                        
+                        <!-- Card Content -->
+                        <div class="flex flex-col md:flex-row items-stretch justify-center overflow-y-auto flex-1 gap-4">
+                            <!-- Request Stats (Line Chart) -->
+                            <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden relative pl-4 pr-0 py-1">
+                                <div class="w-full h-48 flex items-center justify-center relative overflow-hidden">
                                 <!-- Loading Overlay for Line Chart -->
                                 <div id="lineChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
                                     <div class="flex flex-col items-center gap-3">
@@ -526,7 +532,7 @@
                             </div>
                         </div>
                                                  <!-- Status Breakdown (Donut Chart + Legend) -->
-                         <div class="flex-[1_1_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden border-t md:border-t-0 md:border-l border-gray-200 p-4 relative">
+                         <div class="flex-[1_1_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden border-t md:border-t-0 md:border-l border-gray-200 px-4 relative">
                              <div class="w-full max-w-xs mx-auto h-64 flex flex-col items-center justify-center relative overflow-hidden">
                                  <!-- Loading Overlay for Pie Chart -->
                                  <div id="pieChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
@@ -536,18 +542,18 @@
                                      </div>
                                  </div>
                                  <canvas id="statusChart" class="w-28 h-28 max-w-[112px] max-h-[112px] transition-opacity duration-500 opacity-0" style="max-width:112px;max-height:112px;"></canvas>
-                                 <div id="statusLegend" class="mt-2 w-full transition-all duration-500">
-                                    <table class="w-full text-xs min-w-0 table-fixed">
+                                 <div id="statusLegend" class="mt-2 w-full px-2 transition-all duration-500">
+                                    <table class="w-full text-xs min-w-0">
                                         <thead>
                                             <tr class="border-b border-gray-200">
-                                                <th class="text-left py-1 font-semibold text-gray-700 w-16">Status</th>
-                                                <th class="text-center py-1 font-semibold text-gray-700 w-8">Count</th>
-                                                <th class="text-right py-1 font-semibold text-gray-700 w-8">%</th>
+                                                <th class="text-left py-1 font-semibold text-gray-700">Status</th>
+                                                <th class="text-center py-1 font-semibold text-gray-700">Count</th>
+                                                <th class="text-right py-1 font-semibold text-gray-700">%</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @php
-                                                $statusLabels = ['Pending', 'Endorsed', 'Rejected'];
+                                                $statusLabels = ['PEN', 'END', 'REJ'];
                                                 $statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
                                                 $total = array_sum(array_values($statusCounts));
                                             @endphp
@@ -573,11 +579,12 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                </div>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
                     
-                        <!-- Activity Log Card -->
+                    <!-- Activity Log Card -->
                     <div class="bg-white border border-gray-200 rounded-lg shadow overflow-visible" style="overflow: visible;">
                         <div class="bg-gray-50 sticky top-0 left-0 right-0 z-10 px-4 py-3 rounded-t-lg">
                             <h2 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -1067,32 +1074,7 @@
                     };
                 },
                 
-                updateChartsWithData(data) {
-                    // Update chart title
-                    this.updateChartTitle(data.period);
-                    
-                    // Update Monthly Chart
-                    if (window.monthlyChartInstance) {
-                        window.monthlyChartInstance.data.labels = data.months;
-                        window.monthlyChartInstance.data.datasets[0].data = data.monthlyCounts;
-                        window.monthlyChartInstance.update('none'); // No animation for real-time updates
-                    }
-                    
-                    // Update Status Chart
-                    if (window.statusChartInstance) {
-                        const statusData = [
-                            data.statusCounts.pending || 0,
-                            data.statusCounts.endorsed || 0,
-                            data.statusCounts.rejected || 0
-                        ];
-                        
-                        window.statusChartInstance.data.datasets[0].data = statusData;
-                        window.statusChartInstance.update('none');
-                    }
-                    
-                    // Update status legend
-                    this.updateStatusLegend(data.statusCounts);
-                },
+                // Removed complex real-time update - now using simple reinitialization
                 
                 updateChartTitle(period) {
                     const titleElement = document.getElementById('chartTitle');
@@ -1130,7 +1112,7 @@
                         return;
                     }
                     
-                    const statusLabels = ['Pending', 'Endorsed', 'Rejected'];
+                    const statusLabels = ['PEN', 'END', 'REJ'];
                     const statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
                     const statusKeys = ['pending', 'endorsed', 'rejected'];
                     
@@ -1139,8 +1121,8 @@
                             <thead>
                                 <tr class="border-b border-gray-200">
                                     <th class="text-left py-1 font-semibold text-gray-700 w-16">Status</th>
-                                    <th class="text-center py-1 font-semibold text-gray-700 w-12">Count</th>
-                                    <th class="text-right py-1 font-semibold text-gray-700 w-12">%</th>
+                                    <th class="text-center py-1 font-semibold text-gray-700 w-8">Count</th>
+                                    <th class="text-right py-1 font-semibold text-gray-700 w-8">%</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1185,8 +1167,9 @@
             };
         };
 
-        let monthlyChartInstance = null;
-        let statusChartInstance = null;
+        // Chart instances are now global to prevent redeclaration errors
+        // let monthlyChartInstance = null;
+        // let statusChartInstance = null;
 let eventSource;
 
 function initializeRealTimeUpdates() {
@@ -1201,7 +1184,10 @@ function initializeRealTimeUpdates() {
     eventSource.onmessage = function(event) {
         try {
             const data = JSON.parse(event.data);
-            updateDashboard(data);
+            // Simple reinitialization instead of complex updates
+            if (data.hasChanges) {
+                reinitializeChartsAndTable();
+            }
         } catch (error) {
             // Silent fail for SSE data parsing
         }
@@ -1217,36 +1203,223 @@ function initializeRealTimeUpdates() {
     };
 }
 
-function updateDashboard(data) {
-    // Only update if there are actual changes
-    if (!data.hasChanges) return;
+// Removed complex updateDashboard function - now using simple reinitialization
+
+// Removed complex updatePeriodStats function - now using simple reinitialization
+
+// Removed complex updateActivityLogs function - now using simple reinitialization
+
+// Removed createActivityLogItem function - now using simple reinitialization
+
+// Removed getIconColor function - now using simple reinitialization
+
+// Removed getIconSvg function - now using simple reinitialization
+
+// Removed getLogDescription function - now using simple reinitialization
+
+// Removed getShortName function - now using simple reinitialization
+
+// Removed getTimeAgo function - now using simple reinitialization
+
+// Simple reinitialization function for charts and table
+function reinitializeChartsAndTable() {
+    // Show loading state
+    showChartsLoading();
     
-    // Update stats
-    if (data.stats) {
-        updatePeriodStats(data.stats);
-    }
-    
-    // Update activity logs
-    if (data.activityLogs) {
-        updateActivityLogs(data.activityLogs);
-    }
-    
-    // Show notification for new updates
-    showUpdateNotification();
+    // Fetch fresh data and reinitialize everything
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.months || !data.monthlyCounts || !data.statusCounts) {
+            hideChartsLoading();
+            return;
+        }
+        
+        // Reinitialize charts with fresh data
+        // Destroy existing charts
+        if (window.monthlyChartInstance) {
+            window.monthlyChartInstance.destroy();
+            window.monthlyChartInstance = null;
+        }
+        if (window.statusChartInstance) {
+            window.statusChartInstance.destroy();
+            window.statusChartInstance = null;
+        }
+        
+        // Recreate charts with fresh data
+        initializeCharts(data);
+        
+        // Reinitialize table with fresh data
+        if (data.requests) {
+            updateTableWithData(data.requests);
+        }
+        
+        // Update stats if available
+        if (data.stats) {
+            updateStatsWithData(data.stats);
+        }
+        
+        hideChartsLoading();
+    })
+    .catch(error => {
+        console.error('Error reinitializing dashboard:', error);
+        hideChartsLoading();
+    });
 }
 
-function updatePeriodStats(stats) {
+// Initialize charts with fresh data
+function initializeCharts(data) {
+    const months = data.months || [];
+    const pubData = Object.values(data.monthlyCounts?.Publication || {});
+    const citData = Object.values(data.monthlyCounts?.Citation || {});
+    const typeFilter = data.type;
+    
+    // Initialize monthly chart
+    const monthlyChartElement = document.getElementById('monthlyChart');
+    if (monthlyChartElement) {
+        // Create datasets based on available data and filter
+        let datasets = [];
+        
+        // Show publications if no filter or filter matches
+        if ((!typeFilter || typeFilter === 'Publication' || typeFilter === 'Publications') && pubData.length > 0) {
+            datasets.push({
+                label: 'Publications',
+                data: pubData,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            });
+        }
+        
+        // Show citations if no filter or filter matches
+        if ((!typeFilter || typeFilter === 'Citation' || typeFilter === 'Citations') && citData.length > 0) {
+            datasets.push({
+                label: 'Citations',
+                data: citData,
+                backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                borderColor: 'rgba(34, 197, 94, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            });
+        }
+        
+        // Create the chart
+        window.monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        animation: { duration: 1000 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { display: false },
+                        animation: { duration: 1000 }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize status chart
+    const statusChartElement = document.getElementById('statusChart');
+    if (statusChartElement) {
+        const statusCounts = [data.statusCounts.pending, data.statusCounts.endorsed, data.statusCounts.rejected];
+        const totalCount = statusCounts.reduce((sum, count) => sum + count, 0);
+        
+        if (totalCount === 0) {
+            // Show empty state
+            window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['rgba(156, 163, 175, 0.3)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        } else {
+            window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Endorsed', 'Rejected'],
+                    datasets: [{
+                        data: statusCounts,
+                        backgroundColor: ['#fbbf24', '#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Update status legend
+    updateStatusLegend(data.statusCounts);
+}
+
+// Helper function to update table with fresh data
+function updateTableWithData(requests) {
+    const tableBody = document.querySelector('tbody');
+    if (!tableBody) return;
+    
+    // Clear existing table rows
+    tableBody.innerHTML = '';
+    
+    // Add new rows (simplified - just reload the page content)
+    // For a complete solution, we'd need to render the table rows here
+    // But since we're doing simple reinitialization, we'll just reload
+    window.location.reload();
+}
+
+// Helper function to update stats with fresh data
+function updateStatsWithData(stats) {
+    // Update period stats
     const type = '{{ request("type") }}';
     const periodStats = {
-        'week': type === 'Citation' ? (stats.citation.week || 0)
-            : (type === 'Publication' ? (stats.publication.week || 0)
-            : ((stats.publication.week || 0) + (stats.citation.week || 0))),
-        'month': type === 'Citation' ? (stats.citation.month || 0)
-            : (type === 'Publication' ? (stats.publication.month || 0)
-            : ((stats.publication.month || 0) + (stats.citation.month || 0))),
-        'quarter': type === 'Citation' ? (stats.citation.quarter || 0)
-            : (type === 'Publication' ? (stats.publication.quarter || 0)
-            : ((stats.publication.quarter || 0) + (stats.citation.quarter || 0))),
+        'week': type === 'Citation' ? (stats.citation?.week || 0)
+            : (type === 'Publication' ? (stats.publication?.week || 0)
+            : ((stats.publication?.week || 0) + (stats.citation?.week || 0))),
+        'month': type === 'Citation' ? (stats.citation?.month || 0)
+            : (type === 'Publication' ? (stats.publication?.month || 0)
+            : ((stats.publication?.month || 0) + (stats.citation?.month || 0))),
+        'quarter': type === 'Citation' ? (stats.citation?.quarter || 0)
+            : (type === 'Publication' ? (stats.publication?.quarter || 0)
+            : ((stats.publication?.quarter || 0) + (stats.citation?.quarter || 0))),
     };
     
     // Update period stat cards
@@ -1256,146 +1429,6 @@ function updatePeriodStats(stats) {
             statElement.textContent = periodStats[period];
         }
     });
-}
-
-function updateActivityLogs(activityLogs) {
-    const activityLogContainer = document.querySelector('.activity-log-list');
-    if (!activityLogContainer) return;
-    
-    // Clear existing logs
-    activityLogContainer.innerHTML = '';
-    
-    // Add new logs
-    activityLogs.forEach(log => {
-        const logItem = createActivityLogItem(log);
-        activityLogContainer.appendChild(logItem);
-    });
-}
-
-function createActivityLogItem(log) {
-    const li = document.createElement('li');
-            li.className = 'grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-gray-50 rounded-lg p-3';
-    
-    // Create icon
-    const icon = document.createElement('span');
-    icon.className = `flex items-center justify-center w-7 h-7 rounded-full bg-white border ${getIconColor(log.action)}`;
-    icon.innerHTML = getIconSvg(log.action);
-    
-    // Create description
-    const desc = document.createElement('span');
-            desc.className = 'min-w-0 text-xs text-gray-900 font-medium truncate';
-    desc.innerHTML = getLogDescription(log);
-    
-    // Create username
-    const username = document.createElement('span');
-    username.className = `text-xs text-right whitespace-nowrap min-w-[80px] pl-2 ${log.user && log.user.role === 'admin' ? 'text-maroon-900 font-bold' : 'text-gray-700'}`;
-    username.textContent = log.user ? getShortName(log.user.name) : 'System';
-    
-    // Create separator
-    const separator = document.createElement('span');
-    separator.className = 'text-xs text-gray-400 text-center w-4 flex items-center justify-center';
-    separator.textContent = '·';
-    
-    // Create timestamp
-    const timestamp = document.createElement('span');
-    timestamp.className = 'text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1';
-    timestamp.innerHTML = `<span title="${new Date(log.created_at).toLocaleString()}">${getTimeAgo(log.created_at)}</span>`;
-    
-    li.appendChild(icon);
-    li.appendChild(desc);
-    li.appendChild(username);
-    li.appendChild(separator);
-    li.appendChild(timestamp);
-    
-    return li;
-}
-
-function getIconColor(action) {
-    switch(action) {
-        case 'created': return 'text-green-500';
-        case 'status_changed': return 'text-blue-500';
-        case 'deleted': return 'text-red-500';
-        default: return 'text-maroon-400';
-    }
-}
-
-function getIconSvg(action) {
-    switch(action) {
-        case 'created':
-            return '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
-        case 'status_changed':
-            return '<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>';
-        case 'deleted':
-            return '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
-        default:
-            return '<svg class="w-5 h-5 text-maroon-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
-    }
-}
-
-function getLogDescription(log) {
-    switch(log.action) {
-        case 'created':
-            return `Request <b>${log.details?.request_code || ''}</b> submitted (${log.details?.type || ''})`;
-        case 'status_changed':
-            return `Status changed <b>${log.details?.old_status || ''}</b> → <b>${log.details?.new_status || ''}</b> for <b>${log.details?.request_code || ''}</b>`;
-        case 'deleted':
-            return `Request <b>${log.details?.request_code || ''}</b> deleted`;
-        default:
-            return log.action.charAt(0).toUpperCase() + log.action.slice(1);
-    }
-}
-
-function getShortName(name) {
-    const nameParts = name.trim().split(/\s+/);
-    if (nameParts.length === 1) {
-        return name;
-    }
-    const last = nameParts.pop();
-    const initials = nameParts.map(p => p.charAt(0) + '.').join('');
-    return initials + last;
-}
-
-function getTimeAgo(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    
-    // Convert to Asia/Manila timezone
-    const manilaDate = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Manila"}));
-    const manilaNow = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Manila"}));
-    
-    const diffInSeconds = Math.floor((manilaNow - manilaDate) / 1000);
-    
-    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    return `${Math.floor(diffInSeconds / 86400)} days ago`;
-}
-
-function showUpdateNotification() {
-            // Create notification that animates from the top
-    const notification = document.createElement('div');
-            notification.className = 'fixed top-20 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transform transition-all duration-500';
-    notification.textContent = 'Dashboard updated';
-    
-            // Start position: above viewport
-            notification.style.transform = 'translateY(-100%)';
-    
-    document.body.appendChild(notification);
-    
-            // Animate in
-    setTimeout(() => {
-                notification.style.transform = 'translateY(0)';
-    }, 100);
-    
-            // Animate out after 3 seconds
-    setTimeout(() => {
-                notification.style.transform = 'translateY(-100%)';
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
 }
 
         function showChartsLoading() {
@@ -1487,16 +1520,16 @@ function showUpdateNotification() {
                 return;
             }
             
-            const statusLabels = ['Pending', 'Endorsed', 'Rejected'];
+            const statusLabels = ['PEN', 'END', 'REJ'];
             const statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
             
             legendElement.innerHTML = `
-                <table class="w-full text-xs min-w-0 table-fixed">
+                <table class="w-full text-xs min-w-0">
                     <thead>
                         <tr class="border-b border-gray-200">
-                            <th class="text-left py-1 font-semibold text-gray-700 w-16">Status</th>
-                            <th class="text-center py-1 font-semibold text-gray-700 w-8">Count</th>
-                            <th class="text-right py-1 font-semibold text-gray-700 w-8">%</th>
+                            <th class="text-left py-1 font-semibold text-gray-700 w-20">Status</th>
+                            <th class="text-center py-1 font-semibold text-gray-700 w-12">Count</th>
+                            <th class="text-right py-1 font-semibold text-gray-700 w-12">%</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1531,8 +1564,8 @@ function showUpdateNotification() {
             // Update Monthly Chart with smooth transition
             const monthlyChartElement = document.getElementById('monthlyChart');
             if (monthlyChartElement) {
-                if (monthlyChartInstance) {
-                    monthlyChartInstance.destroy();
+                if (window.monthlyChartInstance) {
+                    window.monthlyChartInstance.destroy();
                 }
                 
                 const months = data.months || [];
@@ -1547,7 +1580,7 @@ function showUpdateNotification() {
                 
                 // If no data at all, show grayed-out chart
                 if (totalData === 0) {
-                    monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
+                    window.monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
                         type: 'line',
                         data: {
                             labels: months.length > 0 ? months : ['No Data'],
@@ -1644,7 +1677,7 @@ function showUpdateNotification() {
                     });
                 }
                 
-                monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
+                window.monthlyChartInstance = new Chart(monthlyChartElement.getContext('2d'), {
                     type: 'line',
                     data: {
                         labels: months,
@@ -1730,8 +1763,8 @@ function showUpdateNotification() {
             // Update Status Donut Chart with smooth transition
             const statusChartElement = document.getElementById('statusChart');
             if (statusChartElement) {
-                if (statusChartInstance) {
-                    statusChartInstance.destroy();
+                if (window.statusChartInstance) {
+                    window.statusChartInstance.destroy();
                 }
                 
                 const statusCounts = [data.statusCounts.pending, data.statusCounts.endorsed, data.statusCounts.rejected];
@@ -1739,7 +1772,7 @@ function showUpdateNotification() {
                 
                 // If no data, show grayed-out pie chart
                 if (totalCount === 0) {
-                    statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
+                    window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
                         type: 'doughnut',
                         data: {
                             labels: ['No Data'],
@@ -1773,7 +1806,7 @@ function showUpdateNotification() {
                         }
                     });
                 } else {
-                statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
+                window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
                     type: 'doughnut',
                     data: {
                         labels: ['Pending', 'Endorsed', 'Rejected'],
@@ -1999,13 +2032,13 @@ window.addEventListener('beforeunload', function() {
 
         document.addEventListener('turbo:before-cache', () => {
             // Destroy charts before Turbo caches the page to avoid stale canvas state
-            if (monthlyChartInstance) {
-                monthlyChartInstance.destroy();
-                monthlyChartInstance = null;
+            if (window.monthlyChartInstance) {
+                window.monthlyChartInstance.destroy();
+                window.monthlyChartInstance = null;
             }
-            if (statusChartInstance) {
-                statusChartInstance.destroy();
-                statusChartInstance = null;
+            if (window.statusChartInstance) {
+                window.statusChartInstance.destroy();
+                window.statusChartInstance = null;
             }
             if (eventSource) {
                 try { eventSource.close(); } catch(e) {}

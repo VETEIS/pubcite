@@ -123,7 +123,7 @@
                             </div>
 
                             <!-- Signatory Type Field (Conditional) -->
-            <div id="signatory-type-group" class="hidden">
+            <div id="signatory-type-group" class="{{ old('role') == 'signatory' ? '' : 'hidden' }}">
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Signatory Type</label>
                                 <select name="signatory_type" 
                                         class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
@@ -159,45 +159,60 @@
 </div>
 
 <script>
-    const roleSelect = document.getElementById('role-select');
-    const signatoryGroup = document.getElementById('signatory-type-group');
-    const nameInput = document.getElementById('name-input');
-        
-    function toggleSignatory() {
-        if (roleSelect && signatoryGroup) {
-            signatoryGroup.classList.toggle('hidden', roleSelect.value !== 'signatory');
-        }
-    }
-    
-    function convertNameToUppercase() {
-        if (roleSelect && nameInput && roleSelect.value === 'signatory') {
-            nameInput.value = nameInput.value.toUpperCase();
-        }
-    }
-        
-    if (roleSelect) {
-        roleSelect.addEventListener('change', function() {
-            toggleSignatory();
-            convertNameToUppercase();
-        });
-        toggleSignatory();
-    }
-    
-    if (nameInput) {
-        nameInput.addEventListener('input', convertNameToUppercase);
-    }
-    
-    // Refresh signatory cache after successful form submission
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function() {
-            // Add a small delay to allow the server to process the update
-            setTimeout(() => {
-                if (window.refreshSignatoryCache) {
-                    window.refreshSignatoryCache();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add a small delay to ensure all elements are rendered
+        setTimeout(function() {
+            const roleSelect = document.getElementById('role-select');
+            const signatoryGroup = document.getElementById('signatory-type-group');
+            const nameInput = document.getElementById('name-input');
+            
+        function toggleSignatory() {
+            if (roleSelect && signatoryGroup) {
+                // Use explicit show/hide instead of toggle for reliability
+                if (roleSelect.value === 'signatory') {
+                    signatoryGroup.classList.remove('hidden');
+                    console.log('Signatory group shown');
+                } else {
+                    signatoryGroup.classList.add('hidden');
+                    console.log('Signatory group hidden');
                 }
-            }, 1000);
-        });
-    }
+            } else {
+                console.error('Elements not found:', { roleSelect: !!roleSelect, signatoryGroup: !!signatoryGroup });
+            }
+        }
+        
+        function convertNameToUppercase() {
+            if (roleSelect && nameInput && roleSelect.value === 'signatory') {
+                nameInput.value = nameInput.value.toUpperCase();
+            }
+        }
+            
+        if (roleSelect) {
+            roleSelect.addEventListener('change', function() {
+                toggleSignatory();
+                convertNameToUppercase();
+            });
+            // Initialize on page load
+            toggleSignatory();
+        }
+        
+        if (nameInput) {
+            nameInput.addEventListener('input', convertNameToUppercase);
+        }
+        
+        // Refresh signatory cache after successful form submission
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                // Add a small delay to allow the server to process the update
+                setTimeout(() => {
+                    if (window.refreshSignatoryCache) {
+                        window.refreshSignatoryCache();
+                    }
+                }, 1000);
+            });
+        }
+        }, 100); // 100ms delay to ensure DOM is fully rendered
+    });
 </script>
 </x-app-layout> 
