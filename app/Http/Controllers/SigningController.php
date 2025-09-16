@@ -111,6 +111,11 @@ class SigningController extends Controller
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
         $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
         
+        // Deputy Director and RDD Director can access ALL requests
+        if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
+            $matchedRole = $signatoryType; // They can access all requests
+        }
+        
         if (!$matchedRole) {
             abort(403, 'You are not authorized to access this request');
         }
@@ -159,6 +164,11 @@ class SigningController extends Controller
         $userName = trim($user->name ?? '');
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
         $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
+        
+        // Deputy Director and RDD Director can access ALL requests
+        if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
+            $matchedRole = $signatoryType; // They can access all requests
+        }
         
         if (!$matchedRole) {
             abort(403, 'You are not authorized to sign this request');
