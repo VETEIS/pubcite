@@ -142,6 +142,7 @@ Route::middleware(['auth', 'mobile.restrict'])->prefix('admin')->group(function 
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
+    Route::post('/settings/create-account', [\App\Http\Controllers\SettingsController::class, 'createAccount'])->name('admin.settings.create-account');
     // Signatories API (admin-authenticated for now)
     
     // Admin notifications endpoints

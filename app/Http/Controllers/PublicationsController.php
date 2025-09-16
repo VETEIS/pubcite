@@ -585,9 +585,9 @@ class PublicationsController extends Controller
                 'scopus' => 'nullable',
                 'wos' => 'nullable',
                 'aci' => 'nullable',
-                'faculty_name' => 'nullable|string|exists:users,name',
-                'center_manager' => 'nullable|string|exists:users,name',
-                'dean_name' => 'nullable|string|exists:users,name',
+                'faculty_name' => 'nullable|string',
+                'center_manager' => 'nullable|string',
+                'dean_name' => 'nullable|string',
                 'rec_collegeheader' => 'nullable|string',
                 'date' => 'nullable|string',
                 'rec_faculty_name' => 'nullable|string',
@@ -617,9 +617,9 @@ class PublicationsController extends Controller
                 'scopus' => 'nullable',
                 'wos' => 'nullable',
                 'aci' => 'nullable',
-                'faculty_name' => 'required|string|exists:users,name',
-                'center_manager' => 'nullable|string|exists:users,name',
-                'dean_name' => 'required|string|exists:users,name',
+                'faculty_name' => 'required|string',
+                'center_manager' => 'nullable|string',
+                'dean_name' => 'required|string',
                 'rec_collegeheader' => 'required|string',
                 'date' => 'required|string',
                 'rec_faculty_name' => 'required|string',
@@ -727,12 +727,17 @@ class PublicationsController extends Controller
                 ]);
             }
             
-            Log::info('Processing file uploads', [
-                'requestCode' => $requestCode,
-                'uploadPath' => $uploadPath
-            ]);
+            // Define preview status (this method is for submissions, not previews)
+            $isPreview = false;
             
-            $attachments = [];
+            // Skip file processing for previews - only process for actual submissions
+            if (!$isPreview) {
+                Log::info('Processing file uploads', [
+                    'requestCode' => $requestCode,
+                    'uploadPath' => $uploadPath
+                ]);
+                
+                $attachments = [];
             foreach ([
                 'recommendation_letter',
                 'published_article',
@@ -819,6 +824,11 @@ class PublicationsController extends Controller
                     ];
                 }
             }
+            } else {
+                // For previews, initialize empty arrays
+                $attachments = [];
+                $docxPaths = [];
+            }
 
             Log::info('Creating database entry', [
                 'requestCode' => $requestCode,
@@ -903,6 +913,9 @@ class PublicationsController extends Controller
                     foreach ($adminUsers as $adminUser) {
                         Mail::to($adminUser->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, true));
                     }
+                    
+                    // Queue signatory notifications for Deputy Director and RDD Director
+                    $this->notifySignatories($userRequest);
                     
                     Log::info('Email notifications queued successfully', [
                         'requestId' => $userRequest->id,
@@ -1392,18 +1405,8 @@ class PublicationsController extends Controller
             $isPreview = !$reqId;
             
             if ($isPreview) {
-                $userId = Auth::id();
-                if ($storeForSubmit) {
-                    // Store in temp folder for later use in submit
-                    $tempCode = 'preview_' . time() . '_' . Str::random(8);
-                    $uploadPath = "temp/{$userId}/{$tempCode}";
-                    Log::info('Generating DOCX for submit optimization', ['userId' => $userId, 'tempCode' => $tempCode]);
-                } else {
-                    // Generate for immediate download
-                    $tempCode = 'download_' . time() . '_' . Str::random(8);
-                    $uploadPath = "temp/{$userId}/{$tempCode}";
-                    Log::info('Generating DOCX for download', ['userId' => $userId, 'tempCode' => $tempCode]);
-                }
+                // Simple temp path for immediate preview - no complex directory structure
+                $uploadPath = "temp/preview_" . time();
             } else {
                 $userRequest = \App\Models\Request::find($reqId);
                 if (!$userRequest) {
@@ -1420,21 +1423,23 @@ class PublicationsController extends Controller
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
                     $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Incentive_Application_Form.docx';
+                    $filename = 'Incentive_Application_Form';
                     break;
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
                     $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Recommendation_Letter_Form.docx';
+                    $filename = 'Recommendation_Letter_Form';
                     break;
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
                     $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Terminal_Report_Form.docx';
+                    $filename = 'Terminal_Report_Form';
                     break;
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
+            
+            $filename = $filename . '.docx';
             
             $absolutePath = Storage::disk('local')->path($fullPath);
             if (!file_exists($absolutePath)) {
@@ -1488,5 +1493,104 @@ class PublicationsController extends Controller
                 'message' => 'Template preload failed'
             ], 500);
         }
+    }
+
+    /**
+     * Notify all signatories about new requests
+     */
+    private function notifySignatories(\App\Models\Request $request)
+    {
+        try {
+            // Extract signatories from form data using the same logic as admin review modal
+            $signatories = $this->extractSignatories($request->form_data);
+            
+            // Always include Deputy Director and RDD Director
+            $deputyDirectorEmail = \App\Models\Setting::get('deputy_director_email');
+            $rddDirectorEmail = \App\Models\Setting::get('rdd_director_email');
+            
+            $emailsSent = [];
+            
+            // Send emails to detected signatories
+            foreach ($signatories as $signatory) {
+                $user = \App\Models\User::where('name', $signatory['name'])->first();
+                if ($user && $user->email) {
+                    Mail::to($user->email)->queue(new \App\Mail\SignatoryNotification($request, $signatory['role'], $signatory['name']));
+                    $emailsSent[] = $user->email;
+                }
+            }
+            
+            // Send emails to Deputy Director and RDD Director
+            if ($deputyDirectorEmail) {
+                $deputyDirectorName = \App\Models\Setting::get('official_deputy_director_name', 'Deputy Director');
+                Mail::to($deputyDirectorEmail)->queue(new \App\Mail\SignatoryNotification($request, 'deputy_director', $deputyDirectorName));
+                $emailsSent[] = $deputyDirectorEmail;
+            }
+            
+            if ($rddDirectorEmail) {
+                $rddDirectorName = \App\Models\Setting::get('official_rdd_director_name', 'RDD Director');
+                Mail::to($rddDirectorEmail)->queue(new \App\Mail\SignatoryNotification($request, 'rdd_director', $rddDirectorName));
+                $emailsSent[] = $rddDirectorEmail;
+            }
+
+            Log::info('Signatory notifications queued', [
+                'requestId' => $request->id,
+                'signatories' => $signatories,
+                'emailsSent' => $emailsSent
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to queue signatory notifications', [
+                'requestId' => $request->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Extract signatories from form data (same logic as admin review modal)
+     */
+    private function extractSignatories($formData)
+    {
+        if (is_string($formData)) {
+            $decoded = json_decode($formData, true);
+            $formData = is_array($decoded) ? $decoded : [];
+        }
+        if (!$formData || !is_array($formData)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($formData as $k => $v) {
+            $normalized[strtolower($k)] = $v;
+        }
+
+        $roleToFields = [
+            'Faculty' => ['facultyname', 'faculty_name', 'rec_facultyname'],
+            'Research Center Manager' => ['centermanager', 'center_manager', 'research_center_manager'],
+            'College Dean' => ['collegedean', 'college_dean', 'dean', 'dean_name', 'rec_dean_name'],
+        ];
+
+        $signatories = [];
+        $seenValues = [];
+
+        foreach ($roleToFields as $role => $candidates) {
+            $value = null;
+            foreach ($candidates as $field) {
+                if (isset($normalized[$field]) && trim((string)$normalized[$field]) !== '') {
+                    $value = trim((string)$normalized[$field]);
+                    break;
+                }
+            }
+            if ($value !== null && !isset($seenValues[mb_strtolower($value)])) {
+                $signatories[] = [
+                    'role' => $role,
+                    'field' => $role,
+                    'name'  => $value,
+                ];
+                $seenValues[mb_strtolower($value)] = true;
+            }
+        }
+
+        return $signatories;
     }
 } 

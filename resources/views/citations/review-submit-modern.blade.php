@@ -273,7 +273,6 @@ function generateDocx(type) {
         'Preparing document template...',
         'Processing form data...',
         'Generating DOCX file...',
-        'Converting to PDF...',
         'Finalizing document...'
     ];
     

@@ -296,9 +296,37 @@
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs font-medium text-gray-700 mb-1">Official Title</label>
-                                        <input type="text" name="official_deputy_director_title" value="{{ old('official_deputy_director_title', $official_deputy_director_title) }}" 
+                                                    <input type="text" name="official_deputy_director_title" value="{{ old('official_deputy_director_title', $official_deputy_director_title) }}" 
                                                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
                                                            placeholder="Enter deputy director's title" required>
+                                                </div>
+                                                
+                                                <!-- Account Creation Section -->
+                                                <div class="border-t border-gray-200 pt-3 mt-4">
+                                                    <div class="space-y-3">
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
+                                                            <input type="email" name="deputy_director_email" value="{{ old('deputy_director_email', $deputy_director_email ?? '') }}" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                                   placeholder="deputy.director@example.com">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                                                            <input type="password" name="deputy_director_password" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                                   placeholder="Enter password for account creation">
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button type="button" onclick="createDeputyDirectorAccount()" 
+                                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-maroon-600 text-white text-xs font-medium rounded-md hover:bg-maroon-700 transition-colors">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                                </svg>
+                                                                Create Account
+                                                            </button>
+                                                            <span class="text-xs text-gray-500" id="deputy-account-status"></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                     </div>
@@ -316,15 +344,43 @@
                                             <div class="space-y-3">
                                                 <div>
                                                     <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
-                                        <input type="text" name="official_rdd_director_name" value="{{ old('official_rdd_director_name', $official_rdd_director_name) }}" 
+                                                    <input type="text" name="official_rdd_director_name" value="{{ old('official_rdd_director_name', $official_rdd_director_name) }}" 
                                                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
                                                            placeholder="Enter RDD director's full name" required>
-                                    </div>
+                                                </div>
                                                 <div>
                                                     <label class="block text-xs font-medium text-gray-700 mb-1">Official Title</label>
-                                        <input type="text" name="official_rdd_director_title" value="{{ old('official_rdd_director_title', $official_rdd_director_title) }}" 
+                                                    <input type="text" name="official_rdd_director_title" value="{{ old('official_rdd_director_title', $official_rdd_director_title) }}" 
                                                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
                                                            placeholder="Enter RDD director's title" required>
+                                                </div>
+                                                
+                                                <!-- Account Creation Section -->
+                                                <div class="border-t border-gray-200 pt-3 mt-4">
+                                                    <div class="space-y-3">
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
+                                                            <input type="email" name="rdd_director_email" value="{{ old('rdd_director_email', $rdd_director_email ?? '') }}" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                                   placeholder="rdd.director@example.com">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                                                            <input type="password" name="rdd_director_password" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                                   placeholder="Enter password for account creation">
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button type="button" onclick="createRddDirectorAccount()" 
+                                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                                </svg>
+                                                                Create Account
+                                                            </button>
+                                                            <span class="text-xs text-gray-500" id="rdd-account-status"></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                     </div>
@@ -773,6 +829,101 @@
                 if (window.checkCalendarChanges) {
                     window.checkCalendarChanges();
                 }
+            }
+        }
+
+        // Account creation functions
+        async function createDeputyDirectorAccount() {
+            const email = document.querySelector('input[name="deputy_director_email"]').value;
+            const password = document.querySelector('input[name="deputy_director_password"]').value;
+            const name = document.querySelector('input[name="official_deputy_director_name"]').value;
+            const statusElement = document.getElementById('deputy-account-status');
+            
+            if (!email || !password || !name) {
+                statusElement.textContent = 'Please fill all required fields';
+                statusElement.className = 'text-xs text-red-500';
+                return;
+            }
+            
+            statusElement.textContent = 'Creating account...';
+            statusElement.className = 'text-xs text-blue-500';
+            
+            try {
+                const response = await fetch('/admin/settings/create-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        name: name,
+                        role: 'deputy_director'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusElement.textContent = 'Account created successfully!';
+                    statusElement.className = 'text-xs text-green-500';
+                    // Clear password field
+                    document.querySelector('input[name="deputy_director_password"]').value = '';
+                } else {
+                    statusElement.textContent = data.message || 'Failed to create account';
+                    statusElement.className = 'text-xs text-red-500';
+                }
+            } catch (error) {
+                statusElement.textContent = 'Error creating account';
+                statusElement.className = 'text-xs text-red-500';
+            }
+        }
+
+        async function createRddDirectorAccount() {
+            const email = document.querySelector('input[name="rdd_director_email"]').value;
+            const password = document.querySelector('input[name="rdd_director_password"]').value;
+            const name = document.querySelector('input[name="official_rdd_director_name"]').value;
+            const statusElement = document.getElementById('rdd-account-status');
+            
+            if (!email || !password || !name) {
+                statusElement.textContent = 'Please fill all required fields';
+                statusElement.className = 'text-xs text-red-500';
+                return;
+            }
+            
+            statusElement.textContent = 'Creating account...';
+            statusElement.className = 'text-xs text-blue-500';
+            
+            try {
+                const response = await fetch('/admin/settings/create-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        name: name,
+                        role: 'rdd_director'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusElement.textContent = 'Account created successfully!';
+                    statusElement.className = 'text-xs text-green-500';
+                    // Clear password field
+                    document.querySelector('input[name="rdd_director_password"]').value = '';
+                } else {
+                    statusElement.textContent = data.message || 'Failed to create account';
+                    statusElement.className = 'text-xs text-red-500';
+                }
+            } catch (error) {
+                statusElement.textContent = 'Error creating account';
+                statusElement.className = 'text-xs text-red-500';
             }
         }
     </script>

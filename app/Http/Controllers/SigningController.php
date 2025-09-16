@@ -34,6 +34,12 @@ class SigningController extends Controller
         foreach ($candidateRequests as $req) {
             $form = is_array($req->form_data) ? $req->form_data : (json_decode($req->form_data ?? '[]', true) ?: []);
             $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
+            
+            // Deputy Director and RDD Director see ALL requests
+            if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
+                $matchedRole = $signatoryType; // They can sign all requests
+            }
+            
             if ($matchedRole) {
                 $needs[] = [
                     'id' => $req->id,
@@ -74,6 +80,8 @@ class SigningController extends Controller
             'faculty' => ['facultyname', 'faculty_name', 'rec_faculty_name'],
             'center_manager' => ['centermanager', 'center_manager', 'research_center_manager'],
             'college_dean' => ['collegedean', 'college_dean', 'dean', 'dean_name', 'rec_dean_name'],
+            'deputy_director' => ['deputy_director', 'deputy_director_name', 'official_deputy_director_name'],
+            'rdd_director' => ['rdd_director', 'rdd_director_name', 'official_rdd_director_name'],
         ];
         $keys = $map[$signatoryType] ?? [];
         foreach ($keys as $key) {
