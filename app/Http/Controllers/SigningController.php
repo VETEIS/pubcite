@@ -560,16 +560,37 @@ class SigningController extends Controller
     private function findFileInStorage(string $relativePath): ?string
     {
         $possiblePaths = [
+            // Standard Laravel storage paths
             storage_path('app/public/' . $relativePath),
             storage_path('app/' . $relativePath),
             storage_path('app/private/' . $relativePath),
+            // Production-specific paths
+            public_path('storage/' . $relativePath),
+            base_path('storage/app/public/' . $relativePath),
+            base_path('storage/app/' . $relativePath),
+            // Direct path if already absolute
+            $relativePath,
         ];
+        
+        Log::info('Searching for file', [
+            'relative_path' => $relativePath,
+            'possible_paths' => $possiblePaths
+        ]);
         
         foreach ($possiblePaths as $fullPath) {
             if (file_exists($fullPath) && is_readable($fullPath)) {
+                Log::info('File found', [
+                    'found_path' => $fullPath,
+                    'file_size' => filesize($fullPath)
+                ]);
                 return $fullPath;
             }
         }
+        
+        Log::warning('File not found in any location', [
+            'relative_path' => $relativePath,
+            'checked_paths' => $possiblePaths
+        ]);
         
         return null;
     }
