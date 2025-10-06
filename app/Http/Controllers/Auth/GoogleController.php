@@ -7,6 +7,7 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use GuzzleHttp\Client;
 
 class GoogleController extends Controller
 {
@@ -35,7 +36,23 @@ class GoogleController extends Controller
 
     public function handleGoogleCallback()
     {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        // Create custom Guzzle client with SSL verification disabled for development
+        if (app()->environment('local', 'development')) {
+            $guzzleClient = new Client([
+                'verify' => false,
+                'curl' => [
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_SSL_VERIFYHOST => false,
+                ]
+            ]);
+            
+            $googleUser = Socialite::driver('google')
+                ->setHttpClient($guzzleClient)
+                ->stateless()
+                ->user();
+        } else {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+        }
 
         if (!str_ends_with($googleUser->getEmail(), '@usep.edu.ph')) {
             return redirect()->route('login')->withErrors(['email' => 'Only @usep.edu.ph email addresses are allowed.']);

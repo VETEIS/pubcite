@@ -1,788 +1,859 @@
 <x-app-layout>
+    <!-- Global Notifications -->
     <x-global-notifications />
-<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 pb-20">
-    <div class="w-full max-w-4xl mx-auto">
-        <!-- Main Form Card - Fixed Height for Consistency -->
-        <div class="bg-white/30 backdrop-blur-md border border-white/40 overflow-hidden shadow-xl sm:rounded-lg p-0 relative h-[calc(90vh-4rem)] flex flex-col">
-            <div class="flex flex-col items-center text-center p-6">
-                <h2 class="text-xl font-bold text-burgundy-800 mb-1">Citation Request</h2>
-                <p class="text-sm text-gray-600">Fill out all required forms and upload documents to submit your citation request</p>
-            </div>
-            <div class="flex-1 overflow-y-auto px-6 pb-6">
-                <div x-data="{ showError: false, errorMsg: '' }" x-ref="errorBanner" class="relative">
-                    <template x-if="showError">
-                        <div class="fixed inset-0 z-50 flex items-center justify-center">
-                            <div class="fixed inset-0 bg-black/30" @click="showError = false"></div>
-                            <div class="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-full max-w-md">
-                                <div class="text-base font-semibold text-gray-800 mb-1">Incomplete form</div>
-                                <div class="text-sm text-gray-600 mb-4" x-text="errorMsg"></div>
-                                <div class="text-right">
-                                    <button @click="showError = false" type="button" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-burgundy-600 text-white hover:bg-burgundy-700">OK</button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                    <form 
-                        id="citation-request-form"
-                        method="POST" 
-                        action="{{ route('citations.submit') }}" 
-                        enctype="multipart/form-data" 
-                        class="space-b-3"
-                        x-data="citationForm()"
-                        x-ref="citationForm"
-                        @input="checkFilled()"
-                        @change="checkFilled()"
-                        x-init="checkFilled()"
-                        autocomplete="on"
-                    >
-                        @csrf
-                        <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="flex flex-col">
-                            <div class="flex w-full border-b mb-3 sticky top-0 z-20 bg-white/30 backdrop-blur">
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'incentive' ? 'border-burgundy-700 text-burgundy-700' : 'border-transparent text-gray-500',
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'incentive' }"
-                                >Incentive Application</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'recommendation' ? 'border-burgundy-700 text-burgundy-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
-                                    :disabled="false"}
-                                >Recommendation</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'upload' ? 'border-burgundy-700 text-burgundy-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
-                                    :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation)"
-                                >Upload Documents</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'review' ? 'border-burgundy-700 text-burgundy-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.upload) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
-                                    :disabled="!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.upload)"
-                                >Review & Submit</button>
-                            </div>
-
-                            <div class="flex-1 overflow-y-auto">
-                                <!-- Incentive Application Tab -->
-                                <div x-show="$store.tabNav && $store.tabNav.tab === 'incentive'" class="space-y-4">
-                                    @include('citations.incentive-application')
-                                </div>
-
-                                <!-- Recommendation Letter Tab -->
-                                <div x-show="$store.tabNav && $store.tabNav.tab === 'recommendation'" class="space-y-4">
-                                    @include('citations.recommendation-letter')
-                                </div>
-
-                                <!-- File Upload Tab -->
-                                <div x-show="$store.tabNav && $store.tabNav.tab === 'upload'" class="space-y-4">
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="font-semibold text-burgundy-800 mb-3">Required Documents</h3>
-                                        <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
-                                        
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                            <!-- Recommendation Letter Card -->
-                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.recommendationLetter.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Recommendation Letter</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Recommendation Letter approved by the College Dean</p>
-                                                <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="recommendation_letter" accept=".pdf" class="hidden" x-ref="recommendationLetter" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-
-                                            <!-- Citing Article Card -->
-                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.citingArticle.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Citing Article</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Copy of the citing article (PDF copy)</p>
-                                                <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="citing_article" accept=".pdf" class="hidden" x-ref="citingArticle" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-
-                                            <!-- Cited Article Card -->
-                                            <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.citedArticle.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Cited Article</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Copy of the cited article (PDF copy)</p>
-                                                <div class="text-xs text-burgundy-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="cited_article" accept=".pdf" class="hidden" x-ref="citedArticle" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Review & Submit Tab -->
-                                <div x-show="$store.tabNav && $store.tabNav.tab === 'review'" class="space-y-4">
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="font-semibold text-burgundy-800 mb-3">Review Your Submission</h3>
-                                        <p class="text-sm text-gray-600 mb-4">Review all uploaded files and generated documents.</p>
-                                        
-                                        <!-- Uploaded Files Section -->
-                                        <div class="mb-6">
-                                            <h4 class="font-medium text-burgundy-700 mb-3">Uploaded Documents</h4>
-                                            <div class="grid grid-cols-5 gap-4">
-                                                <!-- Recommendation Letter Review Card -->
-                                                <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
-                                                    </div>
-                                                    <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-recommendation-letter">No file uploaded</div>
-                                                    <div class="text-center mt-auto">
-                                                        <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('recommendation-letter-review').click()">Change File</button>
-                                                        <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation-letter', this)">
-                                                    </div>
-                                                </div>
-
-                                                <!-- Citing Article Review Card -->
-                                                <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Citing Article</h5>
-                                                    </div>
-                                                    <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-citing-article">No file uploaded</div>
-                                                    <div class="text-center mt-auto">
-                                                        <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('citing-article-review').click()">Change File</button>
-                                                        <input type="file" id="citing-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('citing-article', this)">
-                                                    </div>
-                                                </div>
-
-                                                <!-- Cited Article Review Card -->
-                                                <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Cited Article</h5>
-                                                    </div>
-                                                    <div class="text-xs text-gray-600 text-center mb-2 flex-1" id="review-cited-article">No file uploaded</div>
-                                                    <div class="text-center mt-auto">
-                                                        <button type="button" class="text-xs text-burgundy-600 hover:text-burgundy-800" onclick="document.getElementById('cited-article-review').click()">Change File</button>
-                                                        <input type="file" id="cited-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited-article', this)">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Generated Documents Section -->
-                                        <div class="mb-6">
-                                            <h4 class="font-medium text-burgundy-700 mb-3">Generated Documents</h4>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <!-- Incentive Application Review -->
-                                                <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Incentive Application</h5>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <button type="button" class="text-xs bg-burgundy-600 text-white px-3 py-1 rounded hover:bg-burgundy-700 transition-colors" onclick="generateDocx('incentive')">Generate DOCX</button>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Recommendation Letter Review -->
-                                                <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-300 shadow-sm">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <button type="button" class="text-xs bg-burgundy-600 text-white px-3 py-1 rounded hover:bg-burgundy-700 transition-colors" onclick="generateDocx('recommendation')">Generate DOCX</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- Loading Overlay - Now handled by simple loading system -->
-
-
-    <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
-<div
-    x-data="stickyProgressBar"
-    x-init="init()"
-    :class="isDocked ? 'absolute' : 'fixed'"
-    :style="`left: 0; right: 0; bottom: 10px; transition: bottom 0.3s cubic-bezier(.4,0,.2,1);`"
-    class="z-50 flex justify-center"
->
-    <div class="max-w-xl mx-auto">
-        <div class="bg-burgundy-800 shadow-2xl rounded-lg border border-burgundy-700 shadow-black/20 shadow-lg">
-            <div class="px-6 py-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1 mr-4">
-                        <div class="w-full bg-burgundy-600 rounded-full h-2">
-                            <div class="bg-white h-2 rounded-full transition-all duration-300" :style="`width: ${$store.tabNav.progressPercentage || 33}%`"></div>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4 text-sm">
-                        <span :class="$store.tabNav.currentStep === 1 ? 'font-semibold text-white' : 'text-burgundy-200'">Step 1: Details</span>
-                        <span :class="$store.tabNav.currentStep === 2 ? 'font-semibold text-white' : 'text-burgundy-200'">Step 2: Upload</span>
-                        <span :class="$store.tabNav.currentStep === 3 ? 'font-semibold text-white' : 'text-burgundy-200'">Step 3: Review</span>
-                        <div x-show="$store.tabNav && $store.tabNav.tab !== 'review'">
-                            <button
-                                type="button"
-                                @click="$store.tabNav.nextTab()"
-                                :disabled="false"
-                                :class="!$store.tabNav.currentTabComplete
-                                    ? 'font-semibold px-4 py-2 rounded-lg bg-burgundy-800 text-burgundy-200 opacity-90 cursor-not-allowed transition shadow-lg'
-                                    : 'font-semibold px-4 py-2 rounded-lg bg-burgundy-800 text-white shadow-lg hover:bg-burgundy-900 hover:shadow-xl cursor-pointer transition'"
-                            >
-                                Next
-                            </button>
-                        </div>
-                        <div x-show="$store.tabNav && $store.tabNav.tab === 'review'">
-                                                            <button
-                                    type="button"
-                                    onclick="submitCitationForm(event)"
-                                    :class="!$store.tabNav.allComplete
-                                        ? 'font-semibold px-4 py-2 rounded-lg bg-burgundy-800 text-burgundy-50 opacity-90 cursor-not-allowed transition shadow-lg'
-                                        : 'font-semibold px-4 py-2 rounded-lg bg-burgundy-800 text-white shadow-lg hover:bg-burgundy-900 hover:shadow-xl cursor-pointer transition'"
-                                >
-                                Submit Request
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- DOCX Spinner - Now handled by simple loading system -->
-
-<script>
-    function citationForm() {
-        return {
-            isFormComplete: false,
-            
-            checkFilled() {
-                // No-op, logic moved to tabNav
-            }
-        }
-    }
     
-    function submitCitationForm(event) {
-    // Prevent double submission
-    if (document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
-        return false;
-    }
-        
-        // Validate all tabs before submission
-        const tabNav = Alpine.store('tabNav');
-        if (!tabNav.allComplete) {
-            tabNav.checkTabs();
-            if (!tabNav.allComplete) {
-                // Show error via global notifications
-                if (window.notificationManager) {
-                    window.notificationManager.error('Please complete all required fields before submitting.');
-                }
+    <script>
+        function citationRequestData() {
+            return {
+                loading: false,
+                isSubmitting: false,
+                autoSaveDisabled: false,
+                errorMessage: null,
+                errorTimer: null,
+                activeTab: 'incentive',
+                searchOpen: false,
+                savingDraft: false,
+                lastSaved: null,
+                autoSaveTimer: null,
+                tabStatesRefreshed: 0,
+                confirmChecked: false,
+                
+                showError(message) {
+                    this.errorMessage = message;
+                    if (this.errorTimer) clearTimeout(this.errorTimer);
+                    this.errorTimer = setTimeout(() => {
+                        this.errorMessage = null;
+                    }, 3000);
+                },
+                
+                // Simple form validation - no complex logic
+                validateForm(showError = false) {
+                    const requiredFields = document.querySelectorAll('[required]');
+                    let allValid = true;
+                    let firstInvalidField = null;
+                    
+                    requiredFields.forEach(field => {
+                        let isValid = false;
+                        
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            isValid = field.checked;
+                        } else if (field.type === 'file') {
+                            isValid = field.files && field.files.length > 0;
+                        } else {
+                            isValid = field.value.trim() !== '';
+                        }
+                        
+                        if (!isValid) {
+                            allValid = false;
+                            if (!firstInvalidField) firstInvalidField = field;
+                            field.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
+                            setTimeout(() => field.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2'), 3000);
+                        }
+                    });
+                    
+                    if (!allValid && firstInvalidField && showError) {
+                        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalidField.focus();
+                        this.showError('Please complete all required fields before submitting.');
+                    }
+                    
+                    return allValid;
+                },
+                
+                // Sequential tab switching with validation
+                switchTab(targetTab) {
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    const targetIndex = tabs.indexOf(targetTab);
+                    
+                    // Always allow going back or staying on same tab
+                    if (targetIndex <= currentIndex) {
+                        this.activeTab = targetTab;
+                        return;
+                    }
+                    
+                    // Going forward - validate current tab
+                    if (!this.validateCurrentTab()) {
+                        this.showError('Please complete all required fields in the current tab before proceeding.');
+                        return;
+                    }
+                    
+                    this.activeTab = targetTab;
+                    
+                    // Display uploaded files when switching to review tab
+                    if (targetTab === 'review') {
+                        setTimeout(() => {
+                            if (typeof displayUploadedFiles === 'function') {
+                                displayUploadedFiles();
+                            }
+                        }, 100);
+                    }
+                },
+                
+                // Validate current tab - simple and reliable
+                validateCurrentTab() {
+                    const currentTab = this.activeTab;
+                    
+                    // Special handling for upload tab
+                    if (currentTab === 'upload') {
+                        const requiredFiles = ['recommendation_letter', 'citing_article', 'cited_article'];
+                        
+                        for (let fileName of requiredFiles) {
+                            const fileInput = document.querySelector(`input[name="${fileName}"]`);
+                            
+                            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                    
+                    // Define required fields for other tabs
+                    const tabFields = {
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
+                        'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details']
+                    };
+                    
+                    const requiredFields = tabFields[currentTab] || [];
+                    if (requiredFields.length === 0) {
+                        return true; // No validation needed for this tab
+                    }
+                    
+                    // Check each required field
+                    for (let fieldName of requiredFields) {
+                        const field = document.querySelector(`[name="${fieldName}"]`);
+                        
+                        if (!field) continue;
+                        
+                        // Check if field is valid
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            if (!field.checked) {
+                                return false;
+                            }
+                        } else {
+                            if (!field.value || field.value.trim() === '') {
+                                return false;
+                            }
+                        }
+                    }
+                    
+                    return true;
+                },
+                
+                // Check if field belongs to current tab
+                fieldBelongsToTab(field, tab) {
+                    const tabElement = document.querySelector(`[x-show="activeTab === '${tab}'"]`);
+                    if (!tabElement) return false;
+                    
+                    return tabElement.contains(field);
+                },
+                
+                // Get next tab in sequence
+                getNextTab() {
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex + 1] || 'review';
+                },
+                
+                // Check if a tab should be enabled (progressive unlocking)
+                isTabEnabled(tabName) {
+                    // Use the reactive property to force re-evaluation
+                    const _ = this.tabStatesRefreshed;
+                    
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    const targetIndex = tabs.indexOf(tabName);
+                    
+                    // Always allow current tab and previous tabs
+                    if (targetIndex <= currentIndex) {
+                        return true;
+                    }
+                    
+                    // For next tab, check if current tab is complete
+                    if (targetIndex === currentIndex + 1) {
+                        const isValid = this.validateCurrentTab();
+                        return isValid;
+                    }
+                    
+                    // For future tabs, check if all previous tabs are complete
+                    for (let i = 0; i < targetIndex; i++) {
+                        const previousTab = tabs[i];
+                        
+                        // Temporarily switch to check previous tab
+                        const originalTab = this.activeTab;
+                        this.activeTab = previousTab;
+                        const isComplete = this.validateCurrentTab();
+                        this.activeTab = originalTab;
+                        
+                            if (!isComplete) {
                 return false;
             }
         }
         
-        // Show comprehensive loading state with progress tracking
-        const operationId = `submit-citation-${Date.now()}`;
-        
-        // Define progress steps for submission
-        const progressSteps = [
-            'Validating form data...',
-            'Processing uploaded files...',
-            'Generating documents...',
-            'Saving to database...',
-            'Sending notifications...',
-            'Finalizing submission...'
-        ];
-        
-        // Show loading screen
-        window.showLoading('Submitting Request', 'Please wait while we process your citation request...', progressSteps);
-        
-        // Simulate progress updates
-        let currentStep = 0;
-        const progressInterval = setInterval(() => {
-            if (currentStep < progressSteps.length - 1) {
-                currentStep++;
-                window.updateProgress(currentStep, progressSteps);
-            }
-        }, 800);
-        
-        // Store interval for cleanup
-        window[`progress_${operationId}`] = progressInterval;
-        
-        // Let Turbo handle the form submission naturally
-        // Add cleanup when page navigation completes
-        document.addEventListener('turbo:before-cache', function cleanup() {
-            window.hideLoading();
-            if (window[`progress_${operationId}`]) {
-                clearInterval(window[`progress_${operationId}`]);
-                delete window[`progress_${operationId}`];
-            }
-            document.removeEventListener('turbo:before-cache', cleanup);
-        });
-        
-        return true; // Allow form submission
-    }
-    
-    function updateReviewFile(type, input) {
-        const fileName = input.files.length > 0 ? input.files[0].name : 'No file uploaded';
-        document.getElementById(`review-${type}`).textContent = fileName;
-        
-        // Update the original file input
-        const originalInput = document.querySelector(`[name="${type.replace('-', '_')}"]`);
-        if (originalInput && input.files.length > 0) {
-            originalInput.files = input.files;
-        }
-    }
-    
-    function generateDocx(type) {
-        // Prevent double submission
-        if (window.loadingManager && window.loadingManager.isLoading()) {
+                    return true;
+                },
+                
+                // Silent auto-save - no notifications
+                async saveDraft() {
+                    this.savingDraft = true;
+                    try {
+                        const formData = new FormData();
+                        const form = document.getElementById('citation-request-form');
+                        
+                        // Collect ALL form data from ALL tabs
+                        const inputs = form.querySelectorAll('input, textarea, select');
+                        
+                        
+                        // Track if we have meaningful data to save
+                        let hasData = false;
+                        
+                        inputs.forEach(input => {
+                            if (input.type === 'file') {
+                                // Skip files in auto-save to prevent multiple folder creation
+                                // Files will be saved only during final submission
+                                return;
+                            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                                if (input.checked) {
+                                    formData.append(input.name, input.value);
+                                    hasData = true;
+                                }
+                            } else {
+                                // Only save fields that have actual content
+                                const value = input.value || '';
+                                if (value.trim() !== '') {
+                                    formData.append(input.name, value);
+                                    hasData = true;
+                                }
+                            }
+                        });
+                        
+                        // Don't save if no meaningful data
+                        if (!hasData) {
+                            return;
+                        }
+                        
+                        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                        formData.append('save_draft', '1');
+                        
+                        const response = await fetch('{{ route("citations.submit") }}', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            this.lastSaved = new Date().toLocaleTimeString();
+                        }
+                        // Silent save - no error notifications for auto-save
+                    } catch (error) {
+                        // Silent error - don't show notifications for auto-save
+                    } finally {
+                        this.savingDraft = false;
+                    }
+                },
+                
+                // Debounced auto-save
+                autoSave() {
+                    // Don't auto-save if disabled (e.g., after form submission)
+                    if (this.autoSaveDisabled) {
             return;
         }
         
-        const form = document.getElementById('citation-request-form');
-        const formData = new FormData(form);
-        formData.append('docx_type', type);
-
-        // Check if this is a preview (before submission) or post-submission
-        // If the form has a request_id hidden field with a value, it's post-submission
-        const requestIdField = document.querySelector('input[name="request_id"]');
-        const isPreview = !requestIdField || !requestIdField.value;
-        
-        if (!isPreview) {
-            // Post-submission: include request_id
-            formData.append('request_id', requestIdField.value);
-        }
-        // Preview mode: don't include request_id (will use temp directory)
-
-        // Show comprehensive loading state with progress tracking
-        const operationId = `generate-citation-docx-${type}-${Date.now()}`;
-        
-        // Define progress steps for document generation
-        const progressSteps = [
-            'Preparing document template...',
-            'Processing form data...',
-            'Generating DOCX file...',
-            'Converting to PDF...',
-            'Finalizing document...'
-        ];
-        
-        if (window.loadingManager) {
-            window.loadingManager.show(operationId, {
-                title: 'Generating Document',
-                message: `Creating ${type} document, please wait...`,
-                showOverlay: true,
-                disableButtons: true,
-                progressSteps: progressSteps,
-                currentStep: 0
-            });
-            
-            // Simulate progress updates
-            let currentStep = 0;
-            const progressInterval = setInterval(() => {
-                if (currentStep < progressSteps.length - 1) {
-                    currentStep++;
-                    if (window.loadingManager && typeof window.loadingManager.updateProgress === 'function') {
-                        window.loadingManager.updateProgress(operationId, currentStep, progressSteps);
-                    } else {
-                        console.warn('Loading system not available');
+                    // Clear existing timer
+                    if (this.autoSaveTimer) {
+                        clearTimeout(this.autoSaveTimer);
                     }
-                }
-            }, 1000); // Update every second
-            
-            // Store interval for cleanup
-            window[`progress_${operationId}`] = progressInterval;
+                    
+                    // Set new timer - save after 2 seconds of inactivity
+                    this.autoSaveTimer = setTimeout(() => {
+                        this.saveDraft();
+                    }, 2000);
+                },
+                
+                // Disable auto-save (called after form submission)
+                disableAutoSave() {
+                    this.autoSaveDisabled = true;
+                    if (this.autoSaveTimer) {
+                        clearTimeout(this.autoSaveTimer);
+                        this.autoSaveTimer = null;
+                    }
+                },
+                
+                // Load draft data into form
+                loadDraftData() {
+                    // Check if we should load a specific draft from sessionStorage
+                    const loadDraftId = sessionStorage.getItem('loadDraftId');
+                    if (loadDraftId) {
+                        this.loadSpecificDraft(loadDraftId);
+                        return;
+                    }
+                    
+                    const draftData = @json($request->form_data ?? []);
+                    if (!draftData || Object.keys(draftData).length === 0) {
+                        // Set initial timestamp even if no draft data
+                        this.lastSaved = 'Never';
+                        return;
+                    }
+                    
+                    
+                    // Set timestamp to show draft was loaded
+                    this.lastSaved = 'Draft loaded';
+                    
+                    // Populate all form fields
+                    Object.keys(draftData).forEach(key => {
+                        const element = document.querySelector(`[name="${key}"]`);
+                        if (element) {
+                            if (element.type === 'checkbox' || element.type === 'radio') {
+                                element.checked = draftData[key] === '1' || draftData[key] === 'on';
+                            } else if (element.type === 'file') {
+                                // Files can't be restored, skip
         } else {
-            // Fallback: Basic button disabling
-            const button = event.target;
-            if (button) {
-                button.disabled = true;
-                button.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        // Get user name for filename
-        const applicantName = document.querySelector('[name="applicant_name"]')?.value || 'User';
-        const sanitizedName = applicantName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-
-        fetch('{{ route("citations.generate") }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.blob();
-            }
-            throw new Error('Network response was not ok');
-        })
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const timestamp = new Date().toISOString().slice(0, 10);
-            a.download = type === 'incentive' 
-                ? `${sanitizedName}_Citation_Incentive_Application_${timestamp}.docx` 
-                : `${sanitizedName}_Citation_Recommendation_Letter_${timestamp}.docx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        })
-        .catch(error => {
-            alert('Error generating document. Please try again.');
-            // Hide loading state
-            if (window.loadingManager) {
-                // Clear progress interval
-                if (window[`progress_${operationId}`]) {
-                    clearInterval(window[`progress_${operationId}`]);
-                    delete window[`progress_${operationId}`];
-                }
-                window.loadingManager.hide(operationId);
-            }
-        })
-        .finally(() => {
-            // Hide loading state
-            if (window.loadingManager) {
-                // Clear progress interval
-                if (window[`progress_${operationId}`]) {
-                    clearInterval(window[`progress_${operationId}`]);
-                    delete window[`progress_${operationId}`];
-                }
-                window.loadingManager.hide(operationId);
-            }
-        });
-    }
-
-    function syncUploadedFiles() {
-        const fileFields = [
-            'recommendation_letter',
-            'citing_article', 
-            'cited_article'
-        ];
-        
-        fileFields.forEach(field => {
-            const input = document.querySelector(`[name="${field}"]`);
-            const reviewElement = document.getElementById(`review-${field.replace(/_/g, '-')}`);
-            
-            if (input && input.files.length > 0 && reviewElement) {
-                const fileName = input.files[0].name;
-                reviewElement.textContent = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
-            }
-        });
-    }
-    
-    function tabNav() {
-        return {
-            tab: 'incentive',
-            tabCompletion: { 
-                incentive: false, 
-                recommendation: false, 
-                upload: false, 
-                review: false 
-            },
-            allComplete: false,
-            get currentTabComplete() {
-                return this.tabCompletion[this.tab];
-            },
-            get allFormsComplete() {
-                return this.tabCompletion.incentive && this.tabCompletion.recommendation && this.tabCompletion.upload;
-            },
-            get currentStep() {
-                if (['incentive', 'recommendation'].includes(this.tab)) {
-                    return 1; // Details step
-                } else if (this.tab === 'upload') {
-                    return 2; // Upload step
-                } else if (this.tab === 'review') {
-                    return 3; // Review step
-                }
-                return 1;
-            },
-            get progressPercentage() {
-                const steps = ['incentive', 'recommendation', 'upload', 'review'];
-                const currentIndex = steps.indexOf(this.tab);
-                return Math.max(33, (currentIndex + 1) * 20);
-            },
-            nextTab() {
-                const tabs = ['incentive', 'recommendation', 'upload', 'review'];
-                const currentIndex = tabs.indexOf(this.tab);
-                if (!this.currentTabComplete) {
-                    this.highlightIncompleteFieldsForTab(this.tab);
-                    return;
-                }
-                if (currentIndex < tabs.length - 1) {
-                    this.tab = tabs[currentIndex + 1];
-                    // Sync uploaded files when moving to review tab
-                    if (this.tab === 'review') {
-                        setTimeout(syncUploadedFiles, 100);
+                                element.value = draftData[key] || '';
+                            }
+                        }
+                    });
+                    
+                    // Restore signatory selections
+                    this.restoreSignatorySelections(draftData);
+                    
+                    // Update submit button state
+                    this.updateSubmitButton();
+                },
+                
+                // Load a specific draft by ID
+                async loadSpecificDraft(draftId) {
+                    try {
+                        const response = await fetch(`/api/draft/${draftId}`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.draft) {
+                            // form_data is already an object from the API
+                            const draftData = data.draft.form_data;
+                            
+                            // Set timestamp to show draft was loaded
+                            this.lastSaved = 'Draft loaded';
+                            
+                            // Populate all form fields
+                            Object.keys(draftData).forEach(key => {
+                                const element = document.querySelector(`[name="${key}"]`);
+                                if (element) {
+                                    if (element.type === 'checkbox' || element.type === 'radio') {
+                                        element.checked = draftData[key] === '1' || draftData[key] === 'on';
+                                    } else if (element.type === 'file') {
+                                        // Files can't be restored, skip
+                                    } else {
+                                        element.value = draftData[key] || '';
+                                    }
+                                }
+                            });
+                            
+                            // Restore signatory selections
+                            this.restoreSignatorySelections(draftData);
+                            
+                            // Update submit button state
+                            this.updateSubmitButton();
+                            
+                            // Clear the sessionStorage
+                            sessionStorage.removeItem('loadDraftId');
+                        } else {
+                            this.lastSaved = 'Never';
+                        }
+                    } catch (error) {
+                        this.lastSaved = 'Never';
                     }
-                }
-            },
-            highlightIncompleteFieldsForTab(tab) {
-                let fields = [];
-                if (tab === 'incentive') {
-                    fields = [
-                        'name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'dean_name'
-                    ]; // 'citescore' and 'doi' are optional
-                } else if (tab === 'recommendation') {
-                    fields = ['rec_collegeheader', 'rec_faculty_name', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name'];
-                } else if (tab === 'upload') {
-                    fields = ['recommendation_letter', 'citing_article', 'cited_article'];
-                }
-                let firstIncompleteEl = null;
-                fields.forEach(field => {
-                    const element = this.getFieldElement(field);
-                    if (!element) return;
-                    let incomplete = false;
-                    if (element.type === 'radio') {
-                        incomplete = !document.querySelector(`[name="${field}"]:checked`);
-                    } else if (element.type === 'checkbox') {
-                        const checked = this.getFieldElements(field);
-                        incomplete = Array.from(checked).filter(cb => cb.checked).length === 0;
-                    } else if (element.type === 'file') {
-                        incomplete = !(element.files && element.files.length > 0);
+                },
+                
+                // Restore signatory Alpine.js selections
+                restoreSignatorySelections(draftData) {
+                    const signatoryFields = [
+                        'faculty_name', 'center_manager', 'dean_name',  // Incentive tab
+                        'rec_faculty_name', 'rec_dean_name'             // Recommendation tab
+                    ];
+                    
+                    signatoryFields.forEach(fieldName => {
+                        const value = draftData[fieldName];
+                        if (value) {
+                            // Use multiple selectors to find the component
+                            const selectors = [
+                                `[data-field="${fieldName}"]`,
+                                `[name="${fieldName}"]`,
+                                `input[name="${fieldName}"]`
+                            ];
+                            
+                            let component = null;
+                            for (const selector of selectors) {
+                                component = document.querySelector(selector);
+                                if (component) {
+                                    break;
+                                }
+                            }
+                            
+                            if (component) {
+                                // Robust restoration with multiple attempts
+                                this.restoreSignatoryValue(component, fieldName, value, 0);
+                            }
+                        }
+                    });
+                },
+                
+                // Robust signatory value restoration with retries
+                restoreSignatoryValue(component, fieldName, value, attempt = 0) {
+                    const maxAttempts = 10;
+                    const delay = Math.min(100 * Math.pow(1.5, attempt), 2000); // Exponential backoff, max 2s
+                    
+                    
+                    // Try to find Alpine.js data
+                    let alpineData = null;
+                    try {
+                        alpineData = Alpine.$data(component);
+                    } catch (e) {
+                        // Alpine.$data failed
+                    }
+                    
+                    if (alpineData && alpineData.selectedName !== undefined) {
+                        // Alpine.js component is ready
+                        alpineData.selectedName = value;
+                        alpineData.query = value;
+                        
+                        // Trigger validation
+                        setTimeout(() => {
+                            document.dispatchEvent(new CustomEvent('signatory-selected', {
+                                detail: { fieldName: fieldName, selectedName: value }
+                            }));
+                        }, 100);
+                    } else if (attempt < maxAttempts) {
+                        // Retry after delay
+                        setTimeout(() => {
+                            this.restoreSignatoryValue(component, fieldName, value, attempt + 1);
+                        }, delay);
                     } else {
-                        incomplete = element.value.trim() === '';
+                        // Fallback: Set the hidden input value directly
+                        const hiddenInput = component.querySelector('input[type="hidden"]');
+                        if (hiddenInput) {
+                            hiddenInput.value = value;
+                        }
                     }
-                    if (incomplete) {
-                        element.classList.add('ring-2', 'ring-burgundy-500', 'ring-offset-2');
-                        if (!firstIncompleteEl) firstIncompleteEl = element;
-                        setTimeout(() => element.classList.remove('ring-2', 'ring-burgundy-500', 'ring-offset-2'), 2000);
+                },
+                
+                // Simple tab navigation helpers
+                getNextTab() {
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex + 1] || this.activeTab;
+                },
+                
+                getPreviousTab() {
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex - 1] || this.activeTab;
+                },
+                
+                // Update submit button state
+                updateSubmitButton() {
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        const confirmChecked = document.querySelector('#confirm-submission')?.checked || false;
+                        submitBtn.disabled = !confirmChecked;
                     }
-                });
-                // Focus and scroll to first incomplete field
-            if (firstIncompleteEl) {
-                setTimeout(() => {
-                    firstIncompleteEl.focus();
-                    firstIncompleteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
-            },
-            getFieldElement(field) {
-                let el = document.querySelector(`[name="${field}"]`);
-                if (el) return el;
-                el = document.querySelector(`[name="${field}[]"]`);
-                return el;
-            },
-            getFieldElements(field) {
-                let els = document.querySelectorAll(`[name="${field}"]`);
-                if (els.length > 0) return els;
-                els = document.querySelectorAll(`[name="${field}[]"]`);
-                return els;
-            },
-            checkTabs() {
-                // Check incentive tab completion
-                const incentiveFields = [
-                    'name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'dean_name'
-                ]; // 'citescore' and 'doi' are optional
+                    
+                    // Also refresh tab states when form changes
+                    this.refreshTabStates();
+                },
+
+                // Reset submit button after submission
+                resetSubmitButton() {
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit';
+                        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                },
                 
-                // Check basic required fields
-                const basicFieldsValid = incentiveFields.every(field => {
-                    const element = document.querySelector(`[name="${field}"]`);
-                    return element && (element.type === 'checkbox' ? element.checked : (element.type === 'file' ? (element.files && element.files.length > 0) : element.value.trim() !== ''));
-                });
+                // Refresh tab enabled/disabled states
+                refreshTabStates() {
+                    // Force Alpine.js to re-evaluate the tab states
+                    this.$nextTick(() => {
+                        // Trigger validation for current tab
+                        const currentTabValid = this.validateCurrentTab();
+                        
+                        // Force Alpine.js to re-render by updating a reactive property
+                        // This will cause isTabEnabled() to be called for all tabs
+                        this.tabStatesRefreshed = Date.now();
+                    });
+                },
                 
-                // Check that at least one indexing option is selected
-                const indexingFields = ['scopus', 'wos', 'aci'];
-                const hasIndexingSelection = indexingFields.some(field => {
-                    const element = document.querySelector(`[name="${field}"]`);
-                    return element && element.checked;
-                });
-                
-                this.tabCompletion.incentive = basicFieldsValid && hasIndexingSelection;
-                
-                // Check recommendation tab completion
-                const recommendationFields = [
-                    'rec_collegeheader', 'rec_faculty_name', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name'
-                ];
-                this.tabCompletion.recommendation = recommendationFields.every(field => {
-                    const element = document.querySelector(`[name="${field}"]`);
-                    if (!element) {
+                // Handle form submission - only show error popup on actual submit
+                handleSubmit(event) {
+                    // Prevent double submission
+                    if (this.isSubmitting) {
+                        event.preventDefault();
                         return false;
                     }
-                    const isFilled = element.value.trim() !== '';
-                    return isFilled;
-                });
-                
-                // Check upload tab completion
-                const uploadFields = [
-                    'recommendation_letter', 'citing_article', 'cited_article'
-                ];
-                this.tabCompletion.upload = uploadFields.every(fileName => {
-                    const element = document.querySelector(`[name="${fileName}"]`);
-                    return element && element.files.length > 0;
-                });
-                
-                // Review tab is complete if upload is complete
-                this.tabCompletion.review = this.tabCompletion.upload;
-                
-                // All complete if all tabs are complete
-                this.allComplete = this.tabCompletion.incentive && this.tabCompletion.recommendation && this.tabCompletion.upload;
-            },
-            validateCurrentTab() {
-                this.checkTabs();
-                if (!this.currentTabComplete) {
-                    this.highlightIncompleteFieldsForTab(this.tab);
-                    if (typeof this.showError !== 'undefined') {
-                        this.showError = true;
-                        this.errorMsg = 'Please complete all required fields in this section before continuing.';
-                        this.$nextTick(() => {
-                            this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        });
+                    
+                    if (!this.validateForm(true)) {
+                        event.preventDefault();
+                        // Error popup is already shown by validateForm()
+                        return false;
                     }
+                    
+                    // Mark as submitting and disable submit button
+                    this.isSubmitting = true;
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Submitting...';
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    // Show loading screen with progress steps
+                    const progressSteps = [
+                        'Validating form data...',
+                        'Processing uploaded files...',
+                        'Generating documents...',
+                        'Saving to database...',
+                        'Sending notifications...',
+                        'Finalizing submission...'
+                    ];
+                    window.showLoading('Submitting Request', 'Please wait while we process your citation request...', progressSteps);
+                    
+                    // Disable auto-save to prevent duplicate entries after submission
+                    this.disableAutoSave();
+                    
+                    // Prevent default form submission and submit manually
+                    event.preventDefault();
+                    
+                    // Submit the form manually after a short delay to ensure loading screen shows
+                    setTimeout(() => {
+                        const form = document.getElementById('citation-request-form');
+                        form.submit();
+                    }, 100);
+                    
                     return false;
-                }
-                return true;
-            }
-        }
-    }
-
-    function stickyProgressBar() {
-        return {
-            isDocked: false,
-            observer: null,
+                },
+                
+                // Initialize form
             init() {
-                const footer = document.getElementById('main-footer');
-                if (!footer) return;
-                this.observer = new IntersectionObserver(
-                    ([entry]) => {
-                        this.isDocked = entry.isIntersecting;
-                    },
-                    {
-                        root: null,
-                        threshold: 0.01
-                    }
-                );
-                this.observer.observe(footer);
-            },
-            destroy() {
-                if (this.observer) this.observer.disconnect();
-            }
-        }
-    }
-
-    function validateFileSize(input) {
-        if (input.files && input.files[0] && input.files[0].size > 20 * 1024 * 1024) {
-            alert('File is too large! Maximum allowed size is 20MB.');
-            input.value = '';
-        }
-    }
-
-    document.addEventListener('alpine:init', () => {
-        Alpine.store('tabNav', tabNav());
-        Alpine.store('stickyProgressBar', stickyProgressBar());
-
-        // Add event listeners for all form fields to update tab completion
-        const events = ['input', 'change', 'click', 'keyup', 'blur'];
-        events.forEach(eventType => {
-            document.addEventListener(eventType, (e) => {
+                    // Load draft data after a short delay to ensure DOM is ready
+                    setTimeout(() => {
+                        this.loadDraftData();
+                    }, 500);
+                    
+                    // Add event listener for confirmation checkbox
+                    this.$nextTick(() => {
+                        const confirmCheckbox = document.querySelector('#confirm-submission');
+                        if (confirmCheckbox) {
+                            confirmCheckbox.addEventListener('change', () => {
+                                this.updateSubmitButton();
+                            });
+                        }
+                    });
+                    
+                    // Setup real-time validation
+                    this.setupRealTimeValidation();
+                    
+                    // Reset submitting state on page unload or navigation
+                    window.addEventListener('beforeunload', () => {
+                        this.isSubmitting = false;
+                    });
+                    
+                    // Reset submitting state on form errors
+                    window.addEventListener('error', () => {
+                        this.isSubmitting = false;
+                        this.resetSubmitButton();
+                    });
+                },
+                
+                // Setup real-time validation with debouncing
+                setupRealTimeValidation() {
+                    let validationTimeout;
+                    
+                    // Debounced validation function
+                    const debouncedValidation = () => {
+                        clearTimeout(validationTimeout);
+                        validationTimeout = setTimeout(() => {
+                            this.refreshTabStates();
+                        }, 500); // 500ms delay
+                    };
+                    
+                    // Listen for input changes on all form fields (debounced)
+                    document.addEventListener('input', (e) => {
                 if (e.target.matches('input, textarea, select')) {
-                    if (Alpine.store('tabNav') && typeof Alpine.store('tabNav').checkTabs === 'function') {
-                        Alpine.store('tabNav').checkTabs();
-                    }
+                            debouncedValidation();
+                        }
+                    });
+                    
+                    // Listen for checkbox/radio changes (immediate for better UX)
+                    document.addEventListener('change', (e) => {
+                        if (e.target.matches('input[type="checkbox"], input[type="radio"]')) {
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for file input changes (immediate for better UX)
+                    document.addEventListener('change', (e) => {
+                        if (e.target.matches('input[type="file"]')) {
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for signatory selection changes (immediate for better UX)
+                    document.addEventListener('signatory-selected', (e) => {
+                        this.refreshTabStates();
+                        this.autoSave(); // Trigger auto-save when signatory is selected
+                    });
+                    
+                    // Listen for Alpine.js initialization
+                    document.addEventListener('alpine:init', () => {
+                        // This will be called when Alpine.js initializes
+                        setTimeout(() => {
+                            this.refreshTabStates();
+                        }, 100);
+                    });
                 }
-            });
-        });
-        // Periodic check as fallback
-        setInterval(() => {
-            if (Alpine.store('tabNav') && typeof Alpine.store('tabNav').checkTabs === 'function') {
-                Alpine.store('tabNav').checkTabs();
             }
-        }, 1000);
-
-        // Add event listeners for file input validation
-        document.querySelectorAll('input[type="file"]').forEach(function(input) {
-            input.addEventListener('change', function() { validateFileSize(this); });
-        });
-    });
-
-    // Loading screens are now handled directly in fetch operations
-    // No Turbo event listeners needed
-    
-    // Preload templates for faster generation
-    document.addEventListener('DOMContentLoaded', function() {
-        // Preload templates in the background
-        fetch('/citations/preload-templates', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Content-Type': 'application/json'
-            }
-        }).then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Templates preloaded successfully');
-            }
-        }).catch(error => {
-            console.log('Template preload failed (non-critical):', error);
-        });
-    });
+        }
 </script>
+    
+    <div x-data="citationRequestData()" x-init="init()" class="h-screen bg-gray-50 flex overflow-hidden">
+        
+        <!-- Hidden notification divs for global notification system -->
+        @if(session('success'))
+            <div id="success-notification" class="hidden">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div id="error-notification" class="hidden">{{ session('error') }}</div>
+        @endif
+
+        <!-- Error message overlay -->
+        <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
+            <span x-text="errorMessage"></span>
+        </div>
+
+        <!-- Submission Loading Overlay -->
+        <div x-show="isSubmitting" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center"
+             style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl px-8 py-6 flex items-center gap-4 max-w-sm mx-4">
+                <div class="animate-spin h-8 w-8 border-4 border-maroon-600 border-t-transparent rounded-full"></div>
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">Submitting Request</h3>
+                    <p class="text-sm text-gray-600">Please wait while we process your submission...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading overlay -->
+        <div x-show="loading" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl px-6 py-5 flex items-center gap-3">
+                <svg class="animate-spin h-6 w-6 text-maroon-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                <span class="text-maroon-900 font-semibold">Processing…</span>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        @include('components.user-sidebar')
+
+        <!-- Main Content -->
+        <div class="flex-1 h-screen overflow-y-auto">
+            <!-- Content Area -->
+            <main class="max-w-7xl mx-auto px-4 pt-2">
+                <!-- Dashboard Header with Modern Compact Filters -->
+                <div class="relative flex items-center justify-between mb-2">
+                    <!-- Left side - Overview Header -->
+                    <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
+                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Citation Request</span>
+                    </div>
+                    
+                    <!-- Right side - User Controls -->
+                    <div class="flex items-center gap-4">
+                        <!-- Auto-save Status -->
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg x-show="savingDraft" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span x-show="savingDraft" class="text-blue-600">Saving...</span>
+                            <span x-show="!savingDraft" class="text-gray-500">
+                                Last saved: <span x-text="lastSaved || 'Never'"></span>
+                            </span>
+                        </div>
+                        
+                        @include('components.user-navbar')
+                    </div>
+                </div>
+
+                <!-- Modern Form Container -->
+                <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl overflow-hidden">
+                    <!-- Tab Header -->
+                    <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-t-xl shadow-xl px-6 py-4">
+                        <div class="flex border-b border-maroon-200 mb-0">
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 rounded-tl-lg border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'incentive' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : 'text-maroon-600'"
+                                @click="switchTab('incentive')">
+                                Incentive Application
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'recommendation' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('recommendation') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('recommendation')"
+                                @click="switchTab('recommendation')">
+                                Recommendation Letter
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'upload' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('upload') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('upload')"
+                                @click="switchTab('upload')">
+                                Upload Documents
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 rounded-tr-lg border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'review' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('review') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('review')"
+                                @click="switchTab('review')">
+                                Review & Submit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form Content -->
+                    <div class="pl-6 pr-6 pb-6">
+                        <form 
+                            id="citation-request-form"
+                            method="POST" 
+                            action="{{ route('citations.submit') }}" 
+                            enctype="multipart/form-data" 
+                            class="space-y-6"
+                            @input="updateSubmitButton(); autoSave()"
+                            @change="updateSubmitButton(); autoSave()"
+                            @submit="handleSubmit($event)"
+                            autocomplete="on"
+                        >
+                            @csrf
+                            <input type="hidden" id="request_id" name="request_id" value="{{ $request->id }}">
+                            
+                            <!-- Tab Content -->
+                            <div class="min-h-[500px] bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <!-- Incentive Application Tab -->
+                                <div x-show="activeTab === 'incentive'" class="space-y-6">
+                                    @include('citations.incentive-application')
+                                </div>
+
+                                <!-- Recommendation Letter Tab -->
+                                <div x-show="activeTab === 'recommendation'" class="space-y-6">
+                                    @include('citations.recommendation-letter')
+                                </div>
+
+                                <!-- Upload Documents Tab -->
+                                <div x-show="activeTab === 'upload'" class="space-y-6">
+                                    @include('citations.upload-documents')
+                                </div>
+
+                                <!-- Review & Submit Tab -->
+                                <div x-show="activeTab === 'review'" class="space-y-6">
+                                    @include('citations.review-submit')
+                                </div>
+                            </div>
+                            
+                            <!-- Padding card to prevent floating pill from covering content -->
+                            <div class="h-16"></div>
+
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Interactive Floating Steps Pill -->
+                <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+                    <div class="bg-white/90 backdrop-blur-sm border border-maroon-200 rounded-full px-6 py-3 shadow-lg">
+                        <div class="flex items-center gap-8">
+                            <!-- Steps group -->
+                            <div class="flex items-center gap-4">
+                                <!-- Step 1: Details (Incentive + Recommendation + Terminal) -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">1</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Details</span>
+                                </div>
+                                
+                                <div class="w-8 h-0.5 bg-maroon-300"></div>
+                                
+                                <!-- Step 2: Upload -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'upload' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">2</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'upload' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Upload</span>
+                                </div>
+                                
+                                <div class="w-8 h-0.5 bg-maroon-300"></div>
+                                
+                                <!-- Step 3: Review -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'review' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">3</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'review' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Review</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Next/Submit button -->
+                            <div class="flex items-center">
+                                <button x-show="activeTab !== 'review'"
+                                    @click="switchTab(getNextTab())"
+                                    :disabled="!isTabEnabled(getNextTab())"
+                                    :class="!isTabEnabled(getNextTab())
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-maroon-600 rounded-lg hover:bg-maroon-700 transition-colors w-20'"
+                                    class="transition-colors">
+                                    Next
+                                </button>
+                                <button x-show="activeTab === 'review'"
+                                    id="submit-btn"
+                                    @click="handleSubmit($event)"
+                                    :disabled="!confirmChecked"
+                                    :class="!confirmChecked
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20'"
+                                    class="transition-colors text-center">
+                                    Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
 </x-app-layout> 

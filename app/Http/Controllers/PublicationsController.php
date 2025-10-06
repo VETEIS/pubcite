@@ -58,10 +58,10 @@ class PublicationsController extends Controller
         
         // Show notification if draft was loaded
         if ($existingDraft) {
-            return view('publications.request-clean', compact('request'))->with('success', 'Draft loaded successfully!');
+            return view('publications.request', compact('request'))->with('success', 'Draft loaded successfully!');
         }
         
-        return view('publications.request-clean', compact('request'));
+        return view('publications.request', compact('request'));
     }
 
     public function adminUpdate(Request $httpRequest, \App\Models\Request $request)
@@ -148,14 +148,7 @@ class PublicationsController extends Controller
                 $templateProcessor->setValue($key, $placeholder);
             }
             
-            try {
-                Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
-                $templateProcessor->saveAs($fullOutputPath);
-                Log::info('DOCX saved successfully', ['path' => $fullOutputPath]);
-            } catch (\Exception $e) {
-                Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
-                throw $e;
-            }
+            $templateProcessor->saveAs($fullOutputPath);
             
             // Only convert to PDF if requested (for submission, not preview)
             if ($convertToPdf) {
@@ -1342,21 +1335,8 @@ class PublicationsController extends Controller
         ];
     }
     private function mapRecommendationFields($data) {
-        $collegeheader = '';
-        if (isset($data['rec_collegeheader'])) {
-            if (is_array($data['rec_collegeheader'])) {
-                $collegeheader = end($data['rec_collegeheader']);
-            } else {
-                $collegeheader = $data['rec_collegeheader'];
-            }
-        } else if (request()->has('rec_collegeheader')) {
-            $collegeheader = request()->input('rec_collegeheader');
-        } else if (isset($_POST['rec_collegeheader'])) {
-            $collegeheader = $_POST['rec_collegeheader'];
-        }
-        Log::info('FORCED rec_collegeheader VALUE', ['value' => $collegeheader, 'raw' => $data['rec_collegeheader'] ?? null, 'request_input' => request()->input('rec_collegeheader'), 'post' => $_POST['rec_collegeheader'] ?? null]);
         return [
-            'collegeheader' => $collegeheader,
+            'collegeheader' => $data['rec_collegeheader'] ?? '',
             'facultyname' => $data['rec_faculty_name'] ?? '',
             'details' => $data['rec_publication_details'] ?? '',
             'indexing' => $data['rec_indexing_details'] ?? '',
@@ -1378,7 +1358,7 @@ class PublicationsController extends Controller
             'appendices' => $data['appendices'] ?? '',
         ];
     }
-    public function generateDocx(Request $request)
+    public function generatePublicationDocx(Request $request)
     {
         try {
             $reqId = $request->input('request_id');
@@ -1417,21 +1397,65 @@ class PublicationsController extends Controller
                 $uploadPath = "requests/{$userId}/{$reqCode}";
                 Log::info('Generating DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
             }
+            
+            // Add fallback data if form data is corrupted (mirror citations logic)
+            $fallbackData = [
+                'name' => 'Sample Name',
+                'rank' => 'Sample Rank', 
+                'college' => 'Sample College',
+                'bibentry' => 'Sample Bibliography Entry',
+                'issn' => 'Sample ISSN',
+                'doi' => 'Sample DOI',
+                'scopus' => '1',
+                'wos' => '1',
+                'faculty_name' => 'Sample Faculty',
+                'center_manager' => 'Sample Manager',
+                'dean_name' => 'Sample Dean',
+                'date' => date('F j, Y'),
+                'title' => 'Sample Title',
+                'author' => 'Sample Author',
+                'duration' => 'Sample Duration',
+                'abstract' => 'Sample Abstract',
+                'introduction' => 'Sample Introduction',
+                'methodology' => 'Sample Methodology',
+                'rnd' => 'Sample R&D',
+                'car' => 'Sample CAR',
+                'references' => 'Sample References',
+                'appendices' => 'Sample Appendices',
+                'rec_faculty_name' => 'Sample Faculty',
+                'rec_publication_details' => 'Sample Publication Details',
+                'rec_indexing_details' => 'Sample Indexing Details',
+                'rec_dean_name' => 'Sample Dean'
+            ];
+            
+            // Merge fallback data with filtered form data (mirror citations logic)
+            $data = array_merge($fallbackData, $data);
+            
+            Log::info('Publication DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
+            
+            $hashSource = json_encode([
+                'type' => $docxType,
+                'data' => $data
+            ]);
+            $uniqueHash = substr(hash('sha256', $hashSource), 0, 16); // 16 chars is enough
             $filename = null;
             $fullPath = null;
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
+                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
                     $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form';
                     break;
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
+                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
                     $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form';
                     break;
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
+                    Log::info('Filtered data for terminal', ['filtered' => $filtered]);
                     $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Terminal_Report_Form';
                     break;
@@ -1445,6 +1469,8 @@ class PublicationsController extends Controller
             if (!file_exists($absolutePath)) {
                 throw new \Exception('Generated file not found at: ' . $absolutePath);
             }
+            
+            Log::info('Publication DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
             
             // If storing for submit, return file path instead of downloading
             if ($storeForSubmit && $isPreview) {

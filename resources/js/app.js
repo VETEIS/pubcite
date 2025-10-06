@@ -28,8 +28,12 @@ document.addEventListener('turbo:submit-start', (event) => {
     if (form.matches('form[method="POST"]')) {
         const action = form.action;
         
-        // Show loading for specific form submissions
-        if (action.includes('submit') || action.includes('nudge') || action.includes('logout')) {
+        // Only show loading if not already shown by custom handlers
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const isAlreadyLoading = loadingOverlay && !loadingOverlay.classList.contains('hidden');
+        
+        // Show loading for specific form submissions (only if not already shown)
+        if (!isAlreadyLoading && (action.includes('submit') || action.includes('nudge') || action.includes('logout'))) {
             if (window.showLoading) {
                 let title = 'Processing...';
                 let message = 'Please wait while we process your request';

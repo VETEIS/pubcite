@@ -25,6 +25,9 @@
         <!-- Scripts and Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
+        <!-- Loading System - Load early to ensure availability -->
+        <script src="{{ asset('js/loading.js') }}"></script>
+        
         <!-- Mobile-Only Portrait Orientation Lock -->
         <style>
             /* Mobile-only orientation lock - desktop completely unaffected */
@@ -205,8 +208,7 @@
         <!-- Livewire Scripts - Single Instance -->
         @livewireScripts
         
-        <!-- Loading System - Load after DOM is ready -->
-        <script src="{{ asset('js/loading.js') }}"></script>
+        <!-- Loading System already loaded in head -->
         
         <!-- Signatory Preloader -->
         <script>

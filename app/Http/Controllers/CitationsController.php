@@ -57,10 +57,10 @@ class CitationsController extends Controller
         
         // Show notification if draft was loaded
         if ($existingDraft) {
-            return view('citations.request-clean', compact('request'))->with('success', 'Draft loaded successfully!');
+            return view('citations.request', compact('request'))->with('success', 'Draft loaded successfully!');
         }
         
-        return view('citations.request-clean', compact('request'));
+        return view('citations.request', compact('request'));
     }
 
     public function adminUpdate(Request $httpRequest, \App\Models\Request $request)

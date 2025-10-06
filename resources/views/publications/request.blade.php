@@ -1,1081 +1,913 @@
 <x-app-layout>
-<div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center p-4 pb-20">
-    <div class="w-full max-w-4xl mx-auto">
-        <div class="bg-white/30 backdrop-blur-md border border-white/40 overflow-hidden shadow-xl sm:rounded-lg p-0 relative h-[calc(90vh-4rem)] flex flex-col">
-            <div class="flex flex-col items-center text-center mb-4 px-6 pt-6">
-                <h2 class="text-xl font-bold text-maroon-800 mb-1">Publication Request</h2>
-                <p class="text-sm text-gray-600">Fill out all required forms and upload documents to submit your publication request</p>
-            </div>
-            <div class="flex-1 overflow-y-auto px-6 pb-6">
-                <div x-data="{ showError: false, errorMsg: '' }" x-ref="errorBanner" class="relative">
-                    <template x-if="showError">
-                        <div class="fixed inset-0 z-50 flex items-center justify-center">
-                            <div class="fixed inset-0 bg-black/30" @click="showError = false"></div>
-                            <div class="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-full max-w-md">
-                                <div class="text-base font-semibold text-gray-800 mb-1">Incomplete form</div>
-                                <div class="text-sm text-gray-600 mb-4" x-text="errorMsg"></div>
-                                <div class="text-right">
-                                    <button @click="showError = false" type="button" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-burgundy-600 text-white hover:bg-burgundy-700">OK</button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                    <form 
-                        id="publication-request-form"
-                        method="POST" 
-                        action="{{ route('publications.submit') }}" 
-                        enctype="multipart/form-data" 
-                        class="space-b-3 h-full"
-                        x-data="publicationForm()"
-                        x-ref="publicationForm"
-                        @input="checkFilled()"
-                        @change="checkFilled()"
-                        x-init="checkFilled()"
-                        autocomplete="on"
-                    >
-                        @csrf
-                        <input type="hidden" id="request_id" name="request_id" value="{{ $request->id }}">
-                        <div x-data x-init="Alpine.store('tabNav').checkTabs()" class="h-full flex flex-col">
-                            <div class="flex w-full border-b mb-3 sticky top-0 z-20 bg-white/30 backdrop-blur">
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'incentive' ? 'border-maroon-700 text-maroon-700' : 'border-transparent text-gray-500',
-                                        !$store.tabNav.tabCompletion.incentive && $store.tabNav.tab !== 'incentive' ? 'border-b-2 border-red-500 bg-red-50' : '',
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'incentive' }"
-                                >Incentive Application</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'recommendation' ? 'border-maroon-700 text-maroon-700' : (!$store.tabNav.tabCompletion.incentive ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                        !$store.tabNav.tabCompletion.recommendation && $store.tabNav.tab !== 'recommendation' && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'recommendation' }"
-                                    :disabled="false"
-                                >Recommendation</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'terminal' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                        !$store.tabNav.tabCompletion.terminal && $store.tabNav.tab !== 'terminal' && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'terminal' }"
-                                    :disabled="false"
-                                >Terminal Report</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'upload' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                        !$store.tabNav.tabCompletion.upload && $store.tabNav.tab !== 'upload' && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.incentive ? 'border-b-2 border-red-500 bg-red-50' : '',
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'upload' }"
-                                    :disabled="false"
-                                >Upload Documents</button>
-                                <button type="button" class="flex-1 px-3 py-2 text-sm font-semibold focus:outline-none border-b-2 text-center"
-                                    :class="[
-                                        $store.tabNav.tab === 'review' ? 'border-maroon-700 text-maroon-700' : (!($store.tabNav.tabCompletion.incentive && $store.tabNav.tabCompletion.recommendation && $store.tabNav.tabCompletion.terminal && $store.tabNav.tabCompletion.upload) ? 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-transparent text-gray-500'),
-                                    ]"
-                                    @click="if ($store.tabNav.validateCurrentTab()) { $store.tabNav.tab = 'review' }"
-                                    :disabled="false"
-                                >Review & Submit</button>
-                            </div>
-
-                            <div class="flex-1 overflow-y-auto">
-                                <div :class="$store.tabNav && $store.tabNav.tab === 'incentive' ? '' : 'hidden'" class="space-y-4">
-                                    @include('publications.incentive-application')
-                                </div>
-
-                                <div :class="$store.tabNav && $store.tabNav.tab === 'recommendation' ? '' : 'hidden'" class="space-y-4">
-                                    @include('publications.recommendation-letter')
-                                </div>
-
-                                <div :class="$store.tabNav && $store.tabNav.tab === 'terminal' ? '' : 'hidden'" class="space-y-4">
-                                    @include('publications.terminal-report')
-                                </div>
-
-                                <div :class="$store.tabNav && $store.tabNav.tab === 'upload' ? '' : 'hidden'" class="space-y-4">
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="font-semibold text-maroon-800 mb-3">Required Documents</h3>
-                                        <p class="text-sm text-gray-600 mb-4">Click on any card to upload the required PDF document.</p>
-                                        
-                                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.articlePdf.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Article PDF</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Your published research article in PDF format</p>
-                                                <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="article_pdf" accept=".pdf" class="hidden" x-ref="articlePdf" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-
-                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.acceptancePdf.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Acceptance Letter</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Official acceptance letter from the journal</p>
-                                                <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="acceptance_pdf" accept=".pdf" class="hidden" x-ref="acceptancePdf" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-
-                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.peerReviewPdf.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Peer Review</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Peer review comments and responses</p>
-                                                <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="peer_review_pdf" accept=".pdf" class="hidden" x-ref="peerReviewPdf" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-
-                                            <!-- Terminal Report Card -->
-                                            <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                                                 x-data="{ fileName: '', displayName: '' }"
-                                                 @click="$refs.terminalReportPdf.click()">
-                                                <div class="text-center mb-3">
-                                                    <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                        <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="font-medium text-gray-800 text-sm">Terminal Report</h4>
-                                                </div>
-                                                <p class="text-xs text-gray-600 mb-3 text-center">Final terminal report document</p>
-                                                <div class="text-xs text-maroon-600 text-center font-medium mt-auto truncate whitespace-nowrap max-w-full"
-                                                     :title="fileName"
-                                                     x-text="displayName || 'Click to upload'"></div>
-                                                <p class="text-xs text-gray-500 mt-1">Maximum file size: 20MB</p>
-                                                <input type="file" name="terminal_report_pdf" accept=".pdf" class="hidden" x-ref="terminalReportPdf" required
-                                                    @change="fileName = $event.target.files.length ? $event.target.files[0].name : ''; displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Review & Submit Tab -->
-                                <div x-show="$store.tabNav && $store.tabNav.tab === 'review'" class="space-y-4">
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="font-semibold text-maroon-800 mb-3">Review Your Submission</h3>
-                                        <p class="text-sm text-gray-600 mb-4">Review all uploaded files and generated documents before submitting.</p>
-                                        
-                                        <!-- Uploaded Files Section -->
-                                        <div class="mb-6">
-                                            <h4 class="font-medium text-maroon-700 mb-3">Uploaded Documents</h4>
-                                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                                <!-- Article PDF Review Card -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Article PDF</h5>
-                                                    </div>
-                                                    <div class="flex-1 flex flex-col justify-end">
-                                                        <div class="text-xs text-gray-600 text-center mb-2" id="review-article">No file uploaded</div>
-                                                        <div class="text-center">
-                                                            <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('article-pdf-review').click()">Change File</button>
-                                                            <input type="file" id="article-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('article-pdf', this)">
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Acceptance Letter Review Card -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Acceptance Letter</h5>
-                                                    </div>
-                                                    <div class="flex-1 flex flex-col justify-end">
-                                                        <div class="text-xs text-gray-600 text-center mb-2" id="review-acceptance">No file uploaded</div>
-                                                        <div class="text-center">
-                                                            <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('acceptance-pdf-review').click()">Change File</button>
-                                                            <input type="file" id="acceptance-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('acceptance-pdf', this)">
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Peer Review Review Card -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="text-medium text-gray-800 text-sm">Peer Review</h5>
-                                                    </div>
-                                                    <div class="flex-1 flex flex-col justify-end">
-                                                        <div class="text-xs text-gray-600 text-center mb-2" id="review-peer">No file uploaded</div>
-                                                        <div class="text-center">
-                                                            <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('peer-review-pdf-review').click()">Change File</button>
-                                                            <input type="file" id="peer-review-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('peer-review-pdf', this)">
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Terminal Report Review Card -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm flex flex-col">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
-                                                    </div>
-                                                    <div class="flex-1 flex flex-col justify-end">
-                                                        <div class="text-xs text-gray-600 text-center mb-2" id="review-terminal">No file uploaded</div>
-                                                        <div class="text-center">
-                                                            <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800" onclick="document.getElementById('terminal-report-pdf-review').click()">Change File</button>
-                                                            <input type="file" id="terminal-report-pdf-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal-report-pdf', this)">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Generated Documents Section -->
-                                        <div class="border-t pt-4">
-                                            <h4 class="font-medium text-maroon-700 mb-3">Generated Documents</h4>
-                                            <p class="text-sm text-gray-600 mb-3">Your documents have been automatically generated. Click to preview:</p>
-                                            
-                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <!-- Incentive Application DOCX -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                                                     @click="$store.tabNav.previewDocx('incentive')">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Incentive Application</h5>
-                                                    </div>
-                                                    <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
-                                                </div>
-
-                                                <!-- Recommendation Letter DOCX -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                                                     @click="$store.tabNav.previewDocx('recommendation')">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Recommendation Letter</h5>
-                                                    </div>
-                                                    <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
-                                                </div>
-
-                                                <!-- Terminal Report DOCX -->
-                                                <div class="bg-maroon-50 p-4 rounded-lg border border-maroon-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
-                                                     @click="$store.tabNav.previewDocx('terminal')">
-                                                    <div class="text-center mb-3">
-                                                        <div class="w-12 h-12 bg-maroon-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <svg class="w-6 h-6 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <h5 class="font-medium text-gray-800 text-sm">Terminal Report</h5>
-                                                    </div>
-                                                    <div class="text-xs text-maroon-600 text-center font-medium">Click to preview</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- DOCX Preview Modal -->
-    <div x-data="{ showModal: false, previewUrl: '', documentName: '' }" 
-         x-show="showModal" 
-         class="fixed inset-0 z-50 overflow-y-auto" 
-         style="display: none;">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900" x-text="documentName"></h3>
-                        <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="w-full h-96 border border-gray-300 rounded">
-                        <iframe x-show="previewUrl" :src="previewUrl" class="w-full h-full" frameborder="0"></iframe>
-                        <div x-show="!previewUrl" class="flex items-center justify-center h-full text-gray-500">
-                            <div class="text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                <p class="mt-2">Loading preview...</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-xs rounded">
-                            <strong>Disclaimer:</strong> For best results, please use <span class="font-semibold">Microsoft Word</span> to review DOCX files. The template and file design are optimized for Word and may not display correctly in other editors or viewers.
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button @click="showModal = false" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-maroon-600 text-base font-medium text-white hover:bg-maroon-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Close
-                    </button>
-                    <button @click="downloadDocument()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Download
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Overlay - Now handled by simple loading system -->
-
-
-    <!-- Floating Progress Bar - Alpine.js Sticky/Docked -->
-    <div
-        x-data="stickyProgressBar"
-        x-init="init()"
-        :class="isDocked ? 'absolute' : 'fixed'"
-        :style="`left: 0; right: 0; bottom: 10px; transition: bottom 0.3s cubic-bezier(.4,0,.2,1);`"
-        class="z-50 flex justify-center"
-    >
-        <div class="max-w-xl mx-auto">
-            <div class="bg-maroon-800 shadow-2xl rounded-lg border border-maroon-700 shadow-black/20 shadow-lg">
-                <div class="px-6 py-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 mr-4">
-                            <div class="w-full bg-maroon-600 rounded-full h-2">
-                                <div class="bg-white h-2 rounded-full transition-all duration-300" :style="`width: ${$store.tabNav.progressPercentage}%`"></div>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-4 text-sm">
-                            <span :class="$store.tabNav.currentStep === 1 ? 'font-semibold text-white' : 'text-maroon-200'">Step 1: Details</span>
-                            <span :class="$store.tabNav.currentStep === 2 ? 'font-semibold text-white' : 'text-maroon-200'">Step 2: Upload</span>
-                            <span :class="$store.tabNav.currentStep === 3 ? 'font-semibold text-white' : 'text-maroon-200'">Step 3: Review</span>
-                            <div x-show="$store.tabNav && $store.tabNav.tab !== 'review'">
-                                <button
-                                    type="button"
-                                    @click="$store.tabNav.nextTab()"
-                                    :disabled="false"
-                                    :class="!$store.tabNav.currentTabComplete
-                                        ? 'font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-maroon-200 opacity-90 cursor-not-allowed transition shadow-lg'
-                                        : 'font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition'"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                            <div x-show="$store.tabNav && $store.tabNav.tab === 'review'">
-                                <button
-                                    type="button"
-                                    onclick="submitPublicationForm(event)"
-                                    class="font-semibold px-4 py-2 rounded-lg bg-maroon-800 text-white shadow-lg hover:bg-maroon-900 hover:shadow-xl cursor-pointer transition"
-                                >
-                                    Submit Request
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-</div>
-<script>
-function publicationForm() {
-    return {
-        checkFilled() {
-            // No-op, logic moved to tabNav or not needed
-        }
-    }
-}
-
-function submitPublicationForm(event) {
-    // Prevent double submission
-    if (document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
-        return false;
-    }
-    
-    // Validate all tabs before submission
-    const tabNav = Alpine.store('tabNav');
-    if (!tabNav.allComplete) {
-        tabNav.checkTabs();
-        if (!tabNav.allComplete) {
-            // Show error via global notifications
-            if (window.notificationManager && typeof window.notificationManager.error === 'function') {
-                window.notificationManager.error('Please complete all required fields before submitting.');
-            }
-            return false;
-        }
-    }
-    
-    // Show comprehensive loading state with progress tracking
-    const operationId = `submit-publication-${Date.now()}`;
-    
-    // Define progress steps for submission
-    const progressSteps = [
-        'Validating form data...',
-        'Processing uploaded files...',
-        'Generating documents...',
-        'Saving to database...',
-        'Sending notifications...',
-        'Finalizing submission...'
-    ];
-    
-    // Show loading screen
-    window.showLoading('Submitting Request', 'Please wait while we process your publication request...', progressSteps);
-    
-    // Simulate progress updates
-    let currentStep = 0;
-    const progressInterval = setInterval(() => {
-        if (currentStep < progressSteps.length - 1) {
-            currentStep++;
-            window.updateProgress(currentStep, progressSteps);
-        }
-    }, 800);
-    
-    // Store interval for cleanup
-    window[`progress_${operationId}`] = progressInterval;
-    
-    // Let Turbo handle the form submission naturally
-    // Add cleanup when page navigation completes
-    document.addEventListener('turbo:before-cache', function cleanup() {
-        window.hideLoading();
-        if (window[`progress_${operationId}`]) {
-            clearInterval(window[`progress_${operationId}`]);
-            delete window[`progress_${operationId}`];
-        }
-        document.removeEventListener('turbo:before-cache', cleanup);
-    });
-    
-    return true; // Allow form submission
-}
-
-function updateReviewFile(type, input) {
-    const fileName = input.files.length > 0 ? input.files[0].name : 'No file uploaded';
-    
-    // Apply the same truncation logic as the upload tab
-    const displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;
-    
-    // Map the review field names to the correct review element IDs
-    const fieldMapping = {
-        'article-pdf': 'review-article',
-        'acceptance-pdf': 'review-acceptance',
-        'peer-review-pdf': 'review-peer',
-        'terminal-report-pdf': 'review-terminal'
-    };
-    
-    const reviewElementId = fieldMapping[type];
-    if (reviewElementId) {
-        const element = document.getElementById(reviewElementId);
-        if (element) {
-            element.textContent = displayName;
-            element.title = fileName; // Show full filename on hover
-        }
-    }
-    
-    // Update the original file input
-    const originalFieldName = type.replace('-', '_');
-    const originalInput = document.querySelector(`[name="${originalFieldName}"]`);
-    if (originalInput && input.files.length > 0) {
-        originalInput.files = input.files;
-    }
-}
-
-// Tab navigation and validation logic
-function tabNav() {
-    return {
-        tab: 'incentive',
-        tabCompletion: { 
-            incentive: false, 
-            recommendation: false, 
-            terminal: false, 
-            upload: false, 
-            review: false 
-        },
-        allComplete: false,
-        generatedDocx: [],
-        get currentTabComplete() {
-            return this.tabCompletion[this.tab];
-        },
-        get allFormsComplete() {
-            return this.tabCompletion.incentive && this.tabCompletion.recommendation && this.tabCompletion.terminal;
-        },
-        get currentStep() {
-            if (['incentive', 'recommendation', 'terminal'].includes(this.tab)) {
-                return 1; // Details step
-            } else if (this.tab === 'upload') {
-                return 2; // Upload step
-            } else if (this.tab === 'review') {
-                return 3; // Review step
-            }
-            return 1;
-        },
-        get progressPercentage() {
-            const steps = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
-            const currentIndex = steps.indexOf(this.tab);
-            return Math.max(33, (currentIndex + 1) * 20);
-        },
-        nextTab() {
-            const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
-            const currentIndex = tabs.indexOf(this.tab);
-            // If current tab is incomplete, highlight incomplete fields and shake button
-            if (!this.currentTabComplete) {
-                this.highlightIncompleteFieldsForTab(this.tab);
-                this.shakeNextButton();
-                return;
-            }
-            // If moving to review tab, validate all tabs
-            if (tabs[currentIndex + 1] === 'review') {
-                this.checkTabs();
-                                    if (!this.allComplete) {
-                        ['incentive', 'recommendation', 'terminal', 'upload'].forEach(tab => {
-                            this.highlightIncompleteFieldsForTab(tab);
-                        });
+    <x-global-notifications />
+    <script>
+        function publicationRequestData() {
+            return {
+                loading: false,
+                isSubmitting: false,
+                autoSaveDisabled: false,
+                errorMessage: null,
+                errorTimer: null,
+                activeTab: 'incentive',
+                searchOpen: false,
+                savingDraft: false,
+                lastSaved: null,
+                autoSaveTimer: null,
+                tabStatesRefreshed: 0,
+                confirmChecked: false,
+                
+                showError(message) {
+                    this.errorMessage = message;
+                    if (this.errorTimer) clearTimeout(this.errorTimer);
+                    this.errorTimer = setTimeout(() => {
+                        this.errorMessage = null;
+                    }, 3000);
+                },
+                
+                // Simple form validation - no complex logic
+                validateForm(showError = false) {
+                    const requiredFields = document.querySelectorAll('[required]');
+                    let allValid = true;
+                    let firstInvalidField = null;
+                    
+                    requiredFields.forEach(field => {
+                        let isValid = false;
+                        
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            isValid = field.checked;
+                        } else if (field.type === 'file') {
+                            isValid = field.files && field.files.length > 0;
+                        } else {
+                            isValid = field.value && field.value.trim() !== '';
+                        }
+                        
+                        if (!isValid) {
+                            allValid = false;
+                            if (!firstInvalidField) firstInvalidField = field;
+                            field.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
+                            setTimeout(() => field.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2'), 3000);
+                        }
+                    });
+                    
+                    if (!allValid && firstInvalidField && showError) {
+                        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalidField.focus();
+                        this.showError('Please complete all required fields before submitting.');
+                    }
+                    
+                    return allValid;
+                },
+                
+                // Validate form for submission - only check fields that have been filled out
+                validateFormForSubmission() {
+                    // Get all required fields
+                    const requiredFields = document.querySelectorAll('[required]');
+                    let allValid = true;
+                    
+                    
+                    requiredFields.forEach(field => {
+                        // Skip validation if field is hidden (not in current tab)
+                        if (field.offsetParent === null) {
+                            return;
+                        }
+                        
+                        let isValid = false;
+                        
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            isValid = field.checked;
+                        } else if (field.type === 'file') {
+                            isValid = field.files && field.files.length > 0;
+                        } else {
+                            isValid = field.value && field.value.trim() !== '';
+                        }
+                        
+                        if (!isValid) {
+                            allValid = false;
+                        }
+                    });
+                    
+                    return allValid;
+                },
+                
+                // Sequential tab switching with validation
+                switchTab(targetTab) {
+                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    const targetIndex = tabs.indexOf(targetTab);
+                    
+                    // Always allow going back or staying on same tab
+                    if (targetIndex <= currentIndex) {
+                        this.activeTab = targetTab;
+                        
+                        // Display uploaded files when switching to review tab
+                        if (targetTab === 'review') {
+                            setTimeout(() => {
+                                if (typeof displayUploadedFiles === 'function') {
+                                    displayUploadedFiles();
+                                }
+                                // Update submit button state when switching to review
+                                this.updateSubmitButton();
+                            }, 100);
+                        }
                         return;
                     }
-            }
-            // Find the next available tab that is complete
-            for (let i = currentIndex + 1; i < tabs.length; i++) {
-                if (this.tabCompletion[tabs[i]]) {
-                    this.tab = tabs[i];
-                    return;
-                }
-            }
-            // If no next tab is complete, go to the next tab in sequence
-            if (currentIndex < tabs.length - 1) {
-                this.tab = tabs[currentIndex + 1];
-            }
-        },
-        // Highlight incomplete fields for a given tab
-        highlightIncompleteFieldsForTab(tab) {
-            let fields = [];
-                            if (tab === 'incentive') {
-                    fields = [
-                        'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean'
-                    ];
-                            } else if (tab === 'recommendation') {
-                    fields = ['rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'];
-            } else if (tab === 'terminal') {
-                fields = ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'];
-            } else if (tab === 'upload') {
-                fields = ['article_pdf', 'acceptance_pdf', 'peer_review_pdf', 'terminal_report_pdf'];
-            }
-            let firstIncompleteEl = null;
-            fields.forEach(field => {
-                const element = this.getFieldElement(field);
-                if (!element) return;
-                let incomplete = false;
-                if (element.type === 'radio') {
-                    incomplete = !document.querySelector(`[name="${field}"]:checked`);
-                } else if (element.type === 'checkbox') {
-                    const checked = this.getFieldElements(field);
-                    incomplete = Array.from(checked).filter(cb => cb.checked).length === 0;
-                } else if (element.type === 'file') {
-                    incomplete = !(element.files && element.files.length > 0);
-                } else {
-                    incomplete = element.value.trim() === '';
-                }
-                if (incomplete) {
-                    element.classList.add('ring-2', 'ring-maroon-500', 'ring-offset-2');
-                    if (!firstIncompleteEl) firstIncompleteEl = element;
-                    setTimeout(() => element.classList.remove('ring-2', 'ring-maroon-500', 'ring-offset-2'), 2000);
-                }
-            });
-            // Focus and scroll to first incomplete field
-            if (firstIncompleteEl) {
-                setTimeout(() => {
-                    firstIncompleteEl.focus();
-                    firstIncompleteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
-        },
-        // Shake the Next button for feedback
-        shakeNextButton() {
-            const btn = document.querySelector('.progress-bar-next-btn');
-            if (!btn) return;
-            btn.classList.add('animate-shake');
-            setTimeout(() => btn.classList.remove('animate-shake'), 600);
-        },
-        checkTabs() {
-            // Check incentive tab completion
-            const incentiveFields = [
-                'name', 'rank', 'college', 'bibentry', 'issn', 'doi', 'faculty_name', 'center_manager', 'dean_name'
-            ];
-            
-            
-            // Wait a bit for DOM to be ready if we're on incentive tab
-            if (this.tab === 'incentive') {
-                setTimeout(() => {
-                    this.performIncentiveValidation(incentiveFields);
-                }, 100);
-            } else {
-                this.performIncentiveValidation(incentiveFields);
-            }
-        },
-        
-        // Helper to get element(s) by field name, supporting array-style names
-        getFieldElement(field) {
-            // Try normal name first
-            let el = document.querySelector(`[name="${field}"]`);
-            if (el) return el;
-            // Try array-style name
-            el = document.querySelector(`[name="${field}[]"]`);
-            return el;
-        },
-
-        // Helper to get all elements by field name (for checkboxes)
-        getFieldElements(field) {
-            let els = document.querySelectorAll(`[name="${field}"]`);
-            if (els.length > 0) return els;
-            els = document.querySelectorAll(`[name="${field}[]"]`);
-            return els;
-        },
-
-        performIncentiveValidation(incentiveFields) {
-            // Check basic required fields
-            const basicFieldsValid = incentiveFields.every(field => {
-                const element = this.getFieldElement(field);
-                let isValid = false;
-                
-                if (!element) {
-                    return false;
-                }
-                
-                if (element.type === 'radio') {
-                    const checked = document.querySelector(`[name="${field}"]:checked`);
-                    isValid = !!checked;
-                } else if (element.type === 'checkbox') {
-                    const checked = this.getFieldElements(field);
-                    const checkedCount = Array.from(checked).filter(cb => cb.checked).length;
-                    isValid = checkedCount > 0;
-                } else {
-                    isValid = element.value.trim() !== '';
-                }
-                
-                return isValid;
-            });
-            
-            // Check that at least one indexing option is selected
-            const indexingFields = ['scopus', 'wos', 'aci'];
-            const hasIndexingSelection = indexingFields.some(field => {
-                const element = this.getFieldElement(field);
-                return element && element.checked;
-            });
-            
-            this.tabCompletion.incentive = basicFieldsValid && hasIndexingSelection;
-            
-
-            // Check recommendation tab completion
-            const recommendationFields = [
-                'rec_collegeheader', 'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean'
-            ];
-            this.tabCompletion.recommendation = recommendationFields.every(field => {
-                const element = document.querySelector(`[name="${field}"]`);
-                if (!element) {
-                    return false;
-                }
-                const isValid = element.value.trim() !== '';
-                return isValid;
-            });
-
-            // Check terminal tab completion
-            const terminalFields = [
-                'title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'
-            ];
-            this.tabCompletion.terminal = terminalFields.every(field => {
-                const element = document.querySelector(`[name="${field}"]`);
-                return element && element.value.trim() !== '';
-            });
-
-            // Check upload tab completion
-            const uploadFields = [
-                'article_pdf', 'acceptance_pdf', 'peer_review_pdf', 'terminal_report_pdf'
-            ];
-            this.tabCompletion.upload = uploadFields.every(field => {
-                const element = document.querySelector(`[name="${field}"]`);
-                return element && element.files && element.files.length > 0;
-            });
-
-            // Review tab is complete if upload is complete
-            this.tabCompletion.review = this.tabCompletion.upload;
-
-            // All complete if all tabs are complete
-            this.allComplete = this.tabCompletion.incentive && this.tabCompletion.recommendation && 
-                              this.tabCompletion.terminal && this.tabCompletion.upload;
-
-            
-
-            // Update review display
-            this.updateReviewDisplay();
-            
-            // Auto-generate DOCX files when entering review tab
-            if (this.tab === 'review' && this.allFormsComplete && this.generatedDocx.length === 0) {
-                this.autoGenerateDocx();
-            }
-        },
-        autoGenerateDocx() {
-            // Generate all three DOCX files automatically
-            const types = ['incentive', 'recommendation', 'terminal'];
-            types.forEach(type => {
-                this.generateDocx(type, true); // true = silent generation
-            });
-        },
-        updateReviewDisplay() {
-            // Update review tab with actual data
-            const nameEl = document.getElementById('review-name');
-            const collegeEl = document.getElementById('review-college');
-            const titleEl = document.getElementById('review-title');
-            
-            if (nameEl) {
-                const nameInput = document.querySelector('[name="name"]');
-                nameEl.textContent = nameInput ? nameInput.value || '-' : '-';
-            }
-            
-            if (collegeEl) {
-                const collegeInput = document.querySelector('[name="college"]');
-                collegeEl.textContent = collegeInput ? collegeInput.value || '-' : '-';
-            }
-            
-            if (titleEl) {
-                titleEl.textContent = '-';
-            }
-
-            // Update file names with correct mapping and truncation
-            const fileFields = [
-                { field: 'article_pdf', id: 'review-article' },
-                { field: 'acceptance_pdf', id: 'review-acceptance' },
-                { field: 'peer_review_pdf', id: 'review-peer' },
-                { field: 'terminal_report_pdf', id: 'review-terminal' }
-            ];
-            fileFields.forEach(({ field, id }) => {
-                const element = document.getElementById(id);
-                const fileInput = document.querySelector(`[name="${field}"]`);
-                if (element && fileInput && fileInput.files && fileInput.files.length > 0) {
-                    const fileName = fileInput.files[0].name;
-                    const displayName = fileName.length > 16 ? fileName.slice(0, 3) + '...' + fileName.slice(-6) : fileName;
-                    element.textContent = displayName;
-                    element.title = fileName; // Show full filename on hover
-                } else if (element) {
-                    element.textContent = 'No file uploaded';
-                    element.title = '';
-                }
-            });
-        },
-        generateDocx(type, silent = false) {
-            if (!this.allFormsComplete) return;
-            
-            // Collect form data
-            const formData = new FormData();
-            
-            // Add all form fields
-            const allFields = [
-                'name', 'academicrank', 'college', 'bibentry', 'issn', 'doi', 'indexed_in', 'particulars', 'facultyname', 'centermanager', 'collegedean',
-                'rec_collegeheader', // <-- ARANG RASON BANTOG PIRME WALA ANG BULLSEYE NGA COLLEGEHEADER
-                'rec_date', 'rec_facultyname', 'details', 'indexing', 'dean',
-                'title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices'
-            ];
-            
-            allFields.forEach(field => {
-                const element = this.getFieldElement(field);
-                if (element) {
-                    if (element.type === 'radio') {
-                        const checked = document.querySelector(`[name="${field}"]:checked`);
-                        if (checked) formData.append(field, checked.value);
-                    } else if (element.type === 'checkbox') {
-                        const checked = this.getFieldElements(field);
-                        checked.forEach(cb => formData.append(field + '[]', cb.value));
-                    } else {
-                        formData.append(field, element.value);
+                    
+                    // Going forward - validate current tab
+                    if (!this.validateCurrentTab()) {
+                        this.showError('Please complete all required fields in the current tab before proceeding.');
+                        return;
                     }
-                }
-            });
-            
-            // Add document type
-            formData.append('docx_type', type);
-            
-            // Check if this is a preview (before submission) or post-submission
-            // If the form has a request_id hidden field with a value, it's post-submission
-            const requestIdField = document.getElementById('request_id');
-            const isPreview = !requestIdField || !requestIdField.value;
-            
-            if (!isPreview) {
-                // Post-submission: include request_id
-                formData.append('request_id', requestIdField.value);
-            }
-            // Preview mode: don't include request_id (will use temp directory)
-            
-            // Get user name for filename (same as citations)
-            const applicantName = document.querySelector('[name="name"]')?.value || 'User';
-            const sanitizedName = applicantName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-            const timestamp = new Date().toISOString().slice(0, 10);
-            
-            // Generate DOCX via AJAX with timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-            
-            console.log('Starting DOCX generation for type:', type);
-            console.log('User Agent:', navigator.userAgent);
-            console.log('CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
-            
-            fetch('/publications/generate-docx', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    
+                    this.activeTab = targetTab;
+                    
+                    // Display uploaded files when switching to review tab
+                    if (targetTab === 'review') {
+                        setTimeout(() => {
+                            if (typeof displayUploadedFiles === 'function') {
+                                displayUploadedFiles();
+                            }
+                            // Update submit button state when switching to review
+                            this.updateSubmitButton();
+                        }, 100);
+                    }
                 },
-                signal: controller.signal
-            })
-            .then(response => {
-                clearTimeout(timeoutId);
-                console.log('Response received:', response.status, response.statusText);
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
-                }
                 
-                // Create filename following citations pattern
-                let filename;
-                if (type === 'incentive') {
-                    filename = `${sanitizedName}_Publication_Incentive_Application_${timestamp}.docx`;
-                } else if (type === 'recommendation') {
-                    filename = `${sanitizedName}_Publication_Recommendation_Letter_${timestamp}.docx`;
-                } else {
-                    filename = `${sanitizedName}_Publication_Terminal_Report_${timestamp}.docx`;
-                }
-                
-                return response.blob().then(blob => ({ blob, filename }));
-            })
-            .then(({ blob, filename }) => {
-                // Create download link
-                const url = URL.createObjectURL(blob);
-                
-                // Add to generated documents list
-                this.generatedDocx.push({
-                    type: type,
-                    name: filename,
-                    url: url,
-                    blob: blob
-                });
-                
-                // Trigger download only if not silent
-                if (!silent) {
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            })
-            .catch(error => {
-                clearTimeout(timeoutId);
-                console.error('DOCX Generation Error:', error);
-                if (!silent) {
-                    let errorMessage = 'Error generating document. Please try again.';
-                    if (error.name === 'AbortError') {
-                        errorMessage = 'Request timed out. The document generation is taking longer than expected. Please try again.';
-                    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                        errorMessage = 'Network error: Unable to connect to server. Please check your internet connection and try again.';
-                    } else if (error.message) {
-                        errorMessage = `Error generating document: ${error.message}`;
+                // Validate current tab - simple and reliable
+                validateCurrentTab() {
+                    const currentTab = this.activeTab;
+                    
+                    // Special handling for upload tab
+                    if (currentTab === 'upload') {
+                        const requiredFiles = ['recommendation_letter', 'published_article', 'peer_review', 'terminal_report'];
+                        
+                        for (let fileName of requiredFiles) {
+                            const fileInput = document.querySelector(`input[name="${fileName}"]`);
+                            
+                            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                                return false;
+                            }
+                        }
+                        return true;
                     }
-                    alert(errorMessage);
-                }
-            });
-        },
-        previewDocx(type) {
-            // Find the generated document
-            const doc = this.generatedDocx.find(d => d.type === type);
-            if (!doc) {
-                // Generate it first if not available
-                this.generateDocx(type);
+                    
+                    // Define required fields for other tabs
+                    const tabFields = {
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'issn'],
+                        'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details'],
+                        'terminal': ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices']
+                    };
+                    
+                    const requiredFields = tabFields[currentTab] || [];
+                    if (requiredFields.length === 0) {
+                        return true; // No validation needed for this tab
+                    }
+                    
+                    // Check each required field
+                    for (let fieldName of requiredFields) {
+                        const field = document.querySelector(`[name="${fieldName}"]`);
+                        
+                        if (!field) {
+                            continue;
+                        }
+                        
+                        // Check if field is valid
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            if (!field.checked) {
+            return false;
+                            }
+                        } else {
+                            if (!field.value || field.value.trim() === '') {
+                                return false;
+                            }
+                        }
+                    }
+                    
+                    return true;
+                },
+                
+                // Check if field belongs to current tab
+                fieldBelongsToTab(field, tab) {
+                    const tabElement = document.querySelector(`[x-show="activeTab === '${tab}'"]`);
+                    if (!tabElement) return false;
+                    
+                    return tabElement.contains(field);
+                },
+                
+                // Get next tab in sequence
+                getNextTab() {
+                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex + 1] || 'review';
+                },
+                
+                // Check if a tab should be enabled (progressive unlocking)
+                isTabEnabled(tabName) {
+                    // Use the reactive property to force re-evaluation
+                    const _ = this.tabStatesRefreshed;
+                    
+                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    const targetIndex = tabs.indexOf(tabName);
+                    
+                    
+                    // Always allow current tab and previous tabs
+                    if (targetIndex <= currentIndex) {
+                        return true;
+                    }
+                    
+                    // For next tab, check if current tab is complete
+                    if (targetIndex === currentIndex + 1) {
+                        const isValid = this.validateCurrentTab();
+                        return isValid;
+                    }
+                    
+                    // For future tabs, check if all previous tabs are complete
+                    for (let i = 0; i < targetIndex; i++) {
+                        const previousTab = tabs[i];
+                        
+                        // Temporarily switch to check previous tab
+                        const originalTab = this.activeTab;
+                        this.activeTab = previousTab;
+                        const isComplete = this.validateCurrentTab();
+                        this.activeTab = originalTab;
+                        
+                        if (!isComplete) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                },
+                
+                // Silent auto-save - no notifications
+                async saveDraft() {
+                    this.savingDraft = true;
+                    try {
+                        const formData = new FormData();
+                        const form = document.getElementById('publication-request-form');
+                        
+                        // Collect ALL form data from ALL tabs
+                        const inputs = form.querySelectorAll('input, textarea, select');
+                        
+                        
+                        // Track if we have meaningful data to save
+                        let hasData = false;
+                        
+                        inputs.forEach(input => {
+                            if (input.type === 'file') {
+                                // Skip files in auto-save to prevent multiple folder creation
+                                // Files will be saved only during final submission
+                                return;
+                            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                                if (input.checked) {
+                                    formData.append(input.name, input.value);
+                                    hasData = true;
+                                }
+                            } else {
+                                // Only save fields that have actual content
+                                const value = input.value || '';
+                                if (value.trim() !== '') {
+                                    formData.append(input.name, value);
+                                    hasData = true;
+                                }
+                            }
+                        });
+                        
+                        // Don't save if no meaningful data
+                        if (!hasData) {
                 return;
             }
-            
-            // Show modal with preview
-            const modal = document.querySelector('[x-data*="showModal"]').__x.$data;
-            modal.documentName = doc.name;
-            modal.previewUrl = doc.url;
-            modal.showModal = true;
-            
-            // Store current document for download
-            modal.currentDocument = doc;
-        },
-        downloadDocument() {
-            const modal = document.querySelector('[x-data*="showModal"]').__x.$data;
-            if (modal.currentDocument) {
-                const link = document.createElement('a');
-                link.href = modal.currentDocument.url;
-                link.download = modal.currentDocument.name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        },
-        init() {
-            this.checkTabs();
-            
-            // Enhanced event listeners for better validation
-            const events = ['input', 'change', 'click', 'keyup', 'blur'];
-            events.forEach(eventType => {
-                document.addEventListener(eventType, (e) => {
-                    // Only run validation if the event is on a form element
-                    if (e.target && typeof e.target.matches === 'function' && e.target.matches('input, textarea, select')) {
-                        this.checkTabs();
+                        
+                        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                        formData.append('save_draft', '1');
+                        
+                        const response = await fetch('{{ route("publications.submit") }}', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            this.lastSaved = new Date().toLocaleTimeString();
+                        }
+                        // Silent save - no error notifications for auto-save
+                    } catch (error) {
+                        // Silent error - don't show notifications for auto-save
+                    } finally {
+                        this.savingDraft = false;
                     }
-                });
-            });
-            
-            // Special event listener for signatory components
-            document.addEventListener('DOMContentLoaded', () => {
-                // Watch for changes in signatory hidden inputs
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
-                            const target = mutation.target;
-                            if (target.name && ['rec_facultyname', 'dean'].includes(target.name)) {
-                                this.checkTabs();
+                },
+                
+                // Debounced auto-save
+                autoSave() {
+                    // Don't auto-save if disabled (e.g., after form submission)
+                    if (this.autoSaveDisabled) {
+                    return;
+                }
+                    
+                    // Clear existing timer
+                    if (this.autoSaveTimer) {
+                        clearTimeout(this.autoSaveTimer);
+                    }
+                    
+                    // Set new timer - save after 2 seconds of inactivity
+                    this.autoSaveTimer = setTimeout(() => {
+                        this.saveDraft();
+                    }, 2000);
+                },
+                
+                // Disable auto-save (called after form submission)
+                disableAutoSave() {
+                    this.autoSaveDisabled = true;
+                    if (this.autoSaveTimer) {
+                        clearTimeout(this.autoSaveTimer);
+                        this.autoSaveTimer = null;
+                    }
+                },
+                
+                // Load draft data into form
+                loadDraftData() {
+                    // Check if we should load a specific draft from sessionStorage
+                    const loadDraftId = sessionStorage.getItem('loadDraftId');
+                    if (loadDraftId) {
+                        this.loadSpecificDraft(loadDraftId);
+                        return;
+                    }
+                    
+                    const draftData = @json($request->form_data ?? []);
+                    if (!draftData || Object.keys(draftData).length === 0) {
+                        // Set initial timestamp even if no draft data
+                        this.lastSaved = 'Never';
+                        return;
+                    }
+                    
+                    
+                    // Set timestamp to show draft was loaded
+                    this.lastSaved = 'Draft loaded';
+                    
+                    // Populate all form fields
+                    Object.keys(draftData).forEach(key => {
+                        const element = document.querySelector(`[name="${key}"]`);
+                        if (element) {
+                            if (element.type === 'checkbox' || element.type === 'radio') {
+                                element.checked = draftData[key] === '1' || draftData[key] === 'on';
+                } else if (element.type === 'file') {
+                                // Files can't be restored, skip
+                } else {
+                                element.value = draftData[key] || '';
                             }
                         }
                     });
-                });
+                    
+                    // Restore signatory selections
+                    this.restoreSignatorySelections(draftData);
+                    
+                    // Update submit button state
+                    this.updateSubmitButton();
+                },
                 
-                // Observe all hidden inputs that might be signatory fields
-                document.querySelectorAll('input[type="hidden"][name*="faculty"], input[type="hidden"][name*="dean"]').forEach(input => {
-                    observer.observe(input, { attributes: true, attributeFilter: ['value'] });
-                });
-            });
-            
-            // Also run validation periodically to catch any missed updates
-            setInterval(() => {
-                if (this.tab === 'incentive') {
-                    this.checkTabs();
-                }
-            }, 1000);
-        },
-        validateCurrentTab() {
-            this.checkTabs();
-            if (!this.currentTabComplete) {
-                this.highlightIncompleteFieldsForTab(this.tab);
-                if (typeof this.showError !== 'undefined') {
-                    this.showError = true;
-                    this.errorMsg = 'Please complete all required fields in this section before continuing.';
+                // Load a specific draft by ID
+                async loadSpecificDraft(draftId) {
+                    try {
+                        const response = await fetch(`/api/draft/${draftId}`);
+                        const data = await response.json();
+                        
+                        
+                        if (data.success && data.draft) {
+                            // form_data is already an object from the API
+                            const draftData = data.draft.form_data;
+                            
+                            // Set timestamp to show draft was loaded
+                            this.lastSaved = 'Draft loaded';
+                            
+                            // Populate all form fields
+                            Object.keys(draftData).forEach(key => {
+                                const element = document.querySelector(`[name="${key}"]`);
+                                if (element) {
+                                    if (element.type === 'checkbox' || element.type === 'radio') {
+                                        element.checked = draftData[key] === '1' || draftData[key] === 'on';
+                                    } else if (element.type === 'file') {
+                                        // Files can't be restored, skip
+                } else {
+                                        element.value = draftData[key] || '';
+                                    }
+                                }
+                            });
+                            
+                            // Restore signatory selections
+                            this.restoreSignatorySelections(draftData);
+                            
+                            // Update submit button state
+                            this.updateSubmitButton();
+                            
+                            // Clear the sessionStorage
+                            sessionStorage.removeItem('loadDraftId');
+                        } else {
+                            this.lastSaved = 'Never';
+                        }
+                    } catch (error) {
+                        this.lastSaved = 'Never';
+                    }
+                },
+                
+                // Restore signatory Alpine.js selections
+                restoreSignatorySelections(draftData) {
+                    const signatoryFields = [
+                        'faculty_name', 'center_manager', 'dean_name',  // Incentive tab
+                        'rec_faculty_name', 'rec_dean_name'             // Recommendation tab
+                    ];
+                    
+                    signatoryFields.forEach(fieldName => {
+                        const value = draftData[fieldName];
+                        if (value) {
+                            // Use multiple selectors to find the component
+                            const selectors = [
+                                `[data-field="${fieldName}"]`,
+                                `[name="${fieldName}"]`,
+                                `input[name="${fieldName}"]`
+                            ];
+                            
+                            let component = null;
+                            for (const selector of selectors) {
+                                component = document.querySelector(selector);
+                                if (component) {
+                                    break;
+                                }
+                            }
+                            
+                            if (component) {
+                                // Robust restoration with multiple attempts
+                                this.restoreSignatoryValue(component, fieldName, value, 0);
+                            }
+                        }
+                    });
+                },
+                
+                // Robust signatory value restoration with retries
+                restoreSignatoryValue(component, fieldName, value, attempt = 0) {
+                    const maxAttempts = 10;
+                    const delay = Math.min(100 * Math.pow(1.5, attempt), 2000); // Exponential backoff, max 2s
+                    
+                    
+                    // Try to find Alpine.js data
+                    let alpineData = null;
+                    try {
+                        alpineData = Alpine.$data(component);
+                    } catch (e) {
+                        // Alpine.$data failed
+                    }
+                    
+                    if (alpineData && alpineData.selectedName !== undefined) {
+                        // Alpine.js component is ready
+                        alpineData.selectedName = value;
+                        alpineData.query = value;
+                        
+                        // Trigger validation
+                        setTimeout(() => {
+                            document.dispatchEvent(new CustomEvent('signatory-selected', {
+                                detail: { fieldName: fieldName, selectedName: value }
+                            }));
+                        }, 100);
+                    } else if (attempt < maxAttempts) {
+                        // Retry after delay
+                        setTimeout(() => {
+                            this.restoreSignatoryValue(component, fieldName, value, attempt + 1);
+                        }, delay);
+                    } else {
+                        // Fallback: Set the hidden input value directly
+                        const hiddenInput = component.querySelector('input[type="hidden"]');
+                        if (hiddenInput) {
+                            hiddenInput.value = value;
+                        }
+                    }
+                },
+                
+                // Simple tab navigation helpers
+                getNextTab() {
+                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex + 1] || this.activeTab;
+                },
+                
+                getPreviousTab() {
+                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const currentIndex = tabs.indexOf(this.activeTab);
+                    return tabs[currentIndex - 1] || this.activeTab;
+                },
+                
+                // Update submit button state
+                updateSubmitButton() {
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        // If user reached review page, all fields are already validated
+                        // Only check confirmation checkbox
+                        const confirmChecked = this.confirmChecked;
+                        submitBtn.disabled = !confirmChecked;
+                    }
+                    
+                    // Also refresh tab states when form changes
+                    this.refreshTabStates();
+                },
+
+                // Reset submit button after submission
+                resetSubmitButton() {
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit';
+                        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                },
+                
+                // Refresh tab enabled/disabled states
+                refreshTabStates() {
+                    // Force Alpine.js to re-evaluate the tab states
                     this.$nextTick(() => {
-                        this.$refs.errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Trigger validation for current tab
+                        const currentTabValid = this.validateCurrentTab();
+                        
+                        // Force Alpine.js to re-render by updating a reactive property
+                        // This will cause isTabEnabled() to be called for all tabs
+                        this.tabStatesRefreshed = Date.now();
+                    });
+                },
+                
+                // Handle form submission - only show error popup on actual submit
+                handleSubmit(event) {
+                    // Prevent double submission
+                    if (this.isSubmitting) {
+                        event.preventDefault();
+                        return false;
+                    }
+                    
+                    if (!this.validateForm(true)) {
+                        event.preventDefault();
+                        // Error popup is already shown by validateForm()
+                        return false;
+                    }
+                    
+                    // Populate hidden field with generated DOCX file paths
+                    const generatedFilesField = document.getElementById('generated-docx-files');
+                    if (generatedFilesField && window.generatedDocxFiles) {
+                        generatedFilesField.value = JSON.stringify(window.generatedDocxFiles);
+                    }
+                    
+                    // Mark as submitting and disable submit button
+                    this.isSubmitting = true;
+                    const submitBtn = document.querySelector('#submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Submitting...';
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    // Loading screen will be handled by Turbo events
+                    
+                    // Disable auto-save to prevent duplicate entries after submission
+                    this.disableAutoSave();
+                    
+                    // Form is valid, allow submission
+                    return true;
+                },
+                
+                // Initialize form
+                init() {
+                    // Load draft data after a short delay to ensure DOM is ready
+                    setTimeout(() => {
+                        this.loadDraftData();
+                    }, 500);
+                    
+                    // Add event listener for confirmation checkbox
+                    this.$nextTick(() => {
+                        const confirmCheckbox = document.querySelector('#confirm-submission');
+                        if (confirmCheckbox) {
+                            confirmCheckbox.addEventListener('change', () => {
+                                this.confirmChecked = confirmCheckbox.checked;
+                                this.updateSubmitButton();
+                            });
+                        }
+                    });
+                    
+                    // Setup real-time validation
+                    this.setupRealTimeValidation();
+                    
+                    // Reset submitting state on page unload or navigation
+                    window.addEventListener('beforeunload', () => {
+                        this.isSubmitting = false;
+                    });
+                    
+                    // Reset submitting state on form errors
+                    window.addEventListener('error', () => {
+                        this.isSubmitting = false;
+                        this.resetSubmitButton();
+            });
+        },
+                
+                // Setup real-time validation with debouncing
+                setupRealTimeValidation() {
+                    let validationTimeout;
+                    
+                    // Debounced validation function
+                    const debouncedValidation = () => {
+                        clearTimeout(validationTimeout);
+                        validationTimeout = setTimeout(() => {
+                            this.refreshTabStates();
+                        }, 500); // 500ms delay
+                    };
+                    
+                    // Listen for input changes on all form fields (debounced)
+                    document.addEventListener('input', (e) => {
+                        if (e.target.matches('input, textarea, select')) {
+                            debouncedValidation();
+                        }
+                    });
+                    
+                    // Listen for checkbox/radio changes (immediate for better UX)
+                    document.addEventListener('change', (e) => {
+                        if (e.target.matches('input[type="checkbox"], input[type="radio"]')) {
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for file input changes (immediate for better UX)
+                    document.addEventListener('change', (e) => {
+                        if (e.target.matches('input[type="file"]')) {
+                            this.refreshTabStates();
+                        }
+                    });
+                    
+                    // Listen for signatory selection changes (immediate for better UX)
+                    document.addEventListener('signatory-selected', (e) => {
+                        this.refreshTabStates();
+                        this.autoSave(); // Trigger auto-save when signatory is selected
+                    });
+                    
+                    // Listen for Alpine.js initialization
+                    document.addEventListener('alpine:init', () => {
+                        // This will be called when Alpine.js initializes
+                        setTimeout(() => {
+                            this.refreshTabStates();
+                        }, 100);
                     });
                 }
-                return false;
             }
-            return true;
         }
-    }
-}
+    </script>
+    
+    <div x-data="publicationRequestData()" x-init="init()" class="h-screen bg-gray-50 flex overflow-hidden">
+        
+        <!-- Hidden notification divs for global notification system -->
+        @if(session('success'))
+            <div id="success-notification" class="hidden">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div id="error-notification" class="hidden">{{ session('error') }}</div>
+        @endif
 
-function validateFileSize(input) {
-    if (input.files && input.files[0] && input.files[0].size > 20 * 1024 * 1024) {
-        alert('File is too large! Maximum allowed size is 20MB.');
-        input.value = '';
-    }
-}
+        <!-- Error message overlay -->
+        <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
+            <span x-text="errorMessage"></span>
+        </div>
 
-document.querySelectorAll('input[type="file"]').forEach(function(input) {
-    input.addEventListener('change', function() { validateFileSize(this); });
-});
+        <!-- Submission Loading Overlay -->
+        <div x-show="isSubmitting" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center"
+             style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl px-8 py-6 flex items-center gap-4 max-w-sm mx-4">
+                <div class="animate-spin h-8 w-8 border-4 border-maroon-600 border-t-transparent rounded-full"></div>
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">Submitting Request</h3>
+                    <p class="text-sm text-gray-600">Please wait while we process your submission...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading overlay -->
+        <div x-show="loading" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl px-6 py-5 flex items-center gap-3">
+                <svg class="animate-spin h-6 w-6 text-maroon-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                <span class="text-maroon-900 font-semibold">Processing…</span>
+            </div>
+        </div>
 
-document.addEventListener('alpine:init', () => {
-    Alpine.data('stickyProgressBar', () => ({
-        isDocked: false,
-        observer: null,
-        init() {
-            const footer = document.getElementById('main-footer');
-            if (!footer) return;
-            this.observer = new IntersectionObserver(
-                ([entry]) => {
-                    this.isDocked = entry.isIntersecting;
-                },
-                {
-                    root: null,
-                    threshold: 0.01
-                }
-            );
-            this.observer.observe(footer);
-        },
-        destroy() {
-            if (this.observer) this.observer.disconnect();
-        }
-    }));
-    Alpine.store('tabNav', tabNav());
-});
+        <!-- Sidebar -->
+        @include('components.user-sidebar')
 
-// Loading screens are now handled directly in fetch operations
-// No Turbo event listeners needed
+        <!-- Main Content -->
+        <div class="flex-1 h-screen overflow-y-auto">
+            <!-- Content Area -->
+            <main class="max-w-7xl mx-auto px-4 pt-2">
+                <!-- Dashboard Header with Modern Compact Filters -->
+                <div class="relative flex items-center justify-between mb-2">
+                    <!-- Left side - Overview Header -->
+                    <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
+                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                        </svg>
+                        <span>Publication Request</span>
+                    </div>
+                    
+                    <!-- Right side - User Controls -->
+                    <div class="flex items-center gap-4">
+                        <!-- Auto-save Status -->
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg x-show="savingDraft" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span x-show="savingDraft" class="text-blue-600">Saving...</span>
+                            <span x-show="!savingDraft" class="text-gray-500">
+                                Last saved: <span x-text="lastSaved || 'Never'"></span>
+                            </span>
+                        </div>
+                        
+                        @include('components.user-navbar')
+                    </div>
+                </div>
 
-// Preload templates for faster generation
-document.addEventListener('DOMContentLoaded', function() {
-    // Preload templates in the background
-    fetch('/publications/preload-templates', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json'
-        }
-    }).then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Templates preloaded successfully');
-        }
-    }).catch(error => {
-        console.log('Template preload failed (non-critical):', error);
-    });
-});
-</script>
+                <!-- Modern Form Container -->
+                <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl overflow-hidden">
+                    <!-- Tab Header -->
+                    <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-t-xl shadow-xl px-6 py-4">
+                        <div class="flex border-b border-maroon-200 mb-0">
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 rounded-tl-lg border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'incentive' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : 'text-maroon-600'"
+                                @click="switchTab('incentive')">
+                                Incentive Application
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'recommendation' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('recommendation') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('recommendation')"
+                                @click="switchTab('recommendation')">
+                                Recommendation Letter
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'terminal' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('terminal') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('terminal')"
+                                @click="switchTab('terminal')">
+                                Terminal Report
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'upload' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('upload') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('upload')"
+                                @click="switchTab('upload')">
+                                Upload Documents
+                            </button>
+                            <button type="button" 
+                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 rounded-tr-lg border-transparent hover:text-maroon-800 hover:bg-maroon-100"
+                                :class="activeTab === 'review' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('review') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
+                                :disabled="!isTabEnabled('review')"
+                                @click="switchTab('review')">
+                                Review & Submit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form Content -->
+                    <div class="pl-6 pr-6 pb-6">
+                        <form 
+                            id="publication-request-form"
+                            method="POST" 
+                            action="{{ route('publications.submit') }}" 
+                            enctype="multipart/form-data" 
+                            class="space-y-6"
+                            @input="updateSubmitButton(); autoSave()"
+                            @change="updateSubmitButton(); autoSave()"
+                            @submit="handleSubmit($event)"
+                            autocomplete="on"
+                        >
+                            @csrf
+                            <input type="hidden" id="request_id" name="request_id" value="{{ $request->id ?? session('draft_publication_' . auth()->id()) }}">
+                            
+                            <!-- Hidden field for generated DOCX files -->
+                            <input type="hidden" name="generated_docx_files" id="generated-docx-files" value="">
+                            
+                            <!-- Tab Content -->
+                            <div class="min-h-[500px] bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <!-- Incentive Application Tab -->
+                                <div x-show="activeTab === 'incentive'" class="space-y-6">
+                                    @include('publications.incentive-application')
+                                </div>
+
+                                <!-- Recommendation Letter Tab -->
+                                <div x-show="activeTab === 'recommendation'" class="space-y-6">
+                                    @include('publications.recommendation-letter')
+                                </div>
+
+                                <!-- Terminal Report Tab -->
+                                <div x-show="activeTab === 'terminal'" class="space-y-6">
+                                    @include('publications.terminal-report')
+                                </div>
+
+                                <!-- Upload Documents Tab -->
+                                <div x-show="activeTab === 'upload'" class="space-y-6">
+                                    @include('publications.upload-documents')
+                                </div>
+
+                                <!-- Review & Submit Tab -->
+                                <div x-show="activeTab === 'review'" class="space-y-6">
+                                    @include('publications.review-submit')
+                                </div>
+                            </div>
+                            
+                            <!-- Padding card to prevent floating pill from covering content -->
+                            <div class="h-16"></div>
+
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Interactive Floating Steps Pill -->
+                <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+                    <div class="bg-white/90 backdrop-blur-sm border border-maroon-200 rounded-full px-6 py-3 shadow-lg">
+                        <div class="flex items-center gap-8">
+                            <!-- Steps group -->
+                            <div class="flex items-center gap-4">
+                                <!-- Step 1: Details (Incentive + Recommendation + Terminal) -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">1</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Details</span>
+                                </div>
+                                
+                                <div class="w-8 h-0.5 bg-maroon-300"></div>
+                                
+                                <!-- Step 2: Upload -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'upload' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">2</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'upload' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Upload</span>
+                                </div>
+                                
+                                <div class="w-8 h-0.5 bg-maroon-300"></div>
+                                
+                                <!-- Step 3: Review -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        :class="activeTab === 'review' 
+                                            ? 'bg-maroon-600 text-white' 
+                                            : 'bg-maroon-200 text-maroon-800'">
+                                        <span class="font-bold text-sm">3</span>
+                                    </div>
+                                    <span class="font-medium text-sm"
+                                        :class="activeTab === 'review' 
+                                            ? 'text-maroon-600 font-semibold' 
+                                            : 'text-maroon-800'">Review</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Next/Submit button -->
+                            <div class="flex items-center">
+                                <button x-show="activeTab !== 'review'"
+                                    @click="switchTab(getNextTab())"
+                                    :disabled="!isTabEnabled(getNextTab())"
+                                    :class="!isTabEnabled(getNextTab())
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-maroon-600 rounded-lg hover:bg-maroon-700 transition-colors w-20'"
+                                    class="transition-colors">
+                                    Next
+                                </button>
+                                <button x-show="activeTab === 'review'"
+                                    id="submit-btn"
+                                    @click="document.getElementById('publication-request-form').submit()"
+                                    :disabled="!confirmChecked"
+                                    :class="!confirmChecked
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20'"
+                                    class="transition-colors text-center">
+                                    Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
 </x-app-layout> 

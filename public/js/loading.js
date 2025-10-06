@@ -1,140 +1,119 @@
-/**
- * Simple Loading System - Direct DOM manipulation
- * No complex classes, just simple functions that work
- */
-
-// Prevent redeclaration errors when script is loaded multiple times
-if (typeof window.loadingSystemInitialized === 'undefined') {
-    window.loadingSystemInitialized = true;
+// Dynamic loading system with progress tracking
+(function() {
+    'use strict';
     
-    // Simple loading overlay
     let loadingOverlay = null;
-
-    function createLoadingOverlay(showFirstGenNotice = false) {
-        // Remove existing overlay if it exists and notice parameter is different
+    let progressInterval = null;
+    
+    function createLoadingOverlay(title = 'Processing...', message = 'Please wait...', progressSteps = []) {
         if (loadingOverlay) {
-            const existingNotice = loadingOverlay.querySelector('.bg-maroon-50');
-            const hasNotice = existingNotice !== null;
-            if (hasNotice !== showFirstGenNotice) {
-                loadingOverlay.remove();
-                loadingOverlay = null;
-            } else {
-                return; // Same configuration, reuse existing
-            }
+            loadingOverlay.remove();
+            loadingOverlay = null;
         }
         
         loadingOverlay = document.createElement('div');
         loadingOverlay.id = 'loading-overlay';
-        loadingOverlay.className = 'fixed inset-0 flex items-center justify-center z-50 hidden backdrop-blur-md';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            font-family: Arial, sans-serif;
+        `;
         
-        const firstGenNotice = showFirstGenNotice ? `
-            <div class="bg-maroon-50 border border-maroon-200 rounded-lg p-3 mb-4">
-                <p class="text-xs text-maroon-800 font-medium">
-                    💡 <strong>Notice:</strong> First generation may be slower as templates are being optimized.
-                    Subsequent generations will be instant!
-                </p>
+        const progressHTML = progressSteps.length > 0 ? `
+            <div style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #666;">
+                    <span id="current-step">Initializing...</span>
+                    <span id="step-counter">1/${progressSteps.length}</span>
+                </div>
+                <div style="width: 100%; background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden;">
+                    <div id="progress-bar" style="
+                        background: linear-gradient(90deg, #8B1538, #A91B47);
+                        height: 100%;
+                        width: 0%;
+                        border-radius: 10px;
+                        transition: width 0.5s ease;
+                    "></div>
+                </div>
             </div>
         ` : '';
         
         loadingOverlay.innerHTML = `
-            <div class="bg-white rounded-xl shadow-2xl px-8 py-8 flex flex-col items-center max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="loading-card">
-                <div class="relative mb-6">
-                    <div class="w-16 h-16 border-4 border-gray-200 border-t-maroon-600 rounded-full animate-spin"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="w-8 h-8 bg-maroon-600 rounded-full animate-pulse"></div>
-                    </div>
-                </div>
-                <div class="text-center w-full">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2" id="loading-title">Processing...</h3>
-                    <p class="text-sm text-gray-600 mb-2" id="loading-message">Please wait while we process your request</p>
-                    ${firstGenNotice}
-                    <div class="space-y-2" id="progress-steps">
-                        <div class="flex items-center justify-between text-xs text-gray-500">
-                            <span id="current-step">Initializing...</span>
-                            <span id="step-counter">1/5</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-maroon-600 h-2 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
+            <div style="
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                max-width: 450px;
+                width: 90%;
+                transform: scale(0.95);
+                opacity: 0;
+                transition: all 0.3s ease;
+            " id="loading-card">
+                <div style="
+                    width: 60px;
+                    height: 60px;
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #8B1538;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 20px;
+                "></div>
+                <h3 style="margin: 0 0 10px; color: #333; font-size: 20px; font-weight: 600;" id="loading-title">${title}</h3>
+                <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.4;" id="loading-message">${message}</p>
+                ${progressHTML}
             </div>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
         `;
         
-        // Ensure document.body exists before appending
-        if (document.body) {
-            document.body.appendChild(loadingOverlay);
-        } else {
-            // If document.body doesn't exist yet, wait for DOM to be ready
-            document.addEventListener('DOMContentLoaded', () => {
-                if (document.body && !document.getElementById('loading-overlay')) {
-                    document.body.appendChild(loadingOverlay);
-                }
-            });
-        }
-    }
-
-    function showLoading(title, message, progressSteps = [], showFirstGenNotice = false) {
-        createLoadingOverlay(showFirstGenNotice);
-        
-        // Wait for elements to be available with retry mechanism
-        const updateContent = () => {
-            const titleEl = document.getElementById('loading-title');
-            const messageEl = document.getElementById('loading-message');
-            
-            if (titleEl) {
-                titleEl.textContent = title;
-            } else {
-                console.warn('Loading title element not found');
-            }
-            if (messageEl) {
-                messageEl.textContent = message;
-            } else {
-                console.warn('Loading message element not found');
-            }
-        };
-        
-        // Try to update immediately
-        updateContent();
-        
-        // If elements still don't exist, retry with increasing delays
-        let retryCount = 0;
-        const maxRetries = 10;
-        const retryInterval = setInterval(() => {
-            const titleEl = document.getElementById('loading-title');
-            const messageEl = document.getElementById('loading-message');
-            
-            if (titleEl && messageEl) {
-                clearInterval(retryInterval);
-                updateContent();
-            } else if (retryCount >= maxRetries) {
-                clearInterval(retryInterval);
-                console.error('Failed to find loading elements after', maxRetries, 'retries');
-            } else {
-                retryCount++;
-            }
-        }, 50);
-        
-        // Show overlay
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('hidden');
-        }
+        document.body.appendChild(loadingOverlay);
         
         // Animate in
-        const card = document.getElementById('loading-card');
-        if (card) {
-            setTimeout(() => {
-                card.classList.remove('scale-95', 'opacity-0');
-                card.classList.add('scale-100', 'opacity-100');
-            }, 10);
+        setTimeout(() => {
+            const card = document.getElementById('loading-card');
+            if (card) {
+                card.style.transform = 'scale(1)';
+                card.style.opacity = '1';
+            }
+        }, 10);
+    }
+    
+    function showLoading(title = 'Processing...', message = 'Please wait...', progressSteps = []) {
+        createLoadingOverlay(title, message, progressSteps);
+        
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
         }
         
-        // Initialize progress
+        // Start progress animation if steps provided
         if (progressSteps.length > 0) {
-            updateProgress(0, progressSteps);
+            let currentStep = 0;
+            updateProgress(currentStep, progressSteps);
+            
+            progressInterval = setInterval(() => {
+                if (currentStep < progressSteps.length - 1) {
+                    currentStep++;
+                    updateProgress(currentStep, progressSteps);
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 800);
         }
     }
-
+    
     function updateProgress(currentStep, steps) {
         const progressBar = document.getElementById('progress-bar');
         const currentStepEl = document.getElementById('current-step');
@@ -145,22 +124,28 @@ if (typeof window.loadingSystemInitialized === 'undefined') {
             progressBar.style.width = `${progress}%`;
             currentStepEl.textContent = steps[currentStep] || 'Processing...';
             stepCounter.textContent = `${currentStep + 1}/${steps.length}`;
-        } else {
-            // If elements don't exist yet, try again after a short delay
-            setTimeout(() => updateProgress(currentStep, steps), 50);
         }
     }
-
+    
     function hideLoading() {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+        
         if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+            loadingOverlay.remove();
+            loadingOverlay = null;
         }
     }
-
+    
     // Make functions globally available
     window.showLoading = showLoading;
-    window.updateProgress = updateProgress;
     window.hideLoading = hideLoading;
-
-    console.log('Loading system initialized');
-}
+    window.updateProgress = updateProgress;
+    
+    // Auto-hide on page navigation
+    document.addEventListener('turbo:before-cache', hideLoading);
+    document.addEventListener('turbo:load', hideLoading);
+    
+})();
