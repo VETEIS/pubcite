@@ -343,7 +343,6 @@ function generateDocx(type) {
     
     const formData = new FormData(form);
     formData.append('docx_type', type);
-    // Don't set store_for_submit by default - let user choose
 
     // Show comprehensive loading state with progress tracking
     const operationId = `generate-docx-${type}-${Date.now()}`;

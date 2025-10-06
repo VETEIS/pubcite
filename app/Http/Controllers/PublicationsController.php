@@ -1364,23 +1364,6 @@ class PublicationsController extends Controller
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
-            // Filter out error messages and invalid data
-            $data = $request->all();
-            $data = array_filter($data, function($value, $key) {
-                // Skip error messages and system fields
-                if (is_string($value) && (
-                    strpos($value, 'false message') !== false ||
-                    strpos($value, 'Please wait before submitting') !== false ||
-                    strpos($value, 'Validation failed') !== false
-                )) {
-                    return false;
-                }
-                // Skip system fields
-                if (in_array($key, ['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft'])) {
-                    return false;
-                }
-                return true;
-            }, ARRAY_FILTER_USE_BOTH);
             
             $isPreview = !$reqId;
             
@@ -1395,10 +1378,10 @@ class PublicationsController extends Controller
                 $reqCode = $userRequest->request_code;
                 $userId = $userRequest->user_id;
                 $uploadPath = "requests/{$userId}/{$reqCode}";
-                Log::info('Generating DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
+                Log::info('Generating Publication DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
             }
             
-            // Add fallback data if form data is corrupted (mirror citations logic)
+            // Add fallback data if form data is corrupted
             $fallbackData = [
                 'name' => 'Sample Name',
                 'rank' => 'Sample Rank', 
@@ -1428,8 +1411,8 @@ class PublicationsController extends Controller
                 'rec_dean_name' => 'Sample Dean'
             ];
             
-            // Merge fallback data with filtered form data (mirror citations logic)
-            $data = array_merge($fallbackData, $data);
+            // Merge fallback data with form data
+            $data = array_merge($fallbackData, $request->all());
             
             Log::info('Publication DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
             
@@ -1440,30 +1423,32 @@ class PublicationsController extends Controller
             $uniqueHash = substr(hash('sha256', $hashSource), 0, 16); // 16 chars is enough
             $filename = null;
             $fullPath = null;
+            
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
                     Log::info('Filtered data for incentive', ['filtered' => $filtered]);
                     $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Incentive_Application_Form';
+                    $filename = 'Incentive_Application_Form.docx';
                     break;
+                    
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
                     Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
                     $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Recommendation_Letter_Form';
+                    $filename = 'Recommendation_Letter_Form.docx';
                     break;
+                    
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
                     Log::info('Filtered data for terminal', ['filtered' => $filtered]);
                     $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Terminal_Report_Form';
+                    $filename = 'Terminal_Report_Form.docx';
                     break;
+                    
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);
             }
-            
-            $filename = $filename . '.docx';
             
             $absolutePath = Storage::disk('local')->path($fullPath);
             if (!file_exists($absolutePath)) {
