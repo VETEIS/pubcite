@@ -75,6 +75,11 @@ class CitationsController extends Controller
         if ($oldStatus !== $request->status) {
             $adminComment = $httpRequest->input('admin_comment', null);
             Mail::to($request->user->email)->send(new StatusChangeNotification($request, $request->user, $request->status, $adminComment));
+            
+            // If status changed to 'endorsed', notify signatories
+            if ($request->status === 'endorsed') {
+                $this->notifySignatories($request);
+            }
         }
 
         return back()->with('success', 'Request status updated successfully.');
@@ -498,19 +503,28 @@ class CitationsController extends Controller
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
         
-        // Prevent duplicate submissions (only for final submissions, not drafts)
-        if (!$isDraft) {
-            $recentSubmission = \App\Models\Request::where('user_id', $user->id)
-                ->where('type', 'Citation')
-                ->where('status', 'pending')
-                ->where('requested_at', '>=', now()->subMinutes(5)) // Within last 5 minutes
-                ->first();
-                
-            if ($recentSubmission) {
+        // Prevent duplicate submissions for both drafts and final submissions
+        $recentSubmission = \App\Models\Request::where('user_id', $user->id)
+            ->where('type', 'Citation')
+            ->where('status', $isDraft ? 'draft' : 'pending')
+            ->where('requested_at', '>=', now()->subSeconds(10)) // Within last 10 seconds
+            ->first();
+            
+        if ($recentSubmission) {
+            Log::info('Duplicate citation submission prevented', [
+                'user_id' => $user->id,
+                'is_draft' => $isDraft,
+                'recent_submission_id' => $recentSubmission->id,
+                'recent_submission_time' => $recentSubmission->requested_at
+            ]);
+            
+            if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Please wait before submitting another request. You can only submit one request every 5 minutes.'
+                    'message' => 'Duplicate submission prevented. Please wait a moment before trying again.'
                 ], 429);
+            } else {
+                return back()->with('error', 'Duplicate submission prevented. Please wait a moment before trying again.');
             }
         }
         
@@ -792,21 +806,14 @@ class CitationsController extends Controller
                 }
                 // Queue email notifications for better performance
                 try {
-                    // Queue user notification
-                    Mail::to($userRequest->user->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, false));
-                    
-                    // Queue admin notifications
+                    // Queue admin notifications only (user and signatories will be notified when admin endorses)
                     $adminUsers = \App\Models\User::where('role', 'admin')->get();
                     foreach ($adminUsers as $adminUser) {
                         Mail::to($adminUser->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, true));
                     }
                     
-                    // Queue signatory notifications for Deputy Director and RDD Director
-                    $this->notifySignatories($userRequest);
-                    
                     Log::info('Email notifications queued successfully', [
                         'requestId' => $userRequest->id,
-                        'userEmail' => $userRequest->user->email,
                         'adminEmails' => $adminUsers->pluck('email')->toArray()
                     ]);
                 } catch (\Exception $e) {

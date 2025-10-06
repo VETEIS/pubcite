@@ -301,8 +301,13 @@
                 autoSave() {
                     // Don't auto-save if disabled (e.g., after form submission)
                     if (this.autoSaveDisabled) {
-                    return;
-                }
+                        return;
+                    }
+                    
+                    // Don't auto-save if currently submitting
+                    if (this.isSubmitting) {
+                        return;
+                    }
                     
                     // Clear existing timer
                     if (this.autoSaveTimer) {
@@ -311,7 +316,10 @@
                     
                     // Set new timer - save after 2 seconds of inactivity
                     this.autoSaveTimer = setTimeout(() => {
-                        this.saveDraft();
+                        // Double-check before saving
+                        if (!this.autoSaveDisabled && !this.isSubmitting) {
+                            this.saveDraft();
+                        }
                     }, 2000);
                 },
                 
@@ -533,6 +541,11 @@
                 
                 // Handle form submission - only show error popup on actual submit
                 handleSubmit(event) {
+                    console.log('Publications handleSubmit called');
+                    
+                    // CRITICAL: Disable auto-save IMMEDIATELY to prevent conflicts
+                    this.disableAutoSave();
+                    
                     // Prevent double submission
                     if (this.isSubmitting) {
                         event.preventDefault();
@@ -560,13 +573,27 @@
                         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     }
                     
-                    // Loading screen will be handled by Turbo events
+                    // Show loading screen with progress steps
+                    const progressSteps = [
+                        'Validating form data...',
+                        'Processing submission...',
+                        'Generating documents...',
+                        'Finalizing request...'
+                    ];
+                    console.log('About to call window.showLoading');
+                    window.showLoading('Submitting Request', 'Please wait while we process your publication request...', progressSteps);
+                    console.log('window.showLoading called');
                     
-                    // Disable auto-save to prevent duplicate entries after submission
-                    this.disableAutoSave();
+                    // Prevent default form submission and submit manually
+                    event.preventDefault();
                     
-                    // Form is valid, allow submission
-                    return true;
+                    // Submit the form manually after a short delay to ensure loading screen shows
+                    setTimeout(() => {
+                        const form = document.getElementById('publication-request-form');
+                        form.submit();
+                    }, 100);
+                    
+                    return false;
                 },
                 
                 // Initialize form
@@ -788,7 +815,7 @@
                             autocomplete="on"
                         >
                             @csrf
-                            <input type="hidden" id="request_id" name="request_id" value="{{ $request->id ?? session('draft_publication_' . auth()->id()) }}">
+                            <input type="hidden" id="request_id" name="request_id" value="{{ $request->id }}">
                             
                             <!-- Hidden field for generated DOCX files -->
                             <input type="hidden" name="generated_docx_files" id="generated-docx-files" value="">
@@ -894,7 +921,7 @@
                                 </button>
                                 <button x-show="activeTab === 'review'"
                                     id="submit-btn"
-                                    @click="document.getElementById('publication-request-form').submit()"
+                                    @click="handleSubmit($event)"
                                     :disabled="!confirmChecked"
                                     :class="!confirmChecked
                                         ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'

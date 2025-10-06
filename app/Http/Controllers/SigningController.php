@@ -25,7 +25,7 @@ class SigningController extends Controller
         $signatoryType = $user->signatoryType();
         $userName = trim($user->name ?? '');
 
-        $candidateRequests = UserRequest::where('status', '!=', 'draft')
+        $candidateRequests = UserRequest::where('status', 'endorsed')
             ->orderByDesc('requested_at')
             ->limit(200)
             ->get();
@@ -105,15 +105,20 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($requestId);
         
+        // Only allow access to endorsed requests
+        if ($userRequest->status !== 'endorsed') {
+            abort(403, 'This request is not available for signing');
+        }
+        
         // Verify user is authorized to sign this request
         $signatoryType = $user->signatoryType();
         $userName = trim($user->name ?? '');
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
         $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
         
-        // Deputy Director and RDD Director can access ALL requests
+        // Deputy Director and RDD Director can access ALL endorsed requests
         if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
-            $matchedRole = $signatoryType; // They can access all requests
+            $matchedRole = $signatoryType; // They can access all endorsed requests
         }
         
         if (!$matchedRole) {
@@ -156,6 +161,11 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($validated['request_id']);
 
+        // Only allow signing of endorsed requests
+        if ($userRequest->status !== 'endorsed') {
+            abort(403, 'This request is not available for signing');
+        }
+
         // Allow multiple signatures from the same signatory
         // (Removed restriction: users can now sign the same request multiple times)
 
@@ -165,9 +175,9 @@ class SigningController extends Controller
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
         $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
         
-        // Deputy Director and RDD Director can access ALL requests
+        // Deputy Director and RDD Director can access ALL endorsed requests
         if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
-            $matchedRole = $signatoryType; // They can access all requests
+            $matchedRole = $signatoryType; // They can access all endorsed requests
         }
         
         if (!$matchedRole) {

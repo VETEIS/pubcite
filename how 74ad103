@@ -1,0 +1,43 @@
+[33mcommit 74ad103838b9a8fba010249f02a1dbc3134cb1b4[m
+Author: VETE <user@VETE.gmail.com>
+Date:   Mon Oct 6 16:28:36 2025 +0800
+
+    fixed loading screen of submit // uiux changes // bugs fixes
+
+.env.example
+app/Http/Controllers/Auth/GoogleController.php
+app/Http/Controllers/CitationsController.php
+app/Http/Controllers/PublicationsController.php
+config/services.php
+nobs.md
+public/js/loading.js
+resources/js/app.js
+resources/views/citations/incentive-application-modern.blade.php
+resources/views/citations/incentive-application.blade.php
+resources/views/citations/recommendation-letter-modern.blade.php
+resources/views/citations/recommendation-letter.blade.php
+resources/views/citations/request-clean.blade.php
+resources/views/citations/request.blade.php
+resources/views/citations/review-submit.blade.php
+resources/views/citations/success.blade.php
+resources/views/citations/upload-documents-modern.blade.php
+resources/views/citations/upload-documents-simple.blade.php
+resources/views/citations/upload-documents.blade.php
+resources/views/layouts/app.blade.php
+resources/views/publications/group-review.blade.php
+resources/views/publications/incentive-application-modern.blade.php
+resources/views/publications/incentive-application.blade.php
+resources/views/publications/recommendation-letter-modern.blade.php
+resources/views/publications/recommendation-letter.blade.php
+resources/views/publications/request-clean.blade.php
+resources/views/publications/request.blade.php
+resources/views/publications/review-step.blade.php
+resources/views/publications/review-submit-modern.blade.php
+resources/views/publications/review-submit.blade.php
+resources/views/publications/success.blade.php
+resources/views/publications/terminal-report-modern.blade.php
+resources/views/publications/terminal-report.blade.php
+resources/views/publications/upload-documents-modern.blade.php
+resources/views/publications/upload-documents-simple.blade.php
+resources/views/publications/upload-documents.blade.php
+routes/web.php

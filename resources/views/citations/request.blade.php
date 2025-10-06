@@ -255,9 +255,14 @@
                 autoSave() {
                     // Don't auto-save if disabled (e.g., after form submission)
                     if (this.autoSaveDisabled) {
-            return;
-        }
-        
+                        return;
+                    }
+                    
+                    // Don't auto-save if currently submitting
+                    if (this.isSubmitting) {
+                        return;
+                    }
+                    
                     // Clear existing timer
                     if (this.autoSaveTimer) {
                         clearTimeout(this.autoSaveTimer);
@@ -265,7 +270,10 @@
                     
                     // Set new timer - save after 2 seconds of inactivity
                     this.autoSaveTimer = setTimeout(() => {
-                        this.saveDraft();
+                        // Double-check before saving
+                        if (!this.autoSaveDisabled && !this.isSubmitting) {
+                            this.saveDraft();
+                        }
                     }, 2000);
                 },
                 
@@ -484,6 +492,9 @@
                 
                 // Handle form submission - only show error popup on actual submit
                 handleSubmit(event) {
+                    // CRITICAL: Disable auto-save IMMEDIATELY to prevent conflicts
+                    this.disableAutoSave();
+                    
                     // Prevent double submission
                     if (this.isSubmitting) {
                         event.preventDefault();
@@ -515,9 +526,6 @@
                         'Finalizing submission...'
                     ];
                     window.showLoading('Submitting Request', 'Please wait while we process your citation request...', progressSteps);
-                    
-                    // Disable auto-save to prevent duplicate entries after submission
-                    this.disableAutoSave();
                     
                     // Prevent default form submission and submit manually
                     event.preventDefault();

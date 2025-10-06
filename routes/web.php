@@ -152,8 +152,8 @@ Route::middleware(['auth', 'mobile.restrict'])->prefix('admin')->group(function 
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     
     // Admin request management routes
-    Route::patch('/requests/{request}', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.update');
-    Route::patch('/requests/{request}/status', [\App\Http\Controllers\PublicationsController::class, 'adminUpdate'])->name('admin.requests.status');
+    Route::patch('/requests/{request}', [\App\Http\Controllers\AdminRequestController::class, 'updateStatus'])->name('admin.requests.update');
+    Route::patch('/requests/{request}/status', [\App\Http\Controllers\AdminRequestController::class, 'updateStatus'])->name('admin.requests.status');
     Route::delete('/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
     Route::get('/requests/{request}/download', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadFile'])->name('admin.requests.download');
     Route::get('/requests/{request}/debug', [\App\Http\Controllers\PublicationsController::class, 'debugFilePaths'])->name('admin.requests.debug');

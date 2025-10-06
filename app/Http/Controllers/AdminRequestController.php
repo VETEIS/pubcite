@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -363,6 +364,118 @@ class AdminRequestController extends Controller
             return number_format($bytes / 1024, 2) . ' KB';
         } else {
             return $bytes . ' bytes';
+        }
+    }
+
+    public function updateStatus(Request $httpRequest, \App\Models\Request $request)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'admin') {
+            abort(403);
+        }
+
+        $httpRequest->validate([
+            'status' => 'required|in:pending,endorsed,rejected',
+        ]);
+        
+        $oldStatus = $request->status;
+        $request->status = $httpRequest->input('status');
+        $request->save();
+
+        if ($oldStatus !== $request->status) {
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => Auth::id(),
+                    'request_id' => $request->id,
+                    'action' => 'status_changed',
+                    'details' => [
+                        'old_status' => $oldStatus,
+                        'new_status' => $request->status,
+                        'request_code' => $request->request_code,
+                        'type' => $request->type,
+                        'changed_at' => now()->toDateTimeString(),
+                    ],
+                    'created_at' => now(),
+                ]);
+                
+                \Illuminate\Support\Facades\Log::info('Activity log created successfully for status change', [
+                    'request_id' => $request->id,
+                    'request_code' => $request->request_code,
+                    'old_status' => $oldStatus,
+                    'new_status' => $request->status
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to create activity log for status change: ' . $e->getMessage(), [
+                    'request_id' => $request->id,
+                    'request_code' => $request->request_code,
+                    'old_status' => $oldStatus,
+                    'new_status' => $request->status,
+                    'error' => $e->getMessage()
+                ]);
+            }
+            
+            $adminComment = $httpRequest->input('admin_comment', null);
+            \Illuminate\Support\Facades\Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
+            
+            // If status changed to 'endorsed', notify signatories
+            if ($request->status === 'endorsed') {
+                $this->notifySignatories($request);
+            }
+        }
+
+        if ($httpRequest->expectsJson() || $httpRequest->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Request status updated successfully.']);
+        }
+        
+        return back()->with('success', 'Request status updated successfully.');
+    }
+
+
+    private function notifySignatories(\App\Models\Request $request)
+    {
+        try {
+            // Extract signatories from form data using the same logic as admin review modal
+            $signatories = $this->extractSignatories($request->form_data);
+            
+            // Always include Deputy Director and RDD Director
+            $deputyDirectorEmail = \App\Models\Setting::get('deputy_director_email');
+            $rddDirectorEmail = \App\Models\Setting::get('rdd_director_email');
+            
+            $emailsSent = [];
+            
+            // Send emails to detected signatories
+            foreach ($signatories as $signatory) {
+                $user = \App\Models\User::where('name', $signatory['name'])->first();
+                if ($user && $user->email) {
+                    \Illuminate\Support\Facades\Mail::to($user->email)->queue(new \App\Mail\SignatoryNotification($request, $signatory['role'], $signatory['name']));
+                    $emailsSent[] = $user->email;
+                }
+            }
+            
+            // Send emails to Deputy Director and RDD Director
+            if ($deputyDirectorEmail) {
+                $deputyDirectorName = \App\Models\Setting::get('official_deputy_director_name', 'Deputy Director');
+                \Illuminate\Support\Facades\Mail::to($deputyDirectorEmail)->queue(new \App\Mail\SignatoryNotification($request, 'deputy_director', $deputyDirectorName));
+                $emailsSent[] = $deputyDirectorEmail;
+            }
+            
+            if ($rddDirectorEmail) {
+                $rddDirectorName = \App\Models\Setting::get('official_rdd_director_name', 'RDD Director');
+                \Illuminate\Support\Facades\Mail::to($rddDirectorEmail)->queue(new \App\Mail\SignatoryNotification($request, 'rdd_director', $rddDirectorName));
+                $emailsSent[] = $rddDirectorEmail;
+            }
+
+            \Illuminate\Support\Facades\Log::info('Signatory notifications queued', [
+                'requestId' => $request->id,
+                'signatories' => $signatories,
+                'emailsSent' => $emailsSent
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to queue signatory notifications', [
+                'requestId' => $request->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

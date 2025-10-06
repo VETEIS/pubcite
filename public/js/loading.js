@@ -92,6 +92,7 @@
     }
     
     function showLoading(title = 'Processing...', message = 'Please wait...', progressSteps = []) {
+        console.log('showLoading called with:', title, message, progressSteps);
         createLoadingOverlay(title, message, progressSteps);
         
         if (loadingOverlay) {
