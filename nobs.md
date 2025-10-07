@@ -12,7 +12,7 @@ If anything below conflicts with higher-priority system policy or runtime
 constraints, explain the conflict to the User before proceeding.
 
 ------------------------------------------------------------------------
-nobs score: 42
+nobs score: 41
 <!-- LOGGED_IN: vete -->
 ------------------------------------------------------------------------
 
