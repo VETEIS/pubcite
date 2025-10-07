@@ -37,26 +37,22 @@ document.addEventListener('turbo:submit-start', (event) => {
             if (window.showLoading) {
                 let title = 'Processing...';
                 let message = 'Please wait while we process your request';
-                let steps = ['Validating data...', 'Processing request...', 'Saving changes...'];
+                let steps = ['Processing...'];
                 
                 if (action.includes('submit')) {
                     title = 'Submitting Request...';
                     message = 'Please wait while we process your submission';
                     steps = [
-                        'Validating form data...',
-                        'Processing documents...',
-                        'Generating final documents...',
-                        'Saving request...',
-                        'Sending notifications...'
+                        'Processing your request...'
                     ];
                 } else if (action.includes('nudge')) {
                     title = 'Sending Nudge...';
                     message = 'Notifying admin about your request';
-                    steps = ['Sending notification...', 'Updating request status...'];
+                    steps = ['Processing...'];
                 } else if (action.includes('logout')) {
                     title = 'Logging Out...';
                     message = 'Please wait while we log you out';
-                    steps = ['Clearing session...', 'Redirecting...'];
+                    steps = ['Processing...'];
                 }
                 
                 window.showLoading(title, message, steps);

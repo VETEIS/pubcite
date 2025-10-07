@@ -91,28 +91,94 @@
         }, 10);
     }
     
-    function showLoading(title = 'Processing...', message = 'Please wait...', progressSteps = []) {
-        console.log('showLoading called with:', title, message, progressSteps);
+    function showLoading(title = 'Processing...', message = 'Please wait...', progressSteps = [], useRealProgress = false) {
+        console.log('showLoading called with:', title, message, progressSteps, useRealProgress);
         createLoadingOverlay(title, message, progressSteps);
         
         if (loadingOverlay) {
             loadingOverlay.style.display = 'flex';
         }
         
-        // Start progress animation if steps provided
-        if (progressSteps.length > 0) {
-            let currentStep = 0;
-            updateProgress(currentStep, progressSteps);
+        if (useRealProgress && progressSteps.length > 0) {
+            // Use real progress tracking via Server-Sent Events
+            startRealProgressTracking();
+        } else if (progressSteps.length > 0) {
+            // Show honest loading without fake progress steps
+            updateProgress(0, progressSteps);
             
-            progressInterval = setInterval(() => {
-                if (currentStep < progressSteps.length - 1) {
-                    currentStep++;
-                    updateProgress(currentStep, progressSteps);
-                } else {
-                    clearInterval(progressInterval);
-                }
-            }, 800);
+            // Show a simple animated progress bar that doesn't pretend to track specific steps
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) {
+                // Animate progress bar to show activity without specific step tracking
+                let progress = 0;
+                progressInterval = setInterval(() => {
+                    progress += Math.random() * 10; // Random increments to show activity
+                    if (progress > 90) progress = 90; // Never reach 100% until actually complete
+                    progressBar.style.width = `${progress}%`;
+                }, 200);
+            }
         }
+    }
+    
+    function startRealProgressTracking() {
+        const currentStepEl = document.getElementById('current-step');
+        const stepCounter = document.getElementById('step-counter');
+        const progressBar = document.getElementById('progress-bar');
+        
+        if (!currentStepEl || !stepCounter || !progressBar) {
+            console.error('Progress elements not found');
+            return;
+        }
+        
+        // Initialize progress
+        currentStepEl.textContent = 'Starting submission...';
+        stepCounter.textContent = '0/6';
+        progressBar.style.width = '0%';
+        
+        // Connect to Server-Sent Events
+        const eventSource = new EventSource('/progress/stream');
+        let currentStep = 0;
+        const totalSteps = 6;
+        
+        eventSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Progress update:', data);
+                
+                if (data.type === 'progress') {
+                    currentStep++;
+                    const progress = (currentStep / totalSteps) * 100;
+                    
+                    // Update progress display
+                    currentStepEl.textContent = data.message;
+                    stepCounter.textContent = `${currentStep}/${totalSteps}`;
+                    progressBar.style.width = `${progress}%`;
+                } else if (data.type === 'complete') {
+                    // Mark as complete
+                    currentStep = totalSteps;
+                    currentStepEl.textContent = 'Request submitted successfully!';
+                    stepCounter.textContent = `${totalSteps}/${totalSteps}`;
+                    progressBar.style.width = '100%';
+                    
+                    // Close the connection
+                    eventSource.close();
+                } else if (data.type === 'timeout') {
+                    currentStepEl.textContent = 'Processing completed';
+                    eventSource.close();
+                }
+            } catch (e) {
+                console.error('Error parsing progress data:', e);
+            }
+        };
+        
+        eventSource.onerror = function(event) {
+            console.error('SSE connection error:', event);
+            currentStepEl.textContent = 'Processing...';
+            eventSource.close();
+        };
+        
+        // Store event source for cleanup
+        window.progressEventSource = eventSource;
     }
     
     function updateProgress(currentStep, steps) {
@@ -132,6 +198,12 @@
         if (progressInterval) {
             clearInterval(progressInterval);
             progressInterval = null;
+        }
+        
+        // Close SSE connection if it exists
+        if (window.progressEventSource) {
+            window.progressEventSource.close();
+            window.progressEventSource = null;
         }
         
         if (loadingOverlay) {

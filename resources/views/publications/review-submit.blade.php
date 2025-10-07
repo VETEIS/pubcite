@@ -357,20 +357,15 @@ function generateDocx(type) {
         'Finalizing document...'
     ];
     
-    // Show loading screen with first generation notice for preview
+    // Show real progress tracking for document generation
+    const progressSteps = [
+        'Starting document generation...',
+        'Processing form data...',
+        'Filtering data for document type...',
+        'Generating document...',
+        'Document ready for download!'
+    ];
     window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
-    
-    // Simulate progress updates
-    let currentStep = 0;
-    const progressInterval = setInterval(() => {
-        if (currentStep < progressSteps.length - 1) {
-            currentStep++;
-            window.updateProgress(currentStep, progressSteps);
-        }
-    }, 1000);
-    
-    // Store interval for cleanup
-    window[`progress_${operationId}`] = progressInterval;
 
     fetch('{{ route("publications.generate") }}', {
         method: 'POST',
@@ -420,22 +415,14 @@ function generateDocx(type) {
         // Hide loading state
         window.hideLoading();
         
-        // Clear progress interval
-        if (window[`progress_${operationId}`]) {
-            clearInterval(window[`progress_${operationId}`]);
-            delete window[`progress_${operationId}`];
-        }
+        // Progress tracking is now handled by SSE
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
         // Hide loading state
         window.hideLoading();
         
-        // Clear progress interval
-        if (window[`progress_${operationId}`]) {
-            clearInterval(window[`progress_${operationId}`]);
-            delete window[`progress_${operationId}`];
-        }
+        // Progress tracking is now handled by SSE
     });
 }
 </script>

@@ -789,6 +789,12 @@ class CitationsController extends Controller
             if (!$isDraft) {
                 // Create admin notifications for final submission
                 $admins = \App\Models\User::where('role', 'admin')->get();
+                Log::info('Creating admin notifications', [
+                    'requestId' => $userRequest->id,
+                    'requestCode' => $requestCode,
+                    'adminCount' => $admins->count()
+                ]);
+                
                 foreach ($admins as $admin) {
                     \App\Models\AdminNotification::create([
                         'user_id' => $admin->id,

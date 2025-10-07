@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicationsController;
 use App\Http\Controllers\CitationsController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\ProgressController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -159,3 +160,6 @@ Route::middleware(['auth', 'mobile.restrict'])->prefix('admin')->group(function 
     Route::get('/requests/{request}/debug', [\App\Http\Controllers\PublicationsController::class, 'debugFilePaths'])->name('admin.requests.debug');
     Route::get('/requests/{request}/serve', [\App\Http\Controllers\PublicationsController::class, 'serveFile'])->name('admin.requests.serve');
 });
+
+// Progress tracking route (authenticated users only)
+Route::middleware('auth')->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');

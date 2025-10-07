@@ -115,12 +115,7 @@ class LoadingManager {
                 button.disabled = true;
                 button.classList.add('opacity-50', 'cursor-not-allowed');
                 
-                // Add loading text if it's a submit button
-                if (button.type === 'submit' || button.textContent.includes('Submit')) {
-                    button.textContent = 'Submitting...';
-                } else if (button.textContent.includes('Generate')) {
-                    button.textContent = 'Generating...';
-                }
+                // Keep original button text - no automatic text changes
             }
         });
     }

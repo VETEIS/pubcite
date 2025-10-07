@@ -268,28 +268,15 @@ function generateDocx(type) {
     // Show comprehensive loading state with progress tracking
     const operationId = `generate-citation-docx-${type}-${Date.now()}`;
     
-    // Define progress steps for document generation
+    // Show real progress tracking for document generation
     const progressSteps = [
-        'Preparing document template...',
+        'Starting document generation...',
         'Processing form data...',
-        'Generating DOCX file...',
-        'Finalizing document...'
+        'Filtering data for document type...',
+        'Generating document...',
+        'Document ready for download!'
     ];
-    
-    // Show loading screen with first generation notice for preview
     window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
-    
-    // Simulate progress updates
-    let currentStep = 0;
-    const progressInterval = setInterval(() => {
-        if (currentStep < progressSteps.length - 1) {
-            currentStep++;
-            window.updateProgress(currentStep, progressSteps);
-        }
-    }, 1000);
-    
-    // Store interval for cleanup
-    window[`progress_${operationId}`] = progressInterval;
 
     fetch('{{ route("citations.generate") }}', {
         method: 'POST',
@@ -341,21 +328,11 @@ function generateDocx(type) {
         // Hide loading state
         window.hideLoading();
         
-        // Clear progress interval
-        if (window[`progress_${operationId}`]) {
-            clearInterval(window[`progress_${operationId}`]);
-            delete window[`progress_${operationId}`];
-        }
+        // Progress tracking is now handled by SSE
     })
     .finally(() => {
         // Hide loading state
         window.hideLoading();
-        
-        // Clear progress interval
-        if (window[`progress_${operationId}`]) {
-            clearInterval(window[`progress_${operationId}`]);
-            delete window[`progress_${operationId}`];
-        }
     });
 }
 </script>

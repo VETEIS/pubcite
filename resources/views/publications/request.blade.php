@@ -569,20 +569,21 @@
                     const submitBtn = document.querySelector('#submit-btn');
                     if (submitBtn) {
                         submitBtn.disabled = true;
-                        submitBtn.textContent = 'Submitting...';
                         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     }
                     
-                    // Show loading screen with progress steps
+                    // Show real progress tracking
                     const progressSteps = [
-                        'Validating form data...',
-                        'Processing submission...',
-                        'Generating documents...',
-                        'Finalizing request...'
+                        'Starting submission...',
+                        'Processing file uploads...',
+                        'Creating admin notifications...',
+                        'Sending email notifications...',
+                        'Finalizing request...',
+                        'Request submitted successfully!'
                     ];
-                    console.log('About to call window.showLoading');
-                    window.showLoading('Submitting Request', 'Please wait while we process your publication request...', progressSteps);
-                    console.log('window.showLoading called');
+                    console.log('About to call window.showLoading with real progress');
+                    window.showLoading('Submitting Request', 'Please wait while we process your publication request...', progressSteps, true);
+                    console.log('window.showLoading called with real progress');
                     
                     // Prevent default form submission and submit manually
                     event.preventDefault();
@@ -680,6 +681,13 @@
         }
     </script>
     
+    <style>
+        /* Force main content scrollbar to always be present to prevent layout shifts */
+        .main-content-scroll {
+            overflow-y: scroll !important;
+        }
+    </style>
+    
     <div x-data="publicationRequestData()" x-init="init()" class="h-screen bg-gray-50 flex overflow-hidden">
         
         <!-- Hidden notification divs for global notification system -->
@@ -729,7 +737,7 @@
         @include('components.user-sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 h-screen overflow-y-auto">
+        <div class="flex-1 h-screen overflow-y-auto main-content-scroll">
             <!-- Content Area -->
             <main class="max-w-7xl mx-auto px-4 pt-2">
                 <!-- Dashboard Header with Modern Compact Filters -->
@@ -760,7 +768,7 @@
                 </div>
 
                 <!-- Modern Form Container -->
-                <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl overflow-hidden">
+                <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-xl shadow-xl overflow-hidden mb-8">
                     <!-- Tab Header -->
                     <div class="bg-white/30 backdrop-blur-md border border-white/40 rounded-t-xl shadow-xl px-6 py-4">
                         <div class="flex border-b border-maroon-200 mb-0">
@@ -802,13 +810,13 @@
                     </div>
 
                     <!-- Form Content -->
-                    <div class="pl-6 pr-6 pb-6">
+                    <div class="pl-6 pr-6 pb-6 flex-1 flex flex-col">
                         <form 
                             id="publication-request-form"
                             method="POST" 
                             action="{{ route('publications.submit') }}" 
                             enctype="multipart/form-data" 
-                            class="space-y-6"
+                            class="space-y-6 flex-1 flex flex-col"
                             @input="updateSubmitButton(); autoSave()"
                             @change="updateSubmitButton(); autoSave()"
                             @submit="handleSubmit($event)"
@@ -821,31 +829,29 @@
                             <input type="hidden" name="generated_docx_files" id="generated-docx-files" value="">
                             
                             <!-- Tab Content -->
-                            <div class="min-h-[500px] bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                <!-- Incentive Application Tab -->
-                                <div x-show="activeTab === 'incentive'" class="space-y-6">
-                                    @include('publications.incentive-application')
-                                </div>
+                            <!-- Incentive Application Tab -->
+                            <div x-show="activeTab === 'incentive'" class="space-y-6">
+                                @include('publications.incentive-application')
+                            </div>
 
-                                <!-- Recommendation Letter Tab -->
-                                <div x-show="activeTab === 'recommendation'" class="space-y-6">
-                                    @include('publications.recommendation-letter')
-                                </div>
+                            <!-- Recommendation Letter Tab -->
+                            <div x-show="activeTab === 'recommendation'" class="space-y-6">
+                                @include('publications.recommendation-letter')
+                            </div>
 
-                                <!-- Terminal Report Tab -->
-                                <div x-show="activeTab === 'terminal'" class="space-y-6">
-                                    @include('publications.terminal-report')
-                                </div>
+                            <!-- Terminal Report Tab -->
+                            <div x-show="activeTab === 'terminal'" class="space-y-6">
+                                @include('publications.terminal-report')
+                            </div>
 
-                                <!-- Upload Documents Tab -->
-                                <div x-show="activeTab === 'upload'" class="space-y-6">
-                                    @include('publications.upload-documents')
-                                </div>
+                            <!-- Upload Documents Tab -->
+                            <div x-show="activeTab === 'upload'" class="space-y-6">
+                                @include('publications.upload-documents')
+                            </div>
 
-                                <!-- Review & Submit Tab -->
-                                <div x-show="activeTab === 'review'" class="space-y-6">
-                                    @include('publications.review-submit')
-                                </div>
+                            <!-- Review & Submit Tab -->
+                            <div x-show="activeTab === 'review'" class="space-y-6">
+                                @include('publications.review-submit')
                             </div>
                             
                             <!-- Padding card to prevent floating pill from covering content -->
@@ -914,8 +920,8 @@
                                     @click="switchTab(getNextTab())"
                                     :disabled="!isTabEnabled(getNextTab())"
                                     :class="!isTabEnabled(getNextTab())
-                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
-                                        : 'px-6 py-2 text-sm font-medium text-white bg-maroon-600 rounded-lg hover:bg-maroon-700 transition-colors w-20'"
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20 flex items-center justify-center'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-maroon-600 rounded-lg hover:bg-maroon-700 transition-colors w-20 flex items-center justify-center'"
                                     class="transition-colors">
                                     Next
                                 </button>
@@ -924,9 +930,9 @@
                                     @click="handleSubmit($event)"
                                     :disabled="!confirmChecked"
                                     :class="!confirmChecked
-                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20'
-                                        : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20'"
-                                    class="transition-colors text-center">
+                                        ? 'px-6 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed w-20 flex items-center justify-center'
+                                        : 'px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors w-20 flex items-center justify-center'"
+                                    class="transition-colors">
                                     Submit
                                 </button>
                             </div>
