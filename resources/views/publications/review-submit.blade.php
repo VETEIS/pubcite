@@ -155,43 +155,8 @@
 </div>
 
 <script>
-// Display uploaded files when page loads
-function displayUploadedFiles() {
-    const fileFields = [
-        { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
-        { fieldName: 'published_article', elementId: 'review-published-article' },
-        { fieldName: 'peer_review', elementId: 'review-peer-review' },
-        { fieldName: 'terminal_report', elementId: 'review-terminal-report' }
-    ];
-    
-    fileFields.forEach(({ fieldName, elementId }) => {
-        // Look for the actual file input in the upload tab
-        const input = document.querySelector(`[name="${fieldName}"]`);
-        
-        if (input && input.files && input.files.length > 0) {
-            const fileName = input.files[0].name;
-            const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
-            
-            
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = displayName;
-                element.title = fileName;
-                element.classList.remove('text-gray-600');
-                element.classList.add('text-green-600', 'font-medium');
-            }
-        } else {
-            // Reset display if no file
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = 'No file uploaded';
-                element.title = '';
-                element.classList.remove('text-green-600', 'font-medium');
-                element.classList.add('text-gray-600');
-            }
-        }
-    });
-}
+// Function moved to main Alpine.js component as a method
+// This ensures it's always accessible when tab switching occurs
 
 // Sync file changes between upload tab and review tab
 function syncFileDisplay(fieldName) {
@@ -348,14 +313,6 @@ function generateDocx(type) {
     const operationId = `generate-docx-${type}-${Date.now()}`;
     let originalText = '';
     let button = null;
-    
-    // Define progress steps for document generation
-    const progressSteps = [
-        'Preparing document template...',
-        'Processing form data...',
-        'Generating DOCX file...',
-        'Finalizing document...'
-    ];
     
     // Show real progress tracking for document generation
     const progressSteps = [

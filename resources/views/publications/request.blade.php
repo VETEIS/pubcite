@@ -15,6 +15,12 @@
                 autoSaveTimer: null,
                 tabStatesRefreshed: 0,
                 confirmChecked: false,
+                uploadedFiles: {
+                    recommendation_letter: null,
+                    published_article: null,
+                    peer_review: null,
+                    terminal_report: null
+                },
                 
                 showError(message) {
                     this.errorMessage = message;
@@ -102,9 +108,7 @@
                         // Display uploaded files when switching to review tab
                         if (targetTab === 'review') {
                             setTimeout(() => {
-                                if (typeof displayUploadedFiles === 'function') {
-                                    displayUploadedFiles();
-                                }
+                                this.displayUploadedFiles();
                                 // Update submit button state when switching to review
                                 this.updateSubmitButton();
                             }, 100);
@@ -123,9 +127,7 @@
                     // Display uploaded files when switching to review tab
                     if (targetTab === 'review') {
                         setTimeout(() => {
-                            if (typeof displayUploadedFiles === 'function') {
-                                displayUploadedFiles();
-                            }
+                            this.displayUploadedFiles();
                             // Update submit button state when switching to review
                             this.updateSubmitButton();
                         }, 100);
@@ -288,6 +290,12 @@
                         
                         if (response.ok) {
                             this.lastSaved = new Date().toLocaleTimeString();
+                        } else if (response.status === 429) {
+                            // Rate limited - disable auto-save temporarily
+                            this.autoSaveDisabled = true;
+                            setTimeout(() => {
+                                this.autoSaveDisabled = false;
+                            }, 60000); // Re-enable after 1 minute
                         }
                         // Silent save - no error notifications for auto-save
                     } catch (error) {
@@ -297,7 +305,7 @@
                     }
                 },
                 
-                // Debounced auto-save
+                // Debounced auto-save with rate limiting protection
                 autoSave() {
                     // Don't auto-save if disabled (e.g., after form submission)
                     if (this.autoSaveDisabled) {
@@ -309,18 +317,23 @@
                         return;
                     }
                     
+                    // Don't auto-save if already saving
+                    if (this.savingDraft) {
+                        return;
+                    }
+                    
                     // Clear existing timer
                     if (this.autoSaveTimer) {
                         clearTimeout(this.autoSaveTimer);
                     }
                     
-                    // Set new timer - save after 2 seconds of inactivity
+                    // Set new timer - save after 5 seconds of inactivity (reduced frequency)
                     this.autoSaveTimer = setTimeout(() => {
                         // Double-check before saving
-                        if (!this.autoSaveDisabled && !this.isSubmitting) {
+                        if (!this.autoSaveDisabled && !this.isSubmitting && !this.savingDraft) {
                             this.saveDraft();
                         }
-                    }, 2000);
+                    }, 5000);
                 },
                 
                 // Disable auto-save (called after form submission)
@@ -489,6 +502,49 @@
                     }
                 },
                 
+                // Update uploaded file state
+                updateUploadedFile(fieldName, fileName) {
+                    this.uploadedFiles[fieldName] = fileName;
+                    // Trigger review tab update if on review tab
+                    if (this.activeTab === 'review') {
+                        setTimeout(() => {
+                            this.displayUploadedFiles();
+                        }, 100);
+                    }
+                },
+                
+                // Display uploaded files in review tab
+                displayUploadedFiles() {
+                    
+                    // File state mapping
+                    const fileFields = [
+                        { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
+                        { fieldName: 'published_article', elementId: 'review-published-article' },
+                        { fieldName: 'peer_review', elementId: 'review-peer-review' },
+                        { fieldName: 'terminal_report', elementId: 'review-terminal-report' }
+                    ];
+                    
+                    fileFields.forEach(({ fieldName, elementId }) => {
+                        const fileName = this.uploadedFiles[fieldName];
+                        const element = document.getElementById(elementId);
+                        
+                        if (element) {
+                            if (fileName) {
+                                const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
+                                element.textContent = displayName;
+                                element.title = fileName;
+                                element.classList.remove('text-gray-600');
+                                element.classList.add('text-green-600', 'font-medium');
+                            } else {
+                                element.textContent = 'No file uploaded';
+                                element.title = '';
+                                element.classList.remove('text-green-600', 'font-medium');
+                                element.classList.add('text-gray-600');
+                            }
+                        }
+                    });
+                },
+                
                 // Simple tab navigation helpers
                 getNextTab() {
                     const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
@@ -541,7 +597,6 @@
                 
                 // Handle form submission - only show error popup on actual submit
                 handleSubmit(event) {
-                    console.log('Publications handleSubmit called');
                     
                     // CRITICAL: Disable auto-save IMMEDIATELY to prevent conflicts
                     this.disableAutoSave();
@@ -581,9 +636,7 @@
                         'Finalizing request...',
                         'Request submitted successfully!'
                     ];
-                    console.log('About to call window.showLoading with real progress');
                     window.showLoading('Submitting Request', 'Please wait while we process your publication request...', progressSteps, true);
-                    console.log('window.showLoading called with real progress');
                     
                     // Prevent default form submission and submit manually
                     event.preventDefault();

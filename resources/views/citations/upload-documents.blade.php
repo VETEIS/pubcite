@@ -127,5 +127,11 @@ function handleFileSelection(event, componentData) {
     componentData.displayName = file.name.length > 20 ? 
         file.name.slice(0, 10) + '...' + file.name.slice(-7) : 
         file.name;
+    
+    // Update Alpine.js component data
+    const alpineComponent = Alpine.$data(document.querySelector('[x-data]'));
+    if (alpineComponent && typeof alpineComponent.updateUploadedFile === 'function') {
+        alpineComponent.updateUploadedFile(inputName, file.name);
+    }
 }
 </script>

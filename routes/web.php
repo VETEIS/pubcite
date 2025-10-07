@@ -60,7 +60,7 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
-    'throttle:60,1' // Rate limit: 60 requests per minute
+    'throttle:120,1'
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request')->middleware('mobile.restrict');

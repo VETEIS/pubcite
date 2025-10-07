@@ -92,7 +92,6 @@
     }
     
     function showLoading(title = 'Processing...', message = 'Please wait...', progressSteps = [], useRealProgress = false) {
-        console.log('showLoading called with:', title, message, progressSteps, useRealProgress);
         createLoadingOverlay(title, message, progressSteps);
         
         if (loadingOverlay) {
@@ -143,7 +142,6 @@
         eventSource.onmessage = function(event) {
             try {
                 const data = JSON.parse(event.data);
-                console.log('Progress update:', data);
                 
                 if (data.type === 'progress') {
                     currentStep++;

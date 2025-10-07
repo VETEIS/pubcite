@@ -1,4 +1,12 @@
 <x-app-layout>
+    <!-- Hidden notification divs for global notification system -->
+    @if(session('success'))
+        <div id="success-notification" class="hidden">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div id="error-notification" class="hidden">{{ session('error') }}</div>
+    @endif
+
     <style>
         body { 
             overflow-x: hidden; 
@@ -696,7 +704,7 @@
                                 </div>
 
                 <!-- Requests Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-[600px] flex flex-col">
                     <!-- Table (Combined Header and Body) -->
                     <div class="flex-1 overflow-y-auto table-scroll-area">
                         @if($filteredRequests->isEmpty())
@@ -878,16 +886,12 @@
                                                 </button>
                                                 
                                                 <!-- Delete Button -->
-                                                <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this request?');" class="flex-1">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-red-200" title="Delete">
+                                                <button type="button" onclick="openDeleteModal({{ $request->id }}, '{{ $request->request_code }}')" class="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-red-200" title="Delete">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                         </svg>
                                                         Delete
                                                     </button>
-                                                </form>
                                         </div>
                                         </td>
                                     </tr>
@@ -2280,6 +2284,52 @@ window.addEventListener('beforeunload', function() {
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300">
+                <!-- Modal Header -->
+                <div class="flex items-center gap-3 p-6 border-b border-gray-200">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Delete Request</h3>
+                    </div>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="p-6">
+                    <div class="mb-4">
+                        <p class="text-gray-700 mb-2">Are you sure you want to delete this request?</p>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Request Code:</span> 
+                                <span id="deleteRequestCode" class="font-mono text-gray-900">-</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+                    <button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button id="confirmDeleteBtn" onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <script>
         // Review modal functions
 function openReviewModal(requestId) {
@@ -2478,6 +2528,43 @@ function formatDate(dateString) {
 function submitStatusUpdate(requestId, newStatus) {
     const adminComment = document.getElementById('adminComment')?.value || '';
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Get the buttons and show loading state
+    const endorseBtn = document.getElementById('endorseBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    const actionButtons = [endorseBtn, rejectBtn];
+    
+    // Store original button states
+    const originalStates = actionButtons.map(btn => ({
+        disabled: btn.disabled,
+        text: btn.textContent,
+        classes: btn.className
+    }));
+    
+    // Show loading state
+    actionButtons.forEach(btn => {
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerHTML = `
+                <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                Processing...
+            `;
+        }
+    });
+    
+    // Show loading overlay
+    if (window.showLoading) {
+        const actionText = newStatus === 'endorsed' ? 'Endorsing' : 'Rejecting';
+        window.showLoading(
+            `${actionText} Request...`,
+            `Please wait while we ${actionText.toLowerCase()} this request`,
+            [`${actionText} request...`]
+        );
+    }
             
     fetch(`/admin/requests/${requestId}/status`, {
         method: 'PATCH',
@@ -2493,11 +2580,42 @@ function submitStatusUpdate(requestId, newStatus) {
         return res.text();
     })
     .then(() => {
+        // Hide loading overlay
+        if (window.hideLoading) {
+            window.hideLoading();
+        }
+        
+        // Show success notification
+        if (window.notificationManager) {
+            const actionText = newStatus === 'endorsed' ? 'endorsed' : 'rejected';
+            window.notificationManager.success(`Request ${actionText} successfully!`);
+        }
+        
+        // Close modal and update UI
         closeReviewModal();
-        window.location.reload();
+        
+        // Update the status in the table without full page reload
+        updateRequestStatusInTable(requestId, newStatus);
     })
     .catch(err => {
-        alert('Failed to update status. Please try again.');
+        // Hide loading overlay
+        if (window.hideLoading) {
+            window.hideLoading();
+        }
+        
+        // Show error notification
+        if (window.notificationManager) {
+            window.notificationManager.error('Failed to update request status. Please try again.');
+        }
+        
+        // Restore original button states
+        actionButtons.forEach((btn, index) => {
+            if (btn && originalStates[index]) {
+                btn.disabled = originalStates[index].disabled;
+                btn.className = originalStates[index].classes;
+                btn.innerHTML = originalStates[index].text;
+            }
+        });
     });
 }
 
@@ -2520,6 +2638,119 @@ function updateActionButtonsState(status) {
                 rejectBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 }
+
+function updateRequestStatusInTable(requestId, newStatus) {
+    // Find the table row for this request
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const reviewBtn = row.querySelector('button[onclick*="openReviewModal"]');
+        if (reviewBtn && reviewBtn.onclick.toString().includes(requestId)) {
+            // Update status badge
+            const statusCell = row.querySelector('td:nth-child(3)'); // Assuming status is 3rd column
+            if (statusCell) {
+                const statusBadge = statusCell.querySelector('.status-badge');
+                if (statusBadge) {
+                    // Remove existing status classes
+                    statusBadge.classList.remove('bg-yellow-100', 'text-yellow-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+                    
+                    // Add new status classes
+                    if (newStatus === 'endorsed') {
+                        statusBadge.classList.add('bg-green-100', 'text-green-800');
+                        statusBadge.textContent = 'Endorsed';
+                    } else if (newStatus === 'rejected') {
+                        statusBadge.classList.add('bg-red-100', 'text-red-800');
+                        statusBadge.textContent = 'Rejected';
+                    }
+                }
+            }
+            
+            // Update action buttons in the row
+            const actionButtons = row.querySelectorAll('button');
+            actionButtons.forEach(btn => {
+                if (btn.textContent.includes('Review')) {
+                    // Disable review button for completed requests
+                    if (newStatus === 'endorsed' || newStatus === 'rejected') {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+        }
+    });
+}
+
+// Delete modal functions
+let currentDeleteRequestId = null;
+
+function openDeleteModal(requestId, requestCode) {
+    currentDeleteRequestId = requestId;
+    document.getElementById('deleteRequestCode').textContent = requestCode;
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    
+    // Add keyboard event listener for ESC key
+    document.addEventListener('keydown', handleDeleteModalKeydown);
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    currentDeleteRequestId = null;
+    
+    // Remove keyboard event listener
+    document.removeEventListener('keydown', handleDeleteModalKeydown);
+}
+
+function handleDeleteModalKeydown(event) {
+    if (event.key === 'Escape') {
+        closeDeleteModal();
+    }
+}
+
+function confirmDelete() {
+    if (!currentDeleteRequestId) {
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const originalText = confirmBtn.innerHTML;
+    
+    // Show loading state
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = `
+        <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        Deleting...
+    `;
+    
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/requests/${currentDeleteRequestId}`;
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    
+    form.appendChild(csrfToken);
+    form.appendChild(methodField);
+    document.body.appendChild(form);
+    
+    // Submit form
+    form.submit();
+}
 </script>
+
+<!-- Include loading and notification systems -->
+<script src="{{ asset('js/loading.js') }}"></script>
+<x-global-notifications />
 </x-app-layout>
 

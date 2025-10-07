@@ -150,40 +150,8 @@ function updateReviewFile(type, input) {
     }
 }
 
-// Display uploaded files when page loads
-function displayUploadedFiles() {
-    const fileFields = [
-        { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
-        { fieldName: 'citing_article', elementId: 'review-citing-article' },
-        { fieldName: 'cited_article', elementId: 'review-cited-article' }
-    ];
-    
-    fileFields.forEach(({ fieldName, elementId }) => {
-        // Look for the actual file input in the upload tab
-        const input = document.querySelector(`[name="${fieldName}"]`);
-        if (input && input.files && input.files.length > 0) {
-            const fileName = input.files[0].name;
-            const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
-            
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = displayName;
-                element.title = fileName;
-                element.classList.remove('text-gray-600');
-                element.classList.add('text-green-600', 'font-medium');
-            }
-        } else {
-            // Reset display if no file
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = 'No file uploaded';
-                element.title = '';
-                element.classList.remove('text-green-600', 'font-medium');
-                element.classList.add('text-gray-600');
-            }
-        }
-    });
-}
+// Function moved to main Alpine.js component as a method
+// This ensures it's always accessible when tab switching occurs
 
 // Sync file changes between upload tab and review tab
 function syncFileDisplay(fieldName) {
