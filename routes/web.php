@@ -95,6 +95,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Signatories lookup for authenticated users (handles both admin and non-admin)
     Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('signatories.index');
+    Route::get('/signatories/validate', [\App\Http\Controllers\SignatoryController::class, 'validate'])->name('signatories.validate');
     
     // Debug route for testing generateDocx
     Route::get('/debug-generate', function() {

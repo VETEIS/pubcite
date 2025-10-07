@@ -55,4 +55,30 @@ class SignatoryController extends Controller
         
         return response()->json($items);
     }
+    
+    public function validate(Request $request)
+    {
+        // Any authenticated user may validate signatories
+        if (!Auth::check()) {
+            return response()->json(['valid' => false]);
+        }
+        
+        $name = trim((string) $request->query('name', ''));
+        $type = $request->query('type');
+        
+        if (empty($name)) {
+            return response()->json(['valid' => false]);
+        }
+        
+        $query = User::query()->where('role', 'signatory')
+            ->where('name', $name);
+        
+        if ($type) {
+            $query->where('signatory_type', $type);
+        }
+        
+        $exists = $query->exists();
+        
+        return response()->json(['valid' => $exists]);
+    }
 } 

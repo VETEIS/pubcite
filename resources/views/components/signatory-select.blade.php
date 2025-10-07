@@ -39,7 +39,7 @@
            :class="isValidSelection ? '{{ $inputClass }}' : '{{ $inputClass }} border-red-500 bg-red-50'"
            autocomplete="off">
     <input type="hidden" name="{{ $name }}" :value="selectedName" required>
-    <div x-show="open" class="absolute left-0 z-30 mt-1 w-max min-w-48 max-w-80 max-h-40 overflow-auto bg-white border border-gray-200 rounded shadow" @mouseenter="hovering = true" @mouseleave="hovering = false">
+    <div x-show="open" class="absolute left-1/2 transform -translate-x-1/2 z-30 mt-1 w-max min-w-48 max-w-80 max-h-40 overflow-auto bg-white border border-gray-200 rounded shadow" @mouseenter="hovering = true" @mouseleave="hovering = false">
         <template x-if="loading"><div class="p-2 text-xs text-gray-500">Loading...</div></template>
         <template x-if="!loading">
             <template x-for="opt in options" :key="opt.id">
@@ -72,6 +72,11 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
         init() {
             // Preload signatories on component initialization
             this.preloadSignatories();
+            
+            // Validate pre-populated name if it exists
+            if (this.query && this.query.trim() !== '') {
+                this.validatePrePopulatedName();
+            }
         },
         preloadSignatories() {
             // Check if already preloaded globally
@@ -208,6 +213,44 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
                     this.validateSelection();
                 }
             }, 150);
+        },
+        validatePrePopulatedName() {
+            // Validate a pre-populated name against the database
+            if (!this.query || this.query.trim() === '') return;
+            
+            const params = new URLSearchParams({ 
+                name: this.query.trim(), 
+                type: type 
+            });
+            
+            fetch(`/signatories/validate?${params.toString()}`, { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            })
+            .then(r => r.ok ? r.json() : { valid: false })
+            .then(data => {
+                if (!data.valid) {
+                    // Store the invalid name for logging before clearing
+                    const invalidName = this.query;
+                    
+                    // Signatory no longer exists, clear the field
+                    this.query = '';
+                    this.selectedName = '';
+                    this.isValidSelection = false;
+                    
+                    // Show a subtle notification
+                    console.warn(`Signatory "${invalidName}" no longer exists and has been cleared.`);
+                } else {
+                    // Signatory is valid
+                    this.selectedName = this.query;
+                    this.isValidSelection = true;
+                }
+            })
+            .catch(() => {
+                // On error, assume invalid to be safe
+                this.query = '';
+                this.selectedName = '';
+                this.isValidSelection = false;
+            });
         },
         validateSelection() {
             // If there's a query but no valid selection, validate it
