@@ -36,23 +36,9 @@ class GoogleController extends Controller
 
     public function handleGoogleCallback()
     {
-        // Create custom Guzzle client with SSL verification disabled for development
-        if (app()->environment('local', 'development')) {
-            $guzzleClient = new Client([
-                'verify' => false,
-                'curl' => [
-                    CURLOPT_SSL_VERIFYPEER => false,
-                    CURLOPT_SSL_VERIFYHOST => false,
-                ]
-            ]);
-            
-            $googleUser = Socialite::driver('google')
-                ->setHttpClient($guzzleClient)
-                ->stateless()
-                ->user();
-        } else {
-            $googleUser = Socialite::driver('google')->stateless()->user();
-        }
+        // SECURITY FIX: Always use SSL verification for security
+        // SSL verification should never be disabled in any environment
+        $googleUser = Socialite::driver('google')->stateless()->user();
 
         if (!str_ends_with($googleUser->getEmail(), '@usep.edu.ph')) {
             return redirect()->route('login')->withErrors(['email' => 'Only @usep.edu.ph email addresses are allowed.']);
@@ -72,17 +58,14 @@ class GoogleController extends Controller
         // Update privacy acceptance for existing users
         if (!$user->hasAcceptedPrivacy()) {
             $user->update(['privacy_accepted_at' => now()]);
-            \Log::info('Privacy acceptance recorded for Google user: ' . $googleUser->getEmail());
+            // SECURITY FIX: Don't log email addresses for security
+            \Log::info('Privacy acceptance recorded for Google user');
         }
 
         if ($googleUser->getAvatar()) {
             $avatarUrl = $googleUser->getAvatar();
-            \Log::info('Google profile picture found', [
-                'user_email' => $googleUser->getEmail(),
-                'avatar_url' => $avatarUrl,
-                'previous_photo' => $user->profile_photo_path,
-                'environment' => app()->environment()
-            ]);
+            // SECURITY FIX: Don't log email addresses or URLs for security
+            \Log::info('Google profile picture found');
             
             // Ensure HTTPS for Google profile pictures
             if (str_contains($avatarUrl, 'googleusercontent.com')) {

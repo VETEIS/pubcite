@@ -1154,54 +1154,8 @@ class PublicationsController extends Controller
         }
     }
 
-    public function debugFilePaths(Request $httpRequest, \App\Models\Request $request)
-    {
-        $user = Auth::user();
-        if (!$user || $user->role !== 'admin') {
-            abort(403, 'Unauthorized');
-        }
-
-        $pdfPath = $request->pdf_path;
-        $paths = json_decode($pdfPath, true);
-
-        $debug = [
-            'request_id' => $request->id,
-            'pdf_path_raw' => $pdfPath,
-            'pdf_path_decoded' => $paths,
-            'storage_base' => Storage::disk('public')->path(''),
-        ];
-
-        if ($paths) {
-            $debug['pdfs'] = [];
-            if (isset($paths['pdfs'])) {
-                foreach ($paths['pdfs'] as $key => $fileInfo) {
-                    $fullPath = Storage::disk('public')->path($fileInfo['path']);
-                    $debug['pdfs'][$key] = [
-                        'path' => $fileInfo['path'],
-                        'full_path' => $fullPath,
-                        'exists' => file_exists($fullPath),
-                        'size' => file_exists($fullPath) ? filesize($fullPath) : 'N/A',
-                        'original_name' => $fileInfo['original_name'] ?? 'N/A'
-                    ];
-                }
-            }
-
-            $debug['docxs'] = [];
-            if (isset($paths['docxs'])) {
-                foreach ($paths['docxs'] as $key => $storagePath) {
-                    $fullPath = Storage::disk('public')->path($storagePath);
-                    $debug['docxs'][$key] = [
-                        'path' => $storagePath,
-                        'full_path' => $fullPath,
-                        'exists' => file_exists($fullPath),
-                        'size' => file_exists($fullPath) ? filesize($fullPath) : 'N/A'
-                    ];
-                }
-            }
-        }
-
-        return response()->json($debug);
-    }
+    // SECURITY FIX: Removed debug endpoint that exposed system information
+    // Debug endpoints should never be available in production
 
     public function adminDownloadZip(Request $httpRequest, \App\Models\Request $request)
     {

@@ -42,8 +42,8 @@ class LoginController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            // User doesn't exist - don't create account automatically
-            Log::info('Login attempt with non-existent email: ' . $request->email);
+            // SECURITY FIX: Don't log email addresses for security
+            Log::info('Login attempt with non-existent email');
             throw ValidationException::withMessages([
                 'email' => 'No account found with this email address. Please use "Sign in with Google" to create an account with your USeP email.'
             ]);
@@ -51,22 +51,26 @@ class LoginController extends Controller
 
         // Verify password for existing user
         if (!Hash::check($request->password, $user->password)) {
-            Log::info('Password mismatch for user: ' . $request->email);
+            // SECURITY FIX: Don't log email addresses for security
+            Log::info('Password mismatch for user');
             throw ValidationException::withMessages([
                 'password' => 'The provided credentials do not match our records. If you previously used Google login, please use the "Sign in with Google" button.'
             ]);
         }
         
-        Log::info('Password verified for user: ' . $request->email);
+        // SECURITY FIX: Don't log email addresses for security
+        Log::info('Password verified for user');
 
         // Update privacy acceptance timestamp (privacy was already accepted on welcome page)
         if (!$user->hasAcceptedPrivacy()) {
             $user->update(['privacy_accepted_at' => now()]);
-            Log::info('Privacy acceptance recorded for user: ' . $request->email);
+            // SECURITY FIX: Don't log email addresses for security
+            Log::info('Privacy acceptance recorded for user');
         }
 
         Auth::login($user, $request->boolean('remember'));
-        Log::info('User logged in successfully: ' . $request->email);
+        // SECURITY FIX: Don't log email addresses for security
+        Log::info('User logged in successfully');
 
         // Clear any existing intended URL to prevent redirect issues
         session()->forget('url.intended');

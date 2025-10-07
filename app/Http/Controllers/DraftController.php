@@ -19,10 +19,9 @@ class DraftController extends Controller
             ->orderByDesc('requested_at')
             ->get(['id', 'type', 'request_code', 'requested_at']);
         
+        // SECURITY FIX: Removed sensitive user data from logs
         Log::info('Draft API called', [
-            'user_id' => $user->id,
-            'drafts_count' => $drafts->count(),
-            'drafts' => $drafts->toArray()
+            'drafts_count' => $drafts->count()
         ]);
         
         return response()->json([

@@ -123,8 +123,8 @@ class ProgressController extends Controller
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',
             'Connection' => 'keep-alive',
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Allow-Headers' => 'Cache-Control'
+            // SECURITY FIX: Removed dangerous CORS wildcard
+            // Only allow same-origin requests for security
         ]);
         
         return $response;

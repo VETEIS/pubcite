@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Global middleware
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\VerifyCsrfToken::class);
         
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,

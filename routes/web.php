@@ -60,6 +60,7 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
+    'throttle:60,1' // Rate limit: 60 requests per minute
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/publications/request', [\App\Http\Controllers\PublicationsController::class, 'create'])->name('publications.request')->middleware('mobile.restrict');
@@ -81,7 +82,7 @@ Route::middleware([
     Route::post('/signing/upload-signed', [\App\Http\Controllers\SigningController::class, 'uploadSignedDocuments'])->name('signing.upload-signed')->middleware('throttle:10,1');
 
 // Secure file download routes for admin
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', 'admin', 'throttle:30,1'])->group(function () {
     Route::get('/admin/download/{type}/{filename}', [\App\Http\Controllers\AdminFileController::class, 'download'])->name('admin.download.file');
 });
     
@@ -126,7 +127,7 @@ Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallba
 // Route to set privacy session before Google login
 Route::post('auth/google/privacy-check', [GoogleController::class, 'checkPrivacyBeforeGoogle'])->name('google.privacy.check');
 
-Route::middleware(['auth', 'mobile.restrict'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'mobile.restrict', 'throttle:30,1'])->prefix('admin')->group(function () {
     // Main admin dashboard page
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
@@ -163,4 +164,4 @@ Route::middleware(['auth', 'mobile.restrict'])->prefix('admin')->group(function 
 });
 
 // Progress tracking route (authenticated users only)
-Route::middleware('auth')->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');
+Route::middleware(['auth', 'throttle:10,1'])->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');
