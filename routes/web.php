@@ -16,20 +16,18 @@ Route::get('/', function () {
 })->name('welcome');
 
 
-// Privacy acceptance handled client-side with localStorage
-
 // Debug route for troubleshooting
 Route::get('/debug', function () {
     return view('debug');
 })->name('debug');
 
 
-// Draft management routes
+// Draft
 Route::get('/api/drafts', [App\Http\Controllers\DraftController::class, 'apiIndex'])->name('drafts.api');
 Route::get('/api/draft/{draft}', [App\Http\Controllers\DraftController::class, 'apiShow'])->name('draft.api');
 Route::delete('/drafts/{draft}', [App\Http\Controllers\DraftController::class, 'destroy'])->name('drafts.destroy');
 
-// Simple test route
+// test
 Route::get('/test', function () {
     return response()->json([
         'status' => 'success',
@@ -47,10 +45,10 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/privacy/accept', [LoginController::class, 'acceptPrivacy'])->name('privacy.accept');
 Route::get('/privacy/status', [LoginController::class, 'getPrivacyStatus'])->name('privacy.status');
 
-// Custom logout with draft session cleanup
+// logout with draft session cleanup
 Route::post('/logout', [\App\Http\Controllers\Auth\LogoutController::class, 'logout'])->name('logout');
 
-// Registration disabled for security - users must use Google OAuth
+// Registration
 
 Route::get('/forgot-password', function () {
     return view('auth.forgot-password');
@@ -69,24 +67,24 @@ Route::middleware([
     Route::post('/citations/submit', [\App\Http\Controllers\CitationsController::class, 'submitCitationRequest'])->name('citations.submit')->middleware('mobile.restrict');
     Route::post('/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate')->middleware('mobile.restrict');
     Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success')->middleware('mobile.restrict');
-    // Add a single endpoint for all publication DOCX generations
+    // publication DOCX generations
     Route::post('/publications/generate', [\App\Http\Controllers\PublicationsController::class, 'generatePublicationDocx'])->name('publications.generate')->middleware('mobile.restrict');
     Route::post('/publications/preload-templates', [\App\Http\Controllers\PublicationsController::class, 'preloadTemplates'])->name('publications.preloadTemplates')->middleware('mobile.restrict');
     Route::post('/citations/preload-templates', [\App\Http\Controllers\CitationsController::class, 'preloadTemplates'])->name('citations.preloadTemplates')->middleware('mobile.restrict');
-    // Nudge a pending request (user action)
+    // Nudge
     Route::post('/requests/{request}/nudge', [\App\Http\Controllers\DashboardController::class, 'nudge'])->name('requests.nudge');
-    // Signing for signatories
+    // Signing
     Route::get('/signing', [\App\Http\Controllers\SigningController::class, 'index'])->name('signing.index');
     Route::post('/signing/revert-document', [\App\Http\Controllers\SigningController::class, 'revertDocument'])->name('signing.revert-document');
     Route::get('/signing/download-files/{requestId}', [\App\Http\Controllers\SigningController::class, 'downloadRequestFiles'])->name('signing.download-files')->middleware('throttle:20,1');
     Route::post('/signing/upload-signed', [\App\Http\Controllers\SigningController::class, 'uploadSignedDocuments'])->name('signing.upload-signed')->middleware('throttle:10,1');
 
-// Secure file download routes for admin
+// file download
 Route::middleware(['auth', 'admin', 'throttle:30,1'])->group(function () {
     Route::get('/admin/download/{type}/{filename}', [\App\Http\Controllers\AdminFileController::class, 'download'])->name('admin.download.file');
 });
     
-    // Signature management routes (only store, show, update, destroy - no index/create)
+    // signature management
     Route::middleware('auth')->group(function () {
         Route::resource('signatures', \App\Http\Controllers\SignatureController::class)->except(['create']);
     });
@@ -94,11 +92,11 @@ Route::middleware(['auth', 'admin', 'throttle:30,1'])->group(function () {
 
     
 
-    // Signatories lookup for authenticated users (handles both admin and non-admin)
+    // search signatories
     Route::get('/signatories', [\App\Http\Controllers\SignatoryController::class, 'index'])->name('signatories.index');
     Route::get('/signatories/validate', [\App\Http\Controllers\SignatoryController::class, 'validate'])->name('signatories.validate');
     
-    // Debug route for testing generateDocx
+    // testing generateDocx
     Route::get('/debug-generate', function() {
         try {
             $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
@@ -124,11 +122,11 @@ Route::middleware(['auth', 'admin', 'throttle:30,1'])->group(function () {
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
-// Route to set privacy session before Google login
+// set privacy session
 Route::post('auth/google/privacy-check', [GoogleController::class, 'checkPrivacyBeforeGoogle'])->name('google.privacy.check');
 
-Route::middleware(['auth', 'mobile.restrict', 'throttle:30,1'])->prefix('admin')->group(function () {
-    // Main admin dashboard page
+Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin')->group(function () {
+    // admin dashboard page
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/create', [AdminUserController::class, 'create'])->name('admin.users.create');
@@ -139,22 +137,20 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:30,1'])->prefix('admin')
     Route::get('/requests/manage', [\App\Http\Controllers\AdminRequestController::class, 'index'])->name('admin.requests.manage');
     Route::get('/requests/{request}/data', [\App\Http\Controllers\AdminRequestController::class, 'getRequestData'])->name('admin.requests.data');
     Route::get('/requests/{request}/download-zip', [\App\Http\Controllers\AdminRequestController::class, 'downloadZip'])->name('admin.requests.download-zip');
-    // Dashboard data endpoints (admin only)
+    // endpointss
     Route::get('/dashboard/data', [\App\Http\Controllers\DashboardController::class, 'getData'])->name('admin.dashboard.data');
     Route::get('/dashboard/stream', [\App\Http\Controllers\DashboardController::class, 'streamUpdates'])->name('admin.dashboard.stream');
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
     Route::post('/settings/create-account', [\App\Http\Controllers\SettingsController::class, 'createAccount'])->name('admin.settings.create-account');
-    // Signatories API (admin-authenticated for now)
-    
-    // Admin notifications endpoints
+    // notifications endpoints
     Route::get('/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');
     Route::post('/notifications/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.read');
     Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.mark-all-read');
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     
-    // Admin request management routes
+    // request management
     Route::patch('/requests/{request}', [\App\Http\Controllers\AdminRequestController::class, 'updateStatus'])->name('admin.requests.update');
     Route::patch('/requests/{request}/status', [\App\Http\Controllers\AdminRequestController::class, 'updateStatus'])->name('admin.requests.status');
     Route::delete('/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
@@ -163,5 +159,5 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:30,1'])->prefix('admin')
     Route::get('/requests/{request}/serve', [\App\Http\Controllers\PublicationsController::class, 'serveFile'])->name('admin.requests.serve');
 });
 
-// Progress tracking route (authenticated users only)
+// progress tracking
 Route::middleware(['auth', 'throttle:10,1'])->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');

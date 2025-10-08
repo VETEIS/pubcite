@@ -1,4 +1,4 @@
-<aside class="w-56 h-screen flex-shrink-0 bg-gradient-to-b from-maroon-800 to-maroon-900 text-white flex flex-col shadow-2xl border-r border-maroon-700/50">
+<aside class="w-56 h-screen flex-shrink-0 bg-gradient-to-b from-maroon-800 to-maroon-900 text-white flex flex-col shadow-2xl border-r border-maroon-700/50 fixed left-0 top-0 z-40">
     <!-- Brand Section -->
     <div class="p-6 border-b border-maroon-700/50">
         <div class="flex items-center gap-3">

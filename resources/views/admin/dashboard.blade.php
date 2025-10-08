@@ -15,6 +15,12 @@
         html { 
             overflow-x: hidden; 
             height: 100%;
+            /* Hide browser scrollbar to prevent layout shifts */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        html::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
         .admin-dashboard-container {
             min-height: 100vh;
@@ -210,7 +216,7 @@
                 this.errorMessage = null;
             }, 3000);
         }
-    }" class="h-screen bg-gray-50 flex overflow-hidden admin-dashboard-container" style="scrollbar-gutter: stable;">
+    }" class="bg-gray-50 flex admin-dashboard-container" style="scrollbar-gutter: stable;">
         
         <!-- Hidden notification divs for global notification system -->
         @if(session('success'))
@@ -229,9 +235,9 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto force-scrollbar">
+        <div class="flex-1 ml-60">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg h-full flex flex-col main-content fouc-prevent" id="mainContent">
+            <main class="p-4 rounded-bl-lg flex flex-col main-content fouc-prevent" id="mainContent">
                 <!-- Dashboard Header with Modern Compact Filters -->
                 <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Date Range Display -->
@@ -704,9 +710,9 @@
                                 </div>
 
                 <!-- Requests Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-[600px] flex flex-col">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                     <!-- Table (Combined Header and Body) -->
-                    <div class="flex-1 overflow-y-auto table-scroll-area">
+                    <div class="flex-1">
                         @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
                             <div class="h-full flex items-center justify-center">
@@ -824,7 +830,7 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($filteredRequests as $index => $request)
-                                    <tr class="hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer group">
+                                    <tr class="hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer group" data-request-id="{{ $request->id }}">
                                         <td class="w-32 px-6 py-3 text-sm text-gray-900 overflow-hidden text-left">
                                             <div class="truncate">{{ \Carbon\Carbon::parse($request->requested_at)->format('M d, Y H:i') }}</div>
                                         </td>
@@ -932,8 +938,8 @@
                 
                 init() {
                     this.loadNotifications();
-                    // Poll for new notifications every 10 seconds
-                    setInterval(() => this.checkForNewNotifications(), 10000);
+                    // Poll for new notifications every 7 seconds
+                    setInterval(() => this.checkForNewNotifications(), 7000);
                     
                     // Initialize real-time dashboard updates
                     this.initializeDashboardUpdates();
@@ -1031,8 +1037,8 @@
                 
                 // Real-time dashboard updates
                 initializeDashboardUpdates() {
-                    // Poll for dashboard data every 15 seconds
-                    setInterval(() => this.updateDashboardData(), 15000);
+                    // Poll for dashboard data every 7 seconds
+                    setInterval(() => this.updateDashboardData(), 7000);
                 },
                 
                 async updateDashboardData() {
@@ -1063,6 +1069,93 @@
                     } catch (error) {
                         console.error('Error updating dashboard data:', error);
                     }
+                },
+                
+                updateTableData(data) {
+                    if (!data.requests || !Array.isArray(data.requests)) return;
+                    
+                    const tbody = document.querySelector('.requests-table tbody');
+                    if (!tbody) return;
+                    
+                    // Store current request IDs to detect new ones
+                    const currentRequestIds = new Set();
+                    const existingRows = tbody.querySelectorAll('tr');
+                    existingRows.forEach(row => {
+                        const requestId = row.getAttribute('data-request-id');
+                        if (requestId) currentRequestIds.add(requestId);
+                    });
+                    
+                    // Clear existing rows
+                    tbody.innerHTML = '';
+                    
+                    // Add new rows
+                    data.requests.forEach(request => {
+                        const isNewRequest = !currentRequestIds.has(request.id.toString());
+                        const row = this.createTableRow(request, isNewRequest);
+                        tbody.appendChild(row);
+                    });
+                    
+                    // Show notification for new requests
+                    const newRequests = data.requests.filter(req => !currentRequestIds.has(req.id.toString()));
+                    if (newRequests.length > 0 && window.notificationManager) {
+                        window.notificationManager.success(`${newRequests.length} new request(s) received!`);
+                    }
+                },
+                
+                createTableRow(request, isNewRequest = false) {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-request-id', request.id);
+                    
+                    // Add highlight class for new requests
+                    if (isNewRequest) {
+                        row.classList.add('bg-green-50', 'border-l-4', 'border-green-400');
+                        // Remove highlight after 5 seconds
+                        setTimeout(() => {
+                            row.classList.remove('bg-green-50', 'border-l-4', 'border-green-400');
+                        }, 5000);
+                    }
+                    
+                    // Status badge classes
+                    const statusClasses = {
+                        'pending': 'bg-yellow-100 text-yellow-800',
+                        'endorsed': 'bg-green-100 text-green-800',
+                        'rejected': 'bg-red-100 text-red-800'
+                    };
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${request.request_code}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${request.type}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="status-badge inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[request.status] || 'bg-gray-100 text-gray-800'}">
+                                ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${request.requested_at}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${request.user_name}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${request.user_email}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="openReviewModal(${request.id})" class="text-indigo-600 hover:text-indigo-900 transition-colors">
+                                    Review
+                                </button>
+                                <button type="button" onclick="openDeleteModal(${request.id}, '${request.request_code}')" class="text-red-600 hover:text-red-900 transition-colors">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    return row;
                 },
                 
                 getCurrentFilters() {

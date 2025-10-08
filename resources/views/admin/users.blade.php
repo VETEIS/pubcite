@@ -121,7 +121,7 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto force-scrollbar">
+        <div class="flex-1 ml-60 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
             <main class="p-4 rounded-bl-lg h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->
@@ -573,10 +573,26 @@
     </div>
     
     <style>
-        /* Force scrollbar to always be visible to prevent layout shifts */
+        /* Hide browser scrollbar to prevent layout shifts */
+        html {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        html::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        
+        /* Hide main content scrollbar to prevent layout shifts */
         .force-scrollbar {
             scrollbar-gutter: stable;
             overflow-y: scroll !important;
+            /* Hide scrollbar but keep functionality */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        .force-scrollbar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
         
         /* Ensure table column alignment */
@@ -589,29 +605,6 @@
             box-sizing: border-box;
         }
         
-        /* Ensure scrollbar is always visible even on short content */
-        .force-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .force-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        
-        .force-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        
-        .force-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        
-        /* For Firefox */
-        .force-scrollbar {
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 #f1f5f9;
-        }
         
         /* Table scrollbar styling */
         .table-scroll-area::-webkit-scrollbar {

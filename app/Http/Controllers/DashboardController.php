@@ -133,7 +133,7 @@ class DashboardController extends Controller
                     }
                 });
             }
-            $requests = $query->paginate(15)->withQueryString();
+            $requests = $query->paginate(10)->withQueryString();
             $stats = [
                 'publication' => [
                     'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
@@ -582,6 +582,22 @@ class DashboardController extends Controller
                 $monthlyCounts[$row->type][$row->month] = $row->count;
             }
             
+            // Get paginated requests for table (limit to 10 for real-time updates)
+            $paginatedRequests = $tableQuery->limit(10)->get();
+            
+            // Format requests for frontend
+            $formattedRequests = $paginatedRequests->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'request_code' => $request->request_code,
+                    'type' => $request->type,
+                    'status' => $request->status,
+                    'requested_at' => $request->requested_at->format('M d, Y H:i'),
+                    'user_name' => $request->user ? $request->user->name : 'Unknown',
+                    'user_email' => $request->user ? $request->user->email : 'Unknown',
+                ];
+            });
+            
             return response()->json([
                 'months' => $months,
                 'monthlyCounts' => $monthlyCounts,
@@ -592,6 +608,7 @@ class DashboardController extends Controller
                 'dateDetails' => $dateDetails,
                 'filtered_count' => $allRequests->count(),
                 'total_count' => \App\Models\Request::where('status', '!=', 'draft')->count(),
+                'requests' => $formattedRequests, // Add request table data
             ]);
             
         } catch (\Exception $e) {

@@ -121,7 +121,7 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+        <div class="flex-1 ml-60 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
             <style>
                 .flex-1::-webkit-scrollbar {
                     display: none;
