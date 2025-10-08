@@ -615,18 +615,17 @@
                                         <button type="button" onclick="addAnnouncementRow()" 
                                                 class="w-8 h-8 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center" 
                                                 title="Add Announcement">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                            </svg>
+                                        </svg>
                                         </button>
                                         <button type="submit" name="save_announcements" value="1"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
-                                                disabled>
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
                                             Save Changes
-                                        </button>
+                                    </button>
                                     </div>
                                 </div>
                             </div>
@@ -821,7 +820,24 @@
                 checkOfficialChanges();
                 checkFeaturesChanges();
                 checkCalendarChanges();
-                checkAnnouncementsChanges();
+        checkAnnouncementsChanges();
+        
+        // Debug: Log form submission for announcements
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (e.submitter && e.submitter.name === 'save_announcements') {
+                    const formData = new FormData(form);
+                    const announcements = [];
+                    for (let [key, value] of formData.entries()) {
+                        if (key.startsWith('announcements[')) {
+                            announcements.push({key, value});
+                        }
+                    }
+                    console.log('Submitting announcements:', announcements);
+                }
+            });
+        }
             }
             
             // Initialize checkbox UI
@@ -1006,7 +1022,38 @@
                 }
             });
             
-            if (hasContent) {
+            // Enable save button if there are rows OR if we're in a state where we need to save
+            // This allows saving empty arrays (deleting all) or saving new content
+            const rows = document.querySelectorAll('#announcementsRepeater tr');
+            const shouldEnable = true; // Always enable - allows saving empty state or content
+            
+            // Show empty state message if no rows
+            const emptyState = document.getElementById('announcements-empty-state');
+            if (rows.length === 0) {
+                if (!emptyState) {
+                    const container = document.getElementById('announcementsRepeater');
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.id = 'announcements-empty-state';
+                    emptyRow.innerHTML = `
+                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center gap-2">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-sm">No announcements yet</p>
+                                <p class="text-xs text-gray-400">Click the + button to add your first announcement</p>
+                            </div>
+                        </td>
+                    `;
+                    container.appendChild(emptyRow);
+                }
+            } else {
+                if (emptyState) {
+                    emptyState.remove();
+                }
+            }
+            
+            if (shouldEnable) {
                 saveBtn.disabled = false;
                 saveBtn.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg';
             } else {
