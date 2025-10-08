@@ -173,5 +173,14 @@ Route::get('/api/announcements', function() {
     ]);
 })->name('public.announcements');
 
+// Public researchers endpoint for landing page
+Route::get('/api/researchers', function() {
+    $researchers = \App\Models\ResearcherProfile::active()->ordered()->get();
+    return response()->json([
+        'researchers' => $researchers,
+        'count' => $researchers->count()
+    ]);
+})->name('public.researchers');
+
 // progress tracking
 Route::middleware(['auth', 'throttle:10,1'])->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');

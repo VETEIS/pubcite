@@ -2435,7 +2435,11 @@ function openReviewModal(requestId) {
         .then(data => {
             populateModal(data);
             const zipBtn = document.getElementById('downloadZipBtn');
-            if (zipBtn) zipBtn.onclick = () => { window.location.href = `/admin/requests/${requestId}/download-zip`; };
+            if (zipBtn) {
+                zipBtn.onclick = () => { 
+                    window.location.href = `/admin/requests/${requestId}/download-zip`; 
+                };
+            }
             const endorseBtn = document.getElementById('endorseBtn');
             const rejectBtn = document.getElementById('rejectBtn');
             if (endorseBtn) endorseBtn.onclick = () => submitStatusUpdate(requestId, 'endorsed');

@@ -995,222 +995,40 @@
 
                             <!-- Researchers -->
                             <div id="researchers-container" class="flex gap-6 overflow-x-auto scrollbar-hide pb-4 pt-4 px-8 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50">
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-maroon-100 to-maroon-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-maroon-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                            </div>
-                                        </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Active</span>
-                                        </div>
-                                    </div>
-                                    <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Maria Santos</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Associate Professor, College of Education</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                                    Educational Technology
-                                                </span>
-                                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                                    Curriculum Development
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Leading research in innovative teaching methodologies and digital learning platforms for enhanced student engagement.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
-                                    </div>
-                        </div>
-
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-blue-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Research</span>
-                                        </div>
-                                    </div>
-                                    <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Prof. Juan Dela Cruz</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Professor, College of Engineering</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                                                    Renewable Energy
-                                                </span>
-                                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                                                    Smart Grid Technology
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Pioneering sustainable energy solutions and integrating technology in engineering education.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                <!-- Loading state -->
+                                <div id="researchers-loading" class="flex-shrink-0 w-full flex items-center justify-center py-12">
+                                    <div class="text-center">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-maroon-600 mx-auto mb-4"></div>
+                                        <p class="text-gray-600 text-sm">Loading researchers...</p>
                                     </div>
                                 </div>
-
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-green-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                </svg>
-                                            </div>
+                                
+                                <!-- Empty state -->
+                                <div id="researchers-empty" class="flex-shrink-0 w-full flex items-center justify-center py-12 hidden">
+                                    <div class="text-center">
+                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
                                         </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Active</span>
-                                        </div>
-                                    </div>
-                                    <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Ana Rodriguez</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Associate Professor, College of Science</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                                                    Environmental Science
-                                                </span>
-                                                <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-                                                    Climate Research
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Conducting groundbreaking research on climate change impacts and environmental sustainability.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                        <p class="text-gray-600 text-sm">No researchers available at the moment.</p>
                                     </div>
                                 </div>
-
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-purple-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                </svg>
-                                            </div>
+                                
+                                <!-- Error state -->
+                                <div id="researchers-error" class="flex-shrink-0 w-full flex items-center justify-center py-12 hidden">
+                                    <div class="text-center">
+                                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
                                         </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Innovation</span>
-                                        </div>
-                                    </div>
-                                                                        <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Carlos Mendoza</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Assistant Professor, College of Computer Studies</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                                                    Artificial Intelligence
-                                                </span>
-                                                <span class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">
-                                                    Machine Learning
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Advancing AI and machine learning applications for healthcare and educational technology solutions.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
-                                    </div>
-                        </div>
-
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-orange-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                        </svg>
-                                            </div>
-                                        </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Leadership</span>
-                                        </div>
-                                    </div>
-                                    <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Prof. Elena Santos</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Professor, College of Business Administration</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                                                    Business Strategy
-                                                </span>
-                                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                                                    Entrepreneurship
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Leading research in sustainable business practices and entrepreneurial development in emerging markets.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                                        <p class="text-gray-600 text-sm">Failed to load researchers.</p>
                                     </div>
                                 </div>
-
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-teal-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-teal-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Collaboration</span>
-                                             </div>
-                                         </div>
-                                                                        <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Roberto Garcia</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Associate Professor, College of Agriculture</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
-                                                    Sustainable Agriculture
-                                                </span>
-                                                <span class="bg-lime-100 text-lime-800 text-xs px-2 py-1 rounded-full">
-                                                    Food Security
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Developing sustainable agricultural practices and food security solutions for rural communities.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
-                                    </div>
-                                         </div>
-
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card">
-                                    <div class="relative">
-                                        <div class="h-48 bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
-                                            <div class="w-20 h-20 bg-rose-300 rounded-full flex items-center justify-center">
-                                                <svg class="w-10 h-10 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                </svg>
-                                             </div>
-                                         </div>
-                                        <div class="absolute top-4 right-4">
-                                            <span class="bg-rose-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">Excellence</span>
-                                             </div>
-                                         </div>
-                                    <div class="p-6 flex flex-col flex-1">
-                                        <div class="flex-1">
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">Dr. Sofia Martinez</h3>
-                                            <p class="text-sm text-gray-600 mb-3">Professor, College of Arts and Sciences</p>
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <span class="bg-violet-100 text-violet-800 text-xs px-2 py-1 rounded-full">
-                                                    Cultural Studies
-                                                </span>
-                                                <span class="bg-fuchsia-100 text-fuchsia-800 text-xs px-2 py-1 rounded-full">
-                                                    Social Sciences
-                                                </span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 leading-relaxed">Exploring cultural heritage preservation and social development in Southeast Asian communities.</p>
-                                        </div>
-                                        <a href="#" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
-                                    </div>
-                                </div>
+                                
+                                <!-- Dynamic researcher cards will be loaded here -->
+                                    
                             </div>
                         </div>
                     </div>
@@ -2132,4 +1950,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <!-- Landing Page Announcements JavaScript -->
-<script src="{{ asset('js/landing-announcements.js') }}"></script> 
+<script src="{{ asset('js/landing-announcements.js') }}"></script>
+
+<!-- Landing Page Researchers JavaScript -->
+<script src="{{ asset('js/landing-researchers.js') }}"></script> 

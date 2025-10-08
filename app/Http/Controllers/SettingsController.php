@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\ResearcherProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -24,6 +26,7 @@ class SettingsController extends Controller
             'citations_request_enabled' => Setting::get('citations_request_enabled', '1'),
             'calendar_marks' => json_decode(Setting::get('calendar_marks', '[]'), true) ?? [],
             'announcements' => json_decode(Setting::get('landing_page_announcements', '[]'), true) ?? [],
+            'researchers' => ResearcherProfile::ordered()->get()->toArray(),
         ];
         return view('admin.settings', $data);
     }
@@ -41,6 +44,8 @@ class SettingsController extends Controller
             return $this->updateCalendar($request);
         } elseif ($request->has('save_announcements')) {
             return $this->updateAnnouncements($request);
+        } elseif ($request->has('save_researchers')) {
+            return $this->updateResearchers($request);
         }
         
         return back()->with('error', 'Invalid form submission.');
@@ -192,6 +197,72 @@ class SettingsController extends Controller
                 'message' => 'Failed to create account: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function updateResearchers(Request $request)
+    {
+        $validated = $request->validate([
+            'researchers' => 'nullable|array',
+            'researchers.*.name' => 'nullable|string|max:255',
+            'researchers.*.title' => 'nullable|string|max:255',
+            'researchers.*.research_areas' => 'nullable|string|max:500',
+            'researchers.*.bio' => 'nullable|string|max:1000',
+            'researchers.*.status_badge' => 'nullable|string|max:50',
+            'researchers.*.background_color' => 'nullable|string|max:50',
+            'researchers.*.profile_link' => 'nullable|string|max:500',
+            'researchers.*.photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Clear existing researchers
+        ResearcherProfile::truncate();
+
+        $researchers = [];
+        if (!empty($validated['researchers']) && is_array($validated['researchers'])) {
+            foreach ($validated['researchers'] as $index => $row) {
+                $name = trim($row['name'] ?? '');
+                $title = trim($row['title'] ?? '');
+                $researchAreas = trim($row['research_areas'] ?? '');
+                $bio = trim($row['bio'] ?? '');
+                
+                if (!$name && !$title && !$researchAreas && !$bio) {
+                    continue;
+                }
+
+                // Convert research areas string to array
+                $researchAreasArray = [];
+                if ($researchAreas) {
+                    $researchAreasArray = array_map('trim', explode(',', $researchAreas));
+                    $researchAreasArray = array_filter($researchAreasArray); // Remove empty values
+                }
+
+                // Handle photo upload
+                $photoPath = null;
+                if ($request->hasFile("researchers.{$index}.photo")) {
+                    $photo = $request->file("researchers.{$index}.photo");
+                    $photoPath = $photo->store('researcher-photos', 'public');
+                }
+
+                $researchers[] = [
+                    'name' => $name,
+                    'title' => $title,
+                    'research_areas' => json_encode($researchAreasArray),
+                    'bio' => $bio,
+                    'status_badge' => $row['status_badge'] ?? 'Active',
+                    'background_color' => $row['background_color'] ?? 'maroon',
+                    'profile_link' => $row['profile_link'] ?? '',
+                    'photo_path' => $photoPath,
+                    'sort_order' => $index,
+                    'is_active' => true,
+                ];
+            }
+        }
+
+        // Insert new researchers
+        if (!empty($researchers)) {
+            ResearcherProfile::insert($researchers);
+        }
+
+        return back()->with('success', 'Researchers updated successfully.');
     }
 
     private function authorizeAdmin(): void

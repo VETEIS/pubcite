@@ -516,7 +516,14 @@ class AdminRequestController extends Controller
             if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
                 foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
                     if (isset($fileInfo['path']) && is_string($fileInfo['path'])) {
-                        $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                        // Check both local (private) and public disks like individual downloads do
+                        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($fileInfo['path'])) {
+                            $fullPath = \Illuminate\Support\Facades\Storage::disk('local')->path($fileInfo['path']);
+                        } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($fileInfo['path'])) {
+                            $fullPath = \Illuminate\Support\Facades\Storage::disk('public')->path($fileInfo['path']);
+                        } else {
+                            $fullPath = null;
+                        }
                         if (file_exists($fullPath) && is_readable($fullPath)) {
                             $fileName = $fileInfo['original_name'] ?? ucfirst(str_replace('_', ' ', $key)) . '.pdf';
                             if ($zip->addFile($fullPath, 'PDFs/' . $fileName)) {
@@ -535,15 +542,13 @@ class AdminRequestController extends Controller
             if (isset($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
                 foreach ($pdfPathData['docxs'] as $key => $docxPath) {
                     if ($docxPath && is_string($docxPath)) {
-                        // Try both public and private disk locations
-                        $fullPathPublic = storage_path('app/public/' . $docxPath);
-                        $fullPathPrivate = storage_path('app/' . $docxPath);
-                        
-                        $fullPath = null;
-                        if (file_exists($fullPathPublic) && is_readable($fullPathPublic)) {
-                            $fullPath = $fullPathPublic;
-                        } elseif (file_exists($fullPathPrivate) && is_readable($fullPathPrivate)) {
-                            $fullPath = $fullPathPrivate;
+                        // Check both local (private) and public disks like individual downloads do
+                        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($docxPath)) {
+                            $fullPath = \Illuminate\Support\Facades\Storage::disk('local')->path($docxPath);
+                        } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($docxPath)) {
+                            $fullPath = \Illuminate\Support\Facades\Storage::disk('public')->path($docxPath);
+                        } else {
+                            $fullPath = null;
                         }
                         
                         if ($fullPath) {

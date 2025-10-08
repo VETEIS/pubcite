@@ -243,7 +243,7 @@
                 <div class="max-w-7xl mx-auto">
 
                     
-                    <form id="settings-form" method="POST" action="{{ route('admin.settings.update') }}">
+                    <form id="settings-form" method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
@@ -626,7 +626,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
                                             Save Changes
-                                        </button>
+                                    </button>
                                     </div>
                                 </div>
                             </div>
@@ -640,7 +640,7 @@
                                                 <li>{{ $error }}</li>
                                             @endforeach
                                         </ul>
-                                    </div>
+                                </div>
                                 @endif
                                 
                                 <div class="mb-4">                                        
@@ -671,7 +671,7 @@
                                                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                                 </svg>
-                                                            </div>
+                            </div>
                                                         </td>
                                                         <td class="px-6 py-4 whitespace-nowrap">
                                                             <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
@@ -696,7 +696,169 @@
                                                     @endforeach
                                                 </tbody>
                                             </table>
+                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- USEP Researchers Management Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
+                            <!-- Header -->
+                            <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
                                         </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">USEP Researchers</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Manage researcher profiles displayed on the landing page</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <button type="button" onclick="addResearcherRow()" 
+                                                class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
+                                                title="Add Researcher">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                        <button type="submit" name="save_researchers" value="1"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                disabled>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+             <!-- Content -->
+             <div class="p-6">
+                 <div class="mb-4">
+                                    <div id="researchersRepeater" class="space-y-6">
+                                        @php($researchers = old('researchers', $researchers ?? []))
+                                        @if(empty($researchers))
+                                            @php($researchers = [['name' => '', 'title' => '', 'research_areas' => '', 'bio' => '', 'status_badge' => 'Active', 'background_color' => 'maroon', 'profile_link' => '']])
+                                        @endif
+                                        @foreach($researchers as $idx => $researcher)
+                                        <div class="researcher-card bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
+                                            <div class="flex items-start justify-between mb-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm">
+                                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                    </div>
+                                                    <h4 class="text-lg font-semibold text-gray-900">Researcher Profile {{ $idx + 1 }}</h4>
+                                                </div>
+                                                <button type="button" onclick="removeResearcherRow(this)" 
+                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                        title="Remove Researcher">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="space-y-6">
+                                                <!-- Row 1: Profile Picture | Biography -->
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+                                                        <div class="flex items-center gap-4">
+                                                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                                                                <img id="preview-{{ $idx }}" src="{{ $researcher['photo_path'] ? '/storage/' . $researcher['photo_path'] : '' }}" alt="Profile preview" class="w-full h-full object-cover {{ $researcher['photo_path'] ? '' : 'hidden' }}">
+                                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-{{ $idx }}" {{ $researcher['photo_path'] ? 'style="display: none;"' : '' }}>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="flex-1">
+                                                                <input type="file" name="researchers[{{ $idx }}][photo]" id="photo-{{ $idx }}" 
+                                                                       accept="image/*" onchange="previewImage(this, {{ $idx }})"
+                                                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                                                                <p class="text-xs text-gray-500 mt-1">JPG, PNG up to 2MB</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Biography</label>
+                                                        <textarea name="researchers[{{ $idx }}][bio]" rows="4" 
+                                                                  placeholder="Brief description of research focus and achievements..." 
+                                                                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none">{{ $researcher['bio'] ?? '' }}</textarea>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Row 2: Full Name | Profile Link -->
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                                        <input type="text" name="researchers[{{ $idx }}][name]" value="{{ $researcher['name'] ?? '' }}" 
+                                                               placeholder="Dr. John Doe" 
+                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Profile Link</label>
+                                                        <input type="url" name="researchers[{{ $idx }}][profile_link]" value="{{ $researcher['profile_link'] ?? '' }}" 
+                                                               placeholder="https://example.com/profile" 
+                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Row 3: Title/Position | Status Badge -->
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Title/Position *</label>
+                                                        <input type="text" name="researchers[{{ $idx }}][title]" value="{{ $researcher['title'] ?? '' }}" 
+                                                               placeholder="Professor, College of Engineering" 
+                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Status Badge</label>
+                                                        <select name="researchers[{{ $idx }}][status_badge]" 
+                                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                            <option value="Active" {{ ($researcher['status_badge'] ?? '') == 'Active' ? 'selected' : '' }}>Active</option>
+                                                            <option value="Research" {{ ($researcher['status_badge'] ?? '') == 'Research' ? 'selected' : '' }}>Research</option>
+                                                            <option value="Innovation" {{ ($researcher['status_badge'] ?? '') == 'Innovation' ? 'selected' : '' }}>Innovation</option>
+                                                            <option value="Leadership" {{ ($researcher['status_badge'] ?? '') == 'Leadership' ? 'selected' : '' }}>Leadership</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Row 4: Research Areas | Card Background Color -->
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Research Areas</label>
+                                                        <input type="text" name="researchers[{{ $idx }}][research_areas]" value="{{ is_array($researcher['research_areas'] ?? []) ? implode(', ', $researcher['research_areas']) : ($researcher['research_areas'] ?? '') }}" 
+                                                               placeholder="AI, Machine Learning, Data Science" 
+                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Card Background Color</label>
+                                                        <select name="researchers[{{ $idx }}][background_color]" 
+                                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                            <option value="maroon" {{ ($researcher['background_color'] ?? '') == 'maroon' ? 'selected' : '' }}>Maroon</option>
+                                                            <option value="blue" {{ ($researcher['background_color'] ?? '') == 'blue' ? 'selected' : '' }}>Blue</option>
+                                                            <option value="green" {{ ($researcher['background_color'] ?? '') == 'green' ? 'selected' : '' }}>Green</option>
+                                                            <option value="purple" {{ ($researcher['background_color'] ?? '') == 'purple' ? 'selected' : '' }}>Purple</option>
+                                                            <option value="orange" {{ ($researcher['background_color'] ?? '') == 'orange' ? 'selected' : '' }}>Orange</option>
+                                                            <option value="teal" {{ ($researcher['background_color'] ?? '') == 'teal' ? 'selected' : '' }}>Teal</option>
+                                                            <option value="rose" {{ ($researcher['background_color'] ?? '') == 'rose' ? 'selected' : '' }}>Rose</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>
@@ -744,19 +906,19 @@
             
             // Update save button state
             function updateSaveButton(button, hasChanges) {
-                console.log('updateSaveButton called:', { button: !!button, hasChanges });
                 if (!button) return;
                 
                 if (hasChanges) {
-                    console.log('Enabling save button');
                     button.disabled = false;
                     button.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg';
                 } else {
-                    console.log('Disabling save button');
                     button.disabled = true;
                     button.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm';
                 }
             }
+            
+            // Make updateSaveButton globally available
+            window.updateSaveButton = updateSaveButton;
             
             // Check for changes in official information section
             function checkOfficialChanges() {
@@ -803,11 +965,7 @@
                     : [];
                 const originalMarks = window.originalValues.calendar?.marks || [];
                 
-                console.log('checkCalendarChanges - Current:', currentMarks);
-                console.log('checkCalendarChanges - Original:', originalMarks);
-                
                 const hasChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
-                console.log('checkCalendarChanges - Has changes:', hasChanges);
                 
                 const saveBtn = document.querySelector('button[name="save_calendar"]');
                 updateSaveButton(saveBtn, hasChanges);
@@ -821,11 +979,7 @@
                     : [];
                 const originalAnnouncements = window.originalValues.announcements?.announcements || [];
                 
-                console.log('checkAnnouncementsChanges - Current:', currentAnnouncements);
-                console.log('checkAnnouncementsChanges - Original:', originalAnnouncements);
-                
                 const hasChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
-                console.log('checkAnnouncementsChanges - Has changes:', hasChanges);
                 
                 const saveBtn = document.querySelector('button[name="save_announcements"]');
                 updateSaveButton(saveBtn, hasChanges);
@@ -847,6 +1001,7 @@
                 const citationsCheckbox = document.querySelector('input[name="citations_request_enabled"][type="checkbox"]');
                 const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
                 const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
+                const researcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
                 
                 window.originalValues = {
                     official: {
@@ -863,8 +1018,12 @@
                     },
                     announcements: {
                         announcements: Array.from(announcementInputs).map(input => input.value)
+                    },
+                    researchers: {
+                        researchers: Array.from(researcherInputs).map(input => input.value)
                     }
                 };
+                
                 
                 // Add event listeners
                 if (deputyName) deputyName.addEventListener('input', checkOfficialChanges);
@@ -882,17 +1041,23 @@
                     input.addEventListener('input', checkAnnouncementsChanges);
                 });
                 
+                researcherInputs.forEach(input => {
+                    input.addEventListener('input', checkResearcherChanges);
+                });
+                
                 // Make functions globally available
                 window.checkOfficialChanges = checkOfficialChanges;
                 window.checkFeaturesChanges = checkFeaturesChanges;
                 window.checkCalendarChanges = checkCalendarChanges;
                 window.checkAnnouncementsChanges = checkAnnouncementsChanges;
+                window.checkResearcherChanges = checkResearcherChanges;
                 
-        // Check initial state
-        checkOfficialChanges();
-        checkFeaturesChanges();
-        checkCalendarChanges();
+                // Check initial state
+                checkOfficialChanges();
+                checkFeaturesChanges();
+                checkCalendarChanges();
         checkAnnouncementsChanges();
+        checkResearcherChanges();
         
         // Initialize announcements state tracking
         initializeAnnouncementsState();
@@ -909,15 +1074,9 @@
             if (e.submitter && e.submitter.name === 'save_announcements') {
                 // Let the form submit normally - don't prevent default
                 // The server will handle the submission and redirect back
-                console.log('Announcements form submitting...');
-                console.log('Form action:', e.target.action);
-                console.log('Form method:', e.target.method);
-                console.log('Submitter:', e.submitter.name, e.submitter.value);
             } else if (e.submitter && e.submitter.name === 'save_calendar') {
-                console.log('Calendar form submitting...');
-                console.log('Form action:', e.target.action);
-                console.log('Form method:', e.target.method);
-                console.log('Submitter:', e.submitter.name, e.submitter.value);
+                // Let the form submit normally - don't prevent default
+                // The server will handle the submission and redirect back
             }
         });
         
@@ -1044,13 +1203,11 @@
                 
                 // If no rows left, add an empty entry for consistency
                 if (container.querySelectorAll('tr').length === 0) {
-                    console.log('No calendar rows left, adding empty entry');
                     addMarkRow();
                 }
                 
                 // Trigger calendar change detection
                 if (window.checkCalendarChanges) {
-                    console.log('Calling checkCalendarChanges after deletion');
                     window.checkCalendarChanges();
                 }
             }
@@ -1117,13 +1274,11 @@
                 
                 // If no rows left, add an empty entry for consistency
                 if (container.querySelectorAll('tr').length === 0) {
-                    console.log('No rows left, adding empty entry');
                     addAnnouncementRow();
                 }
                 
                 // Trigger announcements change detection
                 if (window.checkAnnouncementsChanges) {
-                    console.log('Calling checkAnnouncementsChanges after deletion');
                     window.checkAnnouncementsChanges();
                 }
             }
@@ -1224,6 +1379,203 @@
                 statusElement.className = 'text-xs text-red-500';
             }
         }
+
+        // Simple researchers management
+        function addResearcherRow() {
+            const container = document.getElementById('researchersRepeater');
+            if (!container) return;
+            
+            const index = container.querySelectorAll('.researcher-card').length;
+            const card = document.createElement('div');
+            card.className = 'researcher-card bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-200';
+            card.innerHTML = `
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                        <h4 class="text-lg font-semibold text-gray-900">Researcher Profile ${index + 1}</h4>
+                        </div>
+                    <button type="button" onclick="removeResearcherRow(this)" 
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                            title="Remove Researcher">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                </div>
+                
+                 <div class="space-y-6">
+                     <!-- Row 1: Profile Picture | Biography -->
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+                             <div class="flex items-center gap-4">
+                                 <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                                     <img id="preview-${index}" src="" alt="Profile preview" class="w-full h-full object-cover hidden">
+                                     <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-${index}">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                        </div>
+                                 <div class="flex-1">
+                                     <input type="file" name="researchers[${index}][photo]" id="photo-${index}" 
+                                            accept="image/*" onchange="previewImage(this, ${index})"
+                                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                                     <p class="text-xs text-gray-500 mt-1">JPG, PNG up to 2MB</p>
+                    </div>
+                </div>
+                         </div>
+                         
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Biography</label>
+                             <textarea name="researchers[${index}][bio]" rows="4" 
+                                       placeholder="Brief description of research focus and achievements..." 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none"></textarea>
+                         </div>
+                     </div>
+                     
+                     <!-- Row 2: Full Name | Profile Link -->
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                             <input type="text" name="researchers[${index}][name]" 
+                                    placeholder="Dr. John Doe" 
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                         </div>
+                         
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Profile Link</label>
+                             <input type="url" name="researchers[${index}][profile_link]" 
+                                    placeholder="https://example.com/profile" 
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                         </div>
+                     </div>
+                     
+                     <!-- Row 3: Title/Position | Status Badge -->
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Title/Position *</label>
+                             <input type="text" name="researchers[${index}][title]" 
+                                    placeholder="Professor, College of Engineering" 
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                         </div>
+                         
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Status Badge</label>
+                             <select name="researchers[${index}][status_badge]" 
+                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                 <option value="Active">Active</option>
+                                 <option value="Research">Research</option>
+                                 <option value="Innovation">Innovation</option>
+                                 <option value="Leadership">Leadership</option>
+                             </select>
+                         </div>
+                     </div>
+                     
+                     <!-- Row 4: Research Areas | Card Background Color -->
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Research Areas</label>
+                             <input type="text" name="researchers[${index}][research_areas]" 
+                                    placeholder="AI, Machine Learning, Data Science" 
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                         </div>
+                         
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Card Background Color</label>
+                             <select name="researchers[${index}][background_color]" 
+                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                 <option value="maroon">Maroon</option>
+                                 <option value="blue">Blue</option>
+                                 <option value="green">Green</option>
+                                 <option value="purple">Purple</option>
+                                 <option value="orange">Orange</option>
+                                 <option value="teal">Teal</option>
+                                 <option value="rose">Rose</option>
+                             </select>
+                         </div>
+                     </div>
+                 </div>
+            `;
+            
+            container.appendChild(card);
+            
+            // Add event listeners to new inputs
+            const newInputs = card.querySelectorAll('input, select, textarea');
+            newInputs.forEach(input => {
+                input.addEventListener('input', checkResearcherChanges);
+            });
+            
+            // Trigger change detection
+            if (window.checkResearcherChanges) {
+                window.checkResearcherChanges();
+            }
+        }
+
+        function removeResearcherRow(btn) {
+            const card = btn.closest('.researcher-card');
+            const container = document.getElementById('researchersRepeater');
+            if (card && container) {
+                card.remove();
+                
+                // If no cards left, add an empty one
+                const remainingCards = container.querySelectorAll('.researcher-card');
+                if (remainingCards.length === 0) {
+                    addResearcherRow();
+                }
+                
+                // Update original values to reflect the deletion
+                const researcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
+                if (window.originalValues && window.originalValues.researchers) {
+                    window.originalValues.researchers.researchers = Array.from(researcherInputs).map(input => input.value);
+                }
+                
+                // Trigger researcher change detection
+                if (window.checkResearcherChanges) {
+                    window.checkResearcherChanges();
+                }
+            }
+        }
+
+        function checkResearcherChanges() {
+            const researcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
+            
+            const currentResearchers = researcherInputs.length > 0 
+                ? Array.from(researcherInputs).map(input => input.value)
+                : [];
+            
+            const hasChanges = JSON.stringify(currentResearchers) !== JSON.stringify(originalValues.researchers?.researchers || []);
+            
+            const saveBtn = document.querySelector('button[name="save_researchers"]');
+            updateSaveButton(saveBtn, hasChanges);
+        }
+
+        // Image preview functionality
+        function previewImage(input, index) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById(`preview-${index}`);
+                    const placeholder = document.getElementById(`placeholder-${index}`);
+                    
+                    if (preview && placeholder) {
+                        preview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Make functions globally available
+        window.addResearcherRow = addResearcherRow;
+        window.removeResearcherRow = removeResearcherRow;
+        window.checkResearcherChanges = checkResearcherChanges;
+        window.previewImage = previewImage;
 
     </script>
 </x-app-layout> 
