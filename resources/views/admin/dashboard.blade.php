@@ -349,7 +349,7 @@
                         <div class="w-px h-8 bg-gray-200"></div>
                         
                         <!-- Notification Bell (like user dashboard) -->
-                        <div class="relative" x-data="notificationBell()" x-init="init()" x-cloak>
+                        <div class="relative" x-data="notificationBell()" x-cloak>
                             <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
                             <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
@@ -1256,18 +1256,21 @@
         // Chart instances are now global to prevent redeclaration errors
         // let monthlyChartInstance = null;
         // let statusChartInstance = null;
-let eventSource;
+// Global variables - prevent redeclaration during Turbo navigation
+if (typeof window.eventSource === 'undefined') {
+    window.eventSource = null;
+}
 
 function initializeRealTimeUpdates() {
     // Close existing connection if any
-    if (eventSource) {
-        eventSource.close();
+    if (window.eventSource) {
+        window.eventSource.close();
     }
     
     // Create new SSE connection
-    eventSource = new EventSource('{{ route("admin.dashboard.stream") }}');
+    window.eventSource = new EventSource('{{ route("admin.dashboard.stream") }}');
     
-    eventSource.onmessage = function(event) {
+    window.eventSource.onmessage = function(event) {
         try {
             const data = JSON.parse(event.data);
             // Simple reinitialization instead of complex updates
@@ -2076,7 +2079,7 @@ window.addEventListener('beforeunload', function() {
             
             // SSE disabled for stability
             // Defer to allow layout to settle
-            setTimeout(() => fetchAndUpdateCharts(getCurrentFilters()), 0);
+            setTimeout(() => fetchAndUpdateCharts(getGlobalFilters()), 0);
             
             // Fix scrollbar layout shift
             fixScrollbarLayout();
@@ -2761,11 +2764,13 @@ function updateRequestStatusInTable(requestId, newStatus) {
     });
 }
 
-// Delete modal functions
-let currentDeleteRequestId = null;
+// Delete modal functions - prevent redeclaration during Turbo navigation
+if (typeof window.currentDeleteRequestId === 'undefined') {
+    window.currentDeleteRequestId = null;
+}
 
 function openDeleteModal(requestId, requestCode) {
-    currentDeleteRequestId = requestId;
+    window.currentDeleteRequestId = requestId;
     document.getElementById('deleteRequestCode').textContent = requestCode;
     document.getElementById('deleteModal').classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
@@ -2777,7 +2782,7 @@ function openDeleteModal(requestId, requestCode) {
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
-    currentDeleteRequestId = null;
+    window.currentDeleteRequestId = null;
     
     // Remove keyboard event listener
     document.removeEventListener('keydown', handleDeleteModalKeydown);
@@ -2790,7 +2795,7 @@ function handleDeleteModalKeydown(event) {
 }
 
 function confirmDelete() {
-    if (!currentDeleteRequestId) {
+    if (!window.currentDeleteRequestId) {
         return;
     }
     
@@ -2810,7 +2815,7 @@ function confirmDelete() {
     // Create form and submit
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = `/admin/requests/${currentDeleteRequestId}`;
+    form.action = `/admin/requests/${window.currentDeleteRequestId}`;
     
     const csrfToken = document.createElement('input');
     csrfToken.type = 'hidden';

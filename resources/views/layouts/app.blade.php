@@ -205,6 +205,9 @@
         <!-- Global Notification System -->
         <x-global-notifications />
 
+        <!-- Notification Bell System -->
+        <script src="{{ asset('js/notification-bell.js') }}"></script>
+        
         <!-- Livewire Scripts - Single Instance -->
         @livewireScripts
         
