@@ -198,8 +198,8 @@
                         @endauth
 
                         <!-- Quick Links Dropdown -->
-                        <div class="relative hidden sm:block pointer-events-none" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false" aria-hidden="true">
-                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition" x-cloak>
+                        <div class="relative hidden sm:block" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false">
+                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
                                 Quick Links
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -231,8 +231,8 @@
                         </div>
 
                         <!-- Announcements Dropdown -->
-                        <div class="relative hidden sm:block pointer-events-none" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false" aria-hidden="true">
-                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition" x-cloak>
+                        <div class="relative hidden sm:block" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false">
+                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -242,27 +242,8 @@
                                     <div class="px-3 py-2 border-b border-gray-100">
                                         <h4 class="text-sm font-semibold text-maroon-900">Latest Updates</h4>
                                     </div>
-                                    <div class="max-h-64 overflow-y-auto">
-                                        <div class="px-3 py-2 hover:bg-maroon-50">
-                                            <div class="text-sm font-medium text-maroon-900">New Publication Incentive Guidelines</div>
-                                            <div class="text-xs text-gray-600 mt-1">Updated guidelines for 2024 publication incentives are now available.</div>
-                                            <div class="text-xs text-gray-500 mt-1">2 hours ago</div>
-                                        </div>
-                                        <div class="px-3 py-2 hover:bg-maroon-50">
-                                            <div class="text-sm font-medium text-maroon-900">Research Workshop Series</div>
-                                            <div class="text-xs text-gray-600 mt-1">Join our upcoming workshop series on research methodology and academic writing techniques.</div>
-                                            <div class="text-xs text-gray-500 mt-1">1 day ago</div>
-                                        </div>
-                                        <div class="px-3 py-2 hover:bg-maroon-50">
-                                            <div class="text-sm font-medium text-maroon-900">Journal Indexing Updates</div>
-                                            <div class="text-xs text-gray-600 mt-1">Latest updates on Scopus and Web of Science indexing for USeP publications.</div>
-                                            <div class="text-xs text-gray-500 mt-1">3 days ago</div>
-                                        </div>
-                                        <div class="px-3 py-2 hover:bg-maroon-50">
-                                            <div class="text-sm font-medium text-maroon-900">Call for Papers</div>
-                                            <div class="text-xs text-gray-600 mt-1">Submit your research papers for the upcoming special issue on sustainable development.</div>
-                                            <div class="text-xs text-gray-500 mt-1">1 week ago</div>
-                                        </div>
+                                    <div class="max-h-64 overflow-y-auto" id="guest-announcements-content">
+                                        <!-- Content will be loaded here -->
                                     </div>
                                 </div>
                             </div>
@@ -270,7 +251,7 @@
                         
                         @if (Route::has('login'))
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition pointer-events-none" aria-hidden="true">
+                                <a href="{{ url('/dashboard') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/20 transition">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 3l9 6.75V20a1.5 1.5 0 01-1.5 1.5H15a1.5 1.5 0 01-1.5-1.5v-4.5H10.5V20A1.5 1.5 0 019 21.5H4.5A1.5 1.5 0 013 20V9.75z" />
                                     </svg>
@@ -302,5 +283,98 @@
 
         <script>window.livewireScriptConfig = { alpine: false }</script>
         @livewireScripts
+        
+        <!-- Guest Layout Announcements JavaScript -->
+        <script>
+        // Load announcements for guest layout
+        function loadGuestAnnouncements() {
+            const content = document.getElementById('guest-announcements-content');
+            if (!content) return;
+
+            // Show loading state
+            content.innerHTML = `
+                <div class="px-3 py-4 text-center text-gray-500">
+                    <div class="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2"></div>
+                    <div class="text-xs">Loading announcements...</div>
+                </div>
+            `;
+
+            // Fetch dynamic announcements
+            const timestamp = new Date().getTime();
+            fetch(`/admin/announcements?t=${timestamp}`, {
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const announcements = data.announcements || [];
+                
+                if (announcements.length === 0) {
+                    content.innerHTML = `
+                        <div class="px-3 py-4 text-center text-gray-500">
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <div class="text-xs">No announcements available</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                content.innerHTML = announcements.map(announcement => `
+                    <div class="px-3 py-2 hover:bg-maroon-50">
+                        <div class="text-sm font-medium text-maroon-900">${escapeHtml(announcement.title || 'Untitled')}</div>
+                        <div class="text-xs text-gray-600 mt-1">${escapeHtml(announcement.description || 'No description')}</div>
+                        <div class="text-xs text-gray-500 mt-1">${formatTimeAgo(announcement.created_at)}</div>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                content.innerHTML = `
+                    <div class="px-3 py-4 text-center text-gray-500">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="text-xs">Unable to load announcements</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Helper functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTimeAgo(dateString) {
+            if (!dateString) return 'Recently';
+            
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+            
+            if (diffInMinutes < 1) return 'Just now';
+            if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+            if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handler to announcements button in guest layout
+            const announcementsBtn = document.querySelector('[x-data*="open"] button');
+            if (announcementsBtn) {
+                announcementsBtn.addEventListener('click', function() {
+                    setTimeout(loadGuestAnnouncements, 100); // Small delay to ensure dropdown is open
+                });
+            }
+        });
+        </script>
     </body>
 </html>

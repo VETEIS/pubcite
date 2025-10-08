@@ -157,7 +157,18 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     Route::get('/requests/{request}/download', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadFile'])->name('admin.requests.download');
     Route::get('/requests/{request}/debug', [\App\Http\Controllers\PublicationsController::class, 'debugFilePaths'])->name('admin.requests.debug');
     Route::get('/requests/{request}/serve', [\App\Http\Controllers\PublicationsController::class, 'serveFile'])->name('admin.requests.serve');
+    
+    // announcements management (handled through settings)
 });
+
+// Public announcements endpoint for landing page
+Route::get('/admin/announcements', function() {
+    $announcements = json_decode(\App\Models\Setting::get('landing_page_announcements', '[]'), true) ?? [];
+    return response()->json([
+        'announcements' => $announcements,
+        'count' => count($announcements)
+    ]);
+})->name('public.announcements.index');
 
 // progress tracking
 Route::middleware(['auth', 'throttle:10,1'])->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');

@@ -1054,7 +1054,7 @@
                         if (!data.months || !data.monthlyCounts || !data.statusCounts) return;
                         
                         // Update charts with new data
-                        this.updateChartsWithData({
+                        updateChartsWithData({
                             months: data.months,
                             monthlyCounts: data.monthlyCounts,
                             statusCounts: data.statusCounts,
@@ -1249,17 +1249,6 @@
                     `;
                     
                     legendElement.innerHTML = legendHTML;
-                },
-                
-                updateTableData(data) {
-                    // Update table counts if they exist on the page
-                    const resultCountElements = document.querySelectorAll('[data-count]');
-                    resultCountElements.forEach(element => {
-                        const countType = element.getAttribute('data-count');
-                        if (data[countType] !== undefined) {
-                            element.textContent = data[countType];
-                        }
-                    });
                 }
             };
         };
@@ -1954,7 +1943,7 @@ function updateStatsWithData(stats) {
             }, 300);
         }
 
-        function getCurrentFilters() {
+        function getGlobalFilters() {
             const url = new URL(window.location.href);
             const filters = {
                 type: url.searchParams.get('type'),
@@ -2048,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
     // Initial fetch for charts on first non-Turbo load
     if (!window.Turbo) {
-        fetchAndUpdateCharts(getCurrentFilters());
+        fetchAndUpdateCharts(getGlobalFilters());
     } else {
         // If Turbo is enabled, hide loading state after a delay if no turbo:load event fires
         setTimeout(() => {

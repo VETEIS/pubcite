@@ -691,12 +691,19 @@
                             },
                             toggleAnnouncements() {
                                 this.announcementsOpen = !this.announcementsOpen;
-                                if (this.announcementsOpen) this.quickLinksOpen = false;
+                                if (this.announcementsOpen) {
+                                    this.quickLinksOpen = false;
+                                    window.loadAnnouncements();
+                                }
+                            },
+                            closeAll() {
+                                this.quickLinksOpen = false;
+                                this.announcementsOpen = false;
                             }
-                        }">
+                        }" @click.away="closeAll()">
 
                         <!-- Quick Links Dropdown -->
-                        <div class="relative mobile-hidden pointer-events-none" aria-hidden="true">
+                        <div class="relative mobile-hidden">
                             <button @click="toggleQuickLinks()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-1.414 1.414a4 4 0 01-5.656 0l-1.414-1.414a4 4 0 010-5.656M10.172 13.828a4 4 0 010-5.656l1.414-1.414a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
                                 Quick Links
@@ -704,23 +711,23 @@
                             </button>
                             <div x-show="quickLinksOpen" x-cloak class="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
                                 <div class="py-1">
-                                    <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                    <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
                                         <span>SPJRD</span>
                                     </a>
-                                    <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                    <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4M4 11h16" /></svg>
                                         <span>Scopus (Suggested Journals)</span>
                                     </a>
-                                    <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                    <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5zm0 0V4" /></svg>
                                         <span>Web of Science (Suggested)</span>
                                     </a>
-                                    <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                    <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
                                         <span>ACI (Suggested)</span>
                                     </a>
-                                    <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50">
+                                    <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
                                         <span>Peer Review</span>
                                     </a>
@@ -729,7 +736,7 @@
                         </div>
 
                         <!-- Announcements Dropdown -->
-                        <div class="relative mobile-hidden pointer-events-none" aria-hidden="true">
+                        <div class="relative mobile-hidden">
                             <button @click="toggleAnnouncements()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
@@ -738,31 +745,12 @@
                             <div x-show="announcementsOpen" x-cloak class="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur border border-white/40 rounded-lg shadow-xl overflow-hidden z-50">
                                 <div class="py-1">
                                     <div class="px-3 py-2 border-b border-gray-100">
-                                        <h4 class="text-sm font-semibold text-gray-900">Latest Updates</h4>
+                                        <h4 class="text-sm font-semibold text-maroon-900">Latest Updates</h4>
                                     </div>
-                                    <div class="max-h-64 overflow-y-auto">
-                                        <div class="px-3 py-2 hover:bg-gray-50">
-                                            <div class="text-sm font-medium text-gray-900">New Publication Incentive Guidelines</div>
-                                            <div class="text-xs text-gray-600 mt-1">Updated guidelines for 2024 publication incentives are now available.</div>
-                                            <div class="text-xs text-gray-500 mt-1">2 hours ago</div>
-                                        </div>
-                                        <div class="px-3 py-2 hover:bg-gray-50">
-                                            <div class="text-sm font-medium text-gray-900">Research Workshop Series</div>
-                                            <div class="text-xs text-gray-600 mt-1">Join our upcoming workshop series on research methodology and academic writing techniques.</div>
-                                            <div class="text-xs text-gray-500 mt-1">1 day ago</div>
-                                        </div>
-                                        <div class="px-3 py-2 hover:bg-gray-50">
-                                            <div class="text-sm font-medium text-gray-900">Journal Indexing Updates</div>
-                                            <div class="text-xs text-gray-600 mt-1">Latest updates on Scopus and Web of Science indexing for USeP publications.</div>
-                                            <div class="text-xs text-gray-500 mt-1">3 days ago</div>
-                                        </div>
-                                        <div class="px-3 py-2 hover:bg-gray-50">
-                                            <div class="text-sm font-medium text-gray-900">Call for Papers</div>
-                                            <div class="text-xs text-gray-600 mt-1">Submit your research papers for the upcoming special issue on sustainable development.</div>
-                                            <div class="text-xs text-gray-500 mt-1">1 week ago</div>
-                                        </div>
-                                        </div>
+                                    <div class="max-h-64 overflow-y-auto" id="announcements-content">
+                                        <!-- Content will be loaded here -->
                                     </div>
+                                </div>
                             </div>
                         </div>
 
@@ -2125,5 +2113,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize mobile hero fade-in
     initMobileHeroFadeIn();
 
+    // Legacy function for backward compatibility
+    window.loadAnnouncements = function() {
+        if (window.landingAnnouncements) {
+            window.landingAnnouncements.load();
+        }
+    }
+
+    // Legacy function for backward compatibility
+    function formatTimeAgo(dateString) {
+        if (window.landingAnnouncements) {
+            return window.landingAnnouncements.formatTimeAgo(dateString);
+        }
+        return 'Recently';
+    }
+
 });
-</script> 
+</script>
+
+<!-- Landing Page Announcements JavaScript -->
+<script src="{{ asset('js/landing-announcements.js') }}"></script> 

@@ -263,7 +263,7 @@
                                                 <p class="text-sm text-gray-600 mt-1">Configure official names and titles for document generation</p>
                                             </div>
                             </div>
-                                        <button type="submit" name="save_official_info" 
+                                        <button type="submit" name="save_official_info" value="1"
                                                 class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
                                                 disabled>
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +404,7 @@
                                                 <p class="text-sm text-gray-600 mt-1">Manage feature availability and system behavior</p>
                             </div>
                                         </div>
-                                        <button type="submit" name="save_application_controls" 
+                                        <button type="submit" name="save_application_controls" value="1"
                                                 class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
                                                 disabled>
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -522,7 +522,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
                                             </button>
-                                            <button type="submit" name="save_calendar" 
+                                            <button type="submit" name="save_calendar" value="1"
                                                     class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
                                                     disabled>
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -594,6 +594,109 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Announcements Management Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
+                            <!-- Header -->
+                            <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">Landing Page Announcements</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Manage announcements displayed on the landing page dropdown</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <button type="button" onclick="addAnnouncementRow()" 
+                                                class="w-8 h-8 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center" 
+                                                title="Add Announcement">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                        <button type="submit" name="save_announcements" value="1"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                disabled>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="p-6">
+                                <div class="overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Title
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Description
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                                                        Actions
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="announcementsRepeater" class="bg-white divide-y divide-gray-200">
+                                                @php($announcements = old('announcements', $announcements ?? []))
+                                                @if(empty($announcements))
+                                                    @php($announcements = [['title' => '', 'description' => '']])
+                                                @endif
+                                                @foreach($announcements as $idx => $announcement)
+                                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+                                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                            </svg>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
+                                                               placeholder="Enter announcement title" 
+                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                                               oninput="checkAnnouncementsChanges()">
+                                                    </td>
+                                                    <td class="px-6 py-4">
+                                                        <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
+                                                               placeholder="Enter announcement description" 
+                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                                               oninput="checkAnnouncementsChanges()">
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <button type="button" onclick="removeAnnouncementRow(this)" 
+                                                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                                title="Remove Announcement">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </main>
@@ -609,12 +712,15 @@
             
             // Update save button state
             function updateSaveButton(button, hasChanges) {
+                console.log('updateSaveButton called:', { button: !!button, hasChanges });
                 if (!button) return;
                 
                 if (hasChanges) {
+                    console.log('Enabling save button');
                     button.disabled = false;
                     button.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg';
                 } else {
+                    console.log('Disabling save button');
                     button.disabled = true;
                     button.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm';
                 }
@@ -650,7 +756,7 @@
                 if (!checkbox) return;
                 
                 const currentValue = checkbox.checked;
-                const hasChanges = currentValue !== originalValues.features.citations_enabled;
+                const hasChanges = currentValue !== (originalValues.features && originalValues.features.citations_enabled);
                 
                 const saveBtn = document.querySelector('button[name="save_application_controls"]');
                 updateSaveButton(saveBtn, hasChanges);
@@ -667,6 +773,7 @@
                 const saveBtn = document.querySelector('button[name="save_calendar"]');
                 updateSaveButton(saveBtn, hasChanges);
             }
+            
             
             // Initialize form change detection
             function initFormChangeDetection() {
@@ -714,6 +821,7 @@
                 checkOfficialChanges();
                 checkFeaturesChanges();
                 checkCalendarChanges();
+                checkAnnouncementsChanges();
             }
             
             // Initialize checkbox UI
@@ -832,6 +940,81 @@
             }
         }
 
+        // Simple announcements management
+        function addAnnouncementRow() {
+            const container = document.getElementById('announcementsRepeater');
+            if (!container) return;
+            
+            const index = container.querySelectorAll('tr').length;
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors duration-150';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" name="announcements[${index}][title]" 
+                           placeholder="Enter announcement title" 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                           oninput="checkAnnouncementsChanges()">
+                </td>
+                <td class="px-6 py-4">
+                    <input type="text" name="announcements[${index}][description]" 
+                           placeholder="Enter announcement description" 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                           oninput="checkAnnouncementsChanges()">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button type="button" onclick="removeAnnouncementRow(this)" 
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                            title="Remove Announcement">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </td>
+            `;
+            
+            container.appendChild(row);
+            checkAnnouncementsChanges();
+        }
+
+        function removeAnnouncementRow(btn) {
+            const row = btn.closest('tr');
+            const container = document.getElementById('announcementsRepeater');
+            if (row && container) {
+                row.remove();
+                checkAnnouncementsChanges();
+            }
+        }
+
+        function checkAnnouncementsChanges() {
+            const inputs = document.querySelectorAll('input[name^="announcements"]');
+            const saveBtn = document.querySelector('button[name="save_announcements"]');
+            
+            if (!saveBtn) return;
+            
+            // Check if any input has content
+            let hasContent = false;
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    hasContent = true;
+                }
+            });
+            
+            if (hasContent) {
+                saveBtn.disabled = false;
+                saveBtn.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg';
+            } else {
+                saveBtn.disabled = true;
+                saveBtn.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm';
+            }
+        }
+
         // Account creation functions
         async function createDeputyDirectorAccount() {
             const email = document.querySelector('input[name="deputy_director_email"]').value;
@@ -926,5 +1109,6 @@
                 statusElement.className = 'text-xs text-red-500';
             }
         }
+
     </script>
 </x-app-layout> 
