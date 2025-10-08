@@ -620,7 +620,8 @@
                                         </svg>
                                         </button>
                                         <button type="submit" name="save_announcements" value="1"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg">
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                disabled>
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
@@ -699,6 +700,35 @@
                     </form>
                 </div>
             </main>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteAnnouncementModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mt-4">Delete Announcement</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500" id="deleteAnnouncementMessage">
+                        Are you sure you want to delete this announcement? This action cannot be undone.
+                    </p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="confirmDeleteAnnouncement" 
+                            class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                        Delete
+                    </button>
+                    <button id="cancelDeleteAnnouncement" 
+                            class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -816,11 +846,21 @@
                 window.checkFeaturesChanges = checkFeaturesChanges;
                 window.checkCalendarChanges = checkCalendarChanges;
                 
-                // Check initial state
-                checkOfficialChanges();
-                checkFeaturesChanges();
-                checkCalendarChanges();
+        // Check initial state
+        checkOfficialChanges();
+        checkFeaturesChanges();
+        checkCalendarChanges();
+        
+        // Initialize announcements state tracking
+        initializeAnnouncementsState();
         checkAnnouncementsChanges();
+        
+        // Debug: Log initial announcements state
+        console.log('Initial announcements state:', {
+            inputs: document.querySelectorAll('input[name^="announcements"]').length,
+            rows: document.querySelectorAll('#announcementsRepeater tr').length,
+            saveBtnDisabled: document.querySelector('button[name="save_announcements"]')?.disabled
+        });
         
         // Debug: Log form submission for announcements
         const form = document.querySelector('form');
@@ -835,6 +875,13 @@
                         }
                     }
                     console.log('Submitting announcements:', announcements);
+                    
+                    // Reset state after successful submission
+                    // (This will be reset when the page reloads after successful save)
+                    setTimeout(() => {
+                        initializeAnnouncementsState();
+                        checkAnnouncementsChanges();
+                    }, 1000);
                 }
             });
         }
@@ -999,35 +1046,91 @@
             checkAnnouncementsChanges();
         }
 
+        let currentRowToDelete = null;
+        
         function removeAnnouncementRow(btn) {
             const row = btn.closest('tr');
             const container = document.getElementById('announcementsRepeater');
             if (row && container) {
-                row.remove();
-                checkAnnouncementsChanges();
+                // Get announcement title for confirmation
+                const titleInput = row.querySelector('input[name*="[title]"]');
+                const title = titleInput ? titleInput.value.trim() : '';
+                const displayTitle = title || 'Untitled Announcement';
+                
+                // Store reference to row for deletion
+                currentRowToDelete = row;
+                
+                // Update modal message
+                const message = document.getElementById('deleteAnnouncementMessage');
+                message.textContent = `Are you sure you want to delete "${displayTitle}"? This action cannot be undone.`;
+                
+                // Show modal
+                const modal = document.getElementById('deleteAnnouncementModal');
+                modal.classList.remove('hidden');
             }
         }
+        
+        // Modal event handlers
+        document.getElementById('confirmDeleteAnnouncement').addEventListener('click', function() {
+            if (currentRowToDelete) {
+                currentRowToDelete.remove();
+                checkAnnouncementsChanges();
+                
+                // No auto-save - user must manually save changes
+            }
+            
+            // Hide modal
+            const modal = document.getElementById('deleteAnnouncementModal');
+            modal.classList.add('hidden');
+            currentRowToDelete = null;
+        });
+        
+        document.getElementById('cancelDeleteAnnouncement').addEventListener('click', function() {
+            const modal = document.getElementById('deleteAnnouncementModal');
+            modal.classList.add('hidden');
+            currentRowToDelete = null;
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('deleteAnnouncementModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                currentRowToDelete = null;
+            }
+        });
 
+        // Store original state for comparison
+        let originalAnnouncementsState = null;
+        
+        function initializeAnnouncementsState() {
+            // Capture initial state when page loads
+            const inputs = document.querySelectorAll('input[name^="announcements"]');
+            originalAnnouncementsState = Array.from(inputs).map(input => ({
+                name: input.name,
+                value: input.value.trim()
+            }));
+        }
+        
         function checkAnnouncementsChanges() {
             const inputs = document.querySelectorAll('input[name^="announcements"]');
             const saveBtn = document.querySelector('button[name="save_announcements"]');
             
             if (!saveBtn) return;
             
-            // Check if any input has content
-            let hasContent = false;
-            inputs.forEach(input => {
-                if (input.value.trim() !== '') {
-                    hasContent = true;
-                }
-            });
+            // Compare current state with original state
+            const currentState = Array.from(inputs).map(input => ({
+                name: input.name,
+                value: input.value.trim()
+            }));
             
-            // Enable save button if there are rows OR if we're in a state where we need to save
-            // This allows saving empty arrays (deleting all) or saving new content
-            const rows = document.querySelectorAll('#announcementsRepeater tr');
-            const shouldEnable = true; // Always enable - allows saving empty state or content
+            // Check if state has changed
+            const hasChanged = JSON.stringify(currentState) !== JSON.stringify(originalAnnouncementsState);
+            
+            // Enable save button only if there are actual changes
+            const shouldEnable = hasChanged;
             
             // Show empty state message if no rows
+            const rows = document.querySelectorAll('#announcementsRepeater tr');
             const emptyState = document.getElementById('announcements-empty-state');
             if (rows.length === 0) {
                 if (!emptyState) {

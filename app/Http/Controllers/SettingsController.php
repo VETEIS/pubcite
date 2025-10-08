@@ -111,16 +111,29 @@ class SettingsController extends Controller
         
         $announcements = [];
         if (!empty($validated['announcements']) && is_array($validated['announcements'])) {
+            // Get existing announcements to preserve created_at timestamps
+            $existingAnnouncements = json_decode(Setting::get('landing_page_announcements', '[]'), true) ?? [];
+            $existingMap = [];
+            foreach ($existingAnnouncements as $existing) {
+                $key = $existing['title'] . '|' . $existing['description'];
+                $existingMap[$key] = $existing['created_at'] ?? now()->toISOString();
+            }
+            
             foreach ($validated['announcements'] as $row) {
                 $title = trim($row['title'] ?? '');
                 $description = trim($row['description'] ?? '');
                 if (!$title && !$description) {
                     continue;
                 }
+                
+                // Preserve existing created_at or create new one
+                $key = $title . '|' . $description;
+                $createdAt = $existingMap[$key] ?? now()->toISOString();
+                
                 $announcements[] = [
                     'title' => $title,
                     'description' => $description,
-                    'created_at' => now()->toISOString(),
+                    'created_at' => $createdAt,
                 ];
             }
         }
