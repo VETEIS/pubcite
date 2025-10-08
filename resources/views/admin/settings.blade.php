@@ -626,78 +626,81 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
                                             Save Changes
-                                    </button>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Content -->
                             <div class="p-6">
-                                <div class="overflow-hidden">
-                                    <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-200">
-                                            <thead class="bg-gray-50">
-                                                <tr>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                        </svg>
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Title
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Description
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                                                        Actions
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="announcementsRepeater" class="bg-white divide-y divide-gray-200">
-                                                @php($announcements = old('announcements', $announcements ?? []))
-                                                @if(empty($announcements))
-                                                    @php($announcements = [['title' => '', 'description' => '']])
-                                                @endif
-                                                @foreach($announcements as $idx => $announcement)
-                                                <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
-                                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                @if($errors->any())
+                                    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                                        <ul class="list-disc list-inside">
+                                            @foreach($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                
+                                <div class="mb-4">                                        
+                                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                        <div class="overflow-x-auto">
+                                            <table class="w-full">
+                                                <thead class="bg-gray-50 border-b border-gray-200">
+                                                    <tr>
+                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                             </svg>
-                                                        </div>
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
-                                                               placeholder="Enter announcement title" 
-                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                                               oninput="checkAnnouncementsChanges()">
-                                                    </td>
-                                                    <td class="px-6 py-4">
-                                                        <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
-                                                               placeholder="Enter announcement description" 
-                                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                                               oninput="checkAnnouncementsChanges()">
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <button type="button" onclick="removeAnnouncementRow(this)" 
-                                                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                                                                title="Remove Announcement">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                            </svg>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
+                                                        </th>
+                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="announcementsRepeater" class="bg-white divide-y divide-gray-200">
+                                                    @php($announcements = old('announcements', $announcements ?? []))
+                                                    @if(empty($announcements))
+                                                        @php($announcements = [['title' => '', 'description' => '']])
+                                                    @endif
+                                                    @foreach($announcements as $idx => $announcement)
+                                                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                                        <td class="px-6 py-4 whitespace-nowrap">
+                                                            <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+                                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap">
+                                                            <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
+                                                                   placeholder="Enter announcement title" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all">
+                                                        </td>
+                                                        <td class="px-6 py-4">
+                                                            <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
+                                                                   placeholder="Enter announcement description" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all">
+                                                        </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap">
+                                                            <button type="button" onclick="removeAnnouncementRow(this)" 
+                                                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                                    title="Remove Announcement">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </form>
                 </div>
             </main>
         </div>
@@ -737,7 +740,7 @@
             'use strict';
             
             // Global variables for change detection
-            let originalValues = {};
+            window.originalValues = {};
             
             // Update save button state
             function updateSaveButton(button, hasChanges) {
@@ -772,7 +775,7 @@
                 };
                 
                 const hasChanges = Object.keys(currentValues).some(key => 
-                    currentValues[key] !== originalValues.official[key]
+                    currentValues[key] !== window.originalValues.official[key]
                 );
                 
                 const saveBtn = document.querySelector('button[name="save_official_info"]');
@@ -785,7 +788,7 @@
                 if (!checkbox) return;
                 
                 const currentValue = checkbox.checked;
-                const hasChanges = currentValue !== (originalValues.features && originalValues.features.citations_enabled);
+                const hasChanges = currentValue !== (window.originalValues.features && window.originalValues.features.citations_enabled);
                 
                 const saveBtn = document.querySelector('button[name="save_application_controls"]');
                 updateSaveButton(saveBtn, hasChanges);
@@ -794,15 +797,45 @@
             // Check for changes in calendar section
             function checkCalendarChanges() {
                 const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
-                if (!calendarInputs.length) return;
                 
-                const currentMarks = Array.from(calendarInputs).map(input => input.value);
-                const hasChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalValues.calendar.marks);
+                const currentMarks = calendarInputs.length > 0 
+                    ? Array.from(calendarInputs).map(input => input.value)
+                    : [];
+                const originalMarks = window.originalValues.calendar?.marks || [];
+                
+                console.log('checkCalendarChanges - Current:', currentMarks);
+                console.log('checkCalendarChanges - Original:', originalMarks);
+                
+                const hasChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
+                console.log('checkCalendarChanges - Has changes:', hasChanges);
                 
                 const saveBtn = document.querySelector('button[name="save_calendar"]');
                 updateSaveButton(saveBtn, hasChanges);
             }
             
+            function checkAnnouncementsChanges() {
+                const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
+                
+                const currentAnnouncements = announcementInputs.length > 0 
+                    ? Array.from(announcementInputs).map(input => input.value)
+                    : [];
+                const originalAnnouncements = window.originalValues.announcements?.announcements || [];
+                
+                console.log('checkAnnouncementsChanges - Current:', currentAnnouncements);
+                console.log('checkAnnouncementsChanges - Original:', originalAnnouncements);
+                
+                const hasChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
+                console.log('checkAnnouncementsChanges - Has changes:', hasChanges);
+                
+                const saveBtn = document.querySelector('button[name="save_announcements"]');
+                updateSaveButton(saveBtn, hasChanges);
+            }
+            
+            
+            // Initialize announcements state tracking
+            function initializeAnnouncementsState() {
+                // Reset announcements state if needed
+            }
             
             // Initialize form change detection
             function initFormChangeDetection() {
@@ -813,8 +846,9 @@
                 const rddTitle = document.querySelector('input[name="official_rdd_director_title"]');
                 const citationsCheckbox = document.querySelector('input[name="citations_request_enabled"][type="checkbox"]');
                 const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
+                const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
                 
-                originalValues = {
+                window.originalValues = {
                     official: {
                         deputy_name: deputyName ? deputyName.value : '',
                         deputy_title: deputyTitle ? deputyTitle.value : '',
@@ -826,6 +860,9 @@
                     },
                     calendar: {
                         marks: Array.from(calendarInputs).map(input => input.value)
+                    },
+                    announcements: {
+                        announcements: Array.from(announcementInputs).map(input => input.value)
                     }
                 };
                 
@@ -841,19 +878,24 @@
                     input.addEventListener('input', checkCalendarChanges);
                 });
                 
+                announcementInputs.forEach(input => {
+                    input.addEventListener('input', checkAnnouncementsChanges);
+                });
+                
                 // Make functions globally available
                 window.checkOfficialChanges = checkOfficialChanges;
                 window.checkFeaturesChanges = checkFeaturesChanges;
                 window.checkCalendarChanges = checkCalendarChanges;
+                window.checkAnnouncementsChanges = checkAnnouncementsChanges;
                 
         // Check initial state
         checkOfficialChanges();
         checkFeaturesChanges();
         checkCalendarChanges();
+        checkAnnouncementsChanges();
         
         // Initialize announcements state tracking
         initializeAnnouncementsState();
-        checkAnnouncementsChanges();
         
         // Debug: Log initial announcements state
         console.log('Initial announcements state:', {
@@ -862,29 +904,32 @@
             saveBtnDisabled: document.querySelector('button[name="save_announcements"]')?.disabled
         });
         
-        // Debug: Log form submission for announcements
-        const form = document.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                if (e.submitter && e.submitter.name === 'save_announcements') {
-                    const formData = new FormData(form);
-                    const announcements = [];
-                    for (let [key, value] of formData.entries()) {
-                        if (key.startsWith('announcements[')) {
-                            announcements.push({key, value});
-                        }
-                    }
-                    console.log('Submitting announcements:', announcements);
-                    
-                    // Reset state after successful submission
-                    // (This will be reset when the page reloads after successful save)
-                    setTimeout(() => {
-                        initializeAnnouncementsState();
-                        checkAnnouncementsChanges();
-                    }, 1000);
-                }
-            });
-        }
+        // Form submission handling with Turbo integration
+        document.addEventListener('submit', function(e) {
+            if (e.submitter && e.submitter.name === 'save_announcements') {
+                // Let the form submit normally - don't prevent default
+                // The server will handle the submission and redirect back
+                console.log('Announcements form submitting...');
+                console.log('Form action:', e.target.action);
+                console.log('Form method:', e.target.method);
+                console.log('Submitter:', e.submitter.name, e.submitter.value);
+            } else if (e.submitter && e.submitter.name === 'save_calendar') {
+                console.log('Calendar form submitting...');
+                console.log('Form action:', e.target.action);
+                console.log('Form method:', e.target.method);
+                console.log('Submitter:', e.submitter.name, e.submitter.value);
+            }
+        });
+        
+        // Handle successful form submission
+        document.addEventListener('turbo:load', function() {
+            // Check if we just came back from a successful save
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('saved') === 'announcements') {
+                // Reset state after successful save
+                // Reset announcements state if needed
+            }
+        });
             }
             
             // Initialize checkbox UI
@@ -994,10 +1039,18 @@
         function removeMarkRow(btn) {
             const row = btn.closest('tr');
             const container = document.getElementById('marksRepeater');
-            if (row && container && container.children.length > 1) {
+            if (row && container) {
                 row.remove();
+                
+                // If no rows left, add an empty entry for consistency
+                if (container.querySelectorAll('tr').length === 0) {
+                    console.log('No calendar rows left, adding empty entry');
+                    addMarkRow();
+                }
+                
                 // Trigger calendar change detection
                 if (window.checkCalendarChanges) {
+                    console.log('Calling checkCalendarChanges after deletion');
                     window.checkCalendarChanges();
                 }
             }
@@ -1023,13 +1076,13 @@
                     <input type="text" name="announcements[${index}][title]" 
                            placeholder="Enter announcement title" 
                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                           oninput="checkAnnouncementsChanges()">
+>
                 </td>
                 <td class="px-6 py-4">
                     <input type="text" name="announcements[${index}][description]" 
                            placeholder="Enter announcement description" 
                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                           oninput="checkAnnouncementsChanges()">
+>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <button type="button" onclick="removeAnnouncementRow(this)" 
@@ -1043,127 +1096,39 @@
             `;
             
             container.appendChild(row);
-            checkAnnouncementsChanges();
+            
+            // Add event listeners to new inputs
+            const newInputs = row.querySelectorAll('input');
+            newInputs.forEach(input => {
+                input.addEventListener('input', checkAnnouncementsChanges);
+            });
+            
+            // Trigger change detection
+            if (window.checkAnnouncementsChanges) {
+                window.checkAnnouncementsChanges();
+            }
         }
 
-        let currentRowToDelete = null;
-        
         function removeAnnouncementRow(btn) {
             const row = btn.closest('tr');
             const container = document.getElementById('announcementsRepeater');
             if (row && container) {
-                // Get announcement title for confirmation
-                const titleInput = row.querySelector('input[name*="[title]"]');
-                const title = titleInput ? titleInput.value.trim() : '';
-                const displayTitle = title || 'Untitled Announcement';
+                row.remove();
                 
-                // Store reference to row for deletion
-                currentRowToDelete = row;
+                // If no rows left, add an empty entry for consistency
+                if (container.querySelectorAll('tr').length === 0) {
+                    console.log('No rows left, adding empty entry');
+                    addAnnouncementRow();
+                }
                 
-                // Update modal message
-                const message = document.getElementById('deleteAnnouncementMessage');
-                message.textContent = `Are you sure you want to delete "${displayTitle}"? This action cannot be undone.`;
-                
-                // Show modal
-                const modal = document.getElementById('deleteAnnouncementModal');
-                modal.classList.remove('hidden');
+                // Trigger announcements change detection
+                if (window.checkAnnouncementsChanges) {
+                    console.log('Calling checkAnnouncementsChanges after deletion');
+                    window.checkAnnouncementsChanges();
+                }
             }
         }
-        
-        // Modal event handlers
-        document.getElementById('confirmDeleteAnnouncement').addEventListener('click', function() {
-            if (currentRowToDelete) {
-                currentRowToDelete.remove();
-                checkAnnouncementsChanges();
-                
-                // No auto-save - user must manually save changes
-            }
-            
-            // Hide modal
-            const modal = document.getElementById('deleteAnnouncementModal');
-            modal.classList.add('hidden');
-            currentRowToDelete = null;
-        });
-        
-        document.getElementById('cancelDeleteAnnouncement').addEventListener('click', function() {
-            const modal = document.getElementById('deleteAnnouncementModal');
-            modal.classList.add('hidden');
-            currentRowToDelete = null;
-        });
-        
-        // Close modal when clicking outside
-        document.getElementById('deleteAnnouncementModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.add('hidden');
-                currentRowToDelete = null;
-            }
-        });
 
-        // Store original state for comparison
-        let originalAnnouncementsState = null;
-        
-        function initializeAnnouncementsState() {
-            // Capture initial state when page loads
-            const inputs = document.querySelectorAll('input[name^="announcements"]');
-            originalAnnouncementsState = Array.from(inputs).map(input => ({
-                name: input.name,
-                value: input.value.trim()
-            }));
-        }
-        
-        function checkAnnouncementsChanges() {
-            const inputs = document.querySelectorAll('input[name^="announcements"]');
-            const saveBtn = document.querySelector('button[name="save_announcements"]');
-            
-            if (!saveBtn) return;
-            
-            // Compare current state with original state
-            const currentState = Array.from(inputs).map(input => ({
-                name: input.name,
-                value: input.value.trim()
-            }));
-            
-            // Check if state has changed
-            const hasChanged = JSON.stringify(currentState) !== JSON.stringify(originalAnnouncementsState);
-            
-            // Enable save button only if there are actual changes
-            const shouldEnable = hasChanged;
-            
-            // Show empty state message if no rows
-            const rows = document.querySelectorAll('#announcementsRepeater tr');
-            const emptyState = document.getElementById('announcements-empty-state');
-            if (rows.length === 0) {
-                if (!emptyState) {
-                    const container = document.getElementById('announcementsRepeater');
-                    const emptyRow = document.createElement('tr');
-                    emptyRow.id = 'announcements-empty-state';
-                    emptyRow.innerHTML = `
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                            <div class="flex flex-col items-center gap-2">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <p class="text-sm">No announcements yet</p>
-                                <p class="text-xs text-gray-400">Click the + button to add your first announcement</p>
-                            </div>
-                        </td>
-                    `;
-                    container.appendChild(emptyRow);
-                }
-            } else {
-                if (emptyState) {
-                    emptyState.remove();
-                }
-            }
-            
-            if (shouldEnable) {
-                saveBtn.disabled = false;
-                saveBtn.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-maroon-600 to-red-600 text-white rounded-lg hover:from-maroon-700 hover:to-red-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg';
-            } else {
-                saveBtn.disabled = true;
-                saveBtn.className = 'inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm';
-            }
-        }
 
         // Account creation functions
         async function createDeputyDirectorAccount() {

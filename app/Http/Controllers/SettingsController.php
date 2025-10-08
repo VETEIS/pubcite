@@ -108,28 +108,28 @@ class SettingsController extends Controller
             'announcements.*.title' => 'nullable|string|max:255',
             'announcements.*.description' => 'nullable|string|max:1000',
         ]);
-        
+
         $announcements = [];
         if (!empty($validated['announcements']) && is_array($validated['announcements'])) {
             // Get existing announcements to preserve created_at timestamps
             $existingAnnouncements = json_decode(Setting::get('landing_page_announcements', '[]'), true) ?? [];
             $existingMap = [];
             foreach ($existingAnnouncements as $existing) {
-                $key = $existing['title'] . '|' . $existing['description'];
+                $key = ($existing['title'] ?? '') . '|' . ($existing['description'] ?? '');
                 $existingMap[$key] = $existing['created_at'] ?? now()->toISOString();
             }
-            
+
             foreach ($validated['announcements'] as $row) {
                 $title = trim($row['title'] ?? '');
                 $description = trim($row['description'] ?? '');
                 if (!$title && !$description) {
                     continue;
                 }
-                
+
                 // Preserve existing created_at or create new one
                 $key = $title . '|' . $description;
                 $createdAt = $existingMap[$key] ?? now()->toISOString();
-                
+
                 $announcements[] = [
                     'title' => $title,
                     'description' => $description,
@@ -137,10 +137,10 @@ class SettingsController extends Controller
                 ];
             }
         }
-        
+
         Setting::set('landing_page_announcements', json_encode($announcements));
-        
-        return back()->with('success', 'Announcements updated.');
+
+        return back()->with('success', 'Announcements updated successfully.');
     }
 
     public function createAccount(Request $request)

@@ -144,6 +144,9 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
     Route::post('/settings/create-account', [\App\Http\Controllers\SettingsController::class, 'createAccount'])->name('admin.settings.create-account');
+    
+    // Announcements
+    // Announcements management integrated with main settings
     // notifications endpoints
     Route::get('/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');
     Route::post('/notifications/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.read');
@@ -162,13 +165,13 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
 });
 
 // Public announcements endpoint for landing page
-Route::get('/admin/announcements', function() {
+Route::get('/api/announcements', function() {
     $announcements = json_decode(\App\Models\Setting::get('landing_page_announcements', '[]'), true) ?? [];
     return response()->json([
         'announcements' => $announcements,
         'count' => count($announcements)
     ]);
-})->name('public.announcements.index');
+})->name('public.announcements');
 
 // progress tracking
 Route::middleware(['auth', 'throttle:10,1'])->get('/progress/stream', [ProgressController::class, 'streamProgress'])->name('progress.stream');

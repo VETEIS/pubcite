@@ -232,7 +232,7 @@
 
                         <!-- Announcements Dropdown -->
                         <div class="relative hidden sm:block" x-data="{ open: false }" x-init="open=false" @keydown.escape.window="open=false" @click.away="open=false">
-                            <button @click="open = !open" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
+                            <button @click="open = !open; if (open) window.loadGuestAnnouncements()" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm text-white/90 hover:text-white hover:bg-white/10 transition">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Announcements
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -286,95 +286,149 @@
         
         <!-- Guest Layout Announcements JavaScript -->
         <script>
-        // Load announcements for guest layout
-        function loadGuestAnnouncements() {
-            const content = document.getElementById('guest-announcements-content');
-            if (!content) return;
+        // Guest Layout Announcements - Same as landing page
+        class GuestAnnouncements {
+            constructor() {
+                this.apiUrl = '/api/announcements';
+                this.contentElement = document.getElementById('guest-announcements-content');
+                this.init();
+            }
 
-            // Show loading state
-            content.innerHTML = `
-                <div class="px-3 py-4 text-center text-gray-500">
-                    <div class="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2"></div>
-                    <div class="text-xs">Loading announcements...</div>
-                </div>
-            `;
-
-            // Fetch dynamic announcements
-            const timestamp = new Date().getTime();
-            fetch(`/admin/announcements?t=${timestamp}`, {
-                method: 'GET',
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
+            init() {
+                // Re-find the content element in case it was replaced by Turbo
+                this.contentElement = document.getElementById('guest-announcements-content');
+                if (!this.contentElement) {
+                    console.warn('Guest announcements content element not found');
+                    return;
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const announcements = data.announcements || [];
+            }
+
+            async load() {
+                this.showLoadingState();
                 
+                try {
+                    const announcements = await this.fetchAnnouncements();
+                    this.render(announcements);
+                } catch (error) {
+                    this.showErrorState();
+                }
+            }
+
+            async fetchAnnouncements() {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${this.apiUrl}?t=${timestamp}`, {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.announcements || [];
+            }
+
+            render(announcements) {
                 if (announcements.length === 0) {
-                    content.innerHTML = `
-                        <div class="px-3 py-4 text-center text-gray-500">
-                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            <div class="text-xs">No announcements available</div>
-                        </div>
-                    `;
+                    this.showEmptyState();
                     return;
                 }
 
-                content.innerHTML = announcements.map(announcement => `
+                this.contentElement.innerHTML = announcements.map(announcement => 
+                    this.createAnnouncementHTML(announcement)
+                ).join('');
+            }
+
+            createAnnouncementHTML(announcement) {
+                return `
                     <div class="px-3 py-2 hover:bg-maroon-50">
-                        <div class="text-sm font-medium text-maroon-900">${escapeHtml(announcement.title || 'Untitled')}</div>
-                        <div class="text-xs text-gray-600 mt-1">${escapeHtml(announcement.description || 'No description')}</div>
-                        <div class="text-xs text-gray-500 mt-1">${formatTimeAgo(announcement.created_at)}</div>
+                        <div class="text-sm font-medium text-maroon-900">${this.escapeHtml(announcement.title || 'Untitled')}</div>
+                        <div class="text-xs text-gray-600 mt-1">${this.escapeHtml(announcement.description || 'No description')}</div>
+                        <div class="text-xs text-gray-500 mt-1">${this.formatTimeAgo(announcement.created_at)}</div>
                     </div>
-                `).join('');
-            })
-            .catch(error => {
-                content.innerHTML = `
-                    <div class="px-3 py-4 text-center text-gray-500">
+                `;
+            }
+
+            showLoadingState() {
+                this.contentElement.innerHTML = `
+                    <div class="px-3 py-4 text-center text-gray-500 min-h-[120px] flex flex-col justify-center">
+                        <div class="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2"></div>
+                        <div class="text-xs">Loading announcements...</div>
+                    </div>
+                `;
+            }
+
+            showEmptyState() {
+                this.contentElement.innerHTML = `
+                    <div class="px-3 py-4 text-center text-gray-500 min-h-[120px] flex flex-col justify-center">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <div class="text-xs">No announcements available</div>
+                    </div>
+                `;
+            }
+
+            showErrorState() {
+                this.contentElement.innerHTML = `
+                    <div class="px-3 py-4 text-center text-gray-500 min-h-[120px] flex flex-col justify-center">
                         <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div class="text-xs">Unable to load announcements</div>
                     </div>
                 `;
-            });
-        }
-
-        // Helper functions
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function formatTimeAgo(dateString) {
-            if (!dateString) return 'Recently';
-            
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-            
-            if (diffInMinutes < 1) return 'Just now';
-            if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-            if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-            return date.toLocaleDateString();
-        }
-
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add click handler to announcements button in guest layout
-            const announcementsBtn = document.querySelector('[x-data*="open"] button');
-            if (announcementsBtn) {
-                announcementsBtn.addEventListener('click', function() {
-                    setTimeout(loadGuestAnnouncements, 100); // Small delay to ensure dropdown is open
-                });
             }
-        });
+
+            formatTimeAgo(dateString) {
+                if (!dateString) return 'Recently';
+                
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                
+                if (diffInMinutes < 1) return 'Just now';
+                if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+                if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+                return date.toLocaleDateString();
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Initialize guest announcements
+        function initializeGuestAnnouncements() {
+            const container = document.getElementById('guest-announcements-content');
+            if (container) {
+                if (!window.guestAnnouncements) {
+                    window.guestAnnouncements = new GuestAnnouncements();
+                } else {
+                    window.guestAnnouncements.init();
+                }
+            }
+        }
+
+        // Global function for Alpine.js to call
+        window.loadGuestAnnouncements = function() {
+            if (window.guestAnnouncements) {
+                window.guestAnnouncements.load();
+            }
+        };
+
+        // Initialize on regular page load
+        document.addEventListener('DOMContentLoaded', initializeGuestAnnouncements);
+
+        // Initialize on Turbo navigation
+        document.addEventListener('turbo:load', initializeGuestAnnouncements);
         </script>
     </body>
 </html>

@@ -4,7 +4,7 @@
  */
 class LandingAnnouncements {
     constructor() {
-        this.apiUrl = '/admin/announcements';
+        this.apiUrl = '/api/announcements';
         this.contentElement = document.getElementById('announcements-content');
         
         this.init();
@@ -90,7 +90,7 @@ class LandingAnnouncements {
      */
     showLoadingState() {
         this.contentElement.innerHTML = `
-            <div class="px-3 py-4 text-center text-gray-500">
+            <div class="px-3 py-4 text-center text-gray-500 min-h-[120px] flex flex-col justify-center">
                 <div class="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2"></div>
                 <div class="text-xs">Loading announcements...</div>
             </div>
@@ -102,7 +102,7 @@ class LandingAnnouncements {
      */
     showEmptyState() {
         this.contentElement.innerHTML = `
-            <div class="px-3 py-4 text-center text-gray-500">
+            <div class="px-3 py-4 text-center text-gray-500 min-h-[120px] flex flex-col justify-center">
                 <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -116,7 +116,7 @@ class LandingAnnouncements {
      */
     showErrorState() {
         this.contentElement.innerHTML = `
-            <div class="px-3 py-4 text-center text-gray-500">
+            <div class="px-3 py-4 text-center text-gray-500 min-h-[120px] flex flex-col justify-center">
                 <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
