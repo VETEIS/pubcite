@@ -309,8 +309,8 @@
                 autoSave() {
                     // Don't auto-save if disabled (e.g., after form submission)
                     if (this.autoSaveDisabled) {
-                        return;
-                    }
+                return;
+            }
                     
                     // Don't auto-save if currently submitting
                     if (this.isSubmitting) {
@@ -319,8 +319,8 @@
                     
                     // Don't auto-save if already saving
                     if (this.savingDraft) {
-                        return;
-                    }
+                    return;
+                }
                     
                     // Clear existing timer
                     if (this.autoSaveTimer) {
@@ -460,8 +460,8 @@
                                 this.restoreSignatoryValue(component, fieldName, value, 0);
                             }
                         }
-                    });
-                },
+            });
+        },
                 
                 // Robust signatory value restoration with retries
                 restoreSignatoryValue(component, fieldName, value, attempt = 0) {
@@ -517,7 +517,7 @@
                 displayUploadedFiles() {
                     
                     // File state mapping
-                    const fileFields = [
+            const fileFields = [
                         { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
                         { fieldName: 'published_article', elementId: 'review-published-article' },
                         { fieldName: 'peer_review', elementId: 'review-peer-review' },
@@ -531,19 +531,19 @@
                         if (element) {
                             if (fileName) {
                                 const displayName = fileName.length > 20 ? fileName.slice(0, 10) + '...' + fileName.slice(-7) : fileName;
-                                element.textContent = displayName;
+                    element.textContent = displayName;
                                 element.title = fileName;
                                 element.classList.remove('text-gray-600');
                                 element.classList.add('text-green-600', 'font-medium');
                             } else {
-                                element.textContent = 'No file uploaded';
-                                element.title = '';
+                    element.textContent = 'No file uploaded';
+                    element.title = '';
                                 element.classList.remove('text-green-600', 'font-medium');
                                 element.classList.add('text-gray-600');
                             }
-                        }
-                    });
-                },
+                }
+            });
+        },
                 
                 // Simple tab navigation helpers
                 getNextTab() {

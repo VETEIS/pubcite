@@ -142,7 +142,7 @@
                             }
                         } else {
                             if (!field.value || field.value.trim() === '') {
-                                return false;
+                return false;
                             }
                         }
                     }
@@ -208,7 +208,7 @@
                     this.savingDraft = true;
                     try {
                         const formData = new FormData();
-                        const form = document.getElementById('citation-request-form');
+        const form = document.getElementById('citation-request-form');
                         
                         // Collect ALL form data from ALL tabs
                         const inputs = form.querySelectorAll('input, textarea, select');
@@ -468,11 +468,11 @@
                     this.uploadedFiles[fieldName] = fileName;
                     // Trigger review tab update if on review tab
                     if (this.activeTab === 'review') {
-                        setTimeout(() => {
+                setTimeout(() => {
                             this.displayUploadedFiles();
-                        }, 100);
-                    }
-                },
+                }, 100);
+            }
+            },
                 
                 // Display uploaded files in review tab
                 displayUploadedFiles() {
@@ -543,7 +543,7 @@
                 // Refresh tab enabled/disabled states
                 refreshTabStates() {
                     // Force Alpine.js to re-evaluate the tab states
-                    this.$nextTick(() => {
+                        this.$nextTick(() => {
                         // Trigger validation for current tab
                         const currentTabValid = this.validateCurrentTab();
                         
@@ -567,8 +567,8 @@
                     if (!this.validateForm(true)) {
                         event.preventDefault();
                         // Error popup is already shown by validateForm()
-                        return false;
-                    }
+                    return false;
+                }
                     
                     // Mark as submitting and disable submit button
                     this.isSubmitting = true;
@@ -682,7 +682,7 @@
                 }
             }
         }
-    </script>
+</script>
     
     <style>
         /* Force main content scrollbar to always be present to prevent layout shifts */

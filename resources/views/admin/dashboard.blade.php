@@ -219,12 +219,6 @@
     }" class="bg-gray-50 flex admin-dashboard-container" style="scrollbar-gutter: stable;">
         
         <!-- Hidden notification divs for global notification system -->
-        @if(session('success'))
-            <div id="success-notification" class="hidden">{{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-            <div id="error-notification" class="hidden">{{ session('error') }}</div>
-        @endif
 
         <!-- Error message overlay -->
         <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
@@ -534,7 +528,7 @@
                         <div class="flex flex-col md:flex-row items-stretch justify-center overflow-y-auto flex-1 gap-4">
                             <!-- Request Stats (Line Chart) -->
                             <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden relative pl-4 pr-0 py-1">
-                                <div class="w-full h-48 flex items-center justify-center relative overflow-hidden">
+                            <div class="w-full h-48 flex items-center justify-center relative overflow-hidden">
                                 <!-- Loading Overlay for Line Chart -->
                                 <div id="lineChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
                                     <div class="flex flex-col items-center gap-3">
@@ -593,12 +587,12 @@
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
+                                </div>
+                                </div>
+                                    </div>
+                                </div>
                     
-                    <!-- Activity Log Card -->
+                        <!-- Activity Log Card -->
                     <div class="bg-white border border-gray-200 rounded-lg shadow overflow-visible" style="overflow: visible;">
                         <div class="bg-gray-50 sticky top-0 left-0 right-0 z-10 px-4 py-3 rounded-t-lg">
                             <h2 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
