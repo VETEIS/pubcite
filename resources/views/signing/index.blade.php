@@ -334,11 +334,7 @@
 
         async function confirmUpload() {
             if (!currentRequestId) {
-                if (window.notificationManager) {
-                    window.notificationManager.error('No request selected.');
-                } else {
-                    alert('No request selected.');
-                }
+                alert('No request selected.');
                 return;
             }
 
@@ -346,24 +342,12 @@
 
             const fileInput = document.getElementById('signedDocuments');
             if (!fileInput.files || fileInput.files.length === 0) {
-                if (window.notificationManager) {
-                    window.notificationManager.error('Please select at least one file to upload.');
-                } else {
-                    alert('Please select at least one file to upload.');
-                }
+                alert('Please select at least one file to upload.');
                 return;
             }
 
             // Show loading state
-            if (window.loadingManager) {
-                const operationId = `sign-document-${requestId}-${Date.now()}`;
-                window.loadingManager.show(operationId, {
-                    title: 'Signing Document',
-                    message: 'Please wait while we apply your signature...',
-                    showOverlay: true,
-                    disableButtons: true
-                });
-            }
+            window.showLoading('Signing Document', 'Please wait while we apply your signature...');
             document.getElementById('uploadModal').classList.add('hidden');
 
             try {
@@ -387,23 +371,19 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    window.notificationManager.success(data.message);
+                    alert('Success: ' + data.message);
                     // Refresh the page to show updated status
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    window.notificationManager.error(data.message);
+                    alert('Error: ' + data.message);
                     // Hide loading state
-                    if (window.loadingManager) {
-                        window.loadingManager.hide(operationId);
-                    }
+                    window.hideLoading();
                     document.getElementById('uploadModal').classList.remove('hidden');
                 }
             } catch (error) {
-                window.notificationManager.error('Failed to upload signed documents. Please try again.');
+                alert('Failed to upload signed documents. Please try again.');
                 // Hide loading state
-                if (window.loadingManager) {
-                    window.loadingManager.hide(operationId);
-                }
+                window.hideLoading();
                 document.getElementById('uploadModal').classList.remove('hidden');
             }
         }
@@ -429,14 +409,14 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    window.notificationManager.success(data.message);
+                    alert('Success: ' + data.message);
                     // Refresh the page to show updated status
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    window.notificationManager.error(data.message);
+                    alert('Error: ' + data.message);
                 }
             } catch (error) {
-                window.notificationManager.error('Failed to revert document. Please try again.');
+                alert('Failed to revert document. Please try again.');
             }
         }
 
