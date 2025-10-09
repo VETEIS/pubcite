@@ -787,44 +787,19 @@ class CitationsController extends Controller
 
             // Only send emails and create notifications for final submission, not for drafts
             if (!$isDraft) {
-                // Create admin notifications for final submission
-                $admins = \App\Models\User::where('role', 'admin')->get();
-                Log::info('Creating admin notifications', [
-                    'requestId' => $userRequest->id,
-                    'requestCode' => $requestCode,
-                    'adminCount' => $admins->count()
-                ]);
-                
-                foreach ($admins as $admin) {
-                    \App\Models\AdminNotification::create([
-                        'user_id' => $admin->id,
-                        'request_id' => $userRequest->id,
-                        'type' => 'submission',
-                        'title' => 'New Citation Request',
-                        'message' => $user->name . ' submitted a new citation request: ' . $requestCode,
-                        'data' => [
-                            'request_code' => $requestCode,
-                            'user_name' => $user->name,
-                            'user_email' => $user->email,
-                            'type' => 'Citation'
-                        ]
-                    ]);
-                }
-                // Queue email notifications for better performance
+                // Send email to user confirming submission
                 try {
-                    // Queue admin notifications only (user and signatories will be notified when admin endorses)
-                    $adminUsers = \App\Models\User::where('role', 'admin')->get();
-                    foreach ($adminUsers as $adminUser) {
-                        Mail::to($adminUser->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, true));
-                    }
-                    
-                    Log::info('Email notifications queued successfully', [
+                    Mail::to($user->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    Log::info('User submission confirmation email queued', [
                         'requestId' => $userRequest->id,
-                        'adminEmails' => $adminUsers->pluck('email')->toArray()
+                        'userEmail' => $user->email
                     ]);
                 } catch (\Exception $e) {
-                    Log::error('Error queuing email notifications: ' . $e->getMessage());
+                    Log::error('Error queuing user confirmation email: ' . $e->getMessage());
                 }
+                
+                // Notify only the first signatory (Research Manager) in the workflow
+                $this->notifyFirstSignatory($userRequest);
             }
 
             if ($isDraft) {
@@ -1165,6 +1140,51 @@ class CitationsController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Failed to queue signatory notifications', [
+                'requestId' => $request->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Notify only the first signatory (Research Manager) in the workflow
+     */
+    private function notifyFirstSignatory(\App\Models\Request $request)
+    {
+        try {
+            // Extract signatories from form data
+            $signatories = $this->extractSignatories($request->form_data);
+            
+            // Find the Research Manager (center_manager) from the signatories
+            $researchManager = null;
+            foreach ($signatories as $signatory) {
+                if ($signatory['role'] === 'Research Center Manager') {
+                    $researchManager = $signatory;
+                    break;
+                }
+            }
+            
+            if ($researchManager) {
+                $user = \App\Models\User::where('name', $researchManager['name'])->first();
+                if ($user && $user->email) {
+                    Mail::to($user->email)->queue(new \App\Mail\SignatoryNotification($request, 'center_manager', $researchManager['name']));
+                    
+                    Log::info('First signatory notification queued', [
+                        'requestId' => $request->id,
+                        'signatoryName' => $researchManager['name'],
+                        'signatoryEmail' => $user->email,
+                        'role' => $researchManager['role']
+                    ]);
+                }
+            } else {
+                Log::warning('No Research Manager found in signatories', [
+                    'requestId' => $request->id,
+                    'signatories' => $signatories
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to queue first signatory notification', [
                 'requestId' => $request->id,
                 'error' => $e->getMessage()
             ]);

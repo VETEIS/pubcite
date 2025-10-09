@@ -15,6 +15,7 @@ class Request extends Model
         'request_code',
         'type',
         'status',
+        'workflow_state',
         'signature_status',
         'requested_at',
         'signed_at',

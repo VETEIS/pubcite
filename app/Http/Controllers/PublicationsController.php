@@ -64,57 +64,8 @@ class PublicationsController extends Controller
         return view('publications.request', compact('request'));
     }
 
-    public function adminUpdate(Request $httpRequest, \App\Models\Request $request)
-    {
-        $httpRequest->validate([
-            'status' => 'required|in:pending,endorsed,rejected',
-        ]);
-        $oldStatus = $request->status;
-        $request->status = $httpRequest->input('status');
-        $request->save();
-
-        if ($oldStatus !== $request->status) {
-            try {
-                \App\Models\ActivityLog::create([
-                    'user_id' => Auth::id(),
-                    'request_id' => $request->id,
-                    'action' => 'status_changed',
-                    'details' => [
-                        'old_status' => $oldStatus,
-                        'new_status' => $request->status,
-                        'request_code' => $request->request_code,
-                        'type' => $request->type,
-                        'changed_at' => now()->toDateTimeString(),
-                    ],
-                    'created_at' => now(),
-                ]);
-                
-                Log::info('Activity log created successfully for status change', [
-                    'request_id' => $request->id,
-                    'request_code' => $request->request_code,
-                    'old_status' => $oldStatus,
-                    'new_status' => $request->status
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create activity log for status change: ' . $e->getMessage(), [
-                    'request_id' => $request->id,
-                    'request_code' => $request->request_code,
-                    'old_status' => $oldStatus,
-                    'new_status' => $request->status,
-                    'error' => $e->getMessage()
-                ]);
-            }
-            $adminComment = $httpRequest->input('admin_comment', null);
-            Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
-            
-            // If status changed to 'endorsed', notify signatories
-            if ($request->status === 'endorsed') {
-                $this->notifySignatories($request);
-            }
-        }
-
-        return back()->with('success', 'Request status updated successfully.');
-    }
+    // REMOVED: adminUpdate method - Status changes are now automated through the 5-stage signature workflow
+    // Admins can no longer manually set request status to maintain workflow integrity
 
 
     private function generateIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
@@ -893,44 +844,19 @@ class PublicationsController extends Controller
 
             // Only send emails and create notifications for final submission, not for drafts
             if (!$isDraft) {
-                // Create admin notifications for final submission
-                $admins = \App\Models\User::where('role', 'admin')->get();
-                Log::info('Creating admin notifications', [
-                    'requestId' => $userRequest->id,
-                    'requestCode' => $requestCode,
-                    'adminCount' => $admins->count()
-                ]);
-                
-                foreach ($admins as $admin) {
-                    \App\Models\AdminNotification::create([
-                        'user_id' => $admin->id,
-                        'request_id' => $userRequest->id,
-                        'type' => 'submission',
-                        'title' => 'New Publication Request',
-                        'message' => $user->name . ' submitted a new publication request: ' . $requestCode,
-                        'data' => [
-                            'request_code' => $requestCode,
-                            'user_name' => $user->name,
-                            'user_email' => $user->email,
-                            'type' => 'Publication'
-                        ]
-                    ]);
-                }
-                // Queue email notifications for better performance
+                // Send email to user confirming submission
                 try {
-                    // Queue admin notifications only (user and signatories will be notified when admin endorses)
-                    $adminUsers = \App\Models\User::where('role', 'admin')->get();
-                    foreach ($adminUsers as $adminUser) {
-                        Mail::to($adminUser->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, true));
-                    }
-                    
-                    Log::info('Email notifications queued successfully', [
+                    Mail::to($user->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, false));
+                    Log::info('User submission confirmation email queued', [
                         'requestId' => $userRequest->id,
-                        'adminEmails' => $adminUsers->pluck('email')->toArray()
+                        'userEmail' => $user->email
                     ]);
                 } catch (\Exception $e) {
-                    Log::error('Error queuing email notifications: ' . $e->getMessage());
+                    Log::error('Error queuing user confirmation email: ' . $e->getMessage());
                 }
+                
+                // Notify only the first signatory (Research Manager) in the workflow
+                $this->notifyFirstSignatory($userRequest);
             }
 
             if ($isDraft) {
@@ -1518,6 +1444,51 @@ class PublicationsController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Failed to queue signatory notifications', [
+                'requestId' => $request->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Notify only the first signatory (Research Manager) in the workflow
+     */
+    private function notifyFirstSignatory(\App\Models\Request $request)
+    {
+        try {
+            // Extract signatories from form data
+            $signatories = $this->extractSignatories($request->form_data);
+            
+            // Find the Research Manager (center_manager) from the signatories
+            $researchManager = null;
+            foreach ($signatories as $signatory) {
+                if ($signatory['role'] === 'center_manager') {
+                    $researchManager = $signatory;
+                    break;
+                }
+            }
+            
+            if ($researchManager) {
+                $user = \App\Models\User::where('name', $researchManager['name'])->first();
+                if ($user && $user->email) {
+                    Mail::to($user->email)->queue(new \App\Mail\SignatoryNotification($request, $researchManager['role'], $researchManager['name']));
+                    
+                    Log::info('First signatory notification queued', [
+                        'requestId' => $request->id,
+                        'signatoryName' => $researchManager['name'],
+                        'signatoryEmail' => $user->email,
+                        'role' => $researchManager['role']
+                    ]);
+                }
+            } else {
+                Log::warning('No Research Manager found in signatories', [
+                    'requestId' => $request->id,
+                    'signatories' => $signatories
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to queue first signatory notification', [
                 'requestId' => $request->id,
                 'error' => $e->getMessage()
             ]);

@@ -70,6 +70,9 @@ class DashboardController extends Controller
             // Exclude drafts from dashboard by default - only show submitted requests
             $query->where('status', '!=', 'draft');
             
+            // Only show completed requests (those that have gone through the full signature workflow)
+            $query->where('workflow_state', 'completed');
+            
             if (in_array($sortBy, ['requested_at', 'request_code', 'type', 'status'])) {
                 if ($sortBy === 'requested_at') {
                     $query->orderBy('requested_at', $sortOrder);
@@ -355,6 +358,9 @@ class DashboardController extends Controller
             
             // Exclude drafts from dashboard by default - only show submitted requests
             $tableQuery->where('status', '!=', 'draft');
+            
+            // Only show completed requests (those that have gone through the full signature workflow)
+            $tableQuery->where('workflow_state', 'completed');
             
             if ($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected'])) {
                 $tableQuery->where('status', $status);

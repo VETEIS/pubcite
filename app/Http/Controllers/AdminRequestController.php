@@ -21,6 +21,10 @@ class AdminRequestController extends Controller
         $period = request('period');
         $now = now();
         $rangeDescription = '';
+        
+        // Only show completed requests (those that have gone through the full signature workflow)
+        $query->where('workflow_state', 'completed');
+        
         if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
             $query->where('status', $status);
         }
@@ -367,68 +371,8 @@ class AdminRequestController extends Controller
         }
     }
 
-    public function updateStatus(Request $httpRequest, \App\Models\Request $request)
-    {
-        $user = Auth::user();
-        if ($user->role !== 'admin') {
-            abort(403);
-        }
-
-        $httpRequest->validate([
-            'status' => 'required|in:pending,endorsed,rejected',
-        ]);
-        
-        $oldStatus = $request->status;
-        $request->status = $httpRequest->input('status');
-        $request->save();
-
-        if ($oldStatus !== $request->status) {
-            try {
-                \App\Models\ActivityLog::create([
-                    'user_id' => Auth::id(),
-                    'request_id' => $request->id,
-                    'action' => 'status_changed',
-                    'details' => [
-                        'old_status' => $oldStatus,
-                        'new_status' => $request->status,
-                        'request_code' => $request->request_code,
-                        'type' => $request->type,
-                        'changed_at' => now()->toDateTimeString(),
-                    ],
-                    'created_at' => now(),
-                ]);
-                
-                \Illuminate\Support\Facades\Log::info('Activity log created successfully for status change', [
-                    'request_id' => $request->id,
-                    'request_code' => $request->request_code,
-                    'old_status' => $oldStatus,
-                    'new_status' => $request->status
-                ]);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to create activity log for status change: ' . $e->getMessage(), [
-                    'request_id' => $request->id,
-                    'request_code' => $request->request_code,
-                    'old_status' => $oldStatus,
-                    'new_status' => $request->status,
-                    'error' => $e->getMessage()
-                ]);
-            }
-            
-            $adminComment = $httpRequest->input('admin_comment', null);
-            \Illuminate\Support\Facades\Mail::to($request->user->email)->send(new \App\Mail\StatusChangeNotification($request, $request->user, $request->status, $adminComment));
-            
-            // If status changed to 'endorsed', notify signatories
-            if ($request->status === 'endorsed') {
-                $this->notifySignatories($request);
-            }
-        }
-
-        if ($httpRequest->expectsJson() || $httpRequest->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Request status updated successfully.']);
-        }
-        
-        return back()->with('success', 'Request status updated successfully.');
-    }
+    // REMOVED: updateStatus method - Status changes are now automated through the 5-stage signature workflow
+    // Admins can no longer manually set request status to maintain workflow integrity
 
 
     private function notifySignatories(\App\Models\Request $request)

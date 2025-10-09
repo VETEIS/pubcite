@@ -154,8 +154,7 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     
     // request management
-    Route::patch('/requests/{request}', [\App\Http\Controllers\AdminRequestController::class, 'updateStatus'])->name('admin.requests.update');
-    Route::patch('/requests/{request}/status', [\App\Http\Controllers\AdminRequestController::class, 'updateStatus'])->name('admin.requests.status');
+    // REMOVED: Admin status update routes - Status changes are now automated through the 5-stage signature workflow
     Route::delete('/requests/{id}', [\App\Http\Controllers\PublicationsController::class, 'destroy'])->name('admin.requests.destroy');
     Route::get('/requests/{request}/download', [\App\Http\Controllers\PublicationsController::class, 'adminDownloadFile'])->name('admin.requests.download');
     Route::get('/requests/{request}/debug', [\App\Http\Controllers\PublicationsController::class, 'debugFilePaths'])->name('admin.requests.debug');

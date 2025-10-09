@@ -25,7 +25,11 @@ class SigningController extends Controller
         $signatoryType = $user->signatoryType();
         $userName = trim($user->name ?? '');
 
-        $candidateRequests = UserRequest::where('status', 'endorsed')
+        // Determine which workflow state this signatory should see
+        $workflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        
+        $candidateRequests = UserRequest::where('status', 'pending')
+            ->where('workflow_state', $workflowState)
             ->orderByDesc('requested_at')
             ->limit(200)
             ->get();
@@ -35,7 +39,7 @@ class SigningController extends Controller
             $form = is_array($req->form_data) ? $req->form_data : (json_decode($req->form_data ?? '[]', true) ?: []);
             $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
             
-            // Deputy Director and RDD Director see ALL requests
+            // Deputy Director and RDD Director see ALL requests in their workflow state
             if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
                 $matchedRole = $signatoryType; // They can sign all requests
             }
@@ -46,6 +50,7 @@ class SigningController extends Controller
                     'request_code' => $req->request_code,
                     'type' => $req->type,
                     'status' => $req->status,
+                    'workflow_state' => $req->workflow_state,
                     'matched_role' => $matchedRole,
                     'requested_at' => $req->requested_at,
                 ];
@@ -70,6 +75,61 @@ class SigningController extends Controller
         ]);
     }
 
+
+    private function getWorkflowStateForSignatory(?string $signatoryType): string
+    {
+        switch ($signatoryType) {
+            case 'center_manager':
+                return 'pending_research_manager';
+            case 'college_dean':
+                return 'pending_dean';
+            case 'deputy_director':
+                return 'pending_deputy_director';
+            case 'rdd_director':
+                return 'pending_director';
+            default:
+                return 'pending_research_manager';
+        }
+    }
+
+    private function getNextWorkflowState(string $currentState, string $signatoryType): string
+    {
+        switch ($currentState) {
+            case 'pending_research_manager':
+                // After research manager signs, move to dean
+                if ($signatoryType === 'center_manager') {
+                    return 'pending_dean';
+                }
+                return $currentState; // No change for other signatories
+                
+            case 'pending_dean':
+                // After dean signs, move to deputy director
+                if ($signatoryType === 'college_dean') {
+                    return 'pending_deputy_director';
+                }
+                return $currentState; // No change for other signatories
+                
+            case 'pending_deputy_director':
+                // After deputy director signs, move to director
+                if ($signatoryType === 'deputy_director') {
+                    return 'pending_director';
+                }
+                return $currentState; // No change for other signatories
+                
+            case 'pending_director':
+                // After director signs, mark as completed
+                if ($signatoryType === 'rdd_director') {
+                    return 'completed';
+                }
+                return $currentState; // No change for other signatories
+                
+            case 'completed':
+                return $currentState; // Already completed, no change
+                
+            default:
+                return $currentState; // Unknown state, no change
+        }
+    }
 
     private function matchesSignatory(array $form, ?string $signatoryType, string $userName): ?string
     {
@@ -105,18 +165,25 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($requestId);
         
-        // Only allow access to endorsed requests
-        if ($userRequest->status !== 'endorsed') {
+        // Only allow access to pending requests
+        if ($userRequest->status !== 'pending') {
             abort(403, 'This request is not available for signing');
         }
         
-        // Verify user is authorized to sign this request
+        // Verify user is authorized to sign this request based on workflow state
         $signatoryType = $user->signatoryType();
+        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        
+        // Check if request is in the correct workflow state for this signatory
+        if ($userRequest->workflow_state !== $expectedWorkflowState) {
+            abort(403, 'This request is not available for your signature at this time');
+        }
+        
         $userName = trim($user->name ?? '');
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
         $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
         
-        // Deputy Director and RDD Director can access ALL endorsed requests
+        // Deputy Director and RDD Director can access ALL endorsed requests in their workflow state
         if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
             $matchedRole = $signatoryType; // They can access all endorsed requests
         }
@@ -161,21 +228,25 @@ class SigningController extends Controller
 
         $userRequest = UserRequest::findOrFail($validated['request_id']);
 
-        // Only allow signing of endorsed requests
-        if ($userRequest->status !== 'endorsed') {
+        // Only allow signing of pending requests
+        if ($userRequest->status !== 'pending') {
             abort(403, 'This request is not available for signing');
         }
 
-        // Allow multiple signatures from the same signatory
-        // (Removed restriction: users can now sign the same request multiple times)
-
-        // Verify user is authorized to sign this request
+        // Verify user is authorized to sign this request based on workflow state
         $signatoryType = $user->signatoryType();
+        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        
+        // Check if request is in the correct workflow state for this signatory
+        if ($userRequest->workflow_state !== $expectedWorkflowState) {
+            abort(403, 'This request is not available for your signature at this time');
+        }
+
         $userName = trim($user->name ?? '');
         $form = is_array($userRequest->form_data) ? $userRequest->form_data : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
         $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
         
-        // Deputy Director and RDD Director can access ALL endorsed requests
+        // Deputy Director and RDD Director can access ALL endorsed requests in their workflow state
         if ($signatoryType === 'deputy_director' || $signatoryType === 'rdd_director') {
             $matchedRole = $signatoryType; // They can access all endorsed requests
         }
@@ -205,14 +276,27 @@ class SigningController extends Controller
                 'original_document_path' => null, // Could be populated if needed
             ]);
 
-            // Update request's overall signature status
-            // For now, we'll mark it as signed when any signatory signs
-            // This could be changed to require all signatories based on business logic
+            // Update request's workflow state and signature status
+            $newWorkflowState = $this->getNextWorkflowState($userRequest->workflow_state, $signatoryType);
+            
+            // Update status to "endorsed" only when director signs (workflow completed)
+            $newStatus = ($newWorkflowState === 'completed') ? 'endorsed' : 'pending';
+            
             $userRequest->update([
+                'workflow_state' => $newWorkflowState,
+                'status' => $newStatus,
                 'signature_status' => SignatureStatus::SIGNED,
                 'signed_at' => now(),
                 'signed_by' => $user->id, // Keep the last signatory for backward compatibility
             ]);
+            
+            // If workflow is completed (Director signed), notify admins
+            if ($newWorkflowState === 'completed') {
+                $this->notifyAdminsOfCompletedWorkflow($userRequest);
+            } else {
+                // Notify the next signatory in the workflow
+                $this->notifyNextSignatory($userRequest, $newWorkflowState);
+            }
 
             return response()->json([
                 'success' => true,
@@ -704,6 +788,125 @@ class SigningController extends Controller
                 'success' => false,
                 'message' => 'Failed to revert document. Please try again.'
             ], 500);
+        }
+    }
+    
+    /**
+     * Notify the next signatory in the workflow
+     */
+    private function notifyNextSignatory(\App\Models\Request $request, string $workflowState)
+    {
+        try {
+            $nextSignatory = null;
+            $signatoryEmail = null;
+            $signatoryName = null;
+            
+            switch ($workflowState) {
+                case 'pending_dean':
+                    // Find the Dean from form data
+                    $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
+                    $deanName = $form['collegedean'] ?? $form['college_dean'] ?? $form['dean'] ?? $form['dean_name'] ?? $form['rec_dean_name'] ?? null;
+                    if ($deanName) {
+                        $nextSignatory = \App\Models\User::where('name', trim($deanName))->first();
+                        $signatoryName = trim($deanName);
+                    }
+                    break;
+                    
+                case 'pending_deputy_director':
+                    // Get Deputy Director from settings
+                    $signatoryEmail = \App\Models\Setting::get('deputy_director_email');
+                    $signatoryName = \App\Models\Setting::get('official_deputy_director_name', 'Deputy Director');
+                    break;
+                    
+                case 'pending_director':
+                    // Get Director from settings
+                    $signatoryEmail = \App\Models\Setting::get('rdd_director_email');
+                    $signatoryName = \App\Models\Setting::get('official_rdd_director_name', 'RDD Director');
+                    break;
+            }
+            
+            if ($nextSignatory && $nextSignatory->email) {
+                \Illuminate\Support\Facades\Mail::to($nextSignatory->email)->queue(new \App\Mail\SignatoryNotification($request, 'college_dean', $signatoryName));
+                
+                Log::info('Next signatory notification queued', [
+                    'requestId' => $request->id,
+                    'workflowState' => $workflowState,
+                    'signatoryName' => $signatoryName,
+                    'signatoryEmail' => $nextSignatory->email
+                ]);
+            } elseif ($signatoryEmail && $signatoryName) {
+                \Illuminate\Support\Facades\Mail::to($signatoryEmail)->queue(new \App\Mail\SignatoryNotification($request, 
+                    $workflowState === 'pending_deputy_director' ? 'deputy_director' : 'rdd_director', 
+                    $signatoryName));
+                
+                Log::info('Next signatory notification queued (from settings)', [
+                    'requestId' => $request->id,
+                    'workflowState' => $workflowState,
+                    'signatoryName' => $signatoryName,
+                    'signatoryEmail' => $signatoryEmail
+                ]);
+            } else {
+                Log::warning('No next signatory found for workflow state', [
+                    'requestId' => $request->id,
+                    'workflowState' => $workflowState
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error notifying next signatory', [
+                'requestId' => $request->id,
+                'workflowState' => $workflowState,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Notify admins when workflow is completed (Director signed)
+     */
+    private function notifyAdminsOfCompletedWorkflow(\App\Models\Request $request)
+    {
+        try {
+            // Create admin notifications for completed workflow
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            Log::info('Creating admin notifications for completed workflow', [
+                'requestId' => $request->id,
+                'requestCode' => $request->request_code,
+                'adminCount' => $admins->count()
+            ]);
+            
+            foreach ($admins as $admin) {
+                \App\Models\AdminNotification::create([
+                    'user_id' => $admin->id,
+                    'request_id' => $request->id,
+                    'type' => 'workflow_completed',
+                    'title' => 'Request Ready for Download',
+                    'message' => $request->user->name . '\'s ' . $request->type . ' request has completed the signature workflow and is ready for download: ' . $request->request_code,
+                    'data' => [
+                        'request_code' => $request->request_code,
+                        'user_name' => $request->user->name,
+                        'user_email' => $request->user->email,
+                        'type' => $request->type,
+                        'workflow_state' => 'completed'
+                    ]
+                ]);
+            }
+            
+            // Send email notifications to admins
+            foreach ($admins as $admin) {
+                \Illuminate\Support\Facades\Mail::to($admin->email)->queue(new \App\Mail\SubmissionNotification($request, $request->user, true));
+            }
+            
+            Log::info('Admin notifications for completed workflow queued successfully', [
+                'requestId' => $request->id,
+                'adminEmails' => $admins->pluck('email')->toArray()
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error notifying admins of completed workflow', [
+                'requestId' => $request->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
     

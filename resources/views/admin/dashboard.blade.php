@@ -2345,18 +2345,12 @@ window.addEventListener('beforeunload', function() {
                         <span class="font-medium">Review all information before making a decision.</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button id="rejectBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:shadow-md transition-all duration-300 font-medium flex items-center gap-1 text-sm">
+                        <div class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg font-medium flex items-center gap-1 text-sm">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Reject
-                        </button>
-                        <button id="endorseBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-md transition-all duration-300 font-medium flex items-center gap-1 text-sm">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Endorse
-                        </button>
+                            Status: Automated Workflow
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2434,11 +2428,7 @@ function openReviewModal(requestId) {
                     window.location.href = `/admin/requests/${requestId}/download-zip`; 
                 };
             }
-            const endorseBtn = document.getElementById('endorseBtn');
-            const rejectBtn = document.getElementById('rejectBtn');
-            if (endorseBtn) endorseBtn.onclick = () => submitStatusUpdate(requestId, 'endorsed');
-            if (rejectBtn) rejectBtn.onclick = () => submitStatusUpdate(requestId, 'rejected');
-            updateActionButtonsState(data.status);
+            // REMOVED: Status update button handlers - Status changes are now automated through the 5-stage signature workflow
         })
         .catch(error => {
                     alert('Failed to load request data. Please try again.');
@@ -2608,119 +2598,9 @@ function formatDate(dateString) {
     });
 }
 
-function submitStatusUpdate(requestId, newStatus) {
-    const adminComment = document.getElementById('adminComment')?.value || '';
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    // Get the buttons and show loading state
-    const endorseBtn = document.getElementById('endorseBtn');
-    const rejectBtn = document.getElementById('rejectBtn');
-    const actionButtons = [endorseBtn, rejectBtn];
-    
-    // Store original button states
-    const originalStates = actionButtons.map(btn => ({
-        disabled: btn.disabled,
-        text: btn.textContent,
-        classes: btn.className
-    }));
-    
-    // Show loading state
-    actionButtons.forEach(btn => {
-        if (btn) {
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            btn.innerHTML = `
-                <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                </svg>
-                Processing...
-            `;
-        }
-    });
-    
-    // Show loading overlay
-    if (window.showLoading) {
-        const actionText = newStatus === 'endorsed' ? 'Endorsing' : 'Rejecting';
-        window.showLoading(
-            `${actionText} Request...`,
-            `Please wait while we ${actionText.toLowerCase()} this request`,
-            [`${actionText} request...`]
-        );
-    }
-            
-    fetch(`/admin/requests/${requestId}/status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': token,
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({ status: newStatus, admin_comment: adminComment })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('Failed to update status');
-        return res.text();
-    })
-    .then(() => {
-        // Hide loading overlay
-        if (window.hideLoading) {
-            window.hideLoading();
-        }
-        
-        // Show success notification
-        if (window.notificationManager) {
-            const actionText = newStatus === 'endorsed' ? 'endorsed' : 'rejected';
-            window.notificationManager.success(`Request ${actionText} successfully!`);
-        }
-        
-        // Close modal and update UI
-        closeReviewModal();
-        
-        // Update the status in the table without full page reload
-        updateRequestStatusInTable(requestId, newStatus);
-    })
-    .catch(err => {
-        // Hide loading overlay
-        if (window.hideLoading) {
-            window.hideLoading();
-        }
-        
-        // Show error notification
-        if (window.notificationManager) {
-            window.notificationManager.error('Failed to update request status. Please try again.');
-        }
-        
-        // Restore original button states
-        actionButtons.forEach((btn, index) => {
-            if (btn && originalStates[index]) {
-                btn.disabled = originalStates[index].disabled;
-                btn.className = originalStates[index].classes;
-                btn.innerHTML = originalStates[index].text;
-            }
-        });
-    });
-}
+// REMOVED: submitStatusUpdate function - Status changes are now automated through the 5-stage signature workflow
 
-function updateActionButtonsState(status) {
-    const endorseBtn = document.getElementById('endorseBtn');
-    const rejectBtn = document.getElementById('rejectBtn');
-            
-    [endorseBtn, rejectBtn].forEach(btn => {
-        if (!btn) return;
-        btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-    });
-            
-    if (status === 'endorsed' && endorseBtn) {
-        endorseBtn.disabled = true;
-                endorseBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-    if (status === 'rejected' && rejectBtn) {
-        rejectBtn.disabled = true;
-                rejectBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-}
+// REMOVED: updateActionButtonsState function - Status buttons are no longer available
 
 function updateRequestStatusInTable(requestId, newStatus) {
     // Find the table row for this request
