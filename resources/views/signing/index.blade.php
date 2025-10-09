@@ -36,7 +36,7 @@
                                     <table class="w-full table-fixed">
                                         <thead>
                                             <tr>
-                                                <th class="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-40 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center justify-center gap-1">
                                                         ID
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
                                                         Type
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
                                                         Role
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
                                                         Date
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center justify-center gap-1">
                                                         Request Status
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -76,7 +76,7 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center justify-center gap-1">
                                                         Signature Status
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -101,28 +101,28 @@
                                             <tbody class="bg-white divide-y divide-gray-200">
                                                 @foreach($requests as $index => $request)
                                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                                        <td class="w-20 px-6 py-4 whitespace-nowrap text-center">
+                                                        <td class="w-40 px-6 py-4 whitespace-nowrap text-center">
                                                             <span class="text-sm font-medium text-gray-900">{{ $request['request_code'] }}</span>
                                                         </td>
-                                                        <td class="w-24 px-6 py-4 whitespace-nowrap">
+                                                        <td class="w-20 px-6 py-4 whitespace-nowrap">
                                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                                                 {{ $request['type'] === 'Publication' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
                                                                 {{ $request['type'] }}
                                                             </span>
                                                         </td>
-                                                        <td class="w-32 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        <td class="w-28 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                             {{ ucfirst(str_replace('_', ' ', $request['matched_role'])) }}
                                                         </td>
-                                                        <td class="w-24 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        <td class="w-20 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                             {{ \Carbon\Carbon::parse($request['requested_at'])->format('M d, Y') }}
                                                         </td>
-                                                        <td class="w-28 px-6 py-4 whitespace-nowrap text-center">
+                                                        <td class="w-24 px-6 py-4 whitespace-nowrap text-center">
                                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                                 <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
                                                                 Pending
                                                             </span>
                                                         </td>
-                                                        <td class="w-28 px-6 py-4 whitespace-nowrap text-center">
+                                                        <td class="w-24 px-6 py-4 whitespace-nowrap text-center">
                                                             @if($request['signature_status'] === 'signed')
                                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                                     <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
