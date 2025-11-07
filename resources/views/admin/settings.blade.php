@@ -792,8 +792,8 @@
                                                         <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
                                                         <div class="flex items-center gap-4">
                                                             <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                                                                <img id="preview-{{ $idx }}" src="{{ $researcher['photo_path'] ? '/storage/' . $researcher['photo_path'] : '' }}" alt="Profile preview" class="w-full h-full object-cover {{ $researcher['photo_path'] ? '' : 'hidden' }}">
-                                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-{{ $idx }}" {{ $researcher['photo_path'] ? 'style="display: none;"' : '' }}>
+                                                                <img id="preview-{{ $idx }}" src="{{ !empty($researcher['photo_path']) ? '/storage/' . $researcher['photo_path'] : '' }}" alt="Profile preview" class="w-full h-full object-cover {{ !empty($researcher['photo_path']) ? '' : 'hidden' }}">
+                                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-{{ $idx }}" {{ !empty($researcher['photo_path']) ? 'style="display: none;"' : '' }}>
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                                                 </svg>
                                                             </div>
