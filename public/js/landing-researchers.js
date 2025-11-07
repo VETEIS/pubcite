@@ -122,10 +122,6 @@ class LandingResearchers {
         // Create research areas HTML
         const researchAreasHtml = this.createResearchAreasHtml(researcher.research_areas || []);
         
-        // Create profile link
-        const profileLink = researcher.profile_link || '#';
-        const linkTarget = profileLink.startsWith('http') ? '_blank' : '_self';
-        
         // Create photo HTML
         const photoHtml = researcher.photo_path 
             ? `<img src="/storage/${researcher.photo_path}" alt="${this.escapeHtml(researcher.name || '')}" class="w-20 h-20 rounded-full object-cover">`
@@ -153,7 +149,7 @@ class LandingResearchers {
                     </div>
                     <p class="text-sm text-gray-600 leading-relaxed">${this.escapeHtml(researcher.bio || '')}</p>
                 </div>
-                <a href="${this.escapeHtml(profileLink)}" target="${linkTarget}" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</a>
+                <button type="button" onclick="openResearcherModal(this)" data-researcher="${JSON.stringify(researcher).replace(/"/g, '&quot;')}" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</button>
             </div>
         `;
         
@@ -247,6 +243,108 @@ class LandingResearchers {
         return div.innerHTML;
     }
 }
+
+// Global function to open researcher modal
+window.openResearcherModal = function(button) {
+    let researcherData = {};
+    
+    try {
+        const dataAttr = button.getAttribute('data-researcher') || '{}';
+        // Decode HTML entities if present
+        const decoded = dataAttr.replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+        researcherData = JSON.parse(decoded);
+    } catch (error) {
+        console.error('Error parsing researcher data:', error);
+        console.error('Raw data:', button.getAttribute('data-researcher'));
+        return;
+    }
+    
+    // Get modal elements
+    const modal = document.getElementById('researcherProfileModal');
+    const modalPhoto = document.getElementById('modal-researcher-photo');
+    const modalName = document.getElementById('modal-researcher-name');
+    const scopusBtn = document.getElementById('modal-scopus-btn');
+    const orcidBtn = document.getElementById('modal-orcid-btn');
+    const wosBtn = document.getElementById('modal-wos-btn');
+    const googleScholarBtn = document.getElementById('modal-google-scholar-btn');
+    
+    if (!modal) return;
+    
+    // Set photo
+    if (researcherData.photo_path) {
+        modalPhoto.innerHTML = `<img src="/storage/${researcherData.photo_path}" alt="${researcherData.name || ''}" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">`;
+    } else {
+        modalPhoto.innerHTML = `<div class="w-32 h-32 rounded-full border-4 border-gray-200 bg-gray-200 flex items-center justify-center">
+            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+        </div>`;
+    }
+    
+    // Set name
+    modalName.textContent = researcherData.name || '';
+    
+    // Set button links (hide if no link)
+    if (researcherData.scopus_link) {
+        scopusBtn.href = researcherData.scopus_link;
+        scopusBtn.target = '_blank';
+        scopusBtn.classList.remove('hidden');
+    } else {
+        scopusBtn.classList.add('hidden');
+    }
+    
+    if (researcherData.orcid_link) {
+        orcidBtn.href = researcherData.orcid_link;
+        orcidBtn.target = '_blank';
+        orcidBtn.classList.remove('hidden');
+    } else {
+        orcidBtn.classList.add('hidden');
+    }
+    
+    if (researcherData.wos_link) {
+        wosBtn.href = researcherData.wos_link;
+        wosBtn.target = '_blank';
+        wosBtn.classList.remove('hidden');
+    } else {
+        wosBtn.classList.add('hidden');
+    }
+    
+    if (researcherData.google_scholar_link) {
+        googleScholarBtn.href = researcherData.google_scholar_link;
+        googleScholarBtn.target = '_blank';
+        googleScholarBtn.classList.remove('hidden');
+    } else {
+        googleScholarBtn.classList.add('hidden');
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+// Close modal function
+window.closeResearcherModal = function() {
+    const modal = document.getElementById('researcherProfileModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+};
+
+// Close modal on backdrop click
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('researcherProfileModal');
+    if (modal && e.target === modal) {
+        window.closeResearcherModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.closeResearcherModal();
+    }
+});
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

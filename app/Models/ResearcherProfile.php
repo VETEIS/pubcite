@@ -15,6 +15,10 @@ class ResearcherProfile extends Model
         'photo_path',
         'background_color',
         'profile_link',
+        'scopus_link',
+        'orcid_link',
+        'wos_link',
+        'google_scholar_link',
         'sort_order',
         'is_active'
     ];

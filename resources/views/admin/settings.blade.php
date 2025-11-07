@@ -3,8 +3,9 @@
         searchOpen: false
     }" 
     x-init="
-        // Initialize notification bell
-        window.notificationBell = function() {
+        // Ensure notificationBell is available before Alpine initializes
+        if (typeof window.notificationBell === 'undefined') {
+            window.notificationBell = function() {
             return {
                 showDropdown: false,
                 notifications: [],
@@ -202,15 +203,16 @@
                                     <!-- Notifications List -->
                                     <template x-for="notification in notifications" :key="notification.id">
                                         <div class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                                             :class="{ 'bg-blue-50': !notification.read_at }"
+                                             x-show="notification"
+                                             :class="{ 'bg-blue-50': notification && !notification.read_at }"
                                              @click="markAsRead(notification.id)">
                                             <div class="flex items-start gap-3">
                                                 <div class="w-2 h-2 bg-maroon-500 rounded-full mt-2 flex-shrink-0" 
-                                                     x-show="!notification.read_at"></div>
+                                                     x-show="notification && !notification.read_at"></div>
                                                 <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-medium text-gray-900" x-text="notification.title"></p>
-                                                    <p class="text-xs text-gray-600 mt-1" x-text="notification.message"></p>
-                                                    <p class="text-xs text-gray-400 mt-1" x-text="formatTime(notification.created_at)"></p>
+                                                    <p class="text-sm font-medium text-gray-900" x-text="notification ? notification.title : ''"></p>
+                                                    <p class="text-xs text-gray-600 mt-1" x-text="notification ? notification.message : ''"></p>
+                                                    <p class="text-xs text-gray-400 mt-1" x-text="notification ? formatTime(notification.created_at) : ''"></p>
                                                 </div>
                                             </div>
                                         </div>
@@ -747,26 +749,42 @@
                                             @php($researchers = [['name' => '', 'title' => '', 'research_areas' => '', 'bio' => '', 'status_badge' => 'Active', 'background_color' => 'maroon', 'profile_link' => '']])
                                         @endif
                                         @foreach($researchers as $idx => $researcher)
-                                        <div class="researcher-card bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
-                                            <div class="flex items-start justify-between mb-4">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm">
-                                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        <div class="researcher-card bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200" x-data="{ isExpanded: false }">
+                                            <div class="p-6">
+                                                <div class="flex items-start justify-between">
+                                                    <button type="button" @click="isExpanded = !isExpanded" class="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
+                                                        <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="flex-1 min-w-0">
+                                                            <h4 class="text-lg font-semibold text-gray-900">
+                                                                {{ !empty($researcher['name']) ? $researcher['name'] : 'New Researcher' }}
+                                                            </h4>
+                                                        </div>
+                                                        <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                                         </svg>
-                                                    </div>
-                                                    <h4 class="text-lg font-semibold text-gray-900">Researcher Profile {{ $idx + 1 }}</h4>
+                                                    </button>
+                                                    <button type="button" onclick="removeResearcherRow(this)" 
+                                                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors ml-4" 
+                                                            title="Remove Researcher">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-                                                <button type="button" onclick="removeResearcherRow(this)" 
-                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                                                        title="Remove Researcher">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
                                             </div>
                                             
-                                            <div class="space-y-6">
+                                            <div x-show="isExpanded" 
+                                                 x-transition:enter="transition ease-out duration-200"
+                                                 x-transition:enter-start="opacity-0 -mt-4"
+                                                 x-transition:enter-end="opacity-100 mt-0"
+                                                 x-transition:leave="transition ease-in duration-150"
+                                                 x-transition:leave-start="opacity-100 mt-0"
+                                                 x-transition:leave-end="opacity-0 -mt-4"
+                                                 class="px-6 pb-6 space-y-6 border-t border-gray-200">
                                                 <!-- Row 1: Profile Picture | Biography -->
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div>
@@ -854,6 +872,40 @@
                                                             <option value="teal" {{ ($researcher['background_color'] ?? '') == 'teal' ? 'selected' : '' }}>Teal</option>
                                                             <option value="rose" {{ ($researcher['background_color'] ?? '') == 'rose' ? 'selected' : '' }}>Rose</option>
                                                         </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Row 5: Research Profile Links (at bottom) -->
+                                                <div class="mt-6 pt-6 border-t border-gray-200">
+                                                    <h4 class="text-sm font-semibold text-gray-700 mb-4">Research Profile Links</h4>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">SCOPUS Link</label>
+                                                            <input type="url" name="researchers[{{ $idx }}][scopus_link]" value="{{ $researcher['scopus_link'] ?? '' }}" 
+                                                                   placeholder="https://www.scopus.com/authid/detail.uri?authorId=..." 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                        </div>
+                                                        
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">ORCID Link</label>
+                                                            <input type="url" name="researchers[{{ $idx }}][orcid_link]" value="{{ $researcher['orcid_link'] ?? '' }}" 
+                                                                   placeholder="https://orcid.org/0000-0000-0000-0000" 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                        </div>
+                                                        
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">WOS (Web of Science) Link</label>
+                                                            <input type="url" name="researchers[{{ $idx }}][wos_link]" value="{{ $researcher['wos_link'] ?? '' }}" 
+                                                                   placeholder="https://www.webofscience.com/wos/author/record/..." 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                        </div>
+                                                        
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">Google Scholar Link</label>
+                                                            <input type="url" name="researchers[{{ $idx }}][google_scholar_link]" value="{{ $researcher['google_scholar_link'] ?? '' }}" 
+                                                                   placeholder="https://scholar.google.com/citations?user=..." 
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1058,6 +1110,29 @@
                 checkCalendarChanges();
         checkAnnouncementsChanges();
         checkResearcherChanges();
+        
+        // Initialize name header updates for existing researchers
+        function initResearcherNameDisplays() {
+            document.querySelectorAll('.researcher-card').forEach(card => {
+                const nameInput = card.querySelector('input[name*="[name]"]');
+                const nameHeader = card.querySelector('h4');
+                
+                if (nameInput && nameHeader) {
+                    // Update on input
+                    nameInput.addEventListener('input', function() {
+                        nameHeader.textContent = this.value.trim() || 'New Researcher';
+                    });
+                }
+            });
+        }
+        
+        // Initialize name displays
+        initResearcherNameDisplays();
+        
+        // Re-initialize on Turbo navigation
+        document.addEventListener('turbo:load', function() {
+            initResearcherNameDisplays();
+        });
         
         // Initialize announcements state tracking
         initializeAnnouncementsState();
@@ -1387,27 +1462,42 @@
             
             const index = container.querySelectorAll('.researcher-card').length;
             const card = document.createElement('div');
-            card.className = 'researcher-card bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-200';
+            card.className = 'researcher-card bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200';
+            card.setAttribute('x-data', '{ isExpanded: true }');
             card.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                        <h4 class="text-lg font-semibold text-gray-900">Researcher Profile ${index + 1}</h4>
-                        </div>
-                    <button type="button" onclick="removeResearcherRow(this)" 
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                            title="Remove Researcher">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <div class="p-6">
+                    <div class="flex items-start justify-between">
+                        <button type="button" @click="isExpanded = !isExpanded" class="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
-                            </button>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-lg font-semibold text-gray-900 researcher-name-header">New Researcher</h4>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <button type="button" onclick="removeResearcherRow(this)" 
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors ml-4" 
+                                title="Remove Researcher">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
-                 <div class="space-y-6">
+                <div x-show="isExpanded" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -mt-4"
+                     x-transition:enter-end="opacity-100 mt-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 mt-0"
+                     x-transition:leave-end="opacity-0 -mt-4"
+                     class="px-6 pb-6 space-y-6 border-t border-gray-200">
                      <!-- Row 1: Profile Picture | Biography -->
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                          <div>
@@ -1497,15 +1587,64 @@
                              </select>
                          </div>
                      </div>
+                     
+                     <!-- Row 5: Research Profile Links (at bottom) -->
+                     <div class="mt-6 pt-6 border-t border-gray-200">
+                         <h4 class="text-sm font-semibold text-gray-700 mb-4">Research Profile Links</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-700 mb-2">SCOPUS Link</label>
+                                 <input type="url" name="researchers[${index}][scopus_link]" 
+                                        placeholder="https://www.scopus.com/authid/detail.uri?authorId=..." 
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                             </div>
+                             
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-700 mb-2">ORCID Link</label>
+                                 <input type="url" name="researchers[${index}][orcid_link]" 
+                                        placeholder="https://orcid.org/0000-0000-0000-0000" 
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                             </div>
+                             
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-700 mb-2">WOS (Web of Science) Link</label>
+                                 <input type="url" name="researchers[${index}][wos_link]" 
+                                        placeholder="https://www.webofscience.com/wos/author/record/..." 
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                             </div>
+                             
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-700 mb-2">Google Scholar Link</label>
+                                 <input type="url" name="researchers[${index}][google_scholar_link]" 
+                                        placeholder="https://scholar.google.com/citations?user=..." 
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                             </div>
+                         </div>
+                     </div>
                  </div>
             `;
             
             container.appendChild(card);
             
+            // Initialize Alpine.js for the new card
+            if (window.Alpine) {
+                window.Alpine.initTree(card);
+            }
+            
             // Add event listeners to new inputs
             const newInputs = card.querySelectorAll('input, select, textarea');
             newInputs.forEach(input => {
                 input.addEventListener('input', checkResearcherChanges);
+                
+                // Update name header when name field changes
+                if (input.name && input.name.includes('[name]')) {
+                    const nameHeader = card.querySelector('.researcher-name-header');
+                    input.addEventListener('input', function() {
+                        if (nameHeader) {
+                            nameHeader.textContent = this.value.trim() || 'New Researcher';
+                        }
+                    });
+                }
             });
             
             // Trigger change detection

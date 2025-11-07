@@ -48,7 +48,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                         </svg>
                     </div>
-                    <h4 class="text-sm font-medium text-gray-900">Peer Review</h4>
+                    <h4 class="text-sm font-medium text-gray-900">Peer Reviewed</h4>
                 </div>
                 <p class="text-xs text-gray-600 mb-2" id="review-peer-review">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('peer-review-review').click()">Change File</button>

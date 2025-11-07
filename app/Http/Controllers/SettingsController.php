@@ -210,8 +210,17 @@ class SettingsController extends Controller
             'researchers.*.status_badge' => 'nullable|string|max:50',
             'researchers.*.background_color' => 'nullable|string|max:50',
             'researchers.*.profile_link' => 'nullable|string|max:500',
+            'researchers.*.scopus_link' => 'nullable|string|max:500',
+            'researchers.*.orcid_link' => 'nullable|string|max:500',
+            'researchers.*.wos_link' => 'nullable|string|max:500',
+            'researchers.*.google_scholar_link' => 'nullable|string|max:500',
             'researchers.*.photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Get existing researchers to preserve photo_path
+        $existingResearchers = ResearcherProfile::all()->keyBy(function($item, $key) {
+            return $key;
+        });
 
         // Clear existing researchers
         ResearcherProfile::truncate();
@@ -235,11 +244,13 @@ class SettingsController extends Controller
                     $researchAreasArray = array_filter($researchAreasArray); // Remove empty values
                 }
 
-                // Handle photo upload
+                // Handle photo upload - preserve existing if no new upload
                 $photoPath = null;
                 if ($request->hasFile("researchers.{$index}.photo")) {
                     $photo = $request->file("researchers.{$index}.photo");
                     $photoPath = $photo->store('researcher-photos', 'public');
+                } elseif (isset($existingResearchers[$index]) && $existingResearchers[$index]->photo_path) {
+                    $photoPath = $existingResearchers[$index]->photo_path;
                 }
 
                 $researchers[] = [
@@ -250,6 +261,10 @@ class SettingsController extends Controller
                     'status_badge' => $row['status_badge'] ?? 'Active',
                     'background_color' => $row['background_color'] ?? 'maroon',
                     'profile_link' => $row['profile_link'] ?? '',
+                    'scopus_link' => !empty(trim($row['scopus_link'] ?? '')) ? trim($row['scopus_link']) : null,
+                    'orcid_link' => !empty(trim($row['orcid_link'] ?? '')) ? trim($row['orcid_link']) : null,
+                    'wos_link' => !empty(trim($row['wos_link'] ?? '')) ? trim($row['wos_link']) : null,
+                    'google_scholar_link' => !empty(trim($row['google_scholar_link'] ?? '')) ? trim($row['google_scholar_link']) : null,
                     'photo_path' => $photoPath,
                     'sort_order' => $index,
                     'is_active' => true,

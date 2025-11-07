@@ -210,7 +210,7 @@
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
                         </svg>
-                        <span>Peer Review Document (PDF)</span>
+                        <span>Peer Reviewed Document (PDF)</span>
                     </li>
                     <li class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

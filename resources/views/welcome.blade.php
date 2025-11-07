@@ -1953,4 +1953,80 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="{{ asset('js/landing-announcements.js') }}"></script>
 
 <!-- Landing Page Researchers JavaScript -->
-<script src="{{ asset('js/landing-researchers.js') }}"></script> 
+<script src="{{ asset('js/landing-researchers.js') }}"></script>
+
+<!-- Researcher Profile Modal -->
+<div id="researcherProfileModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+            <!-- Close button -->
+            <button onclick="closeResearcherModal()" class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            
+            <!-- Modal content -->
+            <div class="p-8 pt-10">
+                <!-- Profile picture -->
+                <div id="modal-researcher-photo" class="flex justify-center mb-6">
+                    <!-- Photo will be inserted here by JavaScript -->
+                </div>
+                
+                <!-- Full name -->
+                <h2 id="modal-researcher-name" class="text-2xl font-bold text-gray-900 mb-8 text-center"></h2>
+                
+                <!-- Buttons -->
+                <div class="flex flex-col gap-3">
+                    <!-- SCOPUS Button - Orange (#E9710C) -->
+                    <a id="modal-scopus-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       style="background: linear-gradient(135deg, #E9710C 0%, #D65A00 100%);"
+                       onmouseover="this.style.background='linear-gradient(135deg, #F08020 0%, #E9710C 100%)'"
+                       onmouseout="this.style.background='linear-gradient(135deg, #E9710C 0%, #D65A00 100%)'">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        SCOPUS
+                    </a>
+                    
+                    <!-- ORCID Button - Lime Green (#A6CE39) -->
+                    <a id="modal-orcid-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       style="background: linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%);"
+                       onmouseover="this.style.background='linear-gradient(135deg, #B8D94A 0%, #A6CE39 100%)'"
+                       onmouseout="this.style.background='linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%)'">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm.34 5.577c1.939 0 3.511 1.57 3.511 3.511 0 1.939-1.572 3.511-3.511 3.511-1.939 0-3.511-1.572-3.511-3.511 0-1.941 1.572-3.511 3.511-3.511zm-4.988 13.5c.5-.75 1.5-1.5 2.5-1.5s2 .75 2.5 1.5h-5zm9.988 0c.5-.75 1.5-1.5 2.5-1.5s2 .75 2.5 1.5h-5z"/>
+                        </svg>
+                        ORCID
+                    </a>
+                    
+                    <!-- WOS Button - Blue (#0066CC) -->
+                    <a id="modal-wos-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       style="background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);"
+                       onmouseover="this.style.background='linear-gradient(135deg, #1A7AE6 0%, #0066CC 100%)'"
+                       onmouseout="this.style.background='linear-gradient(135deg, #0066CC 0%, #0052A3 100%)'">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        Web of Science
+                    </a>
+                    
+                    <!-- Google Scholar Button - Google Blue (#4285F4) -->
+                    <a id="modal-google-scholar-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       style="background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);"
+                       onmouseover="this.style.background='linear-gradient(135deg, #5A95F5 0%, #4285F4 100%)'"
+                       onmouseout="this.style.background='linear-gradient(135deg, #4285F4 0%, #3367D6 100%)'">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/>
+                        </svg>
+                        Google Scholar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

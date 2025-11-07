@@ -241,15 +241,16 @@
                                     <!-- Notifications List -->
                                     <template x-for="notification in notifications" :key="notification.id">
                                         <div class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                                             :class="{ 'bg-blue-50': !notification.read_at }"
+                                             x-show="notification"
+                                             :class="{ 'bg-blue-50': notification && !notification.read_at }"
                                              @click="markAsRead(notification.id)">
                                             <div class="flex items-start gap-3">
                                                 <div class="w-2 h-2 bg-maroon-500 rounded-full mt-2 flex-shrink-0" 
-                                                     x-show="!notification.read_at"></div>
+                                                     x-show="notification && !notification.read_at"></div>
                                                 <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-medium text-gray-900" x-text="notification.title"></p>
-                                                    <p class="text-xs text-gray-600 mt-1" x-text="notification.message"></p>
-                                                    <p class="text-xs text-gray-400 mt-1" x-text="formatTime(notification.created_at)"></p>
+                                                    <p class="text-sm font-medium text-gray-900" x-text="notification ? notification.title : ''"></p>
+                                                    <p class="text-xs text-gray-600 mt-1" x-text="notification ? notification.message : ''"></p>
+                                                    <p class="text-xs text-gray-400 mt-1" x-text="notification ? formatTime(notification.created_at) : ''"></p>
                                                 </div>
                                             </div>
                                         </div>
