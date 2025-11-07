@@ -62,11 +62,7 @@
                 </button>
             </div>
 
-            <div class="mt-6 text-center">
-                <p class="text-base text-gray-900 font-medium drop-shadow-sm">
-                    {{ __('Don\'t have an account?') }} {{ __('Use "Sign in with Google" to create an account with your USeP email.') }}
-                </p>
-            </div>
+            
         </form>
     </x-authentication-card>
 
