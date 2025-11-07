@@ -27,6 +27,11 @@ class SettingsController extends Controller
             'calendar_marks' => json_decode(Setting::get('calendar_marks', '[]'), true) ?? [],
             'announcements' => json_decode(Setting::get('landing_page_announcements', '[]'), true) ?? [],
             'researchers' => ResearcherProfile::ordered()->get()->toArray(),
+            // Publication counts for welcome hero
+            'scopus_publications_count' => Setting::get('scopus_publications_count', '0'),
+            'wos_publications_count' => Setting::get('wos_publications_count', '0'),
+            'aci_publications_count' => Setting::get('aci_publications_count', '0'),
+            'peer_publications_count' => Setting::get('peer_publications_count', '0'),
         ];
         return view('admin.settings', $data);
     }
@@ -46,9 +51,28 @@ class SettingsController extends Controller
             return $this->updateAnnouncements($request);
         } elseif ($request->has('save_researchers')) {
             return $this->updateResearchers($request);
+        } elseif ($request->has('save_publication_counts')) {
+            return $this->updatePublicationCounts($request);
         }
         
         return back()->with('error', 'Invalid form submission.');
+    }
+
+    private function updatePublicationCounts(Request $request)
+    {
+        $validated = $request->validate([
+            'scopus_publications_count' => 'required|integer|min:0|max:10000000',
+            'wos_publications_count' => 'required|integer|min:0|max:10000000',
+            'aci_publications_count' => 'required|integer|min:0|max:10000000',
+            'peer_publications_count' => 'required|integer|min:0|max:10000000',
+        ]);
+
+        Setting::set('scopus_publications_count', (string)$validated['scopus_publications_count']);
+        Setting::set('wos_publications_count', (string)$validated['wos_publications_count']);
+        Setting::set('aci_publications_count', (string)$validated['aci_publications_count']);
+        Setting::set('peer_publications_count', (string)$validated['peer_publications_count']);
+
+        return back()->with('success', 'Publication counters updated.');
     }
     
     private function updateOfficialInfo(Request $request)
@@ -112,6 +136,15 @@ class SettingsController extends Controller
             'announcements' => 'nullable|array',
             'announcements.*.title' => 'nullable|string|max:255',
             'announcements.*.description' => 'nullable|string|max:1000',
+            // Also accept publication counters when saving the Landing Page card
+            'scopus_publications_count' => 'nullable|integer|min:0|max:10000000',
+            'wos_publications_count' => 'nullable|integer|min:0|max:10000000',
+            'aci_publications_count' => 'nullable|integer|min:0|max:10000000',
+            'peer_publications_count' => 'nullable|integer|min:0|max:10000000',
+            // And accept calendar marks
+            'calendar_marks' => 'nullable|array',
+            'calendar_marks.*.date' => 'nullable|date',
+            'calendar_marks.*.note' => 'nullable|string|max:500',
         ]);
 
         $announcements = [];
@@ -144,6 +177,39 @@ class SettingsController extends Controller
         }
 
         Setting::set('landing_page_announcements', json_encode($announcements));
+
+        // Persist publication counters if present
+        if (array_key_exists('scopus_publications_count', $validated)) {
+            Setting::set('scopus_publications_count', (string)($validated['scopus_publications_count'] ?? 0));
+        }
+        if (array_key_exists('wos_publications_count', $validated)) {
+            Setting::set('wos_publications_count', (string)($validated['wos_publications_count'] ?? 0));
+        }
+        if (array_key_exists('aci_publications_count', $validated)) {
+            Setting::set('aci_publications_count', (string)($validated['aci_publications_count'] ?? 0));
+        }
+        if (array_key_exists('peer_publications_count', $validated)) {
+            Setting::set('peer_publications_count', (string)($validated['peer_publications_count'] ?? 0));
+        }
+
+        // Persist calendar marks if present
+        if (array_key_exists('calendar_marks', $validated)) {
+            $marks = [];
+            if (!empty($validated['calendar_marks']) && is_array($validated['calendar_marks'])) {
+                foreach ($validated['calendar_marks'] as $row) {
+                    $date = $row['date'] ?? null;
+                    $note = $row['note'] ?? null;
+                    if (!$date && !$note) {
+                        continue;
+                    }
+                    $marks[] = [
+                        'date' => $date,
+                        'note' => $note,
+                    ];
+                }
+            }
+            Setting::set('calendar_marks', json_encode($marks));
+        }
 
         return back()->with('success', 'Announcements updated successfully.');
     }

@@ -45,6 +45,7 @@ class SigningController extends Controller
             }
             
             if ($matchedRole) {
+                $college = trim((string)($form['college'] ?? ''));
                 $needs[] = [
                     'id' => $req->id,
                     'request_code' => $req->request_code,
@@ -52,6 +53,7 @@ class SigningController extends Controller
                     'status' => $req->status,
                     'workflow_state' => $req->workflow_state,
                     'matched_role' => $matchedRole,
+                    'college' => $college,
                     'requested_at' => $req->requested_at,
                 ];
             }

@@ -68,6 +68,16 @@
     </div>
     @endif
 
+    <!-- Optional Role Badge for Signatories (left of separator) -->
+    @if(isset($showRoleBadge) && $showRoleBadge && Auth::check() && method_exists(Auth::user(), 'isSignatory') && Auth::user()->isSignatory())
+        @php $roleLabel = ucwords(str_replace('_', ' ', Auth::user()->signatoryType())); @endphp
+        <div class="hidden md:flex items-center mr-3">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                {{ $roleLabel }}
+            </span>
+        </div>
+    @endif
+
     <!-- User Profile Section -->
     <div class="relative flex items-center">
         <!-- Subtle separator -->

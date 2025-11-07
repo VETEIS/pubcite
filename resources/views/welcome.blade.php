@@ -810,8 +810,8 @@
                                     <!--<h3 class="text-md font-medium text-white mb-3">Suggested Journals:</h3>-->
                                     <div class="journal-group flex gap-1 justify-center items-stretch sm:gap-2">
                                         <a href="https://docs.google.com/spreadsheets/d/1bwf9eZvtI5HO7w0HdMRDujQULfdwKJNU4Ieb535sUdk/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
-                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
-                                                <div class="journal-badge" id="scopus-count" data-target="2847">0</div>
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="scopus-count" data-target="{{ (int) \App\Models\Setting::get('scopus_publications_count', '0') }}">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
                                                     <img src="/images/scopus.webp" alt="Scopus" class="journal-image h-10 w-10 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
@@ -820,8 +820,8 @@
                                         </a>
                                         
                                         <a href="https://docs.google.com/spreadsheets/d/1_54NTUdRE4y9QVB01p9SHF_cEPllajyyM3siyBFWfRs/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
-                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
-                                                <div class="journal-badge" id="wos-count" data-target="1923">0</div>
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="wos-count" data-target="{{ (int) \App\Models\Setting::get('wos_publications_count', '0') }}">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
                                                     <img src="/images/wos.webp" alt="Web of Science" class="journal-image h-10 w-10 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
@@ -830,8 +830,8 @@
                                         </a>
                                         
                                         <a href="https://docs.google.com/spreadsheets/d/1XT-2QD6ZYK4Vl5JPWGoDAFFGu0j6SYXhxQbcvidIrAI/edit?gid=572855311#gid=572855311" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
-                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
-                                                <div class="journal-badge" id="aci-count" data-target="856">0</div>
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="aci-count" data-target="{{ (int) \App\Models\Setting::get('aci_publications_count', '0') }}">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
                                                     <img src="/images/aci.webp" alt="ACI" class="journal-image h-8 w-8 sm:h-20 sm:w-20 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
@@ -840,13 +840,13 @@
                                         </a>
                                         
                                         <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="journal-item group flex-1 h-24 sm:h-36 flex flex-col items-center justify-center gap-1 hover:scale-105 transition-all duration-300 min-w-0 px-1">
-                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
-                                                <div class="journal-badge" id="peer-count" data-target="3421">0</div>
+                                            <div class="journal-circle relative w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-white backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:border-white/30" style="aspect-ratio: 1/1;">
+                                                <div class="journal-badge" id="peer-count" data-target="{{ (int) \App\Models\Setting::get('peer_publications_count', '0') }}">0</div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
                                                     <img src="/images/peer.webp" alt="Peer Review" class="journal-image h-10 w-10 sm:h-24 sm:w-24 object-contain filter drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" />
                                                 </div>
                                             </div>
-                                            <span class="journal-text text-white font-medium text-xs text-center leading-tight">Peer Review</span>
+                                            <span class="journal-text text-white font-medium text-xs text-center leading-tight">Peer Reviewed</span>
                                         </a>
                                     </div>
                                 </div>

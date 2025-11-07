@@ -24,7 +24,7 @@
                     </div>
                     
                     <!-- Enhanced Search and User Controls -->
-                    @include('components.user-navbar', ['showFilters' => false])
+                    @include('components.user-navbar', ['showFilters' => false, 'showRoleBadge' => true])
                 </div>
 
                 <!-- Signature Requests Table Container -->
@@ -44,24 +44,24 @@
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                    <div class="flex items-center gap-1">
+                                                <th class="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center justify-center gap-1">
                                                         Type
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <th class="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center gap-1">
-                                                        Role
+                                                        College
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                                         </svg>
                                                     </div>
                                                 </th>
-                                                <th class="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                                                    <div class="flex items-center gap-1">
+                                                <th class="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                                    <div class="flex items-center justify-center gap-1">
                                                         Date
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
@@ -110,8 +110,8 @@
                                                                 {{ $request['type'] }}
                                                             </span>
                                                         </td>
-                                                        <td class="w-28 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            {{ ucfirst(str_replace('_', ' ', $request['matched_role'])) }}
+                                                        <td class="w-40 px-6 py-4 whitespace-nowrap text-sm text-gray-900 overflow-hidden">
+                                                            <span class="block truncate max-w-full">{{ $request['college'] ?: '—' }}</span>
                                                         </td>
                                                         <td class="w-20 px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                             {{ \Carbon\Carbon::parse($request['requested_at'])->format('M d, Y') }}
@@ -154,14 +154,11 @@
                                                                     @endif
                                                                 </div>
                                                             @else
-                                                                <div class="flex flex-col gap-2">
-                                                                    <button onclick="downloadRequestFiles({{ $request['id'] }})" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-sm font-medium">
-                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                                                        </svg>
+                                                                <div class="flex flex-col items-center gap-2">
+                                                                    <button onclick="downloadRequestFiles({{ $request['id'] }})" class="inline-flex justify-center w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
                                                                         Download
                                                                     </button>
-                                                                    <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-sm font-medium">
+                                                                    <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-xs font-medium">
                                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                                                         </svg>

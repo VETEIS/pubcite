@@ -498,7 +498,7 @@ class PublicationsController extends Controller
         
         Log::info('Publication request submission started', [
             'user_id' => $user->id,
-            'has_files' => $request->hasFile('recommendation_letter'),
+            'has_files' => $request->hasFile('published_article') || $request->hasFile('indexing_evidence'),
             'is_draft' => $request->has('save_draft')
         ]);
 
@@ -600,18 +600,14 @@ class PublicationsController extends Controller
         // Only require files for final submission, not for draft
         if (!$isDraft) {
             $validationRules = array_merge($validationRules, [
-                'recommendation_letter' => 'required|file|mimes:pdf|max:20480',
                 'published_article' => 'required|file|mimes:pdf|max:20480',
-                'peer_review' => 'required|file|mimes:pdf|max:20480',
-                'terminal_report' => 'required|file|mimes:pdf|max:20480',
+                'indexing_evidence' => 'required|file|mimes:pdf,jpg,jpeg,png|max:20480',
             ]);
         } else {
             // For drafts, make files optional
             $validationRules = array_merge($validationRules, [
-                'recommendation_letter' => 'nullable|file|mimes:pdf|max:20480',
                 'published_article' => 'nullable|file|mimes:pdf|max:20480',
-                'peer_review' => 'nullable|file|mimes:pdf|max:20480',
-                'terminal_report' => 'nullable|file|mimes:pdf|max:20480',
+                'indexing_evidence' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
             ]);
         }
 
@@ -697,10 +693,8 @@ class PublicationsController extends Controller
                 
                 $attachments = [];
             foreach ([
-                'recommendation_letter',
                 'published_article',
-                'peer_review',
-                'terminal_report'
+                'indexing_evidence'
             ] as $field) {
                 $file = $request->file($field);
                 

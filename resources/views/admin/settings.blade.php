@@ -500,31 +500,27 @@
                             </div>
                         </div>
                         
-                        <!-- Calendar Settings Section -->
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <!-- Removed standalone Calendar Settings Section (merged into Landing Page card) -->
+                        </div>
+
+                        <!-- Announcements Management Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
                                 <!-- Header -->
-                                <div class="px-6 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-gray-200">
+                            <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                 </svg>
                                             </div>
                                             <div>
-                                                <h3 class="text-lg font-semibold text-gray-900">Welcome Page Calendar</h3>
-                                                <p class="text-sm text-gray-600 mt-1">Add multiple marked dates with notes to show on the welcome page</p>
+                                            <h3 class="text-lg font-semibold text-gray-900">Landing Page</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Manage publication counters and announcements displayed on the landing page</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-3">
-                                            <button type="button" onclick="addMarkRow()" 
-                                                    class="w-8 h-8 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center justify-center" 
-                                                    title="Add Event">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                            </button>
-                                            <button type="submit" name="save_calendar" value="1"
+                                    <div class="flex items-center gap-3">
+                                        <button type="submit" name="save_announcements" value="1"
                                                     class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
                                                     disabled>
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -538,7 +534,42 @@
                                 
                                 <!-- Content -->
                                 <div class="p-6">
-                                    <div class="mb-4">                                        
+                                <!-- Publication Counters Sub-Section -->
+                                <div class="mb-6">
+                                    <h4 class="text-md font-semibold text-gray-900 mb-3">Publication Counters</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Scopus Count</label>
+                                            <input type="number" name="scopus_publications_count" min="0" step="1" value="{{ old('scopus_publications_count', $scopus_publications_count) }}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">WOS Count</label>
+                                            <input type="number" name="wos_publications_count" min="0" step="1" value="{{ old('wos_publications_count', $wos_publications_count) }}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">ACI Count</label>
+                                            <input type="number" name="aci_publications_count" min="0" step="1" value="{{ old('aci_publications_count', $aci_publications_count) }}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">PEER Count</label>
+                                            <input type="number" name="peer_publications_count" min="0" step="1" value="{{ old('peer_publications_count', $peer_publications_count) }}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all">
+                                        </div>
+                                    </div>
+                                    <!-- No separate save button; use the card's main Save Changes button -->
+                                </div>
+
+                                <!-- Calendar Sub-Section -->
+                                <div class="mb-6">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="text-md font-semibold text-gray-900">Welcome Page Calendar</h4>
+                                        <button type="button" onclick="addMarkRow()" 
+                                                class="w-8 h-8 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center justify-center" 
+                                                title="Add Event">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                         <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                                             <div class="overflow-x-auto">
                                                 <table class="w-full">
@@ -590,51 +621,21 @@
                                                         @endforeach
                                                     </tbody>
                                                 </table>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Announcements Management Section -->
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
-                            <!-- Header -->
-                            <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900">Landing Page Announcements</h3>
-                                            <p class="text-sm text-gray-600 mt-1">Manage announcements displayed on the landing page dropdown</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <button type="button" onclick="addAnnouncementRow()" 
-                                                class="w-8 h-8 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center" 
-                                                title="Add Announcement">
+                                <!-- Announcements Sub-Section -->
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-md font-semibold text-gray-900">Announcements</h4>
+                                    <button type="button" onclick="addAnnouncementRow()" 
+                                            class="w-8 h-8 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center" 
+                                            title="Add Announcement">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                         </svg>
-                                        </button>
-                                        <button type="submit" name="save_announcements" value="1"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
-                                                disabled>
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Save Changes
                                     </button>
-                                    </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Content -->
-                            <div class="p-6">
                                 @if($errors->any())
                                     <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
                                         <ul class="list-disc list-inside">
@@ -916,9 +917,13 @@
                             </div>
                         </div>
                 </div>
+
+            
+
             </main>
         </div>
     </div>
+
     
     <!-- Delete Confirmation Modal -->
     <div id="deleteAnnouncementModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">

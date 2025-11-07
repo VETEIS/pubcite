@@ -9,22 +9,7 @@
     <!-- Uploaded Files Review -->
     <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 p-6 shadow-sm">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Uploaded Documents</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Recommendation Letter Review -->
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <h4 class="text-sm font-medium text-gray-900">Recommendation Letter</h4>
-                </div>
-                <p class="text-xs text-gray-600 mb-2" id="review-recommendation-letter">No file uploaded</p>
-                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('recommendation-letter-review').click()">Change File</button>
-                <input type="file" id="recommendation-letter-review" class="hidden" accept=".pdf" onchange="updateReviewFile('recommendation_letter', this)">
-            </div>
-
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Citing Article Review -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div class="flex items-center gap-3 mb-3">
@@ -53,6 +38,21 @@
                 <p class="text-xs text-gray-600 mb-2" id="review-cited-article">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('cited-article-review').click()">Change File</button>
                 <input type="file" id="cited-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('cited_article', this)">
+            </div>
+
+            <!-- WOS / Scopus Evidence Review -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-sm font-medium text-gray-900">WOS / Scopus Evidence</h4>
+                </div>
+                <p class="text-xs text-gray-600 mb-2" id="review-indexing-evidence">No file uploaded</p>
+                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('indexing-evidence-review').click()">Change File</button>
+                <input type="file" id="indexing-evidence-review" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="updateReviewFile('indexing_evidence', this)">
             </div>
         </div>
     </div>
@@ -130,9 +130,9 @@ function updateReviewFile(type, input) {
     
     // Map field names to element IDs
     const elementIdMap = {
-        'recommendation_letter': 'review-recommendation-letter',
         'citing_article': 'review-citing-article',
-        'cited_article': 'review-cited-article'
+        'cited_article': 'review-cited-article',
+        'indexing_evidence': 'review-indexing-evidence'
     };
     
     const reviewElementId = elementIdMap[type] || `review-${type}`;
@@ -185,9 +185,9 @@ function updateReviewFile(type, input) {
     
     // Map field names to element IDs
     const elementIdMap = {
-        'recommendation_letter': 'review-recommendation-letter',
         'citing_article': 'review-citing-article',
-        'cited_article': 'review-cited-article'
+        'cited_article': 'review-cited-article',
+        'indexing_evidence': 'review-indexing-evidence'
     };
     
     const reviewElementId = elementIdMap[type] || `review-${type}`;

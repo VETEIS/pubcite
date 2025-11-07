@@ -155,9 +155,7 @@ class CitationsController extends Controller
                 'journal' => 'Sample Journal',
                 'publisher' => 'Sample Publisher',
                 'citescore' => 'Sample CiteScore',
-                'citedtitle' => 'Sample Cited Title',
-                'citedbibentry' => 'Sample Cited Bibliography',
-                'citedjournal' => 'Sample Cited Journal'
+                'citedbibentry' => 'Sample Cited Bibliography'
             ];
             
             // Merge fallback data with filtered form data
@@ -490,7 +488,7 @@ class CitationsController extends Controller
         
         Log::info('Citation request submission started', [
             'user_id' => $user->id,
-            'has_files' => $request->hasFile('recommendation_letter'),
+            'has_files' => $request->hasFile('citing_article') || $request->hasFile('cited_article') || $request->hasFile('indexing_evidence'),
             'is_draft' => $request->has('save_draft')
         ]);
         
@@ -537,8 +535,6 @@ class CitationsController extends Controller
                     'rank' => 'nullable|string',
                     'college' => 'nullable|string',
                     'bibentry' => 'nullable|string',
-                    'citedtitle' => 'nullable|string',
-                    'citedjournal' => 'nullable|string',
                     'citedbibentry' => 'nullable|string',
                     'issn' => 'nullable|string',
                     'doi' => 'nullable|string',
@@ -562,8 +558,6 @@ class CitationsController extends Controller
                     'rank' => 'required|string',
                     'college' => 'required|string',
                     'bibentry' => 'required|string',
-                    'citedtitle' => 'required|string',
-                    'citedjournal' => 'required|string',
                     'citedbibentry' => 'required|string',
                     'issn' => 'required|string',
                     'doi' => 'nullable|string',
@@ -585,16 +579,16 @@ class CitationsController extends Controller
             // Only require files for final submission, not for draft
             if (!$isDraft) {
                 $validationRules = array_merge($validationRules, [
-                    'recommendation_letter' => 'required|file|mimes:pdf|max:20480',
                     'citing_article' => 'required|file|mimes:pdf|max:20480',
                     'cited_article' => 'required|file|mimes:pdf|max:20480',
+                    'indexing_evidence' => 'required|file|mimes:pdf,jpg,jpeg,png|max:20480',
                 ]);
             } else {
                 // For drafts, make files optional
                 $validationRules = array_merge($validationRules, [
-                    'recommendation_letter' => 'nullable|file|mimes:pdf|max:20480',
                     'citing_article' => 'nullable|file|mimes:pdf|max:20480',
                     'cited_article' => 'nullable|file|mimes:pdf|max:20480',
+                    'indexing_evidence' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
                 ]);
             }
 
@@ -673,9 +667,9 @@ class CitationsController extends Controller
                 // Store PDF files in per-request folder
                 $pdfPaths = [];
                 $fields = [
-                    'recommendation_letter',
                     'citing_article',
                     'cited_article',
+                    'indexing_evidence',
                 ];
                 foreach ($fields as $field) {
                 if ($request->hasFile($field)) {
@@ -1051,9 +1045,7 @@ class CitationsController extends Controller
             'publisher' => '',
             'citescore' => '',
             // Citation detail fields from form data
-            'citedtitle' => $data['citedtitle'] ?? '',
             'citedbibentry' => $data['citedbibentry'] ?? '',
-            'citedjournal' => $data['citedjournal'] ?? '',
             'facultyname' => $data['faculty_name'] ?? '',
             'centermanager' => $data['center_manager'] ?? '',
             'dean' => $data['dean_name'] ?? '',

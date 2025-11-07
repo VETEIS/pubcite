@@ -56,7 +56,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
                 </svg>
             </div>
-            <h4 class="text-lg font-semibold text-gray-900">II. Details of the Citation</h4>
+            <h4 class="text-lg font-semibold text-gray-900">II. Details of the Citing Paper</h4>
         </div>
         
         <div class="space-y-6">
@@ -146,31 +146,9 @@
                 </div>
             </div>
             
-            <!-- Additional Citation Details -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700">
-                        Title of Cited Work <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="citedtitle" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
-                           placeholder="Enter the title of the cited work"
-                           value="{{ old('citedtitle', $request->form_data['citedtitle'] ?? '') }}">
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700">
-                        Journal of Cited Work <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="citedjournal" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
-                           placeholder="Enter the journal name"
-                           value="{{ old('citedjournal', $request->form_data['citedjournal'] ?? '') }}">
-                </div>
-            </div>
-            
             <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">
-                    Bibliographic Entry of Cited Work <span class="text-red-500">*</span>
+                    Bibliographic Entry of Cited Work (APA Format)<span class="text-red-500">*</span>
                 </label>
                 <textarea name="citedbibentry" rows="2" required 
                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 

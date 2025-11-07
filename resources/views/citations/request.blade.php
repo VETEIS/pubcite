@@ -18,9 +18,9 @@
                 tabStatesRefreshed: 0,
                 confirmChecked: false,
                 uploadedFiles: {
-                    recommendation_letter: null,
                     citing_article: null,
-                    cited_article: null
+                    cited_article: null,
+                    indexing_evidence: null
                 },
                 
                 showError(message) {
@@ -106,7 +106,7 @@
                     
                     // Special handling for upload tab
                     if (currentTab === 'upload') {
-                        const requiredFiles = ['recommendation_letter', 'citing_article', 'cited_article'];
+                        const requiredFiles = ['citing_article', 'cited_article', 'indexing_evidence'];
                         
                         for (let fileName of requiredFiles) {
                             const fileInput = document.querySelector(`input[name="${fileName}"]`);
@@ -120,7 +120,7 @@
                     
                     // Define required fields for other tabs
                     const tabFields = {
-                        'incentive': ['name', 'rank', 'college', 'bibentry', 'citedtitle', 'citedjournal', 'citedbibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'citedbibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
                         'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details']
                     };
                     
@@ -478,10 +478,10 @@
                 displayUploadedFiles() {
                     
                     // File state mapping
-                    const fileFields = [
-                        { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
+            const fileFields = [
                         { fieldName: 'citing_article', elementId: 'review-citing-article' },
-                        { fieldName: 'cited_article', elementId: 'review-cited-article' }
+                        { fieldName: 'cited_article', elementId: 'review-cited-article' },
+                        { fieldName: 'indexing_evidence', elementId: 'review-indexing-evidence' }
                     ];
                     
                     fileFields.forEach(({ fieldName, elementId }) => {

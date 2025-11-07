@@ -59,7 +59,7 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="bg-gray-50">
-                                <th class="border-b border-gray-300 p-4 text-left font-medium text-gray-900">Details of the Citing Article (Bibliographic Entry)</th>
+                                <th class="border-b border-gray-300 p-4 text-left font-medium text-gray-900">Details of the Citing Article - Bibliographic Entry (APA Format)</th>
                                 <th class="border-b border-gray-300 p-4 text-left font-medium text-gray-900">Indexing</th>
                             </tr>
                             <tr class="bg-gray-50">

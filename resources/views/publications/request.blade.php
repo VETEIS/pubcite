@@ -16,10 +16,8 @@
                 tabStatesRefreshed: 0,
                 confirmChecked: false,
                 uploadedFiles: {
-                    recommendation_letter: null,
                     published_article: null,
-                    peer_review: null,
-                    terminal_report: null
+                    indexing_evidence: null
                 },
                 
                 showError(message) {
@@ -140,7 +138,7 @@
                     
                     // Special handling for upload tab
                     if (currentTab === 'upload') {
-                        const requiredFiles = ['recommendation_letter', 'published_article', 'peer_review', 'terminal_report'];
+                        const requiredFiles = ['published_article', 'indexing_evidence'];
                         
                         for (let fileName of requiredFiles) {
                             const fileInput = document.querySelector(`input[name="${fileName}"]`);
@@ -518,10 +516,8 @@
                     
                     // File state mapping
             const fileFields = [
-                        { fieldName: 'recommendation_letter', elementId: 'review-recommendation-letter' },
                         { fieldName: 'published_article', elementId: 'review-published-article' },
-                        { fieldName: 'peer_review', elementId: 'review-peer-review' },
-                        { fieldName: 'terminal_report', elementId: 'review-terminal-report' }
+                        { fieldName: 'indexing_evidence', elementId: 'review-indexing-evidence' }
                     ];
                     
                     fileFields.forEach(({ fieldName, elementId }) => {
