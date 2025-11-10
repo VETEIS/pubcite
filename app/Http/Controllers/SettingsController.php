@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\ResearcherProfile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -283,65 +284,58 @@ class SettingsController extends Controller
             'researchers.*.photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Get existing researchers to preserve photo_path
-        $existingResearchers = ResearcherProfile::all()->keyBy(function($item, $key) {
-            return $key;
-        });
+        $existingResearchers = ResearcherProfile::ordered()->get()->values();
 
-        // Clear existing researchers
-        ResearcherProfile::truncate();
+        $payloads = [];
+        foreach ($validated['researchers'] ?? [] as $index => $row) {
+            $name = trim($row['name'] ?? '');
+            $title = trim($row['title'] ?? '');
+            $bio = trim($row['bio'] ?? '');
+            $researchAreasInput = $row['research_areas'] ?? '';
 
-        $researchers = [];
-        if (!empty($validated['researchers']) && is_array($validated['researchers'])) {
-            foreach ($validated['researchers'] as $index => $row) {
-                $name = trim($row['name'] ?? '');
-                $title = trim($row['title'] ?? '');
-                $researchAreas = trim($row['research_areas'] ?? '');
-                $bio = trim($row['bio'] ?? '');
-                
-                if (!$name && !$title && !$researchAreas && !$bio) {
-                    continue;
-                }
+            $researchAreas = collect(explode(',', (string) $researchAreasInput))
+                ->map(fn ($area) => trim($area))
+                ->filter()
+                ->values()
+                ->all();
 
-                // Convert research areas string to array
-                $researchAreasArray = [];
-                if ($researchAreas) {
-                    $researchAreasArray = array_map('trim', explode(',', $researchAreas));
-                    $researchAreasArray = array_filter($researchAreasArray); // Remove empty values
-                }
-
-                // Handle photo upload - preserve existing if no new upload
-                $photoPath = null;
-                if ($request->hasFile("researchers.{$index}.photo")) {
-                    $photo = $request->file("researchers.{$index}.photo");
-                    $photoPath = $photo->store('researcher-photos', 'public');
-                } elseif (isset($existingResearchers[$index]) && $existingResearchers[$index]->photo_path) {
-                    $photoPath = $existingResearchers[$index]->photo_path;
-                }
-
-                $researchers[] = [
-                    'name' => $name,
-                    'title' => $title,
-                    'research_areas' => json_encode($researchAreasArray),
-                    'bio' => $bio,
-                    'status_badge' => $row['status_badge'] ?? 'Active',
-                    'background_color' => $row['background_color'] ?? 'maroon',
-                    'profile_link' => $row['profile_link'] ?? '',
-                    'scopus_link' => !empty(trim($row['scopus_link'] ?? '')) ? trim($row['scopus_link']) : null,
-                    'orcid_link' => !empty(trim($row['orcid_link'] ?? '')) ? trim($row['orcid_link']) : null,
-                    'wos_link' => !empty(trim($row['wos_link'] ?? '')) ? trim($row['wos_link']) : null,
-                    'google_scholar_link' => !empty(trim($row['google_scholar_link'] ?? '')) ? trim($row['google_scholar_link']) : null,
-                    'photo_path' => $photoPath,
-                    'sort_order' => $index,
-                    'is_active' => true,
-                ];
+            $hasContent = $name !== '' || $title !== '' || $bio !== '' || !empty($researchAreas);
+            if (!$hasContent) {
+                continue;
             }
+
+            $photoPath = null;
+            if ($request->hasFile("researchers.{$index}.photo")) {
+                $photo = $request->file("researchers.{$index}.photo");
+                $photoPath = $photo->store('researcher-photos', 'public');
+            } elseif (($existingResearchers[$index] ?? null) && $existingResearchers[$index]->photo_path) {
+                $photoPath = $existingResearchers[$index]->photo_path;
+            }
+
+            $payloads[] = [
+                'name' => $name,
+                'title' => $title,
+                'research_areas' => $researchAreas,
+                'bio' => $bio,
+                'status_badge' => $row['status_badge'] ?? 'Active',
+                'background_color' => $row['background_color'] ?? 'maroon',
+                'profile_link' => trim($row['profile_link'] ?? '') ?: null,
+                'scopus_link' => trim($row['scopus_link'] ?? '') ?: null,
+                'orcid_link' => trim($row['orcid_link'] ?? '') ?: null,
+                'wos_link' => trim($row['wos_link'] ?? '') ?: null,
+                'google_scholar_link' => trim($row['google_scholar_link'] ?? '') ?: null,
+                'photo_path' => $photoPath,
+                'sort_order' => count($payloads),
+                'is_active' => true,
+            ];
         }
 
-        // Insert new researchers
-        if (!empty($researchers)) {
-            ResearcherProfile::insert($researchers);
-        }
+        DB::transaction(function () use ($payloads) {
+            ResearcherProfile::query()->delete();
+            foreach ($payloads as $data) {
+                ResearcherProfile::create($data);
+            }
+        });
 
         return back()->with('success', 'Researchers updated successfully.');
     }

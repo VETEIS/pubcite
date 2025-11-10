@@ -1255,8 +1255,9 @@ class PublicationsController extends Controller
             $isPreview = !$reqId;
             
             if ($isPreview) {
-                // Simple temp path for immediate preview - no complex directory structure
-                $uploadPath = "temp/preview_" . time();
+                // Deterministic cache path for previews to avoid regenerating the same DOCX repeatedly
+                // Hash will be computed below once data is merged
+                $uploadPath = null; // set after computing unique hash
             } else {
                 $userRequest = \App\Models\Request::find($reqId);
                 if (!$userRequest) {
@@ -1301,7 +1302,7 @@ class PublicationsController extends Controller
             // Merge fallback data with form data
             $data = array_merge($fallbackData, $request->all());
             
-            Log::info('Publication DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
+            Log::info('Publication DOCX generation - Received data (trimmed log)', ['type' => $docxType, 'isPreview' => $isPreview]);
             
             $hashSource = json_encode([
                 'type' => $docxType,
@@ -1311,24 +1312,52 @@ class PublicationsController extends Controller
             $filename = null;
             $fullPath = null;
             
+            // If preview, set a stable cache directory based on the hash and short-circuit if exists
+            if ($isPreview) {
+                $cacheBase = "temp/docx_cache/{$docxType}_{$uniqueHash}";
+                $uploadPath = $cacheBase;
+                // Determine expected output filename based on type
+                $expectedFile = $docxType === 'incentive'
+                    ? "{$cacheBase}/Incentive_Application_Form.docx"
+                    : ($docxType === 'recommendation'
+                        ? "{$cacheBase}/Recommendation_Letter_Form.docx"
+                        : "{$cacheBase}/Terminal_Report_Form.docx");
+                $expectedAbsolute = Storage::disk('local')->path($expectedFile);
+                if (file_exists($expectedAbsolute)) {
+                    // Serve cached file immediately
+                    $serveName = $docxType === 'incentive'
+                        ? 'Incentive_Application_Form.docx'
+                        : ($docxType === 'recommendation'
+                            ? 'Recommendation_Letter_Form.docx'
+                            : 'Terminal_Report_Form.docx');
+                    $userAgent = request()->header('User-Agent');
+                    $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                    $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    return response()->download($expectedAbsolute, $serveName, [
+                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'Content-Disposition' => $contentDisposition . '; filename="' . $serveName . '"'
+                    ]);
+                }
+            }
+            
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
-                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
+                    Log::info('Filtered data for incentive (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
-                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
+                    Log::info('Filtered data for recommendation (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
                     
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
-                    Log::info('Filtered data for terminal', ['filtered' => $filtered]);
+                    Log::info('Filtered data for terminal (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Terminal_Report_Form.docx';
                     break;

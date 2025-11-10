@@ -741,8 +741,8 @@
                                 </div>
                             </div>
                             
-             <!-- Content -->
-             <div class="p-6">
+            <!-- Content -->
+            <div class="p-6">
                  <div class="mb-4">
                                     <div id="researchersRepeater" class="space-y-6">
                                         @php($researchers = old('researchers', $researchers ?? []))
@@ -785,17 +785,22 @@
                                                  x-transition:leave="transition ease-in duration-150"
                                                  x-transition:leave-start="opacity-100 mt-0"
                                                  x-transition:leave-end="opacity-0 -mt-4"
-                                                 class="px-6 pb-6 space-y-6 border-t border-gray-200">
+                                                 class="px-6 pt-6 pb-6 space-y-6 border-t border-gray-200">
                                                 <!-- Row 1: Profile Picture | Biography -->
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div>
                                                         <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
                                                         <div class="flex items-center gap-4">
-                                                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                                                                <img id="preview-{{ $idx }}" src="{{ !empty($researcher['photo_path']) ? '/storage/' . $researcher['photo_path'] : '' }}" alt="Profile preview" class="w-full h-full object-cover {{ !empty($researcher['photo_path']) ? '' : 'hidden' }}">
-                                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-{{ $idx }}" {{ !empty($researcher['photo_path']) ? 'style="display: none;"' : '' }}>
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                                </svg>
+                                                            <div class="relative">
+                                                                <div class="w-24 h-24 bg-gray-100 rounded-full overflow-hidden ring-1 ring-gray-200">
+                                                                    <img id="preview-{{ $idx }}" src="{{ !empty($researcher['photo_path']) ? '/storage/' . $researcher['photo_path'] : '' }}" alt="Profile preview" class="w-full h-full object-cover {{ !empty($researcher['photo_path']) ? '' : 'hidden' }}">
+                                                                    <svg class="w-10 h-10 text-gray-400 absolute inset-0 m-auto {{ !empty($researcher['photo_path']) ? 'hidden' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-{{ $idx }}">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                                    </svg>
+                                                                </div>
+                                                                <label for="photo-{{ $idx }}" class="absolute inset-0 rounded-full bg-black/30 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition">
+                                                                    <span class="text-xs text-white font-medium px-2 py-1 bg-black/40 rounded">Change</span>
+                                                                </label>
                                                             </div>
                                                             <div class="flex-1">
                                                                 <input type="file" name="researchers[{{ $idx }}][photo]" id="photo-{{ $idx }}" 
@@ -1502,18 +1507,23 @@
                      x-transition:leave="transition ease-in duration-150"
                      x-transition:leave-start="opacity-100 mt-0"
                      x-transition:leave-end="opacity-0 -mt-4"
-                     class="px-6 pb-6 space-y-6 border-t border-gray-200">
+                     class="px-6 pt-6 pb-6 space-y-6 border-t border-gray-200">
                      <!-- Row 1: Profile Picture | Biography -->
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                          <div>
                              <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
                              <div class="flex items-center gap-4">
-                                 <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                             <div class="relative">
+                                 <div class="w-24 h-24 bg-gray-100 rounded-full overflow-hidden ring-1 ring-gray-200">
                                      <img id="preview-${index}" src="" alt="Profile preview" class="w-full h-full object-cover hidden">
-                                     <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-${index}">
+                                     <svg class="w-10 h-10 text-gray-400 absolute inset-0 m-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="placeholder-${index}">
                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                        </div>
+                                    </svg>
+                            </div>
+                                 <label for="photo-${index}" class="absolute inset-0 rounded-full bg-black/30 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition">
+                                     <span class="text-xs text-white font-medium px-2 py-1 bg-black/40 rounded">Change</span>
+                                 </label>
+                         </div>
                                  <div class="flex-1">
                                      <input type="file" name="researchers[${index}][photo]" id="photo-${index}" 
                                             accept="image/*" onchange="previewImage(this, ${index})"

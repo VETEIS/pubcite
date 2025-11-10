@@ -196,101 +196,16 @@ document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
 });
 
-// Store generated file paths for optimization
-window.generatedDocxFiles = {};
-
-// Function to generate and store DOCX for submit optimization
-function generateAndStoreDocx(type) {
-    const form = document.getElementById('publication-request-form');
-    if (!form) {
-        alert('Error: Form not found. Please refresh the page and try again.');
-        return;
-    }
-    
-    const formData = new FormData(form);
-    formData.append('docx_type', type);
-    formData.append('store_for_submit', 'true'); // Flag to store file for later use
-
-    // Show loading state
-    const button = event.target.closest('.cursor-pointer');
-    if (button) {
-        button.style.opacity = '0.6';
-        button.style.pointerEvents = 'none';
-        const originalText = button.querySelector('p').textContent;
-        button.querySelector('p').textContent = 'Storing...';
-    }
-
-    fetch('{{ route("publications.generate") }}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success && data.filePath) {
-            // Store file path for later use in submit
-            window.generatedDocxFiles[type] = data.filePath;
-            
-            // Show success message
-            if (button) {
-                button.querySelector('p').textContent = 'Stored ✓';
-                setTimeout(() => {
-                    button.querySelector('p').textContent = originalText;
-                    button.style.opacity = '1';
-                    button.style.pointerEvents = 'auto';
-                }, 2000);
-            }
-        } else {
-            throw new Error(data.message || 'Failed to store file');
-        }
-    })
-    .catch(error => {
-        alert(`Error storing document: ${error.message}. Please try again.`);
-        if (button) {
-            button.querySelector('p').textContent = originalText;
-            button.style.opacity = '1';
-            button.style.pointerEvents = 'auto';
-        }
-    });
-}
-
-// Function to generate and download DOCX (original behavior)
+// Function to generate and download DOCX (preview-only, PhpWord populate → download)
 function generateDocx(type) {
     const form = document.getElementById('publication-request-form');
     if (!form) {
         alert('Error: Form not found. Please refresh the page and try again.');
         return;
     }
-    
-    // Prevent double submission
-    if (document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
-        return;
-    }
-    
+
     const formData = new FormData(form);
     formData.append('docx_type', type);
-
-    // Show comprehensive loading state with progress tracking
-    const operationId = `generate-docx-${type}-${Date.now()}`;
-    let originalText = '';
-    let button = null;
-    
-    // Show real progress tracking for document generation
-    const progressSteps = [
-        'Starting document generation...',
-        'Processing form data...',
-        'Filtering data for document type...',
-        'Generating document...',
-        'Document ready for download!'
-    ];
-    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
 
     fetch('{{ route("publications.generate") }}', {
         method: 'POST',
@@ -303,22 +218,15 @@ function generateDocx(type) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        // For download mode, always expect a blob
         return response.blob();
     })
     .then(blob => {
-        // Handle blob download
         if (!blob || blob.size === 0) {
             throw new Error('Generated file is empty or corrupted');
         }
-        
-        
-        // Ensure proper MIME type for DOCX
         const docxBlob = new Blob([blob], { 
             type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
         });
-        
         const url = window.URL.createObjectURL(docxBlob);
         const a = document.createElement('a');
         a.href = url;
@@ -330,24 +238,13 @@ function generateDocx(type) {
             : `Publication_Terminal_Report_${timestamp}.docx`;
         document.body.appendChild(a);
         a.click();
-        
-        // Clean up
         setTimeout(() => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }, 100);
-        
-        // Hide loading state
-        window.hideLoading();
-        
-        // Progress tracking is now handled by SSE
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
-        // Hide loading state
-        window.hideLoading();
-        
-        // Progress tracking is now handled by SSE
     });
 }
 </script>

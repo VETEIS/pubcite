@@ -122,20 +122,20 @@ class LandingResearchers {
         // Create research areas HTML
         const researchAreasHtml = this.createResearchAreasHtml(researcher.research_areas || []);
         
-        // Create photo HTML
-        const photoHtml = researcher.photo_path 
-            ? `<img src="/storage/${researcher.photo_path}" alt="${this.escapeHtml(researcher.name || '')}" class="w-20 h-20 rounded-full object-cover">`
-            : `<div class="w-20 h-20 ${bgClasses.avatar} rounded-full flex items-center justify-center">
-                <svg class="w-10 h-10 ${bgClasses.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-            </div>`;
+        // Create top area (full-width image or fallback background with icon)
+        const topAreaHtml = researcher.photo_path
+            ? `<div class="h-48 w-full overflow-hidden">
+                    <img src="/storage/${researcher.photo_path}" alt="${this.escapeHtml(researcher.name || '')}" class="w-full h-full object-cover">
+               </div>`
+            : `<div class="h-48 ${bgClasses.background} w-full flex items-center justify-center">
+                    <svg class="w-16 h-16 ${bgClasses.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+               </div>`;
         
         card.innerHTML = `
             <div class="relative">
-                <div class="h-48 ${bgClasses.background} flex items-center justify-center">
-                    ${photoHtml}
-                </div>
+                ${topAreaHtml}
                 <div class="absolute top-4 right-4">
                     <span class="${statusBadgeClasses} text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">${this.escapeHtml(researcher.status_badge || 'Active')}</span>
                 </div>

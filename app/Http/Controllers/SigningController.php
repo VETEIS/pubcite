@@ -290,42 +290,80 @@ class SigningController extends Controller
         ]);
     }
 
-    public function downloadRequestFile(Request $httpRequest, UserRequest $userRequest, string $type, string $key)
+    public function downloadRequestFile(Request $httpReq, UserRequest $request, string $type, string $key)
     {
         /** @var User $user */
         $user = Auth::user();
         if (!$user || !$user->isSignatory()) {
+            Log::warning('Per-file download forbidden: not signatory', [
+                'request_id' => $request->id ?? null,
+                'route_type' => $type,
+                'key' => $key,
+                'user_id' => $user->id ?? null,
+                'reason' => 'user_not_signatory'
+            ]);
             abort(403);
+        }
+
+        // Normalize type segment to match stored keys
+        // Accept both singular ('pdf','docx') and plural ('pdfs','docxs')
+        $originalType = $type;
+        if ($type === 'pdf') {
+            $type = 'pdfs';
+        } elseif ($type === 'docx') {
+            $type = 'docxs';
+        }
+        if ($originalType !== $type) {
+            Log::info('Per-file download: normalized type', [
+                'request_id' => $request->id,
+                'original_type' => $originalType,
+                'normalized_type' => $type,
+                'key' => $key,
+                'user_id' => $user->id
+            ]);
         }
 
         $signatoryType = $user->signatoryType();
         $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
-        $form = is_array($userRequest->form_data)
-            ? $userRequest->form_data
-            : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
+        $form = is_array($request->form_data)
+            ? $request->form_data
+            : (json_decode($request->form_data ?? '[]', true) ?: []);
 
         $matchedRole = $this->matchesSignatory($form, $signatoryType, trim($user->name ?? ''));
-        $hasSigned = RequestSignature::where('request_id', $userRequest->id)
+        $hasSigned = RequestSignature::where('request_id', $request->id)
             ->where('user_id', $user->id)
             ->exists();
 
-        if (!$matchedRole && !$hasSigned && !in_array($signatoryType, ['deputy_director', 'rdd_director'])) {
-            abort(403);
-        }
+        // Authorization model A: any signatory (and admin) can view/download files in the review modal
+        // We intentionally bypass matchedRole/workflow state checks to align with admin behavior
+        Log::info('Per-file download authorization bypass (signatory-level access)', [
+            'request_id' => $request->id,
+            'user_id' => $user->id,
+            'signatory_type' => $signatoryType
+        ]);
 
-        if (!$hasSigned
-            && !in_array($signatoryType, ['deputy_director', 'rdd_director'])
-            && $userRequest->workflow_state !== $expectedWorkflowState) {
-            abort(403);
-        }
-
-        $pdfPathData = json_decode($userRequest->pdf_path, true);
+        $pdfPathData = json_decode($request->pdf_path, true);
         if (!$pdfPathData || !isset($pdfPathData[$type])) {
+            Log::warning('Per-file download missing type in pdf_path', [
+                'request_id' => $request->id,
+                'user_id' => $user->id,
+                'type' => $type,
+                'key' => $key,
+                'pdf_path_present' => $pdfPathData ? true : false,
+                'reason' => 'type_missing_in_pdf_path'
+            ]);
             abort(404);
         }
 
         $fileInfo = $pdfPathData[$type][$key] ?? null;
         if (!$fileInfo) {
+            Log::warning('Per-file download missing file key', [
+                'request_id' => $request->id,
+                'user_id' => $user->id,
+                'type' => $type,
+                'key' => $key,
+                'reason' => 'file_key_missing'
+            ]);
             abort(404);
         }
 
@@ -338,6 +376,13 @@ class SigningController extends Controller
         }
 
         if (!$filePath) {
+            Log::warning('Per-file download missing file path', [
+                'request_id' => $request->id,
+                'user_id' => $user->id,
+                'type' => $type,
+                'key' => $key,
+                'reason' => 'file_path_missing'
+            ]);
             abort(404);
         }
 
@@ -347,9 +392,25 @@ class SigningController extends Controller
         }
 
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
+            Log::warning('Per-file download file not found or unreadable', [
+                'request_id' => $request->id,
+                'user_id' => $user->id,
+                'type' => $type,
+                'key' => $key,
+                'resolved_path' => $fullPath,
+                'reason' => 'file_missing_or_unreadable'
+            ]);
             abort(404);
         }
 
+        Log::info('Per-file download success', [
+            'request_id' => $request->id,
+            'user_id' => $user->id,
+            'type' => $type,
+            'key' => $key,
+            'original_name' => $originalName,
+            'path' => $fullPath
+        ]);
         return response()->download($fullPath, $originalName);
     }
 
@@ -550,17 +611,24 @@ class SigningController extends Controller
                     continue;
                 }
 
+                $downloadUrl = route('signing.request.file', [
+                    'request' => $request->id,
+                    'type' => 'pdfs',
+                    'key' => $key,
+                ]);
+                Log::info('Generated per-file download URL', [
+                    'request_id' => $request->id,
+                    'key' => $key,
+                    'type' => 'pdfs',
+                    'url' => $downloadUrl,
+                ]);
                 $files[] = [
                     'name' => $originalName ?: ucfirst(str_replace('_', ' ', $key)) . '.pdf',
                     'path' => $filePath,
                     'type' => 'pdf',
                     'size' => $this->formatFileSize(filesize($fullPath)),
                     'key' => $key,
-                    'download_url' => route('signing.request.file', [
-                        'request' => $request->id,
-                        'type' => 'pdfs',
-                        'key' => $key,
-                    ]),
+                    'download_url' => $downloadUrl,
                 ];
             }
         }
@@ -1285,8 +1353,8 @@ class SigningController extends Controller
         $signatoryType = $user->signatoryType();
         
         // Only center managers can perform redo action
-        if ($signatoryType !== 'center_manager') {
-            abort(403, 'Only center managers can perform this action');
+        if ($signatoryType !== 'center_manager' && $user->role !== 'admin') {
+            abort(403, 'Only center managers or admins can perform this action');
         }
 
         // Validate reason is provided
@@ -1294,16 +1362,7 @@ class SigningController extends Controller
             'reason' => 'required|string|min:10|max:1000',
         ]);
 
-        // Verify user has access to this request
-        $userName = trim($user->name ?? '');
-        $form = is_array($userRequest->form_data)
-            ? $userRequest->form_data
-            : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
-        $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
-        
-        if (!$matchedRole) {
-            abort(403, 'You are not authorized to perform this action on this request');
-        }
+        // Admin/Center Manager parity: no name-match requirement for redo
 
         // Only allow redo on pending requests
         if ($userRequest->status !== 'pending') {

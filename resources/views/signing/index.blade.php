@@ -155,19 +155,13 @@
                                                                 </div>
                                                             @else
                                                                 <div class="flex flex-col items-center gap-2">
-                                                                    @if($signatoryType === 'center_manager')
-                                                                        <button onclick="openReviewModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
-                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                            </svg>
-                                                                            Review
-                                                                        </button>
-                                                                    @else
-                                                                        <button onclick="downloadRequestFiles({{ $request['id'] }})" class="inline-flex justify-center w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
-                                                                            Download
-                                                                        </button>
-                                                                    @endif
+                                                                    <button onclick="openReviewModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                        </svg>
+                                                                        Review
+                                                                    </button>
                                                                     @if($signatoryType !== 'center_manager')
                                                                         <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-xs font-medium">
                                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -769,8 +763,9 @@
                     const type = file.type;
                     const key = file.key;
                     
-                    // Use secure download URL if available
-                    const downloadUrl = file.download_url || `/signing/request/${data.id}/file/${type}/${encodeURIComponent(key)}`;
+                    // Use secure download URL if available, otherwise fallback with correct pluralized type
+                    const downloadUrl = file.download_url || null;
+                    const hasUrl = !!downloadUrl;
                     
                     // Get appropriate icon and color based on file type
                     let iconClass = 'text-gray-500';
@@ -801,8 +796,10 @@
                             <span class="text-xs text-gray-500">(${file.size})</span>
                         </div>
                         <div class="flex gap-2">
-                            <a href="${downloadUrl}" target="_blank" class="px-2 py-1 ${bgColor} text-white text-xs rounded hover:opacity-80 transition-colors">View</a>
-                            <a href="${downloadUrl}" download class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>
+                            ${hasUrl ? `<a href="${downloadUrl}" target="_blank" class="px-2 py-1 ${bgColor} text-white text-xs rounded hover:opacity-80 transition-colors">View</a>` 
+                                     : `<button class="px-2 py-1 ${bgColor} text-white text-xs rounded opacity-50 cursor-not-allowed" title="Download link unavailable" disabled>View</button>`}
+                            ${hasUrl ? `<a href="${downloadUrl}" download class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>`
+                                     : `<button class="px-2 py-1 bg-green-600 text-white text-xs rounded opacity-50 cursor-not-allowed" title="Download link unavailable" disabled>Download</button>`}
                         </div>
                     `;
                     filesContainer.appendChild(fileDiv);
