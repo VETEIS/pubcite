@@ -1,98 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Request Submitted Successfully</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0;
-            background: #f9f9f9;
-        }
-        .header {
-            background-color: #8B2635;
-            color: white;
-            padding: 16px 10px 10px 10px;
-            text-align: center;
-            border-radius: 8px 8px 0 0;
-        }
-        .content {
-            background-color: #fff;
-            padding: 18px 16px 10px 16px;
-            border-radius: 0 0 8px 8px;
-        }
-        .request-code {
-            background-color: #8B2635;
-            color: white;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 12px 0 8px 0;
-        }
-        .details {
-            background-color: #f9f9f9;
-            padding: 10px 12px;
-            border-radius: 6px;
-            margin: 10px 0 8px 0;
-            border-left: 4px solid #8B2635;
-            font-size: 15px;
-        }
-        .status {
-            font-weight: bold;
-            color: #f59e0b;
-            font-size: 15px;
-        }
-        .btn {
-            display: inline-block;
-            background-color: #8B2635;
-            color: white !important;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 6px;
-            margin: 12px 0 0 0;
-            font-size: 15px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 18px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-            color: #666;
-            font-size: 13px;
-        }
-        @media (max-width: 600px) {
-            .header, .content { padding-left: 6px; padding-right: 6px; }
-            .btn { width: 100%; box-sizing: border-box; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h2 style="margin:0; font-size: 1.2em;">USEP Publication</h2>
-        <div style="font-size: 1em; margin-top: 2px;">{{ $request->type }} Request Submitted</div>
+@extends('emails.layout')
+
+@section('title', 'Request Submitted Successfully - ' . $request->request_code)
+
+@section('header-title', 'USEP Publication System')
+@section('header-subtitle', $request->type . ' Request Submitted')
+
+@section('content')
+    <p>Dear {{ $user->name }},</p>
+    
+    <p>Your <strong>{{ $request->type }}</strong> request has been submitted successfully and is now pending review.</p>
+    
+    <div class="request-code-badge">
+        Request Code: {{ $request->request_code }}
     </div>
-    <div class="content">
-        <div class="request-code">Request Code: {{ $request->request_code }}</div>
-        <div class="details">
-            <div><strong>Status:</strong> <span class="status">Pending Review</span></div>
-            <div><strong>Submitted:</strong> {{ $request->requested_at->format('M d, Y g:i A') }}</div>
-        </div>
-        <a href="{{ route('dashboard') }}" class="btn">View Dashboard</a>
-        <div style="margin-top:10px; font-size:13px; color:#555;">
-            Please save your request code for future reference.
-        </div>
-        <div style="margin-top:10px; font-size:12px; color:#888;">
-            Your request will be reviewed by the Publication Unit. You will receive updates on the status of your request.
-        </div>
-        <div class="footer">
-            <p>This is an automated message. Please do not reply to this email.</p>
-        </div>
+    
+    <table class="details-table">
+        <tr>
+            <td class="label">Status:</td>
+            <td class="value"><span class="status-badge status-pending">Pending Review</span></td>
+        </tr>
+        <tr>
+            <td class="label">Submitted:</td>
+            <td class="value">{{ $request->requested_at->format('F j, Y \a\t g:i A') }}</td>
+        </tr>
+        <tr>
+            <td class="label">Request Type:</td>
+            <td class="value">{{ $request->type }}</td>
+        </tr>
+    </table>
+    
+    <div class="info-box">
+        <p><strong>Important:</strong> Please save your request code for future reference. You will receive updates on the status of your request via email.</p>
     </div>
-</body>
-</html> 
+    
+    <div class="btn-center">
+        <a href="{{ route('dashboard') }}" class="btn">View Your Dashboard</a>
+    </div>
+    
+    <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">
+        Your request will be reviewed by the Publication Unit. You will receive email notifications when there are updates to your request status.
+    </p>
+@endsection
+
+@section('footer')
+    <p><strong>USEP Publication & Citation System</strong></p>
+    <p>This is an automated message. Please do not reply to this email.</p>
+    <p>If you need assistance, please contact your system administrator or the Publication Unit.</p>
+@endsection

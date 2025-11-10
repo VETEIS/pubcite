@@ -155,15 +155,27 @@
                                                                 </div>
                                                             @else
                                                                 <div class="flex flex-col items-center gap-2">
-                                                                    <button onclick="downloadRequestFiles({{ $request['id'] }})" class="inline-flex justify-center w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
-                                                                        Download
-                                                                    </button>
-                                                                    <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-xs font-medium">
-                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                                                        </svg>
-                                                                        Upload Signed
-                                                                    </button>
+                                                                    @if($signatoryType === 'center_manager')
+                                                                        <button onclick="openReviewModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                            </svg>
+                                                                            Review
+                                                                        </button>
+                                                                    @else
+                                                                        <button onclick="downloadRequestFiles({{ $request['id'] }})" class="inline-flex justify-center w-full px-4 py-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 text-xs font-medium">
+                                                                            Download
+                                                                        </button>
+                                                                    @endif
+                                                                    @if($signatoryType !== 'center_manager')
+                                                                        <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-xs font-medium">
+                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                                                            </svg>
+                                                                            Upload Signed
+                                                                        </button>
+                                                                    @endif
                                                                 </div>
                                                             @endif
                                                         </td>
@@ -214,6 +226,250 @@
 
     <!-- CSRF Token for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="w-[95vw] h-[90vh] max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 bg-maroon-800 text-white flex-shrink-0">
+                    <h2 class="text-lg font-bold">Request Review</h2>
+                    <button onclick="closeReviewModal()" class="px-4 py-2 text-white/80 hover:text-white font-medium transition-colors rounded-lg hover:bg-white/10 text-sm">
+                        Cancel
+                    </button>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="modalLoading" class="flex-1 flex items-center justify-center p-8">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-maroon-700 mx-auto"></div>
+                        <p class="mt-3 text-gray-600 font-medium">Loading request details...</p>
+                    </div>
+                </div>
+                
+                <!-- Content -->
+                <div id="modalContent" class="hidden flex-1 overflow-hidden">
+                    <div class="p-4 h-full flex flex-col space-y-4">
+                        <!-- Main Content Grid -->
+                        <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
+                            <!-- Left Column - Combined Request/Applicant/Signatories Card -->
+                            <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col h-full">
+                                <div class="flex items-center gap-2">
+                                    
+                                </div>
+                                
+                                <!-- Summary Section -->
+                                <div class="mb-3 flex-1 flex flex-col min-h-0">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-6 h-6 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <h4 class="text-xs font-semibold text-gray-800 border-gray-200">Summary</h4>
+                                    </div>
+                                    <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
+                                        <style>
+                                            .summary-table td {
+                                                white-space: nowrap;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                            }
+                                        </style>
+                                        <table class="w-full h-full text-xs summary-table" style="table-layout: fixed;">
+                                            <tbody class="divide-y divide-gray-300">
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Request Code</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalRequestCode" title="">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Type</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalType" title="">-</td>
+                                                </tr>
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Status</td>
+                                                    <td class="px-2 py-0.5 w-1/2 truncate">
+                                                        <div id="modalStatus" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full" title="">-</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Submitted</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalDate" title="">-</td>
+                                                </tr>
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Full Name</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserName" title="">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Email Address</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalUserEmail" title="">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <!-- Signatories Section -->
+                                <div class="flex-1 flex flex-col min-h-0">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-6 h-6 bg-maroon-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-maroon-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                            </svg>
+                                        </div>
+                                        <h4 class="text-xs font-semibold text-gray-800 border-gray-200">Signatories</h4>
+                                    </div>
+                                    <div class="flex-1 overflow-hidden rounded-lg border border-gray-300">
+                                        <style>
+                                            .signatories-table td {
+                                                white-space: nowrap;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                            }
+                                        </style>
+                                        <table class="w-full h-full text-xs signatories-table" style="table-layout: fixed;">
+                                            <tbody class="divide-y divide-gray-300" id="modalFormData">
+                                                <!-- Dynamic Signatories will be populated here -->
+                                                <!-- Fixed Directors -->
+                                                <tr class="bg-gray-50 fixed-director">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}">{{ \App\Models\Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit') }}</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}">{{ \App\Models\Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD') }}</td>
+                                                </tr>
+                                                <tr class="fixed-director">
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300" title="{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}">{{ \App\Models\Setting::get('official_rdd_director_title', 'Director, Research and Development Division') }}</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" title="{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}">{{ \App\Models\Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD') }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column - Files Card -->
+                            <div class="flex flex-col space-y-3 min-h-0">
+                                <!-- Files Section Card -->
+                                <div class="bg-white rounded-xl p-3 border border-gray-200 shadow-sm flex-1 min-h-0 flex flex-col">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-xs font-semibold text-gray-900">Submitted Files</h3>
+                                        </div>
+                                        <button id="downloadZipBtn" class="inline-flex items-center gap-1 px-2 py-1 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 hover:shadow-md transition-all duration-300 text-xs font-medium">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                            Download Zip
+                                        </button>
+                                    </div>
+                                    <div id="modalFiles" class="flex-1 overflow-y-auto space-y-1 text-xs">
+                                        <!-- Files will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer Actions -->
+                <div id="modalFooter" class="flex justify-between items-center p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <span class="font-medium">Review all information before making a decision.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="modalSignedDocuments" name="signed_documents[]" multiple accept=".pdf,.docx" class="hidden">
+                        <button id="modalRedoBtn" onclick="openRedoConfirmationModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm" style="display: none;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Redo
+                        </button>
+                        <button id="modalUploadBtn" class="px-4 py-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors font-medium flex items-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload Signed Documents
+                        </button>
+                        <div id="modalSelectedFiles" class="text-xs text-gray-600 max-w-xs truncate"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redo Confirmation Modal -->
+    <div id="redoConfirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Confirm Redo Action</h3>
+                    <button onclick="closeRedoConfirmationModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-700">
+                                    <strong>Warning:</strong> This action will permanently delete all files associated with this request. This action cannot be undone.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="redoReason" class="block text-sm font-medium text-gray-700 mb-2">
+                            Reason for deletion/rejection <span class="text-red-500">*</span>
+                        </label>
+                        <textarea 
+                            id="redoReason" 
+                            name="redo_reason" 
+                            rows="4" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="Please provide a reason for deleting all files of this request..."
+                            required
+                        ></textarea>
+                        <p class="mt-1 text-xs text-gray-500">This reason will be recorded for audit purposes.</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button 
+                        onclick="closeRedoConfirmationModal()" 
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        id="confirmRedoBtn"
+                        onclick="confirmRedoAction()" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Upload Signed Documents Modal -->
     <div id="uploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
@@ -268,6 +524,634 @@
     
     
     <script>
+        let currentReviewRequestId = null;
+        let reviewModalKeydownHandlerBound = false;
+
+        async function openReviewModal(requestId) {
+            if (!requestId) {
+                return;
+            }
+
+            currentReviewRequestId = requestId;
+
+            const modal = document.getElementById('reviewModal');
+            const loading = document.getElementById('modalLoading');
+            const content = document.getElementById('modalContent');
+            const footer = document.getElementById('modalFooter');
+
+            if (!modal || !loading || !content || !footer) {
+                return;
+            }
+
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+            
+            // Initialize upload button state (hide until data loads)
+            const uploadBtn = document.getElementById('modalUploadBtn');
+            const fileInput = document.getElementById('modalSignedDocuments');
+            const selectedFilesDiv = document.getElementById('modalSelectedFiles');
+            if (uploadBtn) {
+                uploadBtn.style.display = 'none';
+            }
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            if (selectedFilesDiv) {
+                selectedFilesDiv.innerHTML = '';
+            }
+
+            if (!reviewModalKeydownHandlerBound) {
+                document.addEventListener('keydown', handleReviewModalKeydown);
+                reviewModalKeydownHandlerBound = true;
+            }
+
+            try {
+                const response = await fetch(`/signing/request/${requestId}/data`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load request data');
+                }
+
+                const data = await response.json();
+                populateReviewModal(data, requestId);
+
+                const zipBtn = document.getElementById('downloadZipBtn');
+                if (zipBtn) {
+                    const downloadUrl = data.download_zip_url || `/signing/download-files/${requestId}`;
+                    if (downloadUrl) {
+                        zipBtn.disabled = false;
+                        zipBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        zipBtn.onclick = () => {
+                            window.location.href = downloadUrl;
+                        };
+                    } else {
+                        zipBtn.disabled = true;
+                        zipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        zipBtn.onclick = null;
+                    }
+                }
+                
+                // Set up upload functionality
+                setupModalUpload(requestId, data);
+
+            } catch (error) {
+                console.error('Review modal error:', error);
+                alert('Failed to load request data. Please try again.');
+            } finally {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                // Footer is always visible, no need to show it
+            }
+        }
+
+        function closeReviewModal() {
+            const modal = document.getElementById('reviewModal');
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+
+            const loading = document.getElementById('modalLoading');
+            const content = document.getElementById('modalContent');
+
+            if (loading) {
+                loading.classList.remove('hidden');
+            }
+            if (content) {
+                content.classList.add('hidden');
+            }
+
+            // Reset modal content
+            document.getElementById('modalRequestCode').textContent = '-';
+            document.getElementById('modalType').textContent = '-';
+            document.getElementById('modalStatus').textContent = '-';
+            document.getElementById('modalDate').textContent = '-';
+            document.getElementById('modalUserName').textContent = '-';
+            document.getElementById('modalUserEmail').textContent = '-';
+            // Clear only dynamic signatories, preserve fixed directors
+            const formDataContainer = document.getElementById('modalFormData');
+            const dynamicRows = formDataContainer.querySelectorAll('tr:not(.fixed-director)');
+            dynamicRows.forEach(row => row.remove());
+
+            const filesContainer = document.getElementById('modalFiles');
+            if (filesContainer) {
+                filesContainer.innerHTML = '<div class="text-gray-500">No files uploaded for this request.</div>';
+            }
+            
+            // Reset upload button state
+            const fileInput = document.getElementById('modalSignedDocuments');
+            const uploadBtn = document.getElementById('modalUploadBtn');
+            const selectedFilesDiv = document.getElementById('modalSelectedFiles');
+            
+            if (fileInput) {
+                fileInput.value = '';
+                fileInput.removeAttribute('data-request-id');
+            }
+            
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Upload Signed Documents
+                `;
+                uploadBtn.onclick = null;
+            }
+            
+            if (selectedFilesDiv) {
+                selectedFilesDiv.innerHTML = '';
+            }
+
+            currentReviewRequestId = null;
+
+            if (reviewModalKeydownHandlerBound) {
+                document.removeEventListener('keydown', handleReviewModalKeydown);
+                reviewModalKeydownHandlerBound = false;
+            }
+        }
+
+        function populateReviewModal(data, requestId) {
+            // Populate basic info
+            const requestCode = data.request_code || 'N/A';
+            const type = data.type || 'N/A';
+            const date = formatDate(data.requested_at);
+            const userName = data.user?.name || 'N/A';
+            const userEmail = data.user?.email || 'N/A';
+            
+            document.getElementById('modalRequestCode').textContent = requestCode;
+            document.getElementById('modalRequestCode').title = requestCode;
+            document.getElementById('modalType').textContent = type;
+            document.getElementById('modalType').title = type;
+            document.getElementById('modalDate').textContent = date;
+            document.getElementById('modalDate').title = date;
+            document.getElementById('modalUserName').textContent = userName;
+            document.getElementById('modalUserName').title = userName;
+            document.getElementById('modalUserEmail').textContent = userEmail;
+            document.getElementById('modalUserEmail').title = userEmail;
+            
+            // Status
+            const statusElement = document.getElementById('modalStatus');
+            const status = data.status || 'N/A';
+            statusElement.textContent = status;
+            statusElement.title = status;
+            statusElement.className = 'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full';
+            if (data.status === 'pending') {
+                statusElement.classList.add('bg-yellow-100', 'text-yellow-800');
+            } else if (data.status === 'endorsed') {
+                statusElement.classList.add('bg-green-100', 'text-green-800');
+            } else if (data.status === 'rejected') {
+                statusElement.classList.add('bg-red-100', 'text-red-800');
+            }
+            
+            // Signatories
+            const formDataContainer = document.getElementById('modalFormData');
+            
+            // Clear only dynamic signatories (first rows), preserve fixed directors
+            const dynamicRows = formDataContainer.querySelectorAll('tr:not(.fixed-director)');
+            dynamicRows.forEach(row => row.remove());
+            
+            if (data.signatories && data.signatories.length > 0) {
+                data.signatories.forEach((signatory, index) => {
+                    const row = document.createElement('tr');
+                    row.className = index % 2 === 0 ? 'bg-gray-50' : '';
+                    
+                    // Position in column 1
+                    const positionCell = document.createElement('td');
+                    positionCell.className = 'px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300';
+                    positionCell.textContent = signatory.role || 'N/A';
+                    positionCell.title = signatory.role || 'N/A';
+                    
+                    // Name in column 2
+                    const nameCell = document.createElement('td');
+                    nameCell.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate';
+                    nameCell.textContent = signatory.name || 'N/A';
+                    nameCell.title = signatory.name || 'N/A';
+                    
+                    row.appendChild(positionCell);
+                    row.appendChild(nameCell);
+                    formDataContainer.insertBefore(row, formDataContainer.querySelector('.fixed-director'));
+                });
+            } else {
+                const noDataRow = document.createElement('tr');
+                noDataRow.className = 'bg-gray-50';
+                
+                const noDataCell1 = document.createElement('td');
+                noDataCell1.className = 'px-2 py-0.5 font-bold text-gray-700 w-1/2 truncate border-r border-gray-300';
+                noDataCell1.textContent = 'No signatories found';
+                
+                const noDataCell2 = document.createElement('td');
+                noDataCell2.className = 'px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate';
+                noDataCell2.textContent = '';
+                
+                noDataRow.appendChild(noDataCell1);
+                noDataRow.appendChild(noDataCell2);
+                formDataContainer.insertBefore(noDataRow, formDataContainer.querySelector('.fixed-director'));
+            }
+
+            // Files
+            const filesContainer = document.getElementById('modalFiles');
+            filesContainer.innerHTML = '';
+            if (data.files && data.files.length > 0) {
+                data.files.forEach(file => {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3';
+                    const type = file.type;
+                    const key = file.key;
+                    
+                    // Use secure download URL if available
+                    const downloadUrl = file.download_url || `/signing/request/${data.id}/file/${type}/${encodeURIComponent(key)}`;
+                    
+                    // Get appropriate icon and color based on file type
+                    let iconClass = 'text-gray-500';
+                    let bgColor = 'bg-gray-600';
+                    
+                    if (type === 'pdf') {
+                        iconClass = 'text-red-500';
+                        bgColor = 'bg-red-600';
+                    } else if (type === 'docx') {
+                        iconClass = 'text-blue-500';
+                        bgColor = 'bg-blue-600';
+                    } else if (type === 'signed') {
+                        iconClass = 'text-green-500';
+                        bgColor = 'bg-green-600';
+                    } else if (type === 'backup') {
+                        iconClass = 'text-orange-500';
+                        bgColor = 'bg-orange-600';
+                    }
+                    
+                    fileDiv.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-xs text-gray-900">${file.name}</span>
+                            </div>
+                            <span class="text-xs text-gray-500">(${file.size})</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="${downloadUrl}" target="_blank" class="px-2 py-1 ${bgColor} text-white text-xs rounded hover:opacity-80 transition-colors">View</a>
+                            <a href="${downloadUrl}" download class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>
+                        </div>
+                    `;
+                    filesContainer.appendChild(fileDiv);
+                });
+            } else {
+                filesContainer.innerHTML = '<div class="text-gray-500 text-xs">No files uploaded for this request</div>';
+            }
+        }
+
+        function setupModalUpload(requestId, data) {
+            const uploadBtn = document.getElementById('modalUploadBtn');
+            const redoBtn = document.getElementById('modalRedoBtn');
+            const fileInput = document.getElementById('modalSignedDocuments');
+            const selectedFilesDiv = document.getElementById('modalSelectedFiles');
+            
+            if (!fileInput) {
+                return;
+            }
+            
+            // Set request ID on file input (needed for Redo button)
+            fileInput.setAttribute('data-request-id', requestId);
+            
+            // Check if center manager can upload (only if workflow is in their stage and they haven't signed)
+            const centerManagerHasSigned = data.signatories && data.signatories.some(s => 
+                s.status === 'completed' && s.role_key === 'center_manager');
+            const isInCenterManagerStage = data.workflow_state === 'pending_research_manager';
+            const canUpload = isInCenterManagerStage && !centerManagerHasSigned && data.status !== 'endorsed';
+            
+            // Setup upload button
+            if (uploadBtn) {
+                if (!canUpload) {
+                    uploadBtn.style.display = 'none';
+                    if (selectedFilesDiv) {
+                        selectedFilesDiv.innerHTML = '';
+                    }
+                } else {
+                    // Show upload button
+                    uploadBtn.style.display = 'flex';
+                    uploadBtn.disabled = false;
+                    
+                    // Set up button click to open file picker
+                    uploadBtn.onclick = () => {
+                        fileInput.click();
+                    };
+                    
+                    // Handle file selection
+                    fileInput.onchange = function() {
+                        updateModalSelectedFiles(this, selectedFilesDiv, requestId);
+                    };
+                }
+            }
+            
+            // Setup Redo button visibility
+            // Redo button should be visible when:
+            // - Request is in center manager's workflow stage
+            // - Request has files (check if files array exists and has items)
+            // - Request status is pending
+            if (redoBtn) {
+                const hasFiles = data.files && Array.isArray(data.files) && data.files.length > 0;
+                const canRedo = isInCenterManagerStage && hasFiles && data.status === 'pending';
+                
+                if (canRedo) {
+                    redoBtn.style.display = 'flex';
+                } else {
+                    redoBtn.style.display = 'none';
+                }
+            }
+        }
+
+        function updateModalSelectedFiles(fileInput, selectedFilesDiv, requestId) {
+            if (!fileInput || !selectedFilesDiv) return;
+            
+            const uploadBtn = document.getElementById('modalUploadBtn');
+            
+            if (fileInput.files.length > 0) {
+                let filesList = '<div class="text-left"><strong>Selected:</strong> ';
+                const fileNames = [];
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    fileNames.push(fileInput.files[i].name);
+                }
+                filesList += fileNames.join(', ') + '</div>';
+                selectedFilesDiv.innerHTML = filesList;
+                
+                // Update button to show upload action
+                if (uploadBtn) {
+                    uploadBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Now
+                    `;
+                    uploadBtn.onclick = (e) => {
+                        e.preventDefault();
+                        handleModalUpload(requestId, fileInput);
+                    };
+                }
+            } else {
+                selectedFilesDiv.innerHTML = '';
+                // Reset button to file picker
+                if (uploadBtn) {
+                    uploadBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Signed Documents
+                    `;
+                    uploadBtn.onclick = () => {
+                        fileInput.click();
+                    };
+                }
+            }
+        }
+
+        async function handleModalUpload(requestId, fileInput) {
+            if (!requestId || !fileInput || !fileInput.files || fileInput.files.length === 0) {
+                return;
+            }
+
+            // Show loading state
+            const uploadBtn = document.getElementById('modalUploadBtn');
+            if (uploadBtn) {
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>';
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('request_id', requestId);
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                
+                // Add all selected files
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    formData.append('signed_documents[]', fileInput.files[i]);
+                }
+
+                const response = await fetch('/signing/upload-signed', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Success: ' + data.message);
+                    // Close modal and refresh page
+                    closeReviewModal();
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    alert('Error: ' + data.message);
+                    if (uploadBtn) {
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = `
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload Signed Documents
+                        `;
+                        uploadBtn.onclick = () => {
+                            fileInput.click();
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Failed to upload signed documents. Please try again.');
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Signed Documents
+                    `;
+                    uploadBtn.onclick = () => {
+                        fileInput.click();
+                    };
+                }
+            }
+        }
+
+        // Store current request ID for Redo action
+        let currentRedoRequestId = null;
+
+        function openRedoConfirmationModal() {
+            // Get the request ID from the review modal's file input
+            const fileInput = document.getElementById('modalSignedDocuments');
+            if (!fileInput || !fileInput.getAttribute('data-request-id')) {
+                alert('Unable to determine request ID. Please try again.');
+                return;
+            }
+            
+            currentRedoRequestId = fileInput.getAttribute('data-request-id');
+            const modal = document.getElementById('redoConfirmationModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+                // Focus on reason textarea
+                const reasonTextarea = document.getElementById('redoReason');
+                if (reasonTextarea) {
+                    reasonTextarea.value = '';
+                    reasonTextarea.focus();
+                }
+            }
+        }
+
+        function closeRedoConfirmationModal() {
+            const modal = document.getElementById('redoConfirmationModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                // Clear reason textarea
+                const reasonTextarea = document.getElementById('redoReason');
+                if (reasonTextarea) {
+                    reasonTextarea.value = '';
+                }
+                currentRedoRequestId = null;
+            }
+        }
+
+        async function confirmRedoAction() {
+            if (!currentRedoRequestId) {
+                alert('Unable to determine request ID. Please try again.');
+                return;
+            }
+
+            const reasonTextarea = document.getElementById('redoReason');
+            const reason = reasonTextarea ? reasonTextarea.value.trim() : '';
+            
+            if (!reason) {
+                alert('Please provide a reason for deleting the files.');
+                reasonTextarea?.focus();
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmRedoBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>';
+            }
+
+            try {
+                const response = await fetch(`/signing/request/${currentRedoRequestId}/redo`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        reason: reason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Success: ' + data.message);
+                    closeRedoConfirmationModal();
+                    closeReviewModal();
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to delete files. Please try again.'));
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = `
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Confirm Delete
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Redo action error:', error);
+                alert('Failed to delete files. Please try again.');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    `;
+                }
+            }
+        }
+
+        // Handle ESC key to close Redo modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const redoModal = document.getElementById('redoConfirmationModal');
+                if (redoModal && !redoModal.classList.contains('hidden')) {
+                    closeRedoConfirmationModal();
+                }
+            }
+        });
+
+        function formatWorkflowState(state) {
+            if (!state) {
+                return '—';
+            }
+
+            const mapping = {
+                pending_research_manager: 'Pending Research Center Manager',
+                pending_faculty: 'Pending Faculty',
+                pending_dean: 'Pending College Dean',
+                pending_deputy_director: 'Pending Deputy Director',
+                pending_director: 'Pending RDD Director',
+                completed: 'Completed',
+            };
+
+            if (Object.prototype.hasOwnProperty.call(mapping, state)) {
+                return mapping[state];
+            }
+
+            return state.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function formatSignatoryStatus(status) {
+            const variants = {
+                completed: { label: 'Completed', classes: 'bg-green-100 text-green-700' },
+                current: { label: 'Awaiting Your Action', classes: 'bg-amber-100 text-amber-700' },
+                pending: { label: 'Awaiting Previous Step', classes: 'bg-blue-100 text-blue-700' },
+                upcoming: { label: 'Upcoming', classes: 'bg-gray-100 text-gray-600' },
+            };
+
+            return variants[status] || { label: 'Pending', classes: 'bg-gray-100 text-gray-600' };
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function handleReviewModalKeydown(event) {
+            if (event.key === 'Escape') {
+                closeReviewModal();
+            }
+        }
+
         let currentRequestId = null;
 
         function downloadRequestFiles(requestId) {

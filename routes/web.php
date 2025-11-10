@@ -78,6 +78,9 @@ Route::middleware([
     Route::post('/signing/revert-document', [\App\Http\Controllers\SigningController::class, 'revertDocument'])->name('signing.revert-document');
     Route::get('/signing/download-files/{requestId}', [\App\Http\Controllers\SigningController::class, 'downloadRequestFiles'])->name('signing.download-files')->middleware('throttle:20,1');
     Route::post('/signing/upload-signed', [\App\Http\Controllers\SigningController::class, 'uploadSignedDocuments'])->name('signing.upload-signed')->middleware('throttle:10,1');
+    Route::get('/signing/request/{request}/data', [\App\Http\Controllers\SigningController::class, 'getRequestData'])->name('signing.request.data');
+    Route::get('/signing/request/{request}/file/{type}/{key}', [\App\Http\Controllers\SigningController::class, 'downloadRequestFile'])->name('signing.request.file');
+    Route::post('/signing/request/{request}/redo', [\App\Http\Controllers\SigningController::class, 'redoRequest'])->name('signing.request.redo');
 
 // file download
 Route::middleware(['auth', 'admin', 'throttle:30,1'])->group(function () {
@@ -139,7 +142,6 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     Route::get('/requests/{request}/download-zip', [\App\Http\Controllers\AdminRequestController::class, 'downloadZip'])->name('admin.requests.download-zip');
     // endpointss
     Route::get('/dashboard/data', [\App\Http\Controllers\DashboardController::class, 'getData'])->name('admin.dashboard.data');
-    Route::get('/dashboard/stream', [\App\Http\Controllers\DashboardController::class, 'streamUpdates'])->name('admin.dashboard.stream');
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');

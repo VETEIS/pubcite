@@ -178,7 +178,7 @@ class DashboardController extends Controller
             $chartNow = $now;
             $chartStartMonth = $chartNow->copy()->subMonths(11)->startOfMonth();
             $chartEndMonth = $chartNow->copy()->endOfMonth();
-            $chartBaseQuery = \App\Models\Request::query();
+            $chartBaseQuery = \App\Models\Request::query()->where('workflow_state', 'completed');
             if ($chartType && in_array($chartType, ['Publication', 'Citation', 'Publications', 'Citations'])) {
                 $dbType = $chartType === 'Publications' ? 'Publication' : ($chartType === 'Citations' ? 'Citation' : $chartType);
                 $chartBaseQuery->where('type', $dbType);
@@ -204,6 +204,7 @@ class DashboardController extends Controller
             }
             $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
                 ->where('status', '!=', 'draft') // Exclude drafts from chart data
+                ->where('workflow_state', 'completed') // Only include completed workflows
                 ->when($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                     $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                     $q->where('type', $dbType);
@@ -482,6 +483,7 @@ class DashboardController extends Controller
             
             $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
                 ->where('status', '!=', 'draft') // Exclude drafts from chart data
+                ->where('workflow_state', 'completed') // Only include completed workflows
                 ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                     $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                     $q->where('type', $dbType);
@@ -527,6 +529,7 @@ class DashboardController extends Controller
             if ($period === 'month' || $period === 'This Month') {
                 $dateDetails = \App\Models\Request::selectRaw("DATE(requested_at) as date, COUNT(*) as count")
                     ->where('status', '!=', 'draft') // Exclude drafts from date details
+                    ->where('workflow_state', 'completed') // Only include completed workflows
                     ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                         $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                         $q->where('type', $dbType);
@@ -634,125 +637,5 @@ class DashboardController extends Controller
         }
     }
 
-    public function streamUpdates()
-    {
-        $user = Auth::user();
-        if ($user->role !== 'admin') {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        header('Content-Type: text/event-stream');
-        header('Cache-Control: no-cache');
-        header('Connection: keep-alive');
-        header('X-Accel-Buffering: no');
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Headers: Cache-Control');
-
-        $lastCheck = now();
-        $maxExecutionTime = 300;
-        $startTime = time();
-        $lastUpdateTime = null;
-        
-        while (true) {
-            if (time() - $startTime > $maxExecutionTime) {
-                echo "data: " . json_encode(['type' => 'timeout']) . "\n\n";
-                break;
-            }
-            
-            try {
-                $newRequests = 0;
-                $statusChanges = 0;
-                
-                try {
-                    $newRequests = \App\Models\Request::where('requested_at', '>', $lastCheck)->count();
-                } catch (\Exception $e) {
-                    Log::error('SSE Stream Error: ' . $e->getMessage());
-                    $newRequests = 0;
-                }
-                
-                try {
-                    $statusChanges = \App\Models\ActivityLog::where('created_at', '>', $lastCheck)
-                        ->whereIn('action', ['created', 'status_changed', 'deleted', 'nudged'])
-                        ->count();
-                } catch (\Exception $e) {
-                    Log::error('SSE Stream Error: ' . $e->getMessage());
-                    $statusChanges = 0;
-                }
-                
-                if (($newRequests > 0 || $statusChanges > 0) && 
-                    (!$lastUpdateTime || now()->diffInSeconds($lastUpdateTime) > 5)) {
-                    
-                    $now = now();
-                    $stats = [
-                        'publication' => [
-                            'week' => 0, 'month' => 0, 'quarter' => 0, 'year' => 0
-                        ],
-                        'citation' => [
-                            'week' => 0, 'month' => 0, 'quarter' => 0, 'year' => 0
-                        ],
-                    ];
-                    
-                    try {
-                        $stats = [
-                            'publication' => [
-                                'week' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
-                                'month' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
-                                'quarter' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
-                                'year' => \App\Models\Request::where('type', 'Publication')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
-                            ],
-                            'citation' => [
-                                'week' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count(),
-                                'month' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
-                                'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
-                                'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
-                            ],
-                        ];
-                    } catch (\Exception $e) {
-                        Log::error('SSE Stream Error: ' . $e->getMessage());
-                    }
-                    
-                    $recentApplications = collect();
-                    $activityLogs = collect();
-                    
-                    try {
-                        $recentApplications = \App\Models\Request::with('user')->where('status', '!=', 'draft')->orderByDesc('requested_at')->limit(5)->get();
-                    } catch (\Exception $e) {
-                        Log::error('SSE Stream Error: ' . $e->getMessage());
-                    }
-                    
-                    try {
-                        $activityLogs = \App\Models\ActivityLog::with('user')
-                ->whereNotIn('action', ['created']) // Exclude submission requests
-                ->orderByDesc('created_at')
-                ->limit(10)
-                ->get();
-                    } catch (\Exception $e) {
-                        Log::error('SSE Stream Error: ' . $e->getMessage());
-                    }
-                    
-                    $updateData = [
-                        'stats' => $stats,
-                        'recentApplications' => $recentApplications,
-                        'activityLogs' => $activityLogs,
-                        'hasChanges' => true
-                    ];
-                    
-                    echo "data: " . json_encode($updateData) . "\n\n";
-                    $lastUpdateTime = now();
-                }
-                
-                $lastCheck = now();
-                
-            } catch (\Exception $e) {
-                Log::error('SSE Stream Error: ' . $e->getMessage());
-            }
-            
-            if (!$lastUpdateTime || now()->diffInSeconds($lastUpdateTime) > 30) {
-                echo "data: " . json_encode(['type' => 'keepalive']) . "\n\n";
-                $lastUpdateTime = now();
-            }
-            
-            sleep(2);
-        }
-    }
+    // streamUpdates removed: admin dashboard no longer uses real-time SSE
 } 

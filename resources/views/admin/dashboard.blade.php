@@ -932,12 +932,8 @@
                 unreadCount: 0,
                 
                 init() {
-                    this.loadNotifications();
-                    // Poll for new notifications every 7 seconds
-                    setInterval(() => this.checkForNewNotifications(), 7000);
-                    
-                    // Initialize real-time dashboard updates
-                    this.initializeDashboardUpdates();
+                    // No polling; notifications load on demand when opened
+                    this.unreadCount = this.unreadCount || 0;
                 },
                 
                 toggleNotifications() {
@@ -1256,36 +1252,7 @@ if (typeof window.eventSource === 'undefined') {
     window.eventSource = null;
 }
 
-function initializeRealTimeUpdates() {
-    // Close existing connection if any
-    if (window.eventSource) {
-        window.eventSource.close();
-    }
-    
-    // Create new SSE connection
-    window.eventSource = new EventSource('{{ route("admin.dashboard.stream") }}');
-    
-    window.eventSource.onmessage = function(event) {
-        try {
-            const data = JSON.parse(event.data);
-            // Simple reinitialization instead of complex updates
-            if (data.hasChanges) {
-                reinitializeChartsAndTable();
-            }
-        } catch (error) {
-            // Silent fail for SSE data parsing
-        }
-    };
-    
-    eventSource.onerror = function(error) {
-        // Reconnect after 5 seconds
-        setTimeout(initializeRealTimeUpdates, 5000);
-    };
-    
-    eventSource.onopen = function() {
-        // Real-time updates connected
-    };
-}
+// Real-time SSE updates removed to align with finalized admin-only updates after workflow completion
 
 // Removed complex updateDashboard function - now using simple reinitialization
 

@@ -83,6 +83,8 @@ class SigningController extends Controller
         switch ($signatoryType) {
             case 'center_manager':
                 return 'pending_research_manager';
+            case 'faculty':
+                return 'pending_faculty';
             case 'college_dean':
                 return 'pending_dean';
             case 'deputy_director':
@@ -98,8 +100,15 @@ class SigningController extends Controller
     {
         switch ($currentState) {
             case 'pending_research_manager':
-                // After research manager signs, move to dean
+                // After research manager signs, move to faculty
                 if ($signatoryType === 'center_manager') {
+                    return 'pending_faculty';
+                }
+                return $currentState; // No change for other signatories
+                
+            case 'pending_faculty':
+                // After faculty signs, move to dean
+                if ($signatoryType === 'faculty') {
                     return 'pending_dean';
                 }
                 return $currentState; // No change for other signatories
@@ -156,6 +165,193 @@ class SigningController extends Controller
         return null;
     }
 
+
+    public function getRequestData(Request $httpRequest, $requestId)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->isSignatory()) {
+            abort(403);
+        }
+
+        $userRequest = UserRequest::with('user')->findOrFail($requestId);
+
+        $signatoryType = $user->signatoryType();
+        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        $form = is_array($userRequest->form_data)
+            ? $userRequest->form_data
+            : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
+
+        $matchedRole = $this->matchesSignatory($form, $signatoryType, trim($user->name ?? ''));
+        $hasSigned = RequestSignature::where('request_id', $userRequest->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (!$matchedRole && !$hasSigned && !in_array($signatoryType, ['deputy_director', 'rdd_director'])) {
+            abort(403);
+        }
+
+        if (!$hasSigned
+            && !in_array($signatoryType, ['deputy_director', 'rdd_director'])
+            && $userRequest->workflow_state !== $expectedWorkflowState) {
+            abort(403);
+        }
+
+        $signatureRecords = RequestSignature::where('request_id', $userRequest->id)
+            ->get()
+            ->keyBy('signatory_role');
+
+        $signatories = $this->extractSignatories($form);
+
+        $roleOrder = [
+            'center_manager' => [
+                'label' => 'Research Center Manager',
+                'state' => 'pending_research_manager',
+            ],
+            'faculty' => [
+                'label' => 'Faculty',
+                'state' => 'pending_faculty',
+            ],
+            'college_dean' => [
+                'label' => 'College Dean',
+                'state' => 'pending_dean',
+            ],
+            'deputy_director' => [
+                'label' => 'Deputy Director',
+                'state' => 'pending_deputy_director',
+            ],
+            'rdd_director' => [
+                'label' => 'RDD Director',
+                'state' => 'pending_director',
+            ],
+        ];
+
+        $stateOrder = [
+            'pending_research_manager' => 1,
+            'pending_faculty' => 2,
+            'pending_dean' => 3,
+            'pending_deputy_director' => 4,
+            'pending_director' => 5,
+            'completed' => 99,
+        ];
+
+        $currentState = $userRequest->workflow_state ?? 'pending_research_manager';
+        $currentStateOrder = $stateOrder[$currentState] ?? 0;
+
+        $formattedSignatories = [];
+        // Exclude Deputy Director and RDD Director as they're shown as fixed directors in the modal
+        $excludedRoles = ['Deputy Director', 'RDD Director'];
+        
+        foreach ($roleOrder as $roleKey => $meta) {
+            // Skip excluded roles
+            if (in_array($meta['label'], $excludedRoles)) {
+                continue;
+            }
+            
+            $nameEntry = collect($signatories)->firstWhere('role', $meta['label']);
+            $signedRecord = $signatureRecords[$roleKey] ?? null;
+            $signedAt = $signedRecord && $signedRecord->signed_at
+                ? $signedRecord->signed_at->toIso8601String()
+                : null;
+
+            $stepOrder = $stateOrder[$meta['state']] ?? 0;
+            $status = 'upcoming';
+            if ($signedRecord) {
+                $status = 'completed';
+            } elseif ($currentStateOrder === $stepOrder) {
+                $status = 'current';
+            } elseif ($currentStateOrder > $stepOrder) {
+                $status = 'pending';
+            }
+
+            $formattedSignatories[] = [
+                'role_key' => $roleKey,
+                'role' => $meta['label'],
+                'name' => $nameEntry['name'] ?? null,
+                'signed_at' => $signedAt,
+                'status' => $status,
+            ];
+        }
+
+        return response()->json([
+            'id' => $userRequest->id,
+            'request_code' => $userRequest->request_code,
+            'type' => $userRequest->type,
+            'status' => $userRequest->status,
+            'workflow_state' => $userRequest->workflow_state,
+            'requested_at' => optional($userRequest->requested_at)->toIso8601String(),
+            'user' => $userRequest->user ? [
+                'name' => $userRequest->user->name,
+                'email' => $userRequest->user->email,
+            ] : null,
+            'files' => $this->getRequestFiles($userRequest),
+            'signatories' => $formattedSignatories,
+            'download_zip_url' => route('signing.download-files', ['requestId' => $userRequest->id]),
+        ]);
+    }
+
+    public function downloadRequestFile(Request $httpRequest, UserRequest $userRequest, string $type, string $key)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->isSignatory()) {
+            abort(403);
+        }
+
+        $signatoryType = $user->signatoryType();
+        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        $form = is_array($userRequest->form_data)
+            ? $userRequest->form_data
+            : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
+
+        $matchedRole = $this->matchesSignatory($form, $signatoryType, trim($user->name ?? ''));
+        $hasSigned = RequestSignature::where('request_id', $userRequest->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (!$matchedRole && !$hasSigned && !in_array($signatoryType, ['deputy_director', 'rdd_director'])) {
+            abort(403);
+        }
+
+        if (!$hasSigned
+            && !in_array($signatoryType, ['deputy_director', 'rdd_director'])
+            && $userRequest->workflow_state !== $expectedWorkflowState) {
+            abort(403);
+        }
+
+        $pdfPathData = json_decode($userRequest->pdf_path, true);
+        if (!$pdfPathData || !isset($pdfPathData[$type])) {
+            abort(404);
+        }
+
+        $fileInfo = $pdfPathData[$type][$key] ?? null;
+        if (!$fileInfo) {
+            abort(404);
+        }
+
+        if (is_array($fileInfo)) {
+            $filePath = $fileInfo['path'] ?? null;
+            $originalName = $fileInfo['original_name'] ?? ($key . '.pdf');
+        } else {
+            $filePath = $fileInfo;
+            $originalName = $key . '.' . ($type === 'docxs' ? 'docx' : 'pdf');
+        }
+
+        if (!$filePath) {
+            abort(404);
+        }
+
+        $fullPath = Storage::disk('local')->path($filePath);
+        if (!file_exists($fullPath)) {
+            $fullPath = storage_path('app/public/' . $filePath);
+        }
+
+        if (!file_exists($fullPath) || !is_readable($fullPath)) {
+            abort(404);
+        }
+
+        return response()->download($fullPath, $originalName);
+    }
 
     public function downloadRequestFiles(Request $request, $requestId)
     {
@@ -318,6 +514,158 @@ class SigningController extends Controller
                 'message' => 'Failed to upload signed documents. Please try again.'
             ], 500);
         }
+    }
+
+    private function getRequestFiles(UserRequest $request): array
+    {
+        $files = [];
+        $pdfPathData = json_decode($request->pdf_path, true);
+
+        if (!$pdfPathData) {
+            return $files;
+        }
+
+        if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
+            foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
+                $filePath = null;
+                $originalName = null;
+
+                if (is_array($fileInfo)) {
+                    $filePath = $fileInfo['path'] ?? null;
+                    $originalName = $fileInfo['original_name'] ?? null;
+                } elseif (is_string($fileInfo)) {
+                    $filePath = $fileInfo;
+                }
+
+                if (!$filePath) {
+                    continue;
+                }
+
+                $fullPath = Storage::disk('local')->path($filePath);
+                if (!file_exists($fullPath)) {
+                    $fullPath = storage_path('app/public/' . $filePath);
+                }
+
+                if (!file_exists($fullPath) || !is_readable($fullPath)) {
+                    continue;
+                }
+
+                $files[] = [
+                    'name' => $originalName ?: ucfirst(str_replace('_', ' ', $key)) . '.pdf',
+                    'path' => $filePath,
+                    'type' => 'pdf',
+                    'size' => $this->formatFileSize(filesize($fullPath)),
+                    'key' => $key,
+                    'download_url' => route('signing.request.file', [
+                        'request' => $request->id,
+                        'type' => 'pdfs',
+                        'key' => $key,
+                    ]),
+                ];
+            }
+        }
+
+        if (isset($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
+            foreach ($pdfPathData['docxs'] as $key => $fileInfo) {
+                $filePath = is_array($fileInfo) ? ($fileInfo['path'] ?? null) : $fileInfo;
+                if (!$filePath) {
+                    continue;
+                }
+
+                $fullPath = Storage::disk('local')->path($filePath);
+                if (!file_exists($fullPath)) {
+                    $fullPath = storage_path('app/public/' . $filePath);
+                }
+
+                if (!file_exists($fullPath) || !is_readable($fullPath)) {
+                    continue;
+                }
+
+                $files[] = [
+                    'name' => ucfirst(str_replace('_', ' ', $key)) . '.docx',
+                    'path' => $filePath,
+                    'type' => 'docx',
+                    'size' => $this->formatFileSize(filesize($fullPath)),
+                    'key' => $key,
+                    'download_url' => route('signing.request.file', [
+                        'request' => $request->id,
+                        'type' => 'docxs',
+                        'key' => $key,
+                    ]),
+                ];
+            }
+        }
+
+        return $files;
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $power = (int) floor(log($bytes, 1024));
+        $power = min($power, count($units) - 1);
+        $size = $bytes / (1024 ** $power);
+
+        return number_format($size, $power === 0 ? 0 : 2) . ' ' . $units[$power];
+    }
+
+    private function extractSignatories($formData): array
+    {
+        if (is_string($formData)) {
+            $decoded = json_decode($formData, true);
+            $formData = is_array($decoded) ? $decoded : [];
+        }
+
+        if (!$formData || !is_array($formData)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($formData as $k => $v) {
+            $normalized[strtolower($k)] = $v;
+        }
+
+        $roleToFields = [
+            'Faculty' => ['facultyname', 'faculty_name', 'rec_faculty_name'],
+            'Research Center Manager' => ['centermanager', 'center_manager', 'research_center_manager'],
+            'College Dean' => ['collegedean', 'college_dean', 'dean', 'dean_name', 'rec_dean_name'],
+            'Deputy Director' => ['deputy_director', 'deputy_director_name', 'official_deputy_director_name'],
+            'RDD Director' => ['rdd_director', 'rdd_director_name', 'official_rdd_director_name'],
+        ];
+
+        $signatories = [];
+        $seen = [];
+
+        foreach ($roleToFields as $role => $fields) {
+            foreach ($fields as $field) {
+                if (!array_key_exists($field, $normalized)) {
+                    continue;
+                }
+
+                $value = trim((string) $normalized[$field]);
+                if ($value === '') {
+                    continue;
+                }
+
+                $lower = mb_strtolower($value);
+                if (isset($seen[$lower])) {
+                    continue;
+                }
+
+                $signatories[] = [
+                    'role' => $role,
+                    'name' => $value,
+                ];
+                $seen[$lower] = true;
+                break;
+            }
+        }
+
+        return $signatories;
     }
 
     private function createRequestZipFromPdfPath(UserRequest $userRequest): string
@@ -804,6 +1152,15 @@ class SigningController extends Controller
             $signatoryName = null;
             
             switch ($workflowState) {
+                case 'pending_faculty':
+                    // Find the Faculty from form data
+                    $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
+                    $facultyName = $form['facultyname'] ?? $form['faculty_name'] ?? $form['rec_faculty_name'] ?? null;
+                    if ($facultyName) {
+                        $nextSignatory = \App\Models\User::where('name', trim($facultyName))->first();
+                        $signatoryName = trim($facultyName);
+                    }
+                    break;
                 case 'pending_dean':
                     // Find the Dean from form data
                     $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
@@ -828,7 +1185,9 @@ class SigningController extends Controller
             }
             
             if ($nextSignatory && $nextSignatory->email) {
-                \Illuminate\Support\Facades\Mail::to($nextSignatory->email)->queue(new \App\Mail\SignatoryNotification($request, 'college_dean', $signatoryName));
+                // Determine role for email template
+                $roleForEmail = $workflowState === 'pending_faculty' ? 'faculty' : 'college_dean';
+                \Illuminate\Support\Facades\Mail::to($nextSignatory->email)->queue(new \App\Mail\SignatoryNotification($request, $roleForEmail, $signatoryName));
                 
                 Log::info('Next signatory notification queued', [
                     'requestId' => $request->id,
@@ -909,6 +1268,194 @@ class SigningController extends Controller
                 'requestId' => $request->id,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+    
+    /**
+     * Delete all files for a request (Redo action for center manager)
+     */
+    public function redoRequest(Request $httpRequest, UserRequest $userRequest)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->isSignatory()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $signatoryType = $user->signatoryType();
+        
+        // Only center managers can perform redo action
+        if ($signatoryType !== 'center_manager') {
+            abort(403, 'Only center managers can perform this action');
+        }
+
+        // Validate reason is provided
+        $validated = $httpRequest->validate([
+            'reason' => 'required|string|min:10|max:1000',
+        ]);
+
+        // Verify user has access to this request
+        $userName = trim($user->name ?? '');
+        $form = is_array($userRequest->form_data)
+            ? $userRequest->form_data
+            : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
+        $matchedRole = $this->matchesSignatory($form, $signatoryType, $userName);
+        
+        if (!$matchedRole) {
+            abort(403, 'You are not authorized to perform this action on this request');
+        }
+
+        // Only allow redo on pending requests
+        if ($userRequest->status !== 'pending') {
+            abort(403, 'This action can only be performed on pending requests');
+        }
+
+        try {
+            // Parse pdf_path to get all file paths
+            $pdfPathData = json_decode($userRequest->pdf_path, true);
+            $deletedFiles = [];
+            $errors = [];
+
+            if ($pdfPathData) {
+                // Delete PDF files
+                if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
+                    foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
+                        $filePath = null;
+                        
+                        if (is_array($fileInfo)) {
+                            $filePath = $fileInfo['path'] ?? null;
+                        } elseif (is_string($fileInfo)) {
+                            $filePath = $fileInfo;
+                        }
+
+                        if ($filePath) {
+                            try {
+                                // Try local disk first
+                                if (Storage::disk('local')->exists($filePath)) {
+                                    Storage::disk('local')->delete($filePath);
+                                    $deletedFiles[] = $filePath;
+                                } elseif (Storage::disk('public')->exists($filePath)) {
+                                    Storage::disk('public')->delete($filePath);
+                                    $deletedFiles[] = $filePath;
+                                } elseif (file_exists(storage_path('app/' . $filePath))) {
+                                    unlink(storage_path('app/' . $filePath));
+                                    $deletedFiles[] = $filePath;
+                                } elseif (file_exists(storage_path('app/public/' . $filePath))) {
+                                    unlink(storage_path('app/public/' . $filePath));
+                                    $deletedFiles[] = $filePath;
+                                }
+                            } catch (\Exception $e) {
+                                $errors[] = "Failed to delete file: {$filePath} - " . $e->getMessage();
+                                Log::warning('Failed to delete file during redo', [
+                                    'request_id' => $userRequest->id,
+                                    'file_path' => $filePath,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                // Delete DOCX files
+                if (isset($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
+                    foreach ($pdfPathData['docxs'] as $key => $fileInfo) {
+                        $filePath = null;
+                        
+                        if (is_array($fileInfo)) {
+                            $filePath = $fileInfo['path'] ?? null;
+                        } elseif (is_string($fileInfo)) {
+                            $filePath = $fileInfo;
+                        }
+
+                        if ($filePath) {
+                            try {
+                                // Try local disk first
+                                if (Storage::disk('local')->exists($filePath)) {
+                                    Storage::disk('local')->delete($filePath);
+                                    $deletedFiles[] = $filePath;
+                                } elseif (Storage::disk('public')->exists($filePath)) {
+                                    Storage::disk('public')->delete($filePath);
+                                    $deletedFiles[] = $filePath;
+                                } elseif (file_exists(storage_path('app/' . $filePath))) {
+                                    unlink(storage_path('app/' . $filePath));
+                                    $deletedFiles[] = $filePath;
+                                } elseif (file_exists(storage_path('app/public/' . $filePath))) {
+                                    unlink(storage_path('app/public/' . $filePath));
+                                    $deletedFiles[] = $filePath;
+                                }
+                            } catch (\Exception $e) {
+                                $errors[] = "Failed to delete file: {$filePath} - " . $e->getMessage();
+                                Log::warning('Failed to delete file during redo', [
+                                    'request_id' => $userRequest->id,
+                                    'file_path' => $filePath,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Clear pdf_path field
+            $userRequest->pdf_path = null;
+            $userRequest->save();
+
+            // Send email notification to the user who made the request
+            try {
+                $requestUser = $userRequest->user;
+                if ($requestUser && $requestUser->email) {
+                    \Illuminate\Support\Facades\Mail::to($requestUser->email)->queue(
+                        new \App\Mail\ResubmissionNotification(
+                            $userRequest,
+                            $requestUser,
+                            $validated['reason'],
+                            $user->name ?? 'Center Manager'
+                        )
+                    );
+                    Log::info('Resubmission notification email queued', [
+                        'request_id' => $userRequest->id,
+                        'user_email' => $requestUser->email
+                    ]);
+                }
+            } catch (\Exception $emailError) {
+                // Log email error but don't fail the request
+                Log::error('Failed to send resubmission notification email', [
+                    'request_id' => $userRequest->id,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
+
+            // Log the action
+            Log::info('Center manager redo action performed', [
+                'request_id' => $userRequest->id,
+                'request_code' => $userRequest->request_code,
+                'center_manager_id' => $user->id,
+                'center_manager_name' => $user->name,
+                'reason' => $validated['reason'],
+                'deleted_files_count' => count($deletedFiles),
+                'deleted_files' => $deletedFiles,
+                'errors' => $errors
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All files have been deleted successfully. ' . count($deletedFiles) . ' file(s) removed.',
+                'deleted_count' => count($deletedFiles),
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error performing redo action', [
+                'request_id' => $userRequest->id,
+                'center_manager_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete files: ' . $e->getMessage()
+            ], 500);
         }
     }
     
