@@ -32,6 +32,31 @@
             @endif
         </a>
 
+        @if(Auth::user() && Auth::user()->isSignatory())
+            <!-- Signing Link (for signatories) -->
+            <a href="{{ route('signing.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden {{ request()->routeIs('signing.*') ? 'bg-white/20 text-white shadow-lg' : 'text-maroon-100 hover:bg-maroon-700/50 hover:text-white hover:shadow-md' }}">
+                <div class="relative z-10">
+                    <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" 
+                         fill="{{ request()->routeIs('signing.*') ? 'currentColor' : 'none' }}" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20v-6m0 0l-3 3m3-3l3 3M5 8l7-3 7 3-7 3-7-3z"/>
+                    </svg>
+                </div>
+                <span class="font-medium transition-all duration-300 group-hover:translate-x-1">Signatures</span>
+                @if(request()->routeIs('signing.*'))
+                    <div class="absolute right-3 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                @endif
+            </a>
+
+            <!-- Separator -->
+            <div class="my-4 border-t border-maroon-700/50"></div>
+        @else
+            <!-- Separator -->
+            <div class="my-4 border-t border-maroon-700/50"></div>
+        @endif
+
         <!-- Publications Link -->
         <a href="{{ route('publications.request') }}" 
            class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden {{ request()->routeIs('publications.*') ? 'bg-white/20 text-white shadow-lg' : 'text-maroon-100 hover:bg-maroon-700/50 hover:text-white hover:shadow-md' }}">
@@ -76,25 +101,6 @@
             </div>
             <span class="absolute -top-1 -right-1 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full text-[10px]">Disabled</span>
         </div>
-        @endif
-
-        <!-- Signing Link (for signatories) -->
-        @if(Auth::user() && Auth::user()->isSignatory())
-        <a href="{{ route('signing.index') }}" 
-           class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden {{ request()->routeIs('signing.*') ? 'bg-white/20 text-white shadow-lg' : 'text-maroon-100 hover:bg-maroon-700/50 hover:text-white hover:shadow-md' }}">
-            <div class="relative z-10">
-                <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" 
-                     fill="{{ request()->routeIs('signing.*') ? 'currentColor' : 'none' }}" 
-                     stroke="currentColor" 
-                     viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20v-6m0 0l-3 3m3-3l3 3M5 8l7-3 7 3-7 3-7-3z"/>
-                </svg>
-            </div>
-            <span class="font-medium transition-all duration-300 group-hover:translate-x-1">Signatures</span>
-            @if(request()->routeIs('signing.*'))
-                <div class="absolute right-3 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            @endif
-        </a>
         @endif
     </nav>
 

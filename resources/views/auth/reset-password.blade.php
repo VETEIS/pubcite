@@ -4,6 +4,16 @@
             <x-authentication-card-logo />
         </x-slot>
 
+        <!-- Back to Sign In Button -->
+        <div class="absolute top-4 right-4">
+            <a href="{{ route('login') }}" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Sign In
+            </a>
+        </div>
+
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Set New Password</h1>
             <p class="text-gray-600">Create a new password for your account</p>

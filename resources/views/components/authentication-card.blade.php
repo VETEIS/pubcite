@@ -1,4 +1,4 @@
-<div class="w-full max-w-4xl mx-auto bg-white/30 backdrop-blur-md border border-white/40 shadow-xl rounded-xl min-h-[28rem] md:min-h-[32rem]">
+<div class="w-full max-w-4xl mx-auto bg-white/30 backdrop-blur-md border border-white/40 shadow-xl rounded-xl min-h-[28rem] md:min-h-[32rem] relative">
     <div class="flex flex-col md:flex-row items-center md:items-stretch gap-0 h-full min-h-[28rem] md:min-h-[32rem]">
         <!-- Logo Column -->
         <div class="hidden md:flex flex-col items-center justify-center md:w-1/2 w-full min-h-[28rem] md:min-h-[32rem] px-6 py-10">
