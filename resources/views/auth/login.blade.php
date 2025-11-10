@@ -67,10 +67,17 @@
     </x-authentication-card>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function initGoogleLogin() {
             const googleLoginBtn = document.getElementById('google-login-btn');
+            if (!googleLoginBtn) {
+                return;
+            }
             
-            googleLoginBtn.addEventListener('click', function() {
+            // Remove existing event listeners by cloning and replacing
+            const newBtn = googleLoginBtn.cloneNode(true);
+            googleLoginBtn.parentNode.replaceChild(newBtn, googleLoginBtn);
+            
+            newBtn.addEventListener('click', function() {
                 // Check if privacy was accepted in sessionStorage
                 const privacyAccepted = sessionStorage.getItem('privacy_accepted') === 'true';
                 
@@ -99,6 +106,17 @@
                     window.location.href = '{{ route("welcome") }}';
                 }
             });
-        });
+        }
+        
+        // Initialize on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGoogleLogin);
+        } else {
+            initGoogleLogin();
+        }
+        
+        // Re-initialize after form errors (Turbo compatibility)
+        document.addEventListener('turbo:load', initGoogleLogin);
+        document.addEventListener('turbo:render', initGoogleLogin);
     </script>
 </x-guest-layout>

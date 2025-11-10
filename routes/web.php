@@ -77,7 +77,7 @@ Route::middleware([
     Route::get('/signing', [\App\Http\Controllers\SigningController::class, 'index'])->name('signing.index');
     Route::post('/signing/revert-document', [\App\Http\Controllers\SigningController::class, 'revertDocument'])->name('signing.revert-document');
     Route::get('/signing/download-files/{requestId}', [\App\Http\Controllers\SigningController::class, 'downloadRequestFiles'])->name('signing.download-files')->middleware('throttle:20,1');
-    Route::post('/signing/upload-signed', [\App\Http\Controllers\SigningController::class, 'uploadSignedDocuments'])->name('signing.upload-signed')->middleware('throttle:10,1');
+    Route::post('/signing/upload-signed', [\App\Http\Controllers\SigningController::class, 'uploadSignedDocuments'])->name('signing.upload-signed');
     Route::get('/signing/request/{request}/data', [\App\Http\Controllers\SigningController::class, 'getRequestData'])->name('signing.request.data');
     Route::get('/signing/request/{request}/file/{type}/{key}', [\App\Http\Controllers\SigningController::class, 'downloadRequestFile'])->name('signing.request.file');
     Route::post('/signing/request/{request}/redo', [\App\Http\Controllers\SigningController::class, 'redoRequest'])->name('signing.request.redo');

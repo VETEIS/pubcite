@@ -539,9 +539,30 @@ class SigningController extends Controller
             // Update request's workflow state and signature status
             $newWorkflowState = $this->getNextWorkflowState($userRequest->workflow_state, $signatoryType);
             
+            // Validate workflow state before updating (check against database constraint)
+            $validWorkflowStates = [
+                'pending_research_manager',
+                'pending_faculty',
+                'pending_dean',
+                'pending_deputy_director',
+                'pending_director',
+                'completed'
+            ];
+            
+            if (!in_array($newWorkflowState, $validWorkflowStates)) {
+                Log::error('Invalid workflow state generated', [
+                    'request_id' => $userRequest->id,
+                    'current_state' => $userRequest->workflow_state,
+                    'signatory_type' => $signatoryType,
+                    'new_state' => $newWorkflowState,
+                ]);
+                throw new \Exception('Invalid workflow state: ' . $newWorkflowState);
+            }
+            
             // Update status to "endorsed" only when director signs (workflow completed)
             $newStatus = ($newWorkflowState === 'completed') ? 'endorsed' : 'pending';
             
+            try {
             $userRequest->update([
                 'workflow_state' => $newWorkflowState,
                 'status' => $newStatus,
@@ -549,6 +570,23 @@ class SigningController extends Controller
                 'signed_at' => now(),
                 'signed_by' => $user->id, // Keep the last signatory for backward compatibility
             ]);
+            } catch (\Illuminate\Database\QueryException $dbException) {
+                // Check if it's a constraint violation
+                if (strpos($dbException->getMessage(), 'check constraint') !== false || 
+                    strpos($dbException->getMessage(), 'workflow_state_check') !== false) {
+                    Log::error('Workflow state constraint violation', [
+                        'request_id' => $userRequest->id,
+                        'user_id' => $user->id,
+                        'current_state' => $userRequest->workflow_state,
+                        'attempted_state' => $newWorkflowState,
+                        'signatory_type' => $signatoryType,
+                        'error' => $dbException->getMessage(),
+                    ]);
+                    throw new \Exception('Database constraint error: The workflow state "' . $newWorkflowState . '" is not allowed. Please contact support.');
+                }
+                // Re-throw if it's a different database error
+                throw $dbException;
+            }
             
             // If workflow is completed (Director signed), notify admins
             if ($newWorkflowState === 'completed') {
@@ -564,16 +602,47 @@ class SigningController extends Controller
                 'uploaded_files' => $uploadedFiles
             ]);
             
-        } catch (\Exception $e) {
-            Log::error('Error uploading signed documents', [
-                'request_id' => $userRequest->id,
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
+        } catch (\Illuminate\Database\QueryException $dbException) {
+            Log::error('Database error uploading signed documents', [
+                'request_id' => $userRequest->id ?? null,
+                'user_id' => $user->id ?? null,
+                'error' => $dbException->getMessage(),
+                'code' => $dbException->getCode(),
             ]);
+            
+            $errorMessage = 'Database error occurred while uploading documents. ';
+            if (strpos($dbException->getMessage(), 'check constraint') !== false) {
+                $errorMessage = 'Workflow state error: The system cannot transition to the next workflow state. Please contact support.';
+            } else {
+                $errorMessage .= 'Please try again or contact support if the problem persists.';
+            }
             
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to upload signed documents. Please try again.'
+                'message' => $errorMessage,
+                'error_type' => 'database_error'
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error('Error uploading signed documents', [
+                'request_id' => $userRequest->id ?? null,
+                'user_id' => $user->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $errorMessage = $e->getMessage();
+            // Provide user-friendly message if it's a known error
+            if (strpos($errorMessage, 'Database constraint error') !== false || 
+                strpos($errorMessage, 'Invalid workflow state') !== false) {
+                $errorMessage = 'Workflow state error: ' . $errorMessage;
+            } else {
+                $errorMessage = 'Failed to upload signed documents. Please try again.';
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+                'error_type' => 'general_error'
             ], 500);
         }
     }
@@ -629,7 +698,7 @@ class SigningController extends Controller
                 
                 // Check if this file needs signing
                 $needsSigning = in_array($key, $filesNeedingSignature);
-                
+
                 $files[] = [
                     'name' => $originalName ?: ucfirst(str_replace('_', ' ', $key)) . '.pdf',
                     'path' => $filePath,
@@ -660,7 +729,7 @@ class SigningController extends Controller
 
                 // Check if this file needs signing
                 $needsSigning = in_array($key, $filesNeedingSignature);
-                
+
                 $files[] = [
                     'name' => ucfirst(str_replace('_', ' ', $key)) . '.docx',
                     'path' => $filePath,
@@ -1378,12 +1447,44 @@ class SigningController extends Controller
     /**
      * Delete all files for a request (Redo action for center manager)
      */
-    public function redoRequest(Request $httpRequest, UserRequest $userRequest)
+    public function redoRequest(Request $httpRequest, $request)
     {
         /** @var User $user */
         $user = Auth::user();
         if (!$user || !$user->isSignatory()) {
             abort(403, 'Unauthorized');
+        }
+
+        // Log what we received
+        Log::info('Redo request received', [
+            'request_param_type' => gettype($request),
+            'request_param_value' => $request instanceof UserRequest ? $request->id : $request,
+            'route_params' => $httpRequest->route()->parameters(),
+            'user_id' => $user->id,
+        ]);
+
+        // Resolve the request - handle both route model binding and manual lookup
+        if ($request instanceof UserRequest) {
+            $userRequest = $request;
+        } else {
+            // If route model binding didn't work, try to find by ID
+            $requestId = is_numeric($request) ? $request : ($httpRequest->route('request') ?? $request);
+            if (!$requestId) {
+                Log::error('Redo request ID not found', [
+                    'request_param' => $request,
+                    'route_params' => $httpRequest->route()->parameters(),
+                    'user_id' => $user->id,
+                ]);
+                abort(404, 'Request ID not provided');
+            }
+            $userRequest = UserRequest::find($requestId);
+            if (!$userRequest) {
+                Log::error('Redo request not found in database', [
+                    'request_id' => $requestId,
+                    'user_id' => $user->id,
+                ]);
+                abort(404, 'Request not found');
+            }
         }
 
         $signatoryType = $user->signatoryType();
@@ -1400,148 +1501,136 @@ class SigningController extends Controller
 
         // Admin/Center Manager parity: no name-match requirement for redo
 
-        // Only allow redo on pending requests
-        if ($userRequest->status !== 'pending') {
-            abort(403, 'This action can only be performed on pending requests');
+        // Refresh the request from database to ensure we have the latest status
+        $userRequest->refresh();
+        
+        // Log the request status for debugging
+        Log::info('Redo request check', [
+            'request_id' => $userRequest->id,
+            'status' => $userRequest->status,
+            'workflow_state' => $userRequest->workflow_state,
+            'user_id' => $user->id,
+            'signatory_type' => $signatoryType,
+        ]);
+        
+        // Only allow redo on pending requests (not endorsed or rejected)
+        // Also allow if workflow state is in center manager's stage (even if status might be different)
+        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        $isInCorrectWorkflowState = $userRequest->workflow_state === $expectedWorkflowState;
+        $isPending = strtolower(trim($userRequest->status)) === 'pending';
+        
+        if (!$isPending && !$isInCorrectWorkflowState) {
+            Log::warning('Redo blocked: request not pending and not in correct workflow state', [
+                'request_id' => $userRequest->id,
+                'actual_status' => $userRequest->status,
+                'workflow_state' => $userRequest->workflow_state,
+                'expected_workflow_state' => $expectedWorkflowState,
+                'is_pending' => $isPending,
+                'is_in_correct_workflow_state' => $isInCorrectWorkflowState,
+            ]);
+            abort(403, 'This action can only be performed on pending requests in your workflow stage');
+        }
+        
+        // Additional check: don't allow redo on endorsed requests
+        if (strtolower(trim($userRequest->status)) === 'endorsed') {
+            Log::warning('Redo blocked: request is endorsed', [
+                                    'request_id' => $userRequest->id,
+                'status' => $userRequest->status,
+            ]);
+            abort(403, 'Cannot redo an endorsed request');
         }
 
         try {
-            // Parse pdf_path to get all file paths
-            $pdfPathData = json_decode($userRequest->pdf_path, true);
-            $deletedFiles = [];
-            $errors = [];
-
-            if ($pdfPathData) {
-                // Delete PDF files
-                if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
-                    foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
-                        $filePath = null;
-                        
-                        if (is_array($fileInfo)) {
-                            $filePath = $fileInfo['path'] ?? null;
-                        } elseif (is_string($fileInfo)) {
-                            $filePath = $fileInfo;
-                        }
-
-                        if ($filePath) {
-                            try {
-                                // Try local disk first
-                                if (Storage::disk('local')->exists($filePath)) {
-                                    Storage::disk('local')->delete($filePath);
-                                    $deletedFiles[] = $filePath;
-                                } elseif (Storage::disk('public')->exists($filePath)) {
-                                    Storage::disk('public')->delete($filePath);
-                                    $deletedFiles[] = $filePath;
-                                } elseif (file_exists(storage_path('app/' . $filePath))) {
-                                    unlink(storage_path('app/' . $filePath));
-                                    $deletedFiles[] = $filePath;
-                                } elseif (file_exists(storage_path('app/public/' . $filePath))) {
-                                    unlink(storage_path('app/public/' . $filePath));
-                                    $deletedFiles[] = $filePath;
-                                }
-                            } catch (\Exception $e) {
-                                $errors[] = "Failed to delete file: {$filePath} - " . $e->getMessage();
-                                Log::warning('Failed to delete file during redo', [
-                                    'request_id' => $userRequest->id,
-                                    'file_path' => $filePath,
-                                    'error' => $e->getMessage()
-                                ]);
-                            }
-                        }
-                    }
-                }
-
-                // Delete DOCX files
-                if (isset($pdfPathData['docxs']) && is_array($pdfPathData['docxs'])) {
-                    foreach ($pdfPathData['docxs'] as $key => $fileInfo) {
-                        $filePath = null;
-                        
-                        if (is_array($fileInfo)) {
-                            $filePath = $fileInfo['path'] ?? null;
-                        } elseif (is_string($fileInfo)) {
-                            $filePath = $fileInfo;
-                        }
-
-                        if ($filePath) {
-                            try {
-                                // Try local disk first
-                                if (Storage::disk('local')->exists($filePath)) {
-                                    Storage::disk('local')->delete($filePath);
-                                    $deletedFiles[] = $filePath;
-                                } elseif (Storage::disk('public')->exists($filePath)) {
-                                    Storage::disk('public')->delete($filePath);
-                                    $deletedFiles[] = $filePath;
-                                } elseif (file_exists(storage_path('app/' . $filePath))) {
-                                    unlink(storage_path('app/' . $filePath));
-                                    $deletedFiles[] = $filePath;
-                                } elseif (file_exists(storage_path('app/public/' . $filePath))) {
-                                    unlink(storage_path('app/public/' . $filePath));
-                                    $deletedFiles[] = $filePath;
-                                }
-                            } catch (\Exception $e) {
-                                $errors[] = "Failed to delete file: {$filePath} - " . $e->getMessage();
-                                Log::warning('Failed to delete file during redo', [
-                                    'request_id' => $userRequest->id,
-                                    'file_path' => $filePath,
-                                    'error' => $e->getMessage()
-                                ]);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Clear pdf_path field
-            $userRequest->pdf_path = null;
-            $userRequest->save();
-
-            // Send email notification to the user who made the request
-            try {
-                $requestUser = $userRequest->user;
-                if ($requestUser && $requestUser->email) {
-                    \Illuminate\Support\Facades\Mail::to($requestUser->email)->queue(
-                        new \App\Mail\ResubmissionNotification(
-                            $userRequest,
-                            $requestUser,
-                            $validated['reason'],
-                            $user->name ?? 'Center Manager'
-                        )
-                    );
-                    Log::info('Resubmission notification email queued', [
-                        'request_id' => $userRequest->id,
-                        'user_email' => $requestUser->email
+            $requestId = $userRequest->id;
+            $requestCode = $userRequest->request_code;
+            $userId = $userRequest->user_id;
+            
+            // Get user info before deleting the request
+            $requestUser = $userRequest->user;
+            $signedDocumentPath = $userRequest->signed_document_path;
+            $originalDocumentPath = $userRequest->original_document_path;
+            
+            // Delete the entire folder containing all files
+            if ($userId && $requestCode) {
+                $dir = "requests/{$userId}/{$requestCode}";
+                
+                // Delete from local storage
+                if (Storage::disk('local')->exists($dir)) {
+                    Storage::disk('local')->deleteDirectory($dir);
+                    Log::info('Deleted request folder from local storage during redo', [
+                        'request_id' => $requestId,
+                        'dir' => $dir
                     ]);
                 }
-            } catch (\Exception $emailError) {
-                // Log email error but don't fail the request
-                Log::error('Failed to send resubmission notification email', [
-                    'request_id' => $userRequest->id,
-                    'error' => $emailError->getMessage()
-                ]);
+                
+                // Delete from public storage
+                if (Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->deleteDirectory($dir);
+                    Log::info('Deleted request folder from public storage during redo', [
+                        'request_id' => $requestId,
+                        'dir' => $dir
+                                ]);
+                            }
+                        }
+            
+            // Delete signed document folders if they exist
+            if ($signedDocumentPath) {
+                $signedDir = dirname($signedDocumentPath);
+                if (Storage::disk('local')->exists($signedDir)) {
+                    Storage::disk('local')->deleteDirectory($signedDir);
+                    Log::info('Deleted signed document folder during redo', [
+                        'request_id' => $requestId,
+                        'dir' => $signedDir
+                    ]);
+                }
             }
+            
+            if ($originalDocumentPath) {
+                $backupDir = dirname($originalDocumentPath);
+                if (Storage::disk('local')->exists($backupDir)) {
+                    Storage::disk('local')->deleteDirectory($backupDir);
+                    Log::info('Deleted original document folder during redo', [
+                        'request_id' => $requestId,
+                        'dir' => $backupDir
+                    ]);
+                }
+            }
+            
+            // Delete all RequestSignature records for this request
+            $deletedSignatures = RequestSignature::where('request_id', $requestId)->delete();
+            Log::info('Deleted request signatures during redo', [
+                'request_id' => $requestId,
+                'deleted_count' => $deletedSignatures
+            ]);
+            
+            // Delete the request from the database
+            $userRequest->delete();
+            Log::info('Deleted request from database during redo', [
+                'request_id' => $requestId,
+                'request_code' => $requestCode
+            ]);
+
+            // Note: Email notification skipped since request is completely deleted
+            // This is a permanent deletion, not a resubmission request
 
             // Log the action
-            Log::info('Center manager redo action performed', [
-                'request_id' => $userRequest->id,
-                'request_code' => $userRequest->request_code,
+            Log::info('Center manager redo action performed - request completely deleted', [
+                'request_id' => $requestId,
+                'request_code' => $requestCode,
                 'center_manager_id' => $user->id,
                 'center_manager_name' => $user->name,
                 'reason' => $validated['reason'],
-                'deleted_files_count' => count($deletedFiles),
-                'deleted_files' => $deletedFiles,
-                'errors' => $errors
+                'deleted_signatures_count' => $deletedSignatures
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'All files have been deleted successfully. ' . count($deletedFiles) . ' file(s) removed.',
-                'deleted_count' => count($deletedFiles),
-                'errors' => $errors
+                'message' => 'Request and all associated files have been permanently deleted.',
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error performing redo action', [
-                'request_id' => $userRequest->id,
+                'request_id' => $requestId ?? null,
                 'center_manager_id' => $user->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -1549,7 +1638,7 @@ class SigningController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete files: ' . $e->getMessage()
+                'message' => 'Failed to delete request: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -147,7 +147,7 @@ class LandingResearchers {
                     <div class="flex flex-wrap gap-2 mb-4">
                         ${researchAreasHtml}
                     </div>
-                    <p class="text-sm text-gray-600 leading-relaxed">${this.escapeHtml(researcher.bio || '')}</p>
+                    <p class="text-sm text-gray-600 leading-relaxed line-clamp-3 overflow-hidden">${this.escapeHtml(researcher.bio || '')}</p>
                 </div>
                 <button type="button" onclick="openResearcherModal(this)" data-researcher="${JSON.stringify(researcher).replace(/"/g, '&quot;')}" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</button>
             </div>

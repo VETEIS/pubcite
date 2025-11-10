@@ -107,8 +107,9 @@ class AdminUserController extends Controller
         ];
         
         // Only add password validation for non-Google users
-        if ($user->auth_provider !== 'google') {
-            $validationRules['password'] = 'nullable|string|min:8|confirmed';
+        // Only validate password if it's actually provided (not empty)
+        if ($user->auth_provider !== 'google' && $request->filled('password')) {
+            $validationRules['password'] = 'required|string|min:8|confirmed';
         }
         
         $validated = $request->validate($validationRules);

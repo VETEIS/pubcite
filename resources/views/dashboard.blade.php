@@ -145,6 +145,9 @@
                                                 </svg>
                                             </div>
                                         </th>
+                                        <th class="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Signed
+                                        </th>
                                         <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Action
                                         </th>
@@ -222,6 +225,13 @@
                                                 </span>
                                                     @endif
                                                 </td>
+                                            <td class="w-20 px-6 py-4 whitespace-nowrap text-center">
+                                                @php
+                                                    $signedCount = \App\Models\RequestSignature::where('request_id', $request->id)->count();
+                                                    $totalSignatories = 5; // center_manager, faculty, college_dean, deputy_director, rdd_director
+                                                @endphp
+                                                <span class="text-sm font-medium text-gray-900">{{ $signedCount }}/{{ $totalSignatories }}</span>
+                                            </td>
                                             <td class="w-24 px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                     @if($request->status === 'pending')
                                                         @php

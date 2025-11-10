@@ -317,28 +317,148 @@ class DashboardController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        foreach ($admins as $admin) {
-            \App\Models\AdminNotification::create([
-                'user_id' => $admin->id,
-                'request_id' => $request->id,
-                'type' => 'nudge',
-                'title' => 'Nudge: ' . $request->request_code,
-                'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
-                'data' => [
-                    'request_code' => $request->request_code,
-                    'type' => $request->type,
-                    'user_name' => $user->name,
-                    'user_email' => $user->email,
-                ],
-            ]);
-            try {
-                Mail::to($admin->email)->send(new NudgeNotification($request, $user));
-            } catch (\Exception $e) {
-                Log::error('Nudge email failed: ' . $e->getMessage());
-            }
+        // Determine current stage signatory based on workflow_state
+        $workflowState = $request->workflow_state ?? 'pending_research_manager';
+        $currentSignatory = null;
+        $signatoryEmail = null;
+        $signatoryName = null;
+        $signatoryUserId = null;
+        
+        switch ($workflowState) {
+            case 'pending_research_manager':
+                // Find Center Manager from form data
+                $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
+                $centerManagerName = $form['center_manager'] ?? $form['center_manager_name'] ?? null;
+                if ($centerManagerName) {
+                    $currentSignatory = \App\Models\User::where('name', trim($centerManagerName))->where('signatory_type', 'center_manager')->first();
+                    if ($currentSignatory) {
+                        $signatoryName = trim($centerManagerName);
+                        $signatoryEmail = $currentSignatory->email;
+                        $signatoryUserId = $currentSignatory->id;
+                    }
+                }
+                break;
+                
+            case 'pending_faculty':
+                // Find the Faculty from form data
+                $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
+                $facultyName = $form['facultyname'] ?? $form['faculty_name'] ?? $form['rec_faculty_name'] ?? null;
+                if ($facultyName) {
+                    $currentSignatory = \App\Models\User::where('name', trim($facultyName))->where('signatory_type', 'faculty')->first();
+                    if ($currentSignatory) {
+                        $signatoryName = trim($facultyName);
+                        $signatoryEmail = $currentSignatory->email;
+                        $signatoryUserId = $currentSignatory->id;
+                    }
+                }
+                break;
+                
+            case 'pending_dean':
+                // Find the Dean from form data
+                $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
+                $deanName = $form['collegedean'] ?? $form['college_dean'] ?? $form['dean'] ?? $form['dean_name'] ?? $form['rec_dean_name'] ?? null;
+                if ($deanName) {
+                    $currentSignatory = \App\Models\User::where('name', trim($deanName))->where('signatory_type', 'college_dean')->first();
+                    if ($currentSignatory) {
+                        $signatoryName = trim($deanName);
+                        $signatoryEmail = $currentSignatory->email;
+                        $signatoryUserId = $currentSignatory->id;
+                    }
+                }
+                break;
+                
+            case 'pending_deputy_director':
+                // Get Deputy Director from settings
+                $signatoryEmail = \App\Models\Setting::get('deputy_director_email');
+                $signatoryName = \App\Models\Setting::get('official_deputy_director_name', 'Deputy Director');
+                // Try to find user by email
+                if ($signatoryEmail) {
+                    $currentSignatory = \App\Models\User::where('email', $signatoryEmail)->first();
+                    if ($currentSignatory) {
+                        $signatoryUserId = $currentSignatory->id;
+                    }
+                }
+                break;
+                
+            case 'pending_director':
+                // Get Director from settings
+                $signatoryEmail = \App\Models\Setting::get('rdd_director_email');
+                $signatoryName = \App\Models\Setting::get('official_rdd_director_name', 'RDD Director');
+                // Try to find user by email
+                if ($signatoryEmail) {
+                    $currentSignatory = \App\Models\User::where('email', $signatoryEmail)->first();
+                    if ($currentSignatory) {
+                        $signatoryUserId = $currentSignatory->id;
+                    }
+                }
+                break;
         }
-        return back()->with('success', 'Nudge sent to admins.');
+        
+        // Send nudge to current stage signatory
+        if ($signatoryEmail) {
+            // Create notification for the signatory if we have a user ID
+            if ($signatoryUserId) {
+                \App\Models\AdminNotification::create([
+                    'user_id' => $signatoryUserId,
+                    'request_id' => $request->id,
+                    'type' => 'nudge',
+                    'title' => 'Nudge: ' . $request->request_code,
+                    'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
+                    'data' => [
+                        'request_code' => $request->request_code,
+                        'type' => $request->type,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                    ],
+                ]);
+            }
+            
+            try {
+                Mail::to($signatoryEmail)->send(new NudgeNotification($request, $user));
+                Log::info('Nudge email sent to current stage signatory', [
+                    'request_id' => $request->id,
+                    'workflow_state' => $workflowState,
+                    'signatory_email' => $signatoryEmail,
+                    'signatory_name' => $signatoryName
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Nudge email failed: ' . $e->getMessage(), [
+                    'request_id' => $request->id,
+                    'signatory_email' => $signatoryEmail
+                ]);
+            }
+            
+            return back()->with('success', 'Nudge sent to ' . ($signatoryName ?? 'the current stage signatory') . '.');
+        } else {
+            // Fallback: send to admins if no signatory found
+            Log::warning('No current stage signatory found for nudge, falling back to admins', [
+                'request_id' => $request->id,
+                'workflow_state' => $workflowState
+            ]);
+            
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\AdminNotification::create([
+                    'user_id' => $admin->id,
+                    'request_id' => $request->id,
+                    'type' => 'nudge',
+                    'title' => 'Nudge: ' . $request->request_code,
+                    'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
+                    'data' => [
+                        'request_code' => $request->request_code,
+                        'type' => $request->type,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                    ],
+                ]);
+                try {
+                    Mail::to($admin->email)->send(new NudgeNotification($request, $user));
+                } catch (\Exception $e) {
+                    Log::error('Nudge email failed: ' . $e->getMessage());
+                }
+            }
+            return back()->with('success', 'Nudge sent to admins (no signatory found for current stage).');
+        }
     }
 
     public function getData()

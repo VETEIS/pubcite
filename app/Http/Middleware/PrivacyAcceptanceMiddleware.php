@@ -37,7 +37,7 @@ class PrivacyAcceptanceMiddleware
         
         if ($user) {
             // User is logged in - check their privacy acceptance
-            $privacyAccepted = $user->hasAcceptedPrivacy() || session('privacy_accepted', false);
+            $privacyAccepted = ($user->privacy_accepted_at !== null) || session('privacy_accepted', false);
         } else {
             // User is not logged in - check session only
             $privacyAccepted = session('privacy_accepted', false);

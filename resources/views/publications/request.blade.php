@@ -153,7 +153,7 @@
                     // Define required fields for other tabs
                     const tabFields = {
                         'incentive': ['name', 'rank', 'college', 'bibentry', 'issn'],
-                        'recommendation': ['rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details'],
+                        'recommendation': ['rec_collegeheader', 'rec_faculty_name', 'rec_dean_name', 'rec_publication_details', 'rec_indexing_details'],
                         'terminal': ['title', 'author', 'duration', 'abstract', 'introduction', 'methodology', 'rnd', 'car', 'references', 'appendices']
                     };
                     

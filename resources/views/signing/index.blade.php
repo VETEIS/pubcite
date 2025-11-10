@@ -370,28 +370,34 @@
                 </div>
                 
                 <!-- Footer Actions -->
-                <div id="modalFooter" class="flex justify-between items-center p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
-                    <div class="flex items-center gap-2 text-xs text-gray-600">
-                        <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                        </svg>
-                        <span class="font-medium">Review all information before making a decision.</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="file" id="modalSignedDocuments" name="signed_documents[]" multiple accept=".pdf,.docx" class="hidden">
-                        <button id="modalRedoBtn" onclick="openRedoConfirmationModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm" style="display: none;">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                <div id="modalFooter" class="flex flex-col gap-2 p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
+                    <!-- Footer Content Row -->
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2 text-xs text-gray-600">
+                            <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                             </svg>
-                            Redo
-                        </button>
-                        <button id="modalUploadBtn" class="px-4 py-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors font-medium flex items-center gap-2 text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                            </svg>
-                            Upload Signed Documents
-                        </button>
-                        <div id="modalSelectedFiles" class="text-xs text-gray-600 max-w-xs truncate"></div>
+                            <span class="font-medium">Review all information before making a decision.</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="file" id="modalSignedDocuments" name="signed_documents[]" multiple accept=".pdf,.docx" class="hidden">
+                            <!-- Selected Files Display (to the left of redo button) -->
+                            <div id="modalSelectedFiles" class="text-xs text-gray-600 px-2"></div>
+                            <!-- Separator between selected files and redo button -->
+                            <div id="modalSelectedFilesSeparator" class="h-6 w-px bg-gray-300 hidden"></div>
+                            <button id="modalRedoBtn" onclick="openRedoConfirmationModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Redo
+                            </button>
+                            <button id="modalUploadBtn" class="px-4 py-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors font-medium flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                Upload Signed Documents
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -445,6 +451,7 @@
                 
                 <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
                     <button 
+                        id="cancelRedoBtn"
                         onclick="closeRedoConfirmationModal()" 
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
                     >
@@ -598,7 +605,11 @@
 
             } catch (error) {
                 console.error('Review modal error:', error);
-                alert('Failed to load request data. Please try again.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Failed to load request data. Please try again.');
+                } else {
+                    alert('Failed to load request data. Please try again.');
+                }
             } finally {
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
@@ -646,13 +657,25 @@
             const fileInput = document.getElementById('modalSignedDocuments');
             const uploadBtn = document.getElementById('modalUploadBtn');
             const selectedFilesDiv = document.getElementById('modalSelectedFiles');
+            const separator = document.getElementById('modalSelectedFilesSeparator');
             
             if (fileInput) {
                 fileInput.value = '';
                 fileInput.removeAttribute('data-request-id');
             }
             
+            if (selectedFilesDiv) {
+                selectedFilesDiv.innerHTML = '';
+            }
+            
+            // Hide separator when modal is closed
+            if (separator) {
+                separator.classList.add('hidden');
+            }
+            
+            // Reset upload button to initial state
             if (uploadBtn) {
+                uploadBtn.style.display = 'none'; // Will be shown by setupModalUpload if needed
                 uploadBtn.disabled = false;
                 uploadBtn.innerHTML = `
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -661,10 +684,6 @@
                     Upload Signed Documents
                 `;
                 uploadBtn.onclick = null;
-            }
-            
-            if (selectedFilesDiv) {
-                selectedFilesDiv.innerHTML = '';
             }
 
             currentReviewRequestId = null;
@@ -805,10 +824,8 @@
                             <span class="text-xs text-gray-500">(${file.size})</span>
                         </div>
                         <div class="flex gap-2">
-                            ${hasUrl ? `<a href="${downloadUrl}" target="_blank" class="px-2 py-1 ${bgColor} text-white text-xs rounded hover:opacity-80 transition-colors">View</a>` 
-                                     : `<button class="px-2 py-1 ${bgColor} text-white text-xs rounded opacity-50 cursor-not-allowed" title="Download link unavailable" disabled>View</button>`}
-                            ${hasUrl ? `<a href="${downloadUrl}" download class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">Download</a>`
-                                     : `<button class="px-2 py-1 bg-green-600 text-white text-xs rounded opacity-50 cursor-not-allowed" title="Download link unavailable" disabled>Download</button>`}
+                            ${hasUrl ? `<a href="${downloadUrl}" target="_blank" class="px-4 py-1 bg-green-600 text-white text-xs rounded-full hover:bg-green-700 transition-colors">View</a>` 
+                                     : `<button class="px-4 py-1 bg-green-600 text-white text-xs rounded-full opacity-50 cursor-not-allowed" title="Download link unavailable" disabled>View</button>`}
                         </div>
                     `;
                     filesContainer.appendChild(fileDiv);
@@ -844,10 +861,22 @@
                     if (selectedFilesDiv) {
                         selectedFilesDiv.innerHTML = '';
                     }
+                    // Clear file input
+                    if (fileInput) {
+                        fileInput.value = '';
+                    }
                 } else {
                     // Show upload button
                     uploadBtn.style.display = 'flex';
                     uploadBtn.disabled = false;
+                    
+                    // Reset button to initial state
+                    uploadBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Signed Documents
+                    `;
                     
                     // Set up button click to open file picker
                     uploadBtn.onclick = () => {
@@ -861,36 +890,29 @@
                 }
             }
             
-            // Setup Redo button visibility
-            // Redo button should be visible when:
-            // - Request is in center manager's workflow stage
-            // - Request has files (check if files array exists and has items)
-            // - Request status is pending
-            if (redoBtn) {
-                const hasFiles = data.files && Array.isArray(data.files) && data.files.length > 0;
-                const canRedo = isInCenterManagerStage && hasFiles && data.status === 'pending';
-                
-                if (canRedo) {
-                    redoBtn.style.display = 'flex';
-                } else {
-                    redoBtn.style.display = 'none';
-                }
-            }
+            // Redo button is always visible - no visibility logic needed
         }
 
         function updateModalSelectedFiles(fileInput, selectedFilesDiv, requestId) {
             if (!fileInput || !selectedFilesDiv) return;
             
+            const separator = document.getElementById('modalSelectedFilesSeparator');
+            
             const uploadBtn = document.getElementById('modalUploadBtn');
             
             if (fileInput.files.length > 0) {
-                let filesList = '<div class="text-left"><strong>Selected:</strong> ';
+                let filesList = '<div class="flex items-center gap-2 text-gray-700"><svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="font-medium">Selected:</span> ';
                 const fileNames = [];
                 for (let i = 0; i < fileInput.files.length; i++) {
                     fileNames.push(fileInput.files[i].name);
                 }
-                filesList += fileNames.join(', ') + '</div>';
+                filesList += '<span class="text-gray-600">' + fileNames.join(', ') + '</span></div>';
                 selectedFilesDiv.innerHTML = filesList;
+                
+                // Show separator when files are selected
+                if (separator) {
+                    separator.classList.remove('hidden');
+                }
                 
                 // Update button to show upload action
                 if (uploadBtn) {
@@ -907,6 +929,12 @@
                 }
             } else {
                 selectedFilesDiv.innerHTML = '';
+                
+                // Hide separator when no files are selected
+                if (separator) {
+                    separator.classList.add('hidden');
+                }
+                
                 // Reset button to file picker
                 if (uploadBtn) {
                     uploadBtn.innerHTML = `
@@ -952,15 +980,14 @@
                     }
                 });
 
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Success: ' + data.message);
-                    // Close modal and refresh page
-                    closeReviewModal();
-                    setTimeout(() => window.location.reload(), 500);
-                } else {
-                    alert('Error: ' + data.message);
+                // Handle rate limiting
+                if (response.status === 429) {
+                    const errorMsg = 'Too many attempts. Please wait a moment before trying again.';
+                    if (window.notificationManager) {
+                        window.notificationManager.error(errorMsg);
+                    } else {
+                        alert(errorMsg);
+                    }
                     if (uploadBtn) {
                         uploadBtn.disabled = false;
                         uploadBtn.innerHTML = `
@@ -973,21 +1000,98 @@
                             fileInput.click();
                         };
                     }
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (window.notificationManager) {
+                        window.notificationManager.success(data.message || 'Signed documents uploaded successfully');
+                    } else {
+                        alert('Success: ' + data.message);
+                    }
+                    // Close modal and refresh page
+                    closeReviewModal();
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    // Show error message
+                    const errorMsg = data.message || 'Failed to upload signed documents. Please try again.';
+                    if (window.notificationManager) {
+                        window.notificationManager.error(errorMsg);
+                    } else {
+                        alert('Error: ' + errorMsg);
+                    }
+                    
+                    // Reset button state properly
+                    if (uploadBtn) {
+                        uploadBtn.disabled = false;
+                        // Check if files are still selected
+                        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                            uploadBtn.innerHTML = `
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                Upload Now
+                            `;
+                            uploadBtn.onclick = (e) => {
+                                e.preventDefault();
+                                handleModalUpload(requestId, fileInput);
+                            };
+                        } else {
+                            uploadBtn.innerHTML = `
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                Upload Signed Documents
+                            `;
+                            uploadBtn.onclick = () => {
+                                fileInput.click();
+                            };
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                alert('Failed to upload signed documents. Please try again.');
+                let errorMessage = 'Network error: Failed to upload signed documents. Please check your connection and try again.';
+                
+                // Check for rate limiting
+                if (error.message && error.message.includes('429')) {
+                    errorMessage = 'Too many attempts. Please wait a moment before trying again.';
+                }
+                
+                if (window.notificationManager) {
+                    window.notificationManager.error(errorMessage);
+                } else {
+                    alert(errorMessage);
+                }
+                
+                // Reset button state properly
                 if (uploadBtn) {
                     uploadBtn.disabled = false;
-                    uploadBtn.innerHTML = `
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                        </svg>
-                        Upload Signed Documents
-                    `;
-                    uploadBtn.onclick = () => {
-                        fileInput.click();
-                    };
+                    // Check if files are still selected
+                    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                        uploadBtn.innerHTML = `
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload Now
+                        `;
+                        uploadBtn.onclick = (e) => {
+                            e.preventDefault();
+                            handleModalUpload(requestId, fileInput);
+                        };
+                    } else {
+                        uploadBtn.innerHTML = `
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload Signed Documents
+                        `;
+                        uploadBtn.onclick = () => {
+                            fileInput.click();
+                        };
+                    }
                 }
             }
         }
@@ -999,7 +1103,11 @@
             // Get the request ID from the review modal's file input
             const fileInput = document.getElementById('modalSignedDocuments');
             if (!fileInput || !fileInput.getAttribute('data-request-id')) {
-                alert('Unable to determine request ID. Please try again.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Unable to determine request ID. Please try again.');
+                } else {
+                    alert('Unable to determine request ID. Please try again.');
+                }
                 return;
             }
             
@@ -1014,6 +1122,22 @@
                     reasonTextarea.value = '';
                     reasonTextarea.focus();
                 }
+                // Reset cancel button visibility
+                const cancelBtn = document.getElementById('cancelRedoBtn');
+                if (cancelBtn) {
+                    cancelBtn.style.display = '';
+                }
+                // Reset confirm button state
+                const confirmBtn = document.getElementById('confirmRedoBtn');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    `;
+                }
             }
         }
 
@@ -1027,13 +1151,33 @@
                 if (reasonTextarea) {
                     reasonTextarea.value = '';
                 }
+                // Reset cancel button visibility
+                const cancelBtn = document.getElementById('cancelRedoBtn');
+                if (cancelBtn) {
+                    cancelBtn.style.display = '';
+                }
+                // Reset confirm button state
+                const confirmBtn = document.getElementById('confirmRedoBtn');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    `;
+                }
                 currentRedoRequestId = null;
             }
         }
 
         async function confirmRedoAction() {
             if (!currentRedoRequestId) {
-                alert('Unable to determine request ID. Please try again.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Unable to determine request ID. Please try again.');
+                } else {
+                    alert('Unable to determine request ID. Please try again.');
+                }
                 return;
             }
 
@@ -1041,15 +1185,26 @@
             const reason = reasonTextarea ? reasonTextarea.value.trim() : '';
             
             if (!reason) {
-                alert('Please provide a reason for deleting the files.');
+                if (window.notificationManager) {
+                    window.notificationManager.warning('Please provide a reason for deleting the files.');
+                } else {
+                    alert('Please provide a reason for deleting the files.');
+                }
                 reasonTextarea?.focus();
                 return;
             }
 
             const confirmBtn = document.getElementById('confirmRedoBtn');
+            const cancelBtn = document.getElementById('cancelRedoBtn');
+            
             if (confirmBtn) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>';
+            }
+            
+            // Hide cancel button after confirm is clicked
+            if (cancelBtn) {
+                cancelBtn.style.display = 'none';
             }
 
             try {
@@ -1068,12 +1223,21 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Success: ' + data.message);
+                    if (window.notificationManager) {
+                        window.notificationManager.success(data.message || 'Files deleted successfully');
+                    } else {
+                        alert('Success: ' + data.message);
+                    }
                     closeRedoConfirmationModal();
                     closeReviewModal();
                     setTimeout(() => window.location.reload(), 500);
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to delete files. Please try again.'));
+                    const errorMsg = data.message || 'Failed to delete files. Please try again.';
+                    if (window.notificationManager) {
+                        window.notificationManager.error(errorMsg);
+                    } else {
+                        alert('Error: ' + errorMsg);
+                    }
                     if (confirmBtn) {
                         confirmBtn.disabled = false;
                         confirmBtn.innerHTML = `
@@ -1086,7 +1250,11 @@
                 }
             } catch (error) {
                 console.error('Redo action error:', error);
-                alert('Failed to delete files. Please try again.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Failed to delete files. Please try again.');
+                } else {
+                    alert('Failed to delete files. Please try again.');
+                }
                 if (confirmBtn) {
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = `
@@ -1221,7 +1389,11 @@
 
         async function confirmUpload() {
             if (!currentRequestId) {
-                alert('No request selected.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('No request selected.');
+                } else {
+                    alert('No request selected.');
+                }
                 return;
             }
 
@@ -1229,7 +1401,11 @@
 
             const fileInput = document.getElementById('signedDocuments');
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Please select at least one file to upload.');
+                if (window.notificationManager) {
+                    window.notificationManager.warning('Please select at least one file to upload.');
+                } else {
+                    alert('Please select at least one file to upload.');
+                }
                 return;
             }
 
@@ -1255,20 +1431,45 @@
                     }
                 });
 
+                // Handle rate limiting
+                if (response.status === 429) {
+                    const errorMsg = 'Too many attempts. Please wait a moment before trying again.';
+                    if (window.notificationManager) {
+                        window.notificationManager.error(errorMsg);
+                    } else {
+                        alert(errorMsg);
+                    }
+                    window.hideLoading();
+                    document.getElementById('uploadModal').classList.remove('hidden');
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Success: ' + data.message);
+                    if (window.notificationManager) {
+                        window.notificationManager.success(data.message || 'Signed documents uploaded successfully');
+                    } else {
+                        alert('Success: ' + data.message);
+                    }
                     // Refresh the page to show updated status
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    alert('Error: ' + data.message);
+                    if (window.notificationManager) {
+                        window.notificationManager.error(data.message || 'Failed to upload signed documents. Please try again.');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
                     // Hide loading state
                     window.hideLoading();
                     document.getElementById('uploadModal').classList.remove('hidden');
                 }
             } catch (error) {
-                alert('Failed to upload signed documents. Please try again.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Failed to upload signed documents. Please try again.');
+                } else {
+                    alert('Failed to upload signed documents. Please try again.');
+                }
                 // Hide loading state
                 window.hideLoading();
                 document.getElementById('uploadModal').classList.remove('hidden');
@@ -1296,14 +1497,26 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Success: ' + data.message);
+                    if (window.notificationManager) {
+                        window.notificationManager.success(data.message || 'Document reverted successfully');
+                    } else {
+                        alert('Success: ' + data.message);
+                    }
                     // Refresh the page to show updated status
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    alert('Error: ' + data.message);
+                    if (window.notificationManager) {
+                        window.notificationManager.error(data.message || 'Failed to revert document. Please try again.');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
                 }
             } catch (error) {
-                alert('Failed to revert document. Please try again.');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Failed to revert document. Please try again.');
+                } else {
+                    alert('Failed to revert document. Please try again.');
+                }
             }
         }
 

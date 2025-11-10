@@ -6,6 +6,7 @@ class LandingAnnouncements {
     constructor() {
         this.apiUrl = '/api/announcements';
         this.contentElement = document.getElementById('announcements-content');
+        this.cachedAnnouncements = null; // Cache for preloaded data
         
         this.init();
     }
@@ -26,13 +27,35 @@ class LandingAnnouncements {
      * Load and display announcements
      */
     async load() {
+        // If data is already cached, render it immediately
+        if (this.cachedAnnouncements && this.cachedAnnouncements.length >= 0) {
+            this.render(this.cachedAnnouncements);
+            // Refresh in background
+            this.preload();
+            return;
+        }
+        
         this.showLoadingState();
         
         try {
             const announcements = await this.fetchAnnouncements();
+            this.cachedAnnouncements = announcements; // Cache the data
             this.render(announcements);
         } catch (error) {
             this.showErrorState();
+        }
+    }
+    
+    /**
+     * Preload announcements in the background without showing loading state
+     */
+    async preload() {
+        try {
+            const announcements = await this.fetchAnnouncements();
+            this.cachedAnnouncements = announcements; // Cache the data
+        } catch (error) {
+            // Silent fail for preload
+            console.warn('Failed to preload announcements:', error);
         }
     }
 

@@ -229,9 +229,9 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-60">
+        <div class="flex-1 ml-60 h-screen overflow-y-auto">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg flex flex-col main-content fouc-prevent" id="mainContent">
+            <main class="p-4 rounded-bl-lg flex flex-col main-content fouc-prevent h-full" id="mainContent">
                 <!-- Dashboard Header with Modern Compact Filters -->
                 <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Date Range Display -->
@@ -705,9 +705,9 @@
                                 </div>
 
                 <!-- Requests Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <!-- Table (Combined Header and Body) -->
-                    <div class="flex-1">
+                    <div class="flex-1 overflow-y-auto min-h-0">
                         @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
                             <div class="h-full flex items-center justify-center">

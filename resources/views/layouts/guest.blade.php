@@ -224,7 +224,7 @@
                                     </a>
                                     <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
-                                        <span>Peer Review</span>
+                                        <span>Peer Reviewed</span>
                                     </a>
                                 </div>
                             </div>
@@ -291,6 +291,7 @@
             constructor() {
                 this.apiUrl = '/api/announcements';
                 this.contentElement = document.getElementById('guest-announcements-content');
+                this.cachedAnnouncements = null; // Cache for preloaded data
                 this.init();
             }
 
@@ -304,13 +305,33 @@
             }
 
             async load() {
+                // If data is already cached, render it immediately
+                if (this.cachedAnnouncements && this.cachedAnnouncements.length >= 0) {
+                    this.render(this.cachedAnnouncements);
+                    // Refresh in background
+                    this.preload();
+                    return;
+                }
+                
                 this.showLoadingState();
                 
                 try {
                     const announcements = await this.fetchAnnouncements();
+                    this.cachedAnnouncements = announcements; // Cache the data
                     this.render(announcements);
                 } catch (error) {
                     this.showErrorState();
+                }
+            }
+            
+            async preload() {
+                // Preload announcements in the background without showing loading state
+                try {
+                    const announcements = await this.fetchAnnouncements();
+                    this.cachedAnnouncements = announcements; // Cache the data
+                } catch (error) {
+                    // Silent fail for preload
+                    console.warn('Failed to preload announcements:', error);
                 }
             }
 

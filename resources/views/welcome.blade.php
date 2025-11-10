@@ -332,11 +332,13 @@
         
         .hero-art-glow {
             filter: drop-shadow(0 0 1px rgba(255,255,255,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.3)) drop-shadow(0 15px 40px rgba(0,0,0,0.25));
-            transition: filter 0.3s ease;
+            transition: filter 0.3s ease, transform 0.3s ease;
         }
         
+        a.group:hover .hero-art-glow,
         .group:hover .hero-art-glow {
-            filter: drop-shadow(0 0 2px rgba(255,255,255,0.9)) drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 0 16px rgba(255,255,255,0.3)) drop-shadow(0 20px 50px rgba(0,0,0,0.3));
+            filter: drop-shadow(0 0 3px rgba(255,255,255,1)) drop-shadow(0 0 12px rgba(255,255,255,0.7)) drop-shadow(0 0 24px rgba(255,255,255,0.5)) drop-shadow(0 0 32px rgba(255,255,255,0.3)) drop-shadow(0 25px 60px rgba(0,0,0,0.4));
+            transform: scale(1.08);
         }
         
         [x-cloak] {
@@ -729,7 +731,7 @@
                                     </a>
                                     <a href="https://docs.google.com/spreadsheets/d/1qeRfbWQVB2fodnirzIK5Znql5nliLAPVtK4xXRS5xSY/edit?gid=451510018#gid=451510018" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-2 text-sm text-maroon-900 hover:bg-maroon-50">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
-                                        <span>Peer Review</span>
+                                        <span>Peer Reviewed</span>
                                     </a>
                                 </div>
                             </div>
@@ -882,8 +884,8 @@
                                          </div>
                             <div class="mobile-hidden lg:flex justify-end relative pointer-events-none" aria-hidden="true">
                                 <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 pointer-events-none" style="width: 60vh; height: 60vh; background: radial-gradient(closest-side, rgba(255,255,255,0.28), rgba(255,255,255,0.12), transparent 70%); filter: blur(16px); border-radius: 9999px;"></div>
-                                <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="cursor-pointer hover:scale-105 transition-all duration-300 group">
-                                    <img src="/images/art.webp" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none hero-art-glow" />
+                                <a href="https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/index" target="_blank" rel="noopener noreferrer" class="cursor-pointer transition-all duration-300 group pointer-events-auto">
+                                    <img src="/images/art.webp" alt="Hero Art" class="h-[60vh] md:h-[70vh] w-auto object-contain select-none hero-art-glow transition-all duration-300" />
                                 </a>
                                              </div>
                                          </div>
@@ -1179,6 +1181,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('privacy_accepted', 'true');
                     closePrivacyModal();
                     animateJournalCounts();
+                    
+                    // Preload announcements in the background
+                    setTimeout(() => {
+                        // Preload guest announcements (for guest layout)
+                        if (window.guestAnnouncements && typeof window.guestAnnouncements.preload === 'function') {
+                            window.guestAnnouncements.preload();
+                        }
+                        // Preload landing announcements (for welcome page)
+                        if (window.landingAnnouncements && typeof window.landingAnnouncements.preload === 'function') {
+                            window.landingAnnouncements.preload();
+                        }
+                    }, 100);
                 } else {
                     // Privacy not accepted - show modal
                     showPrivacyModal();
@@ -1247,6 +1261,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('privacy_accepted', 'true');
                 closePrivacyModal();
                 animateJournalCounts();
+                
+                // Preload announcements in the background
+                setTimeout(() => {
+                    // Preload guest announcements (for guest layout)
+                    if (window.guestAnnouncements && typeof window.guestAnnouncements.preload === 'function') {
+                        window.guestAnnouncements.preload();
+                    }
+                    // Preload landing announcements (for welcome page)
+                    if (window.landingAnnouncements && typeof window.landingAnnouncements.preload === 'function') {
+                        window.landingAnnouncements.preload();
+                    }
+                }, 100);
             } else {
                 // Error - re-enable button and show error
                 privacyAcceptBtn.disabled = false;
@@ -1269,15 +1295,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Animate journal count badges
     function animateJournalCounts() {
-        const counters = [
-            { id: 'scopus-count', target: 2847 },
-            { id: 'wos-count', target: 1923 },
-            { id: 'aci-count', target: 856 },
-            { id: 'peer-count', target: 3421 }
-        ];
+        const counterIds = ['scopus-count', 'wos-count', 'aci-count', 'peer-count'];
+        
+        const counters = counterIds.map(id => {
+            const element = document.getElementById(id);
+            if (!element) return null;
+            
+            // Get target value from data-target attribute (set from admin settings)
+            const target = parseInt(element.getAttribute('data-target')) || 0;
+            return { id, target, element };
+        }).filter(c => c !== null);
 
         counters.forEach((counter, index) => {
-            const element = document.getElementById(counter.id);
+            const element = counter.element;
             if (!element) return;
 
             const duration = 2000; // 2 seconds

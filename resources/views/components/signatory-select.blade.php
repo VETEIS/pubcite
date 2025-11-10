@@ -38,7 +38,7 @@
     <input type="text" x-model="query" @focus="open = true; fetchOptions()" @blur="handleBlur" @input="fetchOptions()" :placeholder="placeholderText"
            :class="isValidSelection ? '{{ $inputClass }}' : '{{ $inputClass }} border-red-500 bg-red-50'"
            autocomplete="off">
-    <input type="hidden" name="{{ $name }}" :value="selectedName" required>
+    <input type="hidden" name="{{ $name }}" :value="isValidSelection ? selectedName : ''" required>
     <div x-show="open" class="absolute left-1/2 transform -translate-x-1/2 z-30 mt-1 w-max min-w-48 max-w-80 max-h-40 overflow-auto bg-white border border-gray-200 rounded shadow" @mouseenter="hovering = true" @mouseleave="hovering = false">
         <template x-if="loading"><div class="p-2 text-xs text-gray-500">Loading...</div></template>
         <template x-if="!loading">
@@ -188,6 +188,15 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
                 .finally(() => { this.loading = false; });
         },
         choose(opt) {
+            // Ensure the selected option exists in the database list
+            const isValidOption = this.allSignatories.some(s => s.id === opt.id && s.name === opt.name);
+            if (!isValidOption && this.allSignatories.length > 0) {
+                // Option doesn't exist in database - refresh cache and try again
+                this.refreshCache();
+                this.showValidationError('Signatory cache is stale. Refreshing... Please try again.');
+                return;
+            }
+            
             this.selectedName = opt.name;
             this.query = opt.name;
             this.isValidSelection = true;
@@ -253,30 +262,89 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
             });
         },
         validateSelection() {
-            // If there's a query but no valid selection, validate it
-            if (this.query && this.query !== this.selectedName) {
-                // Check if the query matches any of the available options
-                const isValidOption = this.options.some(opt => opt.name === this.query);
+            // If there's a query, validate it against the full database list (not just filtered options)
+            if (this.query && this.query.trim() !== '') {
+                // Wait for preloaded signatories if not ready yet
+                if (!this.preloaded || this.allSignatories.length === 0) {
+                    // If not preloaded yet, validate against server
+                    this.validateAgainstServer();
+                    return;
+                }
+                
+                // Check if the query matches any of the available signatories from database
+                const trimmedQuery = this.query.trim();
+                const isValidOption = this.allSignatories.some(opt => 
+                    opt.name.trim().toLowerCase() === trimmedQuery.toLowerCase()
+                );
+                
                 if (!isValidOption) {
-                    // Mark as invalid
+                    // Mark as invalid - name doesn't exist in database
                     this.isValidSelection = false;
                     // Clear invalid selection
-                    this.query = this.selectedName || '';
+                    this.query = '';
                     this.selectedName = '';
                     // Show error message or visual feedback
-                    this.showValidationError();
+                    this.showValidationError('Please select a valid signatory from the dropdown. This name is not in the database.');
                 } else {
-                    this.isValidSelection = true;
+                    // Valid selection - ensure selectedName matches
+                    const matchedSignatory = this.allSignatories.find(opt => 
+                        opt.name.trim().toLowerCase() === trimmedQuery.toLowerCase()
+                    );
+                    if (matchedSignatory) {
+                        this.selectedName = matchedSignatory.name;
+                        this.query = matchedSignatory.name;
+                        this.isValidSelection = true;
+                    }
                 }
-            } else if (this.query === this.selectedName) {
-                this.isValidSelection = true;
+            } else if (this.query === this.selectedName && this.selectedName) {
+                // Re-validate selected name against database
+                const isValidOption = this.allSignatories.some(opt => 
+                    opt.name.trim().toLowerCase() === this.selectedName.trim().toLowerCase()
+                );
+                this.isValidSelection = isValidOption;
+                if (!isValidOption) {
+                    this.query = '';
+                    this.selectedName = '';
+                }
+            } else if (!this.query) {
+                this.isValidSelection = true; // Empty is valid (optional field)
             }
         },
-        showValidationError() {
+        validateAgainstServer() {
+            // Validate against server when preloaded data is not available
+            if (!this.query || this.query.trim() === '') return;
+            
+            const params = new URLSearchParams({ 
+                name: this.query.trim(), 
+                type: type 
+            });
+            
+            fetch(`/signatories/validate?${params.toString()}`, { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            })
+            .then(r => r.ok ? r.json() : { valid: false })
+            .then(data => {
+                if (!data.valid) {
+                    this.isValidSelection = false;
+                    this.query = '';
+                    this.selectedName = '';
+                    this.showValidationError('Please select a valid signatory from the dropdown. This name is not in the database.');
+                } else {
+                    this.isValidSelection = true;
+                    this.selectedName = this.query;
+                }
+            })
+            .catch(() => {
+                this.isValidSelection = false;
+                this.query = '';
+                this.selectedName = '';
+            });
+        },
+        showValidationError(message = 'Please select a valid signatory from the dropdown') {
             // Create a temporary error message
             const errorMsg = document.createElement('div');
-            errorMsg.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
-            errorMsg.textContent = 'Please select a valid signatory from the dropdown';
+            errorMsg.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50 shadow-lg';
+            errorMsg.textContent = message;
             document.body.appendChild(errorMsg);
             
             // Remove error message after 3 seconds
