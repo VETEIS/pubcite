@@ -284,9 +284,10 @@ class SigningController extends Controller
                 'name' => $userRequest->user->name,
                 'email' => $userRequest->user->email,
             ] : null,
-            'files' => $this->getRequestFiles($userRequest),
+            'files' => $this->getRequestFiles($userRequest, $signatoryType),
             'signatories' => $formattedSignatories,
             'download_zip_url' => route('signing.download-files', ['requestId' => $userRequest->id]),
+            'signatory_type' => $signatoryType,
         ]);
     }
 
@@ -577,7 +578,7 @@ class SigningController extends Controller
         }
     }
 
-    private function getRequestFiles(UserRequest $request): array
+    private function getRequestFiles(UserRequest $request, ?string $signatoryType = null): array
     {
         $files = [];
         $pdfPathData = json_decode($request->pdf_path, true);
@@ -585,6 +586,9 @@ class SigningController extends Controller
         if (!$pdfPathData) {
             return $files;
         }
+
+        // Determine which files need signing based on signatory type
+        $filesNeedingSignature = $this->getFilesNeedingSignature($signatoryType);
 
         if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
             foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
@@ -622,6 +626,10 @@ class SigningController extends Controller
                     'type' => 'pdfs',
                     'url' => $downloadUrl,
                 ]);
+                
+                // Check if this file needs signing
+                $needsSigning = in_array($key, $filesNeedingSignature);
+                
                 $files[] = [
                     'name' => $originalName ?: ucfirst(str_replace('_', ' ', $key)) . '.pdf',
                     'path' => $filePath,
@@ -629,6 +637,7 @@ class SigningController extends Controller
                     'size' => $this->formatFileSize(filesize($fullPath)),
                     'key' => $key,
                     'download_url' => $downloadUrl,
+                    'needs_signing' => $needsSigning,
                 ];
             }
         }
@@ -649,6 +658,9 @@ class SigningController extends Controller
                     continue;
                 }
 
+                // Check if this file needs signing
+                $needsSigning = in_array($key, $filesNeedingSignature);
+                
                 $files[] = [
                     'name' => ucfirst(str_replace('_', ' ', $key)) . '.docx',
                     'path' => $filePath,
@@ -660,11 +672,35 @@ class SigningController extends Controller
                         'type' => 'docxs',
                         'key' => $key,
                     ]),
+                    'needs_signing' => $needsSigning,
                 ];
             }
         }
 
         return $files;
+    }
+
+    /**
+     * Determine which files need signing based on signatory type
+     * 
+     * @param string|null $signatoryType
+     * @return array Array of file keys that need signing
+     */
+    private function getFilesNeedingSignature(?string $signatoryType): array
+    {
+        if (!$signatoryType) {
+            return [];
+        }
+
+        // Most signatories only need to sign the incentive application form
+        $defaultFiles = ['incentive'];
+
+        // College dean needs to sign both incentive and recommendation letter
+        if ($signatoryType === 'college_dean') {
+            return ['incentive', 'recommendation'];
+        }
+
+        return $defaultFiles;
     }
 
     private function formatFileSize(int $bytes): string

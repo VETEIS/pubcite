@@ -758,10 +758,9 @@
             filesContainer.innerHTML = '';
             if (data.files && data.files.length > 0) {
                 data.files.forEach(file => {
-                    const fileDiv = document.createElement('div');
-                    fileDiv.className = 'flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3';
                     const type = file.type;
                     const key = file.key;
+                    const needsSigning = file.needs_signing === true;
                     
                     // Use secure download URL if available, otherwise fallback with correct pluralized type
                     const downloadUrl = file.download_url || null;
@@ -785,13 +784,23 @@
                         bgColor = 'bg-orange-600';
                     }
                     
+                    // Highlight files that need signing with colored background
+                    const fileDiv = document.createElement('div');
+                    if (needsSigning) {
+                        fileDiv.className = 'flex items-center justify-between bg-amber-50 rounded-lg border-2 border-amber-300 p-3';
+                    } else {
+                        fileDiv.className = 'flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3';
+                    }
+                    
                     fileDiv.innerHTML = `
                         <div class="flex items-center gap-3">
                             <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                ${needsSigning ? `<svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Requires your signature">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                </svg>` : `<svg class="w-4 h-4 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                                <span class="text-xs text-gray-900">${file.name}</span>
+                                </svg>`}
+                                <span class="text-xs ${needsSigning ? 'text-amber-900 font-semibold' : 'text-gray-900'}">${file.name}</span>
                             </div>
                             <span class="text-xs text-gray-500">(${file.size})</span>
                         </div>
