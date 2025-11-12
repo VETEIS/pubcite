@@ -97,43 +97,25 @@ class CitationsController extends Controller
         }
         
         try {
-            $data = $request->all();
-            
-            // Filter out error messages and invalid data
-            $data = array_filter($data, function($value, $key) {
-                // Skip error messages and system fields
-                if (is_string($value) && (
-                    strpos($value, 'false message') !== false ||
-                    strpos($value, 'Please wait before submitting') !== false ||
-                    strpos($value, 'Validation failed') !== false
-                )) {
-                    return false;
-                }
-                // Skip system fields
-                if (in_array($key, ['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft'])) {
-                    return false;
-                }
-                return true;
-            }, ARRAY_FILTER_USE_BOTH);
-            
+            $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
-            $reqId = $request->input('request_id');
             
             $isPreview = !$reqId;
             
             if ($isPreview) {
-                // Simple temp path for immediate preview - no complex directory structure
-                $uploadPath = "temp/preview_" . time();
+                // Deterministic cache path for previews to avoid regenerating the same DOCX repeatedly
+                // Hash will be computed below once data is merged
+                $uploadPath = null; // set after computing unique hash
             } else {
                 $userRequest = \App\Models\Request::find($reqId);
                 if (!$userRequest) {
                     throw new \Exception('Request not found for DOCX generation');
                 }
-                $requestCode = $userRequest->request_code;
+                $reqCode = $userRequest->request_code;
                 $userId = $userRequest->user_id;
-                $uploadPath = "requests/{$userId}/{$requestCode}";
-                Log::info('Generating Citation DOCX for saved request', ['request_id' => $reqId, 'request_code' => $requestCode]);
+                $uploadPath = "requests/{$userId}/{$reqCode}";
+                Log::info('Generating Citation DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
             }
             
             // Add fallback data if form data is corrupted
@@ -142,6 +124,7 @@ class CitationsController extends Controller
                 'rank' => 'Sample Rank', 
                 'college' => 'Sample College',
                 'bibentry' => 'Sample Bibliography Entry',
+                'citedbibentry' => 'Sample Cited Bibliography',
                 'issn' => 'Sample ISSN',
                 'doi' => 'Sample DOI',
                 'scopus' => '1',
@@ -155,13 +138,16 @@ class CitationsController extends Controller
                 'journal' => 'Sample Journal',
                 'publisher' => 'Sample Publisher',
                 'citescore' => 'Sample CiteScore',
-                'citedbibentry' => 'Sample Cited Bibliography'
+                'rec_faculty_name' => 'Sample Faculty',
+                'rec_citing_details' => 'Sample Citing Details',
+                'rec_indexing_details' => 'Sample Indexing Details',
+                'rec_dean_name' => 'Sample Dean'
             ];
             
-            // Merge fallback data with filtered form data
-            $data = array_merge($fallbackData, $data);
+            // Merge fallback data with form data
+            $data = array_merge($fallbackData, $request->all());
             
-            Log::info('Citation DOCX generation - Received data:', ['type' => $docxType, 'data' => $data, 'isPreview' => $isPreview]);
+            Log::info('Citation DOCX generation - Received data (trimmed log)', ['type' => $docxType, 'isPreview' => $isPreview]);
             
             $hashSource = json_encode([
                 'type' => $docxType,
@@ -171,17 +157,41 @@ class CitationsController extends Controller
             $filename = null;
             $fullPath = null;
             
+            // If preview, set a stable cache directory based on the hash and short-circuit if exists
+            if ($isPreview) {
+                $cacheBase = "temp/docx_cache/{$docxType}_{$uniqueHash}";
+                $uploadPath = $cacheBase;
+                // Determine expected output filename based on type
+                $expectedFile = $docxType === 'incentive'
+                    ? "{$cacheBase}/Incentive_Application_Form.docx"
+                    : "{$cacheBase}/Recommendation_Letter_Form.docx";
+                $expectedAbsolute = Storage::disk('local')->path($expectedFile);
+                if (file_exists($expectedAbsolute)) {
+                    // Serve cached file immediately
+                    $serveName = $docxType === 'incentive'
+                        ? 'Incentive_Application_Form.docx'
+                        : 'Recommendation_Letter_Form.docx';
+                    $userAgent = request()->header('User-Agent');
+                    $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                    $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    return response()->download($expectedAbsolute, $serveName, [
+                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'Content-Disposition' => $contentDisposition . '; filename="' . $serveName . '"'
+                    ]);
+                }
+            }
+            
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
-                    Log::info('Filtered data for incentive', ['filtered' => $filtered]);
+                    Log::info('Filtered data for incentive (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
-                    Log::info('Filtered data for recommendation', ['filtered' => $filtered]);
+                    Log::info('Filtered data for recommendation (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
@@ -207,11 +217,13 @@ class CitationsController extends Controller
             }
             
             // Otherwise, download the file
+            $userAgent = request()->header('User-Agent');
+            $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+            $contentDisposition = $isIOS ? 'inline' : 'attachment';
             return response()->download($absolutePath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
-            
         } catch (\Exception $e) {
             Log::error('Error generating Citation DOCX: ' . $e->getMessage());
             return response()->json([
