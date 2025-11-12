@@ -5,7 +5,9 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "dev-network": "node start-dev.js"
+        "dev-network": "node start-dev.js",
+        "update-browserslist": "npx update-browserslist-db@latest",
+        "postinstall": "npm run update-browserslist"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.7",
