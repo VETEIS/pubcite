@@ -42,6 +42,13 @@ attempt=1
 db_ready=false
 
 while [ $attempt -le $max_attempts ]; do
+    # Check if artisan file exists first
+    if [ ! -f artisan ]; then
+        echo "❌ CRITICAL: artisan file not found!"
+        echo "Cannot test database connection without artisan file."
+        break
+    fi
+    
     # Try to connect and capture error output
     db_test_output=$(php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'SUCCESS'; } catch (\Exception \$e) { echo 'ERROR: ' . \$e->getMessage(); }" 2>&1)
     
@@ -50,7 +57,13 @@ while [ $attempt -le $max_attempts ]; do
         db_ready=true
         break
     else
-        error_msg=$(echo "$db_test_output" | grep -i "error" | head -1 || echo "Connection failed")
+        # Extract error message from output
+        error_msg=$(echo "$db_test_output" | grep -i "error\|exception\|could not\|failed" | head -1 || echo "Connection failed (no error details)")
+        if [ -z "$error_msg" ] || [ "$error_msg" = "Connection failed (no error details)" ]; then
+            # Try a simpler connection test
+            simple_test=$(php artisan tinker --execute="DB::connection()->getPdo();" 2>&1 | tail -1)
+            error_msg="$simple_test"
+        fi
         echo "Attempt $attempt/$max_attempts: $error_msg"
         sleep 2
         attempt=$((attempt + 1))
@@ -66,8 +79,12 @@ if [ "$db_ready" = false ]; then
     echo "  3. Database is accessible from this service"
     echo "  4. Database credentials are correct"
     echo ""
-    echo "Attempting to show detailed error..."
-    php artisan tinker --execute="try { DB::connection()->getPdo(); } catch (\Exception \$e) { echo 'Error: ' . \$e->getMessage() . PHP_EOL; echo 'Code: ' . \$e->getCode() . PHP_EOL; }" 2>&1 || true
+    if [ -f artisan ]; then
+        echo "Attempting to show detailed error..."
+        php artisan tinker --execute="try { DB::connection()->getPdo(); } catch (\Exception \$e) { echo 'Error: ' . \$e->getMessage() . PHP_EOL; echo 'Code: ' . \$e->getCode() . PHP_EOL; }" 2>&1 || true
+    else
+        echo "⚠️  Cannot show detailed error - artisan file not found"
+    fi
     echo ""
     echo "⚠️  Starting server anyway, but application will not function without database."
 fi
