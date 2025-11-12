@@ -119,7 +119,7 @@
         @endif
 
         @include('admin.partials.sidebar')
-
+        
         <!-- Main Content -->
         <div class="flex-1 ml-60 h-screen overflow-y-auto force-scrollbar">
             <!-- Content Area -->
@@ -131,8 +131,8 @@
                         <!-- User Management Title -->
                         <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
                             <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" />
-                            </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" />
+                        </svg>
                             <span>Edit User</span>
                         </div>
                     </div>
@@ -156,7 +156,7 @@
                             <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
                             <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
-                                                    </svg>
+                                </svg>
                                 <!-- Notification Badge -->
                                 <div x-show="unreadCount > 0" 
                                      x-text="unreadCount" 
@@ -222,7 +222,7 @@
                                 </div>
                             </div>
                         </div>
-                         
+                        
                         <!-- User Profile Button -->
                         <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
                             @if(Auth::user()->profile_photo_path)
@@ -358,19 +358,19 @@
 <script>
     // Function to toggle signatory type field visibility
     function toggleSignatoryTypeField() {
-        const roleSelect = document.getElementById('role-select');
-        const signatoryGroup = document.getElementById('signatory-type-group');
+            const roleSelect = document.getElementById('role-select');
+            const signatoryGroup = document.getElementById('signatory-type-group');
         
         if (!roleSelect || !signatoryGroup) {
             return;
         }
-        
+            
         // Show/hide based on role selection
-        if (roleSelect.value === 'signatory') {
-            signatoryGroup.classList.remove('hidden');
+                if (roleSelect.value === 'signatory') {
+                    signatoryGroup.classList.remove('hidden');
             signatoryGroup.style.display = 'block';
-        } else {
-            signatoryGroup.classList.add('hidden');
+                } else {
+                    signatoryGroup.classList.add('hidden');
             signatoryGroup.style.display = 'none';
         }
     }
@@ -380,11 +380,11 @@
         const roleSelect = document.getElementById('role-select');
         const nameInput = document.getElementById('name-input');
         
-        if (roleSelect && nameInput && roleSelect.value === 'signatory') {
-            nameInput.value = nameInput.value.toUpperCase();
+            if (roleSelect && nameInput && roleSelect.value === 'signatory') {
+                nameInput.value = nameInput.value.toUpperCase();
+            }
         }
-    }
-    
+            
     // Initialize function - works with both regular page loads and Turbo
     function initializeUserForm() {
         const roleSelect = document.getElementById('role-select');

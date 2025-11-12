@@ -488,17 +488,8 @@
                                                         <div class="text-sm font-medium text-gray-900">{{ $user->id }}</div>
                                                     </td>
                                                     <td class="w-48 px-6 py-3 overflow-hidden">
-                                                        <div class="flex items-center w-full">
-                                                            @if($user->profile_photo_path)
-                                                                <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0">
-                                                            @else
-                                                                <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                                                    <span class="text-sm font-medium text-maroon-700">{{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}</span>
-                                                                </div>
-                                                            @endif
-                                                            <div class="min-w-0 flex-1 overflow-hidden">
-                                                                <div class="text-sm font-medium text-gray-900 truncate">{{ $user->name ?? 'N/A' }}</div>
-                                                            </div>
+                                                        <div class="min-w-0 flex-1 overflow-hidden">
+                                                            <div class="text-sm font-medium text-gray-900 truncate">{{ $user->name ?? 'N/A' }}</div>
                                                         </div>
                                     </td>
                                                     <td class="w-64 px-6 py-3 overflow-hidden">

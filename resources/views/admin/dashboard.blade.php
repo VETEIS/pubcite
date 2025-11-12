@@ -286,9 +286,7 @@
                                 </button>
                                 <div class="absolute top-full left-0 mt-1 bg-white text-md font-semibold border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[120px]">
                                     <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => null])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ !$currentStatus ? 'bg-maroon-50 text-maroon-700' : '' }}">All Status</a>
-                                    <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => 'pending'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'pending' ? 'bg-maroon-50 text-maroon-700' : '' }}">Pending</a>
                                     <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => 'endorsed'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'endorsed' ? 'bg-maroon-50 text-maroon-700' : '' }}">Endorsed</a>
-                                    <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => 'rejected'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'rejected' ? 'bg-maroon-50 text-maroon-700' : '' }}">Rejected</a>
                 </div>
             </div>
 
@@ -468,9 +466,7 @@
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                                 <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
                                                     <option value="">All Status</option>
-                                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                                                     <option value="endorsed" {{ request('status') == 'endorsed' ? 'selected' : '' }}>Endorsed</option>
-                                                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -562,9 +558,9 @@
                                         </thead>
                                         <tbody>
                                             @php
-                                                $statusLabels = ['PEN', 'END', 'REJ'];
-                                                $statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
-                                                $total = array_sum(array_values($statusCounts));
+                                                $statusLabels = ['END'];
+                                                $statusColors = ['bg-green-500'];
+                                                $total = $statusCounts['endorsed'] ?? 0;
                                             @endphp
                                             @foreach($statusLabels as $i => $label)
                                                 <tr class="hover:bg-gray-50 transition-all duration-300">
@@ -572,16 +568,13 @@
                                                         <span class="inline-block w-2 h-2 rounded-full {{ $statusColors[$i] }} mr-1 flex-shrink-0"></span>
                                                         <span class="font-semibold truncate">{{ $label }}</span>
                                                     </td>
-                                                    <td class="py-1 text-center font-semibold">{{ $statusCounts[strtolower($label)] ?? 0 }}</td>
+                                                    <td class="py-1 text-center font-semibold">{{ $statusCounts['endorsed'] ?? 0 }}</td>
                                                     <td class="py-1 text-right text-gray-500">
                                                         @if($total > 0)
-                                                            @php
-                                                                $percentage = 100 * ($statusCounts[strtolower($label)] ?? 0) / $total;
-                                                                echo $percentage == 100 ? '100' : number_format($percentage, 1);
-                                                            @endphp
+                                                            100%
                                                         @else
-                                                            0
-                                                        @endif%
+                                                            0%
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -833,19 +826,10 @@
                                             <div class="text-sm font-medium text-gray-900 truncate">{{ $request->request_code }}</div>
                                         </td>
                                         <td class="w-48 px-6 py-3 overflow-hidden text-left">
-                                            <div class="flex items-center w-full">
-                                                @if($request->user->profile_photo_path)
-                                                    <img src="{{ $request->user->profile_photo_url }}" alt="{{ $request->user->name }}" class="w-8 h-8 rounded-full object-cover mr-3 flex-shrink-0">
-                                                @else
-                                                    <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                                        <span class="text-sm font-medium text-maroon-700">{{ strtoupper(substr($request->user->name ?? 'U', 0, 1)) }}</span>
-                                                    </div>
-                                                @endif
-                                                <div class="min-w-0 flex-1 overflow-hidden">
-                                                    <div class="text-sm font-medium text-gray-900 truncate">{{ $request->user->name ?? 'N/A' }}</div>
-                                                    <div class="text-sm text-gray-500 truncate">{{ $request->user->email ?? 'No email' }}</div>
-                                    </div>
-                                                </div>
+                                            <div class="min-w-0 flex-1 overflow-hidden">
+                                                <div class="text-sm font-medium text-gray-900 truncate">{{ $request->user->name ?? 'N/A' }}</div>
+                                                <div class="text-sm text-gray-500 truncate">{{ $request->user->email ?? 'No email' }}</div>
+                                            </div>
                                         </td>
                                         <td class="w-24 px-6 py-3 overflow-hidden text-center" style="width: 96px; max-width: 96px; min-width: 96px;">
                                             <div class="w-full flex justify-center">
@@ -857,22 +841,10 @@
                                         </td>
                                         <td class="w-28 px-6 py-3 overflow-hidden text-center">
                                             <div class="w-full flex justify-center">
-                                                @if($request->status === 'endorsed')
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 w-20 justify-center">
-                                                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                                                        Endorsed
-                                                    </span>
-                                                @elseif($request->status === 'rejected')
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 w-20 justify-center">
-                                                        <div class="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
-                                                        Rejected
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 w-20 justify-center">
-                                                        <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
-                                                        Pending
-                                                    </span>
-                                                @endif
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 w-20 justify-center">
+                                                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                                    Endorsed
+                                                </span>
                                             </div>
                                         </td>
                                         <td class="w-24 px-6 py-3 text-center text-sm font-medium overflow-hidden">
@@ -885,14 +857,6 @@
                                                     </svg>
                                                     Review
                                                 </button>
-                                                
-                                                <!-- Delete Button -->
-                                                <button type="button" onclick="openDeleteModal({{ $request->id }}, '{{ $request->request_code }}')" class="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:shadow-md hover:scale-105 transition-all duration-300 text-xs font-medium group-hover:bg-red-200" title="Delete">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                        </svg>
-                                                        Delete
-                                                    </button>
                                         </div>
                                         </td>
                                     </tr>
@@ -1185,7 +1149,7 @@
                     const legendElement = document.getElementById('statusLegend');
                     if (!legendElement) return;
                     
-                    const total = statusCounts.pending + statusCounts.endorsed + statusCounts.rejected;
+                    const total = statusCounts.endorsed || 0;
                     
                     if (total === 0) {
                         legendElement.innerHTML = `
@@ -1200,9 +1164,9 @@
                         return;
                     }
                     
-                    const statusLabels = ['PEN', 'END', 'REJ'];
-                    const statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
-                    const statusKeys = ['pending', 'endorsed', 'rejected'];
+                    const statusLabels = ['END'];
+                    const statusColors = ['bg-green-500'];
+                    const statusKeys = ['endorsed'];
                     
                     let legendHTML = `
                         <table class="w-full text-xs min-w-0 table-fixed">
@@ -1394,8 +1358,8 @@ function initializeCharts(data) {
     // Initialize status chart
     const statusChartElement = document.getElementById('statusChart');
     if (statusChartElement) {
-        const statusCounts = [data.statusCounts.pending, data.statusCounts.endorsed, data.statusCounts.rejected];
-        const totalCount = statusCounts.reduce((sum, count) => sum + count, 0);
+        const statusCounts = [data.statusCounts.endorsed || 0];
+        const totalCount = statusCounts[0];
         
         if (totalCount === 0) {
             // Show empty state
@@ -1421,10 +1385,10 @@ function initializeCharts(data) {
             window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pending', 'Endorsed', 'Rejected'],
+                    labels: ['Endorsed'],
                     datasets: [{
                         data: statusCounts,
-                        backgroundColor: ['#fbbf24', '#10b981', '#ef4444'],
+                        backgroundColor: ['#10b981'],
                         borderWidth: 0
                     }]
                 },
@@ -1555,7 +1519,7 @@ function updateStatsWithData(stats) {
             const legendElement = document.getElementById('statusLegend');
             if (!legendElement) return;
             
-            const total = statusCounts.pending + statusCounts.endorsed + statusCounts.rejected;
+            const total = statusCounts.endorsed || 0;
             
             // If no data, show empty state
             if (total === 0) {
@@ -1571,9 +1535,9 @@ function updateStatsWithData(stats) {
                 return;
             }
             
-            const statusLabels = ['PEN', 'END', 'REJ'];
-            const statusColors = ['bg-yellow-400', 'bg-green-500', 'bg-red-500'];
-            const statusKeys = ['pending', 'endorsed', 'rejected'];
+            const statusLabels = ['END'];
+            const statusColors = ['bg-green-500'];
+            const statusKeys = ['endorsed'];
             
             legendElement.innerHTML = `
                 <table class="w-full text-xs min-w-0">
@@ -1819,8 +1783,8 @@ function updateStatsWithData(stats) {
                     window.statusChartInstance.destroy();
                 }
                 
-                const statusCounts = [data.statusCounts.pending, data.statusCounts.endorsed, data.statusCounts.rejected];
-                const totalCount = statusCounts.reduce((sum, count) => sum + count, 0);
+                const statusCounts = [data.statusCounts.endorsed || 0];
+                const totalCount = statusCounts[0];
                 
                 // If no data, show grayed-out pie chart
                 if (totalCount === 0) {
@@ -1861,24 +1825,18 @@ function updateStatsWithData(stats) {
                 window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
                     type: 'doughnut',
                     data: {
-                        labels: ['Pending', 'Endorsed', 'Rejected'],
+                        labels: ['Endorsed'],
                         datasets: [{
                             data: statusCounts,
                             backgroundColor: [
-                                'rgba(245, 158, 11, 0.8)',
-                                'rgba(34, 197, 94, 0.8)',
-                                'rgba(239, 68, 68, 0.8)'
+                                'rgba(16, 185, 129, 0.8)'
                             ],
                             borderColor: [
-                                'rgba(245, 158, 11, 1)',
-                                'rgba(34, 197, 94, 1)',
-                                'rgba(239, 68, 68, 1)'
+                                'rgba(16, 185, 129, 1)'
                             ],
                             borderWidth: 2,
                             hoverBackgroundColor: [
-                                'rgba(245, 158, 11, 1)',
-                                'rgba(34, 197, 94, 1)',
-                                'rgba(239, 68, 68, 1)'
+                                'rgba(16, 185, 129, 1)'
                             ]
                         }]
                     },

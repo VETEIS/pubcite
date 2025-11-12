@@ -38,7 +38,7 @@
                                             <tr>
                                                 <th class="w-40 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
                                                     <div class="flex items-center justify-center gap-1">
-                                                        ID
+                                                        Request Code
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                                         </svg>
@@ -162,14 +162,6 @@
                                                                         </svg>
                                                                         Review
                                                                     </button>
-                                                                    @if($signatoryType !== 'center_manager')
-                                                                        <button onclick="openUploadModal({{ $request['id'] }})" class="inline-flex items-center justify-center gap-1 w-full px-4 py-2 rounded-full bg-maroon-100 text-maroon-700 hover:bg-maroon-200 transition-all duration-200 text-xs font-medium">
-                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                                                            </svg>
-                                                                            Upload Signed
-                                                                        </button>
-                                                                    @endif
                                                                 </div>
                                                             @endif
                                                         </td>
@@ -385,13 +377,13 @@
                             <div id="modalSelectedFiles" class="text-xs text-gray-600 px-2"></div>
                             <!-- Separator between selected files and redo button -->
                             <div id="modalSelectedFilesSeparator" class="h-6 w-px bg-gray-300 hidden"></div>
-                            <button id="modalRedoBtn" onclick="openRedoConfirmationModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm">
+                            <button id="modalRedoBtn" onclick="openRedoConfirmationModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm" style="display: none;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
                                 Redo
                             </button>
-                            <button id="modalUploadBtn" class="px-4 py-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors font-medium flex items-center gap-2 text-sm">
+                            <button id="modalUploadBtn" class="px-4 py-2 bg-maroon-700 text-white rounded-lg hover:bg-maroon-800 transition-colors font-medium flex items-center gap-2 text-sm" style="display: none;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                 </svg>
@@ -552,10 +544,14 @@
             
             // Initialize upload button state (hide until data loads)
             const uploadBtn = document.getElementById('modalUploadBtn');
+            const redoBtn = document.getElementById('modalRedoBtn');
             const fileInput = document.getElementById('modalSignedDocuments');
             const selectedFilesDiv = document.getElementById('modalSelectedFiles');
             if (uploadBtn) {
                 uploadBtn.style.display = 'none';
+            }
+            if (redoBtn) {
+                redoBtn.style.display = 'none';
             }
             if (fileInput) {
                 fileInput.value = '';
@@ -634,6 +630,12 @@
             }
             if (content) {
                 content.classList.add('hidden');
+            }
+
+            // Hide redo button when modal closes
+            const redoBtn = document.getElementById('modalRedoBtn');
+            if (redoBtn) {
+                redoBtn.style.display = 'none';
             }
 
             // Reset modal content
@@ -840,73 +842,103 @@
             const redoBtn = document.getElementById('modalRedoBtn');
             const fileInput = document.getElementById('modalSignedDocuments');
             const selectedFilesDiv = document.getElementById('modalSelectedFiles');
-            
-            if (!fileInput) {
-                return;
-            }
-            
+
+            if (!uploadBtn || !fileInput) return;
+
             // Set request ID on file input (needed for Redo button)
             fileInput.setAttribute('data-request-id', requestId);
-            
-            // Check if center manager can upload (only if workflow is in their stage and they haven't signed)
-            const centerManagerHasSigned = data.signatories && data.signatories.some(s => 
-                s.status === 'completed' && s.role_key === 'center_manager');
-            const isInCenterManagerStage = data.workflow_state === 'pending_research_manager';
-            const canUpload = isInCenterManagerStage && !centerManagerHasSigned && data.status !== 'endorsed';
-            
+
+            // Determine if current user can upload based on signatory_type and workflow_state
+            const signatoryType = data.signatory_type || null;
+            const workflowState = data.workflow_state || '';
+            const status = data.status || 'pending';
+
+            console.log('setupModalUpload (signatory) - signatoryType:', signatoryType, 'workflowState:', workflowState, 'status:', status);
+
+            // Map workflow states to signatory types
+            const workflowToSignatoryMap = {
+                'pending_user_signature': 'user',
+                'pending_research_manager': 'center_manager',
+                'pending_dean': 'college_dean',
+                'pending_deputy_director': 'deputy_director',
+                'pending_director': 'rdd_director'
+            };
+
+            // Get expected signatory type for current workflow state
+            const expectedSignatoryType = workflowToSignatoryMap[workflowState];
+
+            // Check if current signatory type matches expected type for this workflow state
+            let canUpload = false;
+            if (signatoryType && expectedSignatoryType && signatoryType === expectedSignatoryType) {
+                // Check if this signatory has already signed
+                const hasSigned = data.signatories && data.signatories.some(s => 
+                    s.status === 'completed' && s.role_key === signatoryType);
+                
+                // Can upload if: hasn't signed yet AND status is not endorsed
+                canUpload = !hasSigned && status !== 'endorsed';
+                
+                console.log('Can upload check:', { signatoryType, expectedSignatoryType, hasSigned, status, canUpload });
+            } else {
+                console.log('Signatory type mismatch:', { signatoryType, expectedSignatoryType, workflowState });
+            }
+
             // Setup upload button
-            if (uploadBtn) {
-                if (!canUpload) {
-                    uploadBtn.style.display = 'none';
-                    if (selectedFilesDiv) {
-                        selectedFilesDiv.innerHTML = '';
+            if (canUpload) {
+                uploadBtn.style.display = 'flex';
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Upload Signed Documents
+                `;
+                uploadBtn.onclick = () => fileInput.click();
+                fileInput.onchange = () => {
+                    if (window.updateModalSelectedFiles) {
+                        updateModalSelectedFiles(fileInput, selectedFilesDiv, requestId);
                     }
-                    // Clear file input
-                    if (fileInput) {
-                        fileInput.value = '';
-                    }
-                } else {
-                    // Show upload button
-                    uploadBtn.style.display = 'flex';
-                    uploadBtn.disabled = false;
-                    
-                    // Reset button to initial state
-                    uploadBtn.innerHTML = `
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                        </svg>
-                        Upload Signed Documents
-                    `;
-                    
-                    // Set up button click to open file picker
-                    uploadBtn.onclick = () => {
-                        fileInput.click();
-                    };
-                    
-                    // Handle file selection
-                    fileInput.onchange = function() {
-                        updateModalSelectedFiles(this, selectedFilesDiv, requestId);
-                    };
+                };
+            } else {
+                // Hide upload button if user can't upload
+                uploadBtn.style.display = 'none';
+                if (selectedFilesDiv) {
+                    selectedFilesDiv.innerHTML = '';
+                }
+                if (fileInput) {
+                    fileInput.value = '';
                 }
             }
-            
-            // Redo button is always visible - no visibility logic needed
+
+            // Show redo button only after content is loaded (same visibility as upload button)
+            if (redoBtn) {
+                redoBtn.style.display = canUpload ? 'flex' : 'none';
+            }
         }
 
         function updateModalSelectedFiles(fileInput, selectedFilesDiv, requestId) {
             if (!fileInput || !selectedFilesDiv) return;
             
             const separator = document.getElementById('modalSelectedFilesSeparator');
-            
             const uploadBtn = document.getElementById('modalUploadBtn');
             
             if (fileInput.files.length > 0) {
-                let filesList = '<div class="flex items-center gap-2 text-gray-700"><svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="font-medium">Selected:</span> ';
-                const fileNames = [];
+                let filesList = '<div class="flex flex-wrap items-center gap-2 text-gray-700">';
+                filesList += '<svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                filesList += '<span class="font-medium">Selected:</span>';
+                
+                // Display each file with a remove button
                 for (let i = 0; i < fileInput.files.length; i++) {
-                    fileNames.push(fileInput.files[i].name);
+                    const fileName = fileInput.files[i].name;
+                    filesList += `<div class="relative inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md group">
+                        <span class="text-xs text-gray-700 truncate max-w-[150px]">${fileName}</span>
+                        <button type="button" onclick="removeSelectedFile(${i}, '${fileInput.id}', '${requestId}')" class="flex-shrink-0 w-4 h-4 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors" title="Remove file">
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>`;
                 }
-                filesList += '<span class="text-gray-600">' + fileNames.join(', ') + '</span></div>';
+                filesList += '</div>';
                 selectedFilesDiv.innerHTML = filesList;
                 
                 // Show separator when files are selected
@@ -947,6 +979,26 @@
                         fileInput.click();
                     };
                 }
+            }
+        }
+
+        function removeSelectedFile(fileIndex, fileInputId, requestId) {
+            const fileInput = document.getElementById(fileInputId);
+            if (!fileInput) return;
+            
+            // Create a new FileList without the removed file
+            const dt = new DataTransfer();
+            for (let i = 0; i < fileInput.files.length; i++) {
+                if (i !== fileIndex) {
+                    dt.items.add(fileInput.files[i]);
+                }
+            }
+            fileInput.files = dt.files;
+            
+            // Update the display
+            const selectedFilesDiv = document.getElementById('modalSelectedFiles');
+            if (selectedFilesDiv) {
+                updateModalSelectedFiles(fileInput, selectedFilesDiv, requestId);
             }
         }
 

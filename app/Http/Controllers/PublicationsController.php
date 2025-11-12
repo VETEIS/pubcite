@@ -810,6 +810,7 @@ class PublicationsController extends Controller
                     'request_code' => $requestCode,
                     'type' => 'Publication',
                     'status' => $isDraft ? 'draft' : 'pending',
+                    'workflow_state' => $isDraft ? null : 'pending_user_signature', // User must sign first
                     'requested_at' => now(),
                     'form_data' => json_encode($data), // Ensure proper JSON encoding
                     'pdf_path' => json_encode([
@@ -1475,10 +1476,21 @@ class PublicationsController extends Controller
     
     /**
      * Notify only the first signatory (Research Manager) in the workflow
+     * Note: This is only called when workflow_state is NOT pending_user_signature
+     * When workflow_state is pending_user_signature, the user must sign first
      */
     private function notifyFirstSignatory(\App\Models\Request $request)
     {
         try {
+            // Don't notify if user needs to sign first
+            if ($request->workflow_state === 'pending_user_signature') {
+                Log::info('Skipping first signatory notification - user must sign first', [
+                    'requestId' => $request->id,
+                    'workflow_state' => $request->workflow_state
+                ]);
+                return;
+            }
+            
             // Extract signatories from form data
             $signatories = $this->extractSignatories($request->form_data);
             

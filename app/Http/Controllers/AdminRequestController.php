@@ -116,6 +116,26 @@ class AdminRequestController extends Controller
             
             $signatories = $this->extractSignatories($request->form_data);
             
+            // Ensure Applicant is always first and uses the request owner's name
+            $hasApplicant = false;
+            foreach ($signatories as &$signatory) {
+                if ($signatory['role'] === 'Applicant') {
+                    $signatory['name'] = $request->user->name ?? 'N/A';
+                    $hasApplicant = true;
+                    break;
+                }
+            }
+            unset($signatory);
+            
+            // If Applicant doesn't exist in signatories, add it at the beginning
+            if (!$hasApplicant && $request->user) {
+                array_unshift($signatories, [
+                    'role' => 'Applicant',
+                    'field' => 'Applicant',
+                    'name' => $request->user->name,
+                ]);
+            }
+            
             return response()->json([
                 'id' => $request->id,
                 'request_code' => $request->request_code,
@@ -306,7 +326,7 @@ class AdminRequestController extends Controller
         }
 
         $roleToFields = [
-            'Faculty' => ['facultyname', 'faculty_name', 'rec_facultyname'],
+            'Applicant' => ['facultyname', 'faculty_name', 'rec_facultyname', 'name'],
             'Research Center Manager' => ['centermanager', 'center_manager', 'research_center_manager'],
             'College Dean' => ['collegedean', 'college_dean', 'dean', 'dean_name', 'rec_dean_name'],
         ];

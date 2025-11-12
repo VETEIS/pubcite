@@ -87,8 +87,8 @@ class DashboardController extends Controller
                 $query->orderByDesc('requested_at');
             }
             
-            if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
-                $query->where('status', $status);
+            if ($status && $status === 'endorsed') {
+                $query->where('status', 'endorsed');
             }
             if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
                 $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
@@ -259,10 +259,8 @@ class DashboardController extends Controller
                 'endorsed' => 0,
                 'rejected' => 0,
             ];
-            $statusRaw = $chartBaseQuery->selectRaw('status, COUNT(*) as count')->groupBy('status')->get();
-            foreach ($statusRaw as $row) {
-                $statusCounts[$row->status] = $row->count;
-            }
+            // Only count endorsed requests since that's all that reaches admin dashboard
+            $statusCounts['endorsed'] = $chartBaseQuery->where('status', 'endorsed')->count();
             $recentApplications = \App\Models\Request::with('user')->where('status', '!=', 'draft')->orderByDesc('requested_at')->limit(5)->get();
             $activityLogs = \App\Models\ActivityLog::with('user')
                 ->whereNotIn('action', ['created']) // Exclude submission requests

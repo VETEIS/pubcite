@@ -750,6 +750,7 @@ class CitationsController extends Controller
                 $userRequest->request_code = $requestCode;
                 $userRequest->type = 'Citation';
                 $userRequest->status = $isDraft ? 'draft' : 'pending';
+                $userRequest->workflow_state = $isDraft ? null : 'pending_user_signature'; // User must sign first
                 $userRequest->requested_at = now(); // Always set requested_at, even for drafts
                 $userRequest->pdf_path = json_encode([
                     'pdfs' => array_merge($pdfPaths, $docxPaths),
@@ -1140,10 +1141,21 @@ class CitationsController extends Controller
     
     /**
      * Notify only the first signatory (Research Manager) in the workflow
+     * Note: This is only called when workflow_state is NOT pending_user_signature
+     * When workflow_state is pending_user_signature, the user must sign first
      */
     private function notifyFirstSignatory(\App\Models\Request $request)
     {
         try {
+            // Don't notify if user needs to sign first
+            if ($request->workflow_state === 'pending_user_signature') {
+                Log::info('Skipping first signatory notification - user must sign first', [
+                    'requestId' => $request->id,
+                    'workflow_state' => $request->workflow_state
+                ]);
+                return;
+            }
+            
             // Extract signatories from form data
             $signatories = $this->extractSignatories($request->form_data);
             

@@ -7,14 +7,14 @@ window.Alpine = Alpine;
 // Turbo error handling for network issues
 document.addEventListener('turbo:before-fetch-request', (event) => {
     // Add error handling for prefetch requests
-    if (event.detail.fetchOptions.method === 'GET') {
+    if (event.detail.fetchOptions && event.detail.fetchOptions.method === 'GET') {
         event.detail.fetchOptions.signal = AbortSignal.timeout(10000); // 10 second timeout
     }
 });
 
 document.addEventListener('turbo:fetch-request-error', (event) => {
     // Silently handle prefetch errors to prevent console spam
-    if (event.detail.fetchOptions.method === 'GET') {
+    if (event.detail.fetchOptions && event.detail.fetchOptions.method === 'GET') {
         console.debug('Turbo prefetch failed (non-critical):', event.detail.url);
         event.preventDefault(); // Prevent error from bubbling up
     }

@@ -11,6 +11,7 @@ use App\Models\RequestSignature;
 use App\Models\Setting;
 use App\Models\User;
 use App\Enums\SignatureStatus;
+use Illuminate\Support\Facades\DB;
 
 class SigningController extends Controller
 {
@@ -30,6 +31,9 @@ class SigningController extends Controller
         
         $candidateRequests = UserRequest::where('status', 'pending')
             ->where('workflow_state', $workflowState)
+            ->whereDoesntHave('signatures', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->orderByDesc('requested_at')
             ->limit(200)
             ->get();
@@ -83,8 +87,6 @@ class SigningController extends Controller
         switch ($signatoryType) {
             case 'center_manager':
                 return 'pending_research_manager';
-            case 'faculty':
-                return 'pending_faculty';
             case 'college_dean':
                 return 'pending_dean';
             case 'deputy_director':
@@ -99,16 +101,16 @@ class SigningController extends Controller
     private function getNextWorkflowState(string $currentState, string $signatoryType): string
     {
         switch ($currentState) {
-            case 'pending_research_manager':
-                // After research manager signs, move to faculty
-                if ($signatoryType === 'center_manager') {
-                    return 'pending_faculty';
+            case 'pending_user_signature':
+                // After user signs their own request, move to center manager
+                if ($signatoryType === 'user') {
+                    return 'pending_research_manager';
                 }
                 return $currentState; // No change for other signatories
                 
-            case 'pending_faculty':
-                // After faculty signs, move to dean
-                if ($signatoryType === 'faculty') {
+            case 'pending_research_manager':
+                // After center manager signs, move to dean
+                if ($signatoryType === 'center_manager') {
                     return 'pending_dean';
                 }
                 return $currentState; // No change for other signatories
@@ -170,17 +172,26 @@ class SigningController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (!$user || !$user->isSignatory()) {
+        if (!$user) {
             abort(403);
         }
 
         $userRequest = UserRequest::with('user')->findOrFail($requestId);
 
-        $signatoryType = $user->signatoryType();
-        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        // Parse form data once for use throughout the method
         $form = is_array($userRequest->form_data)
             ? $userRequest->form_data
             : (json_decode($userRequest->form_data ?? '[]', true) ?: []);
+
+        // Check if user is accessing their own request for signing
+        $isUserAccessingOwnRequest = $userRequest->user_id === $user->id && $userRequest->workflow_state === 'pending_user_signature';
+        
+        $signatoryType = null;
+        if ($isUserAccessingOwnRequest) {
+            $signatoryType = 'user';
+        } else if ($user->isSignatory()) {
+            $signatoryType = $user->signatoryType();
+            $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
 
         $matchedRole = $this->matchesSignatory($form, $signatoryType, trim($user->name ?? ''));
         $hasSigned = RequestSignature::where('request_id', $userRequest->id)
@@ -194,6 +205,9 @@ class SigningController extends Controller
         if (!$hasSigned
             && !in_array($signatoryType, ['deputy_director', 'rdd_director'])
             && $userRequest->workflow_state !== $expectedWorkflowState) {
+                    abort(403);
+                }
+        } else {
             abort(403);
         }
 
@@ -204,13 +218,13 @@ class SigningController extends Controller
         $signatories = $this->extractSignatories($form);
 
         $roleOrder = [
+            'user' => [
+                'label' => 'Applicant',
+                'state' => 'pending_user_signature',
+            ],
             'center_manager' => [
                 'label' => 'Research Center Manager',
                 'state' => 'pending_research_manager',
-            ],
-            'faculty' => [
-                'label' => 'Faculty',
-                'state' => 'pending_faculty',
             ],
             'college_dean' => [
                 'label' => 'College Dean',
@@ -227,15 +241,15 @@ class SigningController extends Controller
         ];
 
         $stateOrder = [
-            'pending_research_manager' => 1,
-            'pending_faculty' => 2,
+            'pending_user_signature' => 1,
+            'pending_research_manager' => 2,
             'pending_dean' => 3,
             'pending_deputy_director' => 4,
             'pending_director' => 5,
             'completed' => 99,
         ];
 
-        $currentState = $userRequest->workflow_state ?? 'pending_research_manager';
+        $currentState = $userRequest->workflow_state ?? 'pending_user_signature';
         $currentStateOrder = $stateOrder[$currentState] ?? 0;
 
         $formattedSignatories = [];
@@ -248,7 +262,15 @@ class SigningController extends Controller
                 continue;
             }
             
+            // For 'user' role (Applicant), use the request owner's name instead of looking in signatories
+            $name = null;
+            if ($roleKey === 'user') {
+                $name = $userRequest->user->name ?? null;
+            } else {
             $nameEntry = collect($signatories)->firstWhere('role', $meta['label']);
+                $name = $nameEntry['name'] ?? null;
+            }
+            
             $signedRecord = $signatureRecords[$roleKey] ?? null;
             $signedAt = $signedRecord && $signedRecord->signed_at
                 ? $signedRecord->signed_at->toIso8601String()
@@ -267,7 +289,7 @@ class SigningController extends Controller
             $formattedSignatories[] = [
                 'role_key' => $roleKey,
                 'role' => $meta['label'],
-                'name' => $nameEntry['name'] ?? null,
+                'name' => $name,
                 'signed_at' => $signedAt,
                 'status' => $status,
             ];
@@ -295,8 +317,22 @@ class SigningController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (!$user || !$user->isSignatory()) {
-            Log::warning('Per-file download forbidden: not signatory', [
+        if (!$user) {
+            Log::warning('Per-file download forbidden: not authenticated', [
+                'request_id' => $request->id ?? null,
+                'route_type' => $type,
+                'key' => $key,
+                'user_id' => $user->id ?? null,
+                'reason' => 'user_not_authenticated'
+            ]);
+            abort(403);
+        }
+
+        // Check if user is accessing their own request for signing
+        $isUserAccessingOwnRequest = $request->user_id === $user->id && $request->workflow_state === 'pending_user_signature';
+        
+        if (!$isUserAccessingOwnRequest && !$user->isSignatory()) {
+            Log::warning('Per-file download forbidden: not signatory and not own request', [
                 'request_id' => $request->id ?? null,
                 'route_type' => $type,
                 'key' => $key,
@@ -324,13 +360,19 @@ class SigningController extends Controller
             ]);
         }
 
-        $signatoryType = $user->signatoryType();
-        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+        $signatoryType = null;
+        if ($isUserAccessingOwnRequest) {
+            $signatoryType = 'user';
+        } else {
+            $signatoryType = $user->signatoryType();
+        }
+        
+        $expectedWorkflowState = $isUserAccessingOwnRequest ? 'pending_user_signature' : $this->getWorkflowStateForSignatory($signatoryType);
         $form = is_array($request->form_data)
             ? $request->form_data
             : (json_decode($request->form_data ?? '[]', true) ?: []);
 
-        $matchedRole = $this->matchesSignatory($form, $signatoryType, trim($user->name ?? ''));
+        $matchedRole = $isUserAccessingOwnRequest ? 'user' : $this->matchesSignatory($form, $signatoryType, trim($user->name ?? ''));
         $hasSigned = RequestSignature::where('request_id', $request->id)
             ->where('user_id', $user->id)
             ->exists();
@@ -419,7 +461,7 @@ class SigningController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (!$user || !$user->isSignatory()) {
+        if (!$user) {
             abort(403);
         }
 
@@ -430,6 +472,12 @@ class SigningController extends Controller
             abort(403, 'This request is not available for signing');
         }
         
+        // Check if user is accessing their own request for signing
+        $isUserAccessingOwnRequest = $userRequest->user_id === $user->id && $userRequest->workflow_state === 'pending_user_signature';
+        
+        if ($isUserAccessingOwnRequest) {
+            // User can access their own request
+        } else if ($user->isSignatory()) {
         // Verify user is authorized to sign this request based on workflow state
         $signatoryType = $user->signatoryType();
         $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
@@ -449,6 +497,9 @@ class SigningController extends Controller
         }
         
         if (!$matchedRole) {
+                abort(403, 'You are not authorized to access this request');
+            }
+        } else {
             abort(403, 'You are not authorized to access this request');
         }
 
@@ -476,7 +527,7 @@ class SigningController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (!$user || !$user->isSignatory()) {
+        if (!$user) {
             abort(403);
         }
 
@@ -493,7 +544,16 @@ class SigningController extends Controller
             abort(403, 'This request is not available for signing');
         }
 
-        // Verify user is authorized to sign this request based on workflow state
+        // Determine if this is a user signing their own request or a signatory
+        $signatoryType = null;
+        $isUserSigningOwnRequest = false;
+        
+        if ($userRequest->user_id === $user->id && $userRequest->workflow_state === 'pending_user_signature') {
+            // User is signing their own request
+            $isUserSigningOwnRequest = true;
+            $signatoryType = 'user';
+        } else if ($user->isSignatory()) {
+            // Regular signatory signing
         $signatoryType = $user->signatoryType();
         $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
         
@@ -512,11 +572,19 @@ class SigningController extends Controller
         }
         
         if (!$matchedRole) {
+                abort(403, 'You are not authorized to sign this request');
+            }
+        } else {
             abort(403, 'You are not authorized to sign this request');
         }
 
         try {
-            $uploadedFiles = $this->processSignedDocuments($userRequest, $validated['signed_documents'], $user);
+            // Stage file replacements and compute updated pdf_path data; do not persist DB-side changes yet
+            $staged = $this->processSignedDocumentsStaged($userRequest, $validated['signed_documents'], $user);
+            $uploadedFiles = $staged['uploaded_files'] ?? [];
+            $updatedPdfPathData = $staged['updated_pdf_path'] ?? null;
+            $backups = $staged['backups'] ?? [];
+            $originals = $staged['originals'] ?? [];
             
             if (empty($uploadedFiles)) {
             return response()->json([
@@ -524,25 +592,14 @@ class SigningController extends Controller
                     'message' => 'No files were successfully uploaded. Please check that the uploaded files match the original filenames exactly.'
                 ], 400);
             }
-            
-            // Create individual signature record
-            $signature = RequestSignature::create([
-                'request_id' => $userRequest->id,
-                'user_id' => $user->id,
-                'signatory_role' => $matchedRole,
-                'signatory_name' => $userName,
-                'signed_at' => now(),
-                'signed_document_path' => $uploadedFiles[0]['path'] ?? null, // Store first uploaded file path
-                'original_document_path' => null, // Could be populated if needed
-            ]);
 
             // Update request's workflow state and signature status
             $newWorkflowState = $this->getNextWorkflowState($userRequest->workflow_state, $signatoryType);
             
             // Validate workflow state before updating (check against database constraint)
             $validWorkflowStates = [
+                'pending_user_signature',
                 'pending_research_manager',
-                'pending_faculty',
                 'pending_dean',
                 'pending_deputy_director',
                 'pending_director',
@@ -556,12 +613,16 @@ class SigningController extends Controller
                     'signatory_type' => $signatoryType,
                     'new_state' => $newWorkflowState,
                 ]);
+                // Restore files if we cannot proceed
+                $this->restoreBackupsSafely($backups, $originals, $userRequest->id);
                 throw new \Exception('Invalid workflow state: ' . $newWorkflowState);
             }
             
             // Update status to "endorsed" only when director signs (workflow completed)
             $newStatus = ($newWorkflowState === 'completed') ? 'endorsed' : 'pending';
             
+            // Persist DB updates atomically so counts match actual success
+            DB::beginTransaction();
             try {
             $userRequest->update([
                 'workflow_state' => $newWorkflowState,
@@ -569,8 +630,30 @@ class SigningController extends Controller
                 'signature_status' => SignatureStatus::SIGNED,
                 'signed_at' => now(),
                 'signed_by' => $user->id, // Keep the last signatory for backward compatibility
-            ]);
+                    // Persist the updated pdf_path along with workflow change
+                    'pdf_path' => json_encode($updatedPdfPathData),
+                ]);
+                
+                // Create individual signature record AFTER successful request update
+                $signatoryRole = $isUserSigningOwnRequest ? 'user' : ($matchedRole ?? $signatoryType);
+                $signatoryName = $isUserSigningOwnRequest ? $user->name : ($userName ?? $user->name);
+                
+                RequestSignature::create([
+                    'request_id' => $userRequest->id,
+                    'user_id' => $user->id,
+                    'signatory_role' => $signatoryRole,
+                    'signatory_name' => $signatoryName,
+                    'signed_at' => now(),
+                    'signed_document_path' => $uploadedFiles[0]['path'] ?? null, // Store first uploaded file path
+                    'original_document_path' => null,
+                ]);
+                
+                DB::commit();
             } catch (\Illuminate\Database\QueryException $dbException) {
+                DB::rollBack();
+                // Restore files if DB update fails
+                $this->restoreBackupsSafely($backups, $originals, $userRequest->id);
+                
                 // Check if it's a constraint violation
                 if (strpos($dbException->getMessage(), 'check constraint') !== false || 
                     strpos($dbException->getMessage(), 'workflow_state_check') !== false) {
@@ -1035,12 +1118,104 @@ class SigningController extends Controller
             $processedFiles[] = $originalName;
         }
         
-        // Update the request with the new pdf_path data
-        $userRequest->update([
-            'pdf_path' => json_encode($updatedPdfPathData),
-        ]);
-        
+        // Update deferred to caller (to ensure atomic DB update with workflow)
+        // Return uploaded files and the new pdf_path data for the caller to persist
         return $uploadedFiles;
+    }
+    
+    /**
+     * A staged variant returning backups and updated pdf_path without persisting DB-side changes.
+     * This allows the caller to atomically update workflow state and pdf_path, and restore on failure.
+     */
+    private function processSignedDocumentsStaged(UserRequest $userRequest, array $files, User $user): array
+    {
+        $pdfPathData = json_decode($userRequest->pdf_path, true) ?: [];
+        $updatedPdfPathData = $pdfPathData;
+        $uploadedFiles = [];
+        $backups = [];
+        $originals = [];
+        $processedFiles = [];
+        
+        foreach ($files as $file) {
+            $originalName = $file->getClientOriginalName();
+            $extension = strtolower($file->getClientOriginalExtension());
+            $fileSize = $file->getSize();
+            $mimeType = $file->getMimeType();
+            
+            if (in_array($originalName, $processedFiles)) {
+                continue;
+            }
+            
+            $matchingKey = $this->findMatchingKeyInPdfPath($pdfPathData, $originalName, $extension);
+            if (!$matchingKey) {
+                continue;
+            }
+            
+            $originalPath = $this->getOriginalFilePath($pdfPathData, $matchingKey, $extension);
+            $backupPath = $this->createBackupOfOriginalFile($originalPath, $userRequest->id);
+            $replaceOk = $this->replaceOriginalFileWithUploaded($originalPath, $file, $userRequest->id);
+            if (!$replaceOk) {
+                // If replacement failed and backup exists, attempt to keep original intact by restoring
+                if ($backupPath) {
+                    @copy($backupPath, $this->findFileInStorage($originalPath) ?? $originalPath);
+                }
+                continue;
+            }
+            
+            // Track for possible restoration on failure
+            $backups[] = $backupPath;
+            $originals[] = $originalPath;
+            
+            if ($extension === 'pdf') {
+                $updatedPdfPathData['pdfs'][$matchingKey] = [
+                    'path' => $originalPath,
+                    'original_name' => $originalName,
+                ];
+            } elseif ($extension === 'docx') {
+                $updatedPdfPathData['docxs'][$matchingKey] = $originalPath;
+            }
+            
+            $uploadedFiles[] = [
+                'original_name' => $originalName,
+                'path' => $originalPath,
+                'size' => $fileSize,
+                'mime_type' => $mimeType,
+                'type' => $extension,
+            ];
+            
+            $processedFiles[] = $originalName;
+        }
+        
+        return [
+            'uploaded_files' => $uploadedFiles,
+            'updated_pdf_path' => $updatedPdfPathData,
+            'backups' => $backups,
+            'originals' => $originals,
+        ];
+    }
+    
+    private function restoreBackupsSafely(array $backupPaths, array $originalPaths, int $requestId): void
+    {
+        // Attempt to restore each backup to its original file
+        foreach ($backupPaths as $idx => $backup) {
+            $original = $originalPaths[$idx] ?? null;
+            if (!$backup || !$original) {
+                continue;
+            }
+            try {
+                $originalFull = $this->findFileInStorage($original) ?? $original;
+                if (file_exists($backup)) {
+                    @copy($backup, $originalFull);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to restore backup after DB failure', [
+                    'request_id' => $requestId,
+                    'backup' => $backup,
+                    'original' => $original,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
     
     private function findMatchingKeyInPdfPath(array $pdfPathData, string $originalName, string $extension): ?string
@@ -1325,13 +1500,16 @@ class SigningController extends Controller
             $signatoryName = null;
             
             switch ($workflowState) {
-                case 'pending_faculty':
-                    // Find the Faculty from form data
+                case 'pending_research_manager':
+                    // Find the Research Manager (center_manager) from form data
                     $form = is_array($request->form_data) ? $request->form_data : (json_decode($request->form_data ?? '[]', true) ?: []);
-                    $facultyName = $form['facultyname'] ?? $form['faculty_name'] ?? $form['rec_faculty_name'] ?? null;
-                    if ($facultyName) {
-                        $nextSignatory = \App\Models\User::where('name', trim($facultyName))->first();
-                        $signatoryName = trim($facultyName);
+                    $signatories = $this->extractSignatories($form);
+                    foreach ($signatories as $signatory) {
+                        if ($signatory['role'] === 'Research Center Manager' || $signatory['role'] === 'center_manager') {
+                            $nextSignatory = \App\Models\User::where('name', trim($signatory['name']))->first();
+                            $signatoryName = trim($signatory['name']);
+                            break;
+                        }
                     }
                     break;
                 case 'pending_dean':
@@ -1359,7 +1537,10 @@ class SigningController extends Controller
             
             if ($nextSignatory && $nextSignatory->email) {
                 // Determine role for email template
-                $roleForEmail = $workflowState === 'pending_faculty' ? 'faculty' : 'college_dean';
+                $roleForEmail = 'college_dean';
+                if ($workflowState === 'pending_research_manager') {
+                    $roleForEmail = 'center_manager';
+                }
                 \Illuminate\Support\Facades\Mail::to($nextSignatory->email)->queue(new \App\Mail\SignatoryNotification($request, $roleForEmail, $signatoryName));
                 
                 Log::info('Next signatory notification queued', [

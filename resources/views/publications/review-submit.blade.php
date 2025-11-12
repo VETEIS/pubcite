@@ -207,6 +207,19 @@ function generateDocx(type) {
     const formData = new FormData(form);
     formData.append('docx_type', type);
 
+    // Show comprehensive loading state with progress tracking
+    const operationId = `generate-publication-docx-${type}-${Date.now()}`;
+    
+    // Show real progress tracking for document generation
+    const progressSteps = [
+        'Starting document generation...',
+        'Processing form data...',
+        'Filtering data for document type...',
+        'Generating document...',
+        'Document ready for download!'
+    ];
+    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
+
     fetch('{{ route("publications.generate") }}', {
         method: 'POST',
         body: formData,
@@ -218,12 +231,18 @@ function generateDocx(type) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        // Check content type
+        const contentType = response.headers.get('content-type');
+        
         return response.blob();
     })
     .then(blob => {
         if (!blob || blob.size === 0) {
             throw new Error('Generated file is empty or corrupted');
         }
+        
+        // Ensure proper MIME type for DOCX
         const docxBlob = new Blob([blob], { 
             type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
         });
@@ -238,6 +257,8 @@ function generateDocx(type) {
             : `Publication_Terminal_Report_${timestamp}.docx`;
         document.body.appendChild(a);
         a.click();
+        
+        // Clean up
         setTimeout(() => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
@@ -245,6 +266,12 @@ function generateDocx(type) {
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
+        // Hide loading state
+        window.hideLoading();
+    })
+    .finally(() => {
+        // Hide loading state
+        window.hideLoading();
     });
 }
 </script>
