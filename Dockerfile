@@ -62,8 +62,12 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
-# Run composer dump-autoload to trigger post-autoload-dump scripts (artisan must exist first)
-RUN composer dump-autoload --optimize --no-interaction
+# Verify artisan file exists and show current directory contents
+RUN pwd && ls -la | head -20 && test -f artisan && echo "artisan file found" || echo "ERROR: artisan file not found"
+
+# Run composer dump-autoload without scripts to avoid post-autoload-dump script
+# Package discovery will happen at runtime when the container starts
+RUN composer dump-autoload --optimize --no-interaction --no-scripts
 
 # Build assets with verbose output
 RUN echo "Building Vite assets..." && npm run build
