@@ -62,8 +62,8 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
-# Run composer scripts after the application is copied
-RUN composer run-script post-autoload-dump
+# Run composer dump-autoload to trigger post-autoload-dump scripts (artisan must exist first)
+RUN composer dump-autoload --optimize --no-interaction
 
 # Build assets with verbose output
 RUN echo "Building Vite assets..." && npm run build
