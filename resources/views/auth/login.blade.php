@@ -43,6 +43,8 @@
                 @endif
             </div>
 
+            <x-recaptcha />
+
             <div class="flex items-center justify-center mt-6">
                 <x-button class="w-full justify-center">
                     {{ __('Sign in') }}

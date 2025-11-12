@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\RecaptchaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -17,12 +18,23 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(Request $request, RecaptchaService $recaptchaService)
     {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'g-recaptcha-response' => 'sometimes|string',
         ]);
+
+        // Verify reCAPTCHA
+        if ($recaptchaService->shouldDisplay()) {
+            $recaptchaToken = $request->input('g-recaptcha-response');
+            if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'
+                ]);
+            }
+        }
 
         // Check if privacy was accepted in session (from welcome page)
         if (session('privacy_accepted') !== true) {

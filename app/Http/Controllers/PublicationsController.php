@@ -24,6 +24,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
+use App\Services\RecaptchaService;
 
 class PublicationsController extends Controller
 {
@@ -493,7 +494,7 @@ class PublicationsController extends Controller
         return redirect()->back()->with('success', 'Request and files deleted successfully.');
     }
 
-    public function submitPublicationRequest(Request $request)
+    public function submitPublicationRequest(Request $request, RecaptchaService $recaptchaService)
     {
         $user = Auth::user();
         
@@ -505,6 +506,14 @@ class PublicationsController extends Controller
 
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
+        
+        // Verify reCAPTCHA for final submissions (not drafts)
+        if (!$isDraft && $recaptchaService->shouldDisplay()) {
+            $recaptchaToken = $request->input('g-recaptcha-response');
+            if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
+                return back()->withErrors(['g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'])->withInput();
+            }
+        }
         
         // Prevent duplicate submissions for both drafts and final submissions
         $recentSubmission = \App\Models\Request::where('user_id', $user->id)

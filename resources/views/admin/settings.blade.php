@@ -1022,15 +1022,42 @@
             function checkCalendarChanges() {
                 const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
                 
-                const currentMarks = calendarInputs.length > 0 
-                    ? Array.from(calendarInputs).map(input => input.value)
-                    : [];
+                // Get all calendar mark values (both date and note fields)
+                const currentMarks = [];
+                calendarInputs.forEach(input => {
+                    const name = input.name;
+                    const match = name.match(/calendar_marks\[(\d+)\]\[(date|note)\]/);
+                    if (match) {
+                        const index = parseInt(match[1]);
+                        const field = match[2];
+                        if (!currentMarks[index]) {
+                            currentMarks[index] = { date: '', note: '' };
+                        }
+                        currentMarks[index][field] = input.value;
+                    }
+                });
+                
                 const originalMarks = window.originalValues.calendar?.marks || [];
                 
-                const hasChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
+                // Compare arrays of objects
+                const hasCalendarChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
                 
-                const saveBtn = document.querySelector('button[name="save_calendar"]');
-                updateSaveButton(saveBtn, hasChanges);
+                // Also check announcements changes since they share the same save button
+                const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
+                const currentAnnouncements = announcementInputs.length > 0 
+                    ? Array.from(announcementInputs).map(input => input.value)
+                    : [];
+                const originalAnnouncements = window.originalValues.announcements?.announcements || [];
+                const hasAnnouncementChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
+                
+                // Enable button if either section has changes
+                const hasChanges = hasCalendarChanges || hasAnnouncementChanges;
+                
+                // Calendar section uses the announcements save button (same card)
+                const saveBtn = document.querySelector('button[name="save_announcements"]');
+                if (saveBtn) {
+                    updateSaveButton(saveBtn, hasChanges);
+                }
             }
             
             function checkAnnouncementsChanges() {
@@ -1041,10 +1068,33 @@
                     : [];
                 const originalAnnouncements = window.originalValues.announcements?.announcements || [];
                 
-                const hasChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
+                const hasAnnouncementChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
+                
+                // Also check calendar changes since they share the same save button
+                const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
+                const currentMarks = [];
+                calendarInputs.forEach(input => {
+                    const name = input.name;
+                    const match = name.match(/calendar_marks\[(\d+)\]\[(date|note)\]/);
+                    if (match) {
+                        const index = parseInt(match[1]);
+                        const field = match[2];
+                        if (!currentMarks[index]) {
+                            currentMarks[index] = { date: '', note: '' };
+                        }
+                        currentMarks[index][field] = input.value;
+                    }
+                });
+                const originalMarks = window.originalValues.calendar?.marks || [];
+                const hasCalendarChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
+                
+                // Enable button if either section has changes
+                const hasChanges = hasAnnouncementChanges || hasCalendarChanges;
                 
                 const saveBtn = document.querySelector('button[name="save_announcements"]');
-                updateSaveButton(saveBtn, hasChanges);
+                if (saveBtn) {
+                    updateSaveButton(saveBtn, hasChanges);
+                }
             }
             
             
@@ -1076,7 +1126,23 @@
                         citations_enabled: citationsCheckbox ? citationsCheckbox.checked : false
                     },
                     calendar: {
-                        marks: Array.from(calendarInputs).map(input => input.value)
+                        marks: (function() {
+                            // Initialize calendar marks as array of objects (date, note pairs)
+                            const marks = [];
+                            calendarInputs.forEach(input => {
+                                const name = input.name;
+                                const match = name.match(/calendar_marks\[(\d+)\]\[(date|note)\]/);
+                                if (match) {
+                                    const index = parseInt(match[1]);
+                                    const field = match[2];
+                                    if (!marks[index]) {
+                                        marks[index] = { date: '', note: '' };
+                                    }
+                                    marks[index][field] = input.value;
+                                }
+                            });
+                            return marks;
+                        })()
                     },
                     announcements: {
                         announcements: Array.from(announcementInputs).map(input => input.value)
@@ -1097,6 +1163,7 @@
                 
                 calendarInputs.forEach(input => {
                     input.addEventListener('input', checkCalendarChanges);
+                    input.addEventListener('change', checkCalendarChanges); // Also listen to change for date inputs
                 });
                 
                 announcementInputs.forEach(input => {
@@ -1272,11 +1339,20 @@
                         window.checkCalendarChanges();
                     }
                 });
+                input.addEventListener('change', function() {
+                    // Also trigger on change for date inputs
+                    if (window.checkCalendarChanges) {
+                        window.checkCalendarChanges();
+                    }
+                });
             });
             
             // Trigger change detection immediately since we added a new row
             if (window.checkCalendarChanges) {
-                window.checkCalendarChanges();
+                // Use setTimeout to ensure DOM is updated
+                setTimeout(() => {
+                    window.checkCalendarChanges();
+                }, 0);
             }
         }
 

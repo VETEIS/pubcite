@@ -23,6 +23,7 @@ use App\Services\TemplatePreloader;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
+use App\Services\RecaptchaService;
 
 class CitationsController extends Controller
 {
@@ -545,7 +546,7 @@ class CitationsController extends Controller
         }
     }
 
-    public function submitCitationRequest(Request $request)
+    public function submitCitationRequest(Request $request, RecaptchaService $recaptchaService)
     {
         $user = Auth::user();
         
@@ -554,15 +555,23 @@ class CitationsController extends Controller
             'has_files' => $request->hasFile('citing_article') || $request->hasFile('cited_article') || $request->hasFile('indexing_evidence'),
             'is_draft' => $request->has('save_draft')
         ]);
-        
+
         $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
         
         if ($citations_request_enabled !== '1') {
             return redirect()->route('dashboard')->with('error', 'Citations requests are currently disabled by administrators.');
         }
-        
+
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
+        
+        // Verify reCAPTCHA for final submissions (not drafts)
+        if (!$isDraft && $recaptchaService->shouldDisplay()) {
+            $recaptchaToken = $request->input('g-recaptcha-response');
+            if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
+                return back()->withErrors(['g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'])->withInput();
+            }
+        }
         
         // Prevent duplicate submissions for both drafts and final submissions
         $recentSubmission = \App\Models\Request::where('user_id', $user->id)
