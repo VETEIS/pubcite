@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Mail\SubmissionNotification;
@@ -725,15 +726,15 @@ class PublicationsController extends Controller
             $tempFiles = $request->input('generated_docx_files', []);
             
             if (!empty($tempFiles) && is_array($tempFiles)) {
-                // Move pre-generated files instead of regenerating
+                // Move pre-generated files instead of regenerating (much faster)
                 Log::info('Moving pre-generated DOCX files', ['tempFiles' => $tempFiles]);
                 foreach ($tempFiles as $type => $tempPath) {
-                    if ($tempPath && file_exists(storage_path('app/' . $tempPath))) {
+                    if ($tempPath && Storage::disk('local')->exists($tempPath)) {
                         $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' :
                                    ($type === 'recommendation' ? 'Recommendation_Letter_Form.docx' : 'Terminal_Report_Form.docx');
                         $finalPath = $uploadPath . '/' . $filename;
                         
-                        // Move file from temp to final location
+                        // Move file from temp to final location (atomic operation)
                         Storage::disk('local')->move($tempPath, $finalPath);
                         $docxPaths[$type] = [
                             'path' => $finalPath,
@@ -746,6 +747,7 @@ class PublicationsController extends Controller
             }
             
             // Generate any missing DOCX files (convert to PDF for submission)
+            // Only generate what's missing to minimize processing time
             if (!isset($docxPaths['incentive'])) {
                 $filtered = $this->mapIncentiveFields($data);
                 $pdfPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, true);
@@ -787,48 +789,53 @@ class PublicationsController extends Controller
                 'userId' => $userId
             ]);
 
-            // Update or create request based on existing draft
-            if ($existingDraft && $isDraft) {
-                // Update existing draft - reuse the same directory
-                $existingDraft->update([
-                    'form_data' => json_encode($data), // Ensure proper JSON encoding
-                    'pdf_path' => json_encode([
-                        'pdfs' => array_merge($attachments, $docxPaths),
-                        'docxs' => [], // Drafts don't have DOCX files
-                    ]),
-                    'requested_at' => now(), // Update timestamp
-                ]);
-                $userRequest = $existingDraft;
-                Log::info('Updated existing draft', [
-                    'request_id' => $existingDraft->id,
-                    'request_code' => $existingDraft->request_code
-                ]);
-            } else {
-                // Create new request (only if not a draft or no existing draft)
-                $userRequest = UserRequest::create([
-                    'user_id' => $userId,
-                    'request_code' => $requestCode,
-                    'type' => 'Publication',
-                    'status' => $isDraft ? 'draft' : 'pending',
-                    'workflow_state' => $isDraft ? null : 'pending_user_signature', // User must sign first
-                    'requested_at' => now(),
-                    'form_data' => json_encode($data), // Ensure proper JSON encoding
-                    'pdf_path' => json_encode([
-                        'pdfs' => array_merge($attachments, $docxPaths),
-                        'docxs' => [], // All files are now PDFs after conversion
-                    ]),
-                ]);
-                Log::info('Created new request', [
-                    'request_id' => $userRequest->id,
-                    'request_code' => $requestCode,
-                    'is_draft' => $isDraft
-                ]);
-                
-                // Store new draft ID in session
-                if ($isDraft) {
-                    session(["draft_publication_{$userId}" => $userRequest->id]);
+            // Use database transaction for atomicity and performance
+            $userRequest = DB::transaction(function () use ($existingDraft, $isDraft, $data, $attachments, $docxPaths, $userId, $requestCode) {
+                // Update or create request based on existing draft
+                if ($existingDraft && $isDraft) {
+                    // Update existing draft - reuse the same directory
+                    $existingDraft->update([
+                        'form_data' => json_encode($data), // Ensure proper JSON encoding
+                        'pdf_path' => json_encode([
+                            'pdfs' => array_merge($attachments, $docxPaths),
+                            'docxs' => [], // Drafts don't have DOCX files
+                        ]),
+                        'requested_at' => now(), // Update timestamp
+                    ]);
+                    Log::info('Updated existing draft', [
+                        'request_id' => $existingDraft->id,
+                        'request_code' => $existingDraft->request_code
+                    ]);
+                    return $existingDraft;
+                } else {
+                    // Create new request (only if not a draft or no existing draft)
+                    $userRequest = UserRequest::create([
+                        'user_id' => $userId,
+                        'request_code' => $requestCode,
+                        'type' => 'Publication',
+                        'status' => $isDraft ? 'draft' : 'pending',
+                        'workflow_state' => $isDraft ? null : 'pending_user_signature', // User must sign first
+                        'requested_at' => now(),
+                        'form_data' => json_encode($data), // Ensure proper JSON encoding
+                        'pdf_path' => json_encode([
+                            'pdfs' => array_merge($attachments, $docxPaths),
+                            'docxs' => [], // All files are now PDFs after conversion
+                        ]),
+                    ]);
+                    Log::info('Created new request', [
+                        'request_id' => $userRequest->id,
+                        'request_code' => $requestCode,
+                        'is_draft' => $isDraft
+                    ]);
+                    
+                    // Store new draft ID in session
+                    if ($isDraft) {
+                        session(["draft_publication_{$userId}" => $userRequest->id]);
+                    }
+                    
+                    return $userRequest;
                 }
-            }
+            });
 
             // Activity log creation removed - now handled by notification bell system
 
@@ -1303,13 +1310,24 @@ class PublicationsController extends Controller
             // Merge fallback data with form data
             $data = array_merge($fallbackData, $request->all());
             
+            // Normalize data for consistent hashing (remove system fields and sort keys)
+            $normalizedData = $data;
+            // Remove system fields that don't affect document content
+            $systemFields = ['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft'];
+            foreach ($systemFields as $field) {
+                unset($normalizedData[$field]);
+            }
+            // Sort keys for consistent hash regardless of field order
+            ksort($normalizedData);
+            
             Log::info('Publication DOCX generation - Received data (trimmed log)', ['type' => $docxType, 'isPreview' => $isPreview]);
             
+            // Create stable hash from normalized data
             $hashSource = json_encode([
                 'type' => $docxType,
-                'data' => $data
-            ]);
-            $uniqueHash = substr(hash('sha256', $hashSource), 0, 16); // 16 chars is enough
+                'data' => $normalizedData
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $uniqueHash = substr(hash('sha256', $hashSource), 0, 16);
             $filename = null;
             $fullPath = null;
             
@@ -1324,7 +1342,10 @@ class PublicationsController extends Controller
                         ? "{$cacheBase}/Recommendation_Letter_Form.docx"
                         : "{$cacheBase}/Terminal_Report_Form.docx");
                 $expectedAbsolute = Storage::disk('local')->path($expectedFile);
-                if (file_exists($expectedAbsolute)) {
+                $lockFile = $expectedAbsolute . '.lock';
+                
+                // Use Storage::exists() for better performance and atomicity
+                if (Storage::disk('local')->exists($expectedFile)) {
                     // Serve cached file immediately
                     $serveName = $docxType === 'incentive'
                         ? 'Incentive_Application_Form.docx'
@@ -1338,6 +1359,36 @@ class PublicationsController extends Controller
                         'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                         'Content-Disposition' => $contentDisposition . '; filename="' . $serveName . '"'
                     ]);
+                }
+                
+                // If file doesn't exist, check if another process is generating it
+                // Wait up to 5 seconds for the file to be generated by another request
+                $maxWait = 5; // seconds
+                $waitInterval = 0.1; // 100ms
+                $waited = 0;
+                while (file_exists($lockFile) && $waited < $maxWait) {
+                    usleep($waitInterval * 1000000); // Convert to microseconds
+                    $waited += $waitInterval;
+                    // Check again if file was created
+                    if (Storage::disk('local')->exists($expectedFile)) {
+                        $serveName = $docxType === 'incentive'
+                            ? 'Incentive_Application_Form.docx'
+                            : ($docxType === 'recommendation'
+                                ? 'Recommendation_Letter_Form.docx'
+                                : 'Terminal_Report_Form.docx');
+                        $userAgent = request()->header('User-Agent');
+                        $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                        $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                        return response()->download($expectedAbsolute, $serveName, [
+                            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'Content-Disposition' => $contentDisposition . '; filename="' . $serveName . '"'
+                        ]);
+                    }
+                }
+                
+                // Create lock file to indicate we're generating
+                if (!file_exists($lockFile)) {
+                    file_put_contents($lockFile, getmypid());
                 }
             }
             
@@ -1370,6 +1421,14 @@ class PublicationsController extends Controller
             $absolutePath = Storage::disk('local')->path($fullPath);
             if (!file_exists($absolutePath)) {
                 throw new \Exception('Generated file not found at: ' . $absolutePath);
+            }
+            
+            // Clean up lock file if it exists (for preview cache)
+            if ($isPreview) {
+                $lockFile = $absolutePath . '.lock';
+                if (file_exists($lockFile)) {
+                    @unlink($lockFile);
+                }
             }
             
             Log::info('Publication DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
