@@ -14,12 +14,12 @@
             </a>
         </div>
 
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Set New Password</h1>
+        <div class="text-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-900 mb-1">Set New Password</h1>
             <p class="text-gray-600">Create a new password for your account</p>
         </div>
 
-        <x-validation-errors class="mb-4" />
+        <x-validation-errors class="mb-3" />
 
         <form method="POST" action="{{ route('password.update') }}">
             @csrf
@@ -31,21 +31,23 @@
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
             </div>
 
-            <div class="mt-4">
+            <div class="mt-3">
                 <x-label for="password" value="{{ __('Password') }}" />
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
             </div>
 
-            <div class="mt-4">
+            <div class="mt-3">
                 <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
                 <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
             </div>
 
-            <x-recaptcha />
-
-            <div class="flex items-center justify-end mt-4">
-                <x-button>
-                    {{ __('Reset Password') }}
+            <div class="mt-3 space-y-3">
+                <x-recaptcha />
+                <x-button class="justify-center items-center" style="width: 260px; margin: 0 auto; display: flex; box-sizing: border-box; border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <svg class="mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 1em; height: 1em; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    <span style="line-height: 1;">{{ __('Reset Password') }}</span>
                 </x-button>
             </div>
         </form>

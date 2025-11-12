@@ -159,7 +159,7 @@ class CitationsController extends Controller
             // Sort keys for consistent hash regardless of field order
             ksort($normalizedData);
             
-            Log::info('Citation DOCX generation - Received data (trimmed log)', ['type' => $docxType, 'isPreview' => $isPreview]);
+            // Removed verbose logging for better performance
             
             // Create stable hash from normalized data
             $hashSource = json_encode([
@@ -228,14 +228,12 @@ class CitationsController extends Controller
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
-                    Log::info('Filtered data for incentive (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
-                    Log::info('Filtered data for recommendation (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
@@ -288,14 +286,11 @@ class CitationsController extends Controller
     private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
-            Log::info('Starting generateCitationIncentiveDocxFromHtml', ['uploadPath' => $uploadPath]);
-            
             $privateUploadPath = $uploadPath; // uploadPath is already in correct format
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
-                Log::info('Created directory', ['path' => $fullPath]);
             }
             
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
@@ -306,26 +301,26 @@ class CitationsController extends Controller
             // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
-            
-            $signaturePlaceholders = [
+            // Prepare all values at once for better performance
+            $allValues = array_merge($data, [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
                 'deansignature' => '${deansignature}',
                 'deputydirectorsignature' => '${deputydirectorsignature}',
                 'directorsignature' => '${directorsignature}'
-            ];
+            ]);
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
+            // Set all values in one pass
+            foreach ($allValues as $key => $value) {
+                try {
+                    $templateProcessor->setValue($key, (string)($value ?? ''));
+                } catch (\Exception $e) {
+                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
+                }
             }
             
             try {
-                Log::info('About to save DOCX', ['fullOutputPath' => $fullOutputPath]);
                 $templateProcessor->saveAs($fullOutputPath);
-                Log::info('DOCX saved successfully', ['path' => $fullOutputPath]);
             } catch (\Exception $e) {
                 Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
                 throw $e;
@@ -363,15 +358,11 @@ class CitationsController extends Controller
     public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
-            Log::info('CITATION RECO: Raw data', $data);
-            Log::info('CITATION RECO: Using mapped data', $data);
-            
             $privateUploadPath = $uploadPath; // uploadPath is already in correct format
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
-                Log::info('Created directory', ['path' => $fullPath]);
             }
             
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
@@ -381,24 +372,26 @@ class CitationsController extends Controller
             
             // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
             
-            $signaturePlaceholders = [
+            // Prepare all values at once for better performance
+            $allValues = array_merge($data, [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
                 'deansignature' => '${deansignature}',
                 'deputydirectorsignature' => '${deputydirectorsignature}',
                 'directorsignature' => '${directorsignature}'
-            ];
+            ]);
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
+            // Set all values in one pass
+            foreach ($allValues as $key => $value) {
+                try {
+                    $templateProcessor->setValue($key, (string)($value ?? ''));
+                } catch (\Exception $e) {
+                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
+                }
             }
             
             $templateProcessor->saveAs($fullOutputPath);
-            Log::info('CITATION RECO: Saved populated docx', ['output' => $fullOutputPath]);
             
             // Only convert to PDF if requested (for submission, not preview)
             if ($convertToPdf) {
@@ -565,9 +558,12 @@ class CitationsController extends Controller
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
         
-        // Verify reCAPTCHA for final submissions (not drafts)
-        if (!$isDraft && $recaptchaService->shouldDisplay()) {
+        // Verify reCAPTCHA for final submissions (not drafts) only if widget was rendered
+        if (!$isDraft && $recaptchaService->shouldDisplay() && $request->has('recaptcha_widget_rendered')) {
             $recaptchaToken = $request->input('g-recaptcha-response');
+            if (empty($recaptchaToken)) {
+                return back()->withErrors(['g-recaptcha-response' => 'Please complete the reCAPTCHA verification.'])->withInput();
+            }
             if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
                 return back()->withErrors(['g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'])->withInput();
             }

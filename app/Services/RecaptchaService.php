@@ -28,8 +28,14 @@ class RecaptchaService
         }
 
         // If no token provided, validation fails
+        // But only log in debug mode to avoid spam
         if (empty($token)) {
-            Log::warning('reCAPTCHA verification failed: No token provided');
+            if (config('app.debug')) {
+                Log::debug('reCAPTCHA verification: No token provided', [
+                    'should_display' => $this->shouldDisplay(),
+                    'environment' => app()->environment()
+                ]);
+            }
             return false;
         }
 
@@ -82,16 +88,32 @@ class RecaptchaService
      */
     public function shouldDisplay(): bool
     {
-        if (!Config::get('recaptcha.enabled', false)) {
+        $enabled = Config::get('recaptcha.enabled', false);
+        $skipInLocal = Config::get('recaptcha.skip_in_local', true);
+        $siteKey = Config::get('recaptcha.site_key', '');
+        $environment = app()->environment();
+        
+        // Log for debugging (only in debug mode)
+        if (config('app.debug')) {
+            Log::debug('reCAPTCHA display check', [
+                'enabled' => $enabled,
+                'skip_in_local' => $skipInLocal,
+                'environment' => $environment,
+                'has_site_key' => !empty($siteKey),
+                'site_key_length' => strlen($siteKey)
+            ]);
+        }
+        
+        if (!$enabled) {
             return false;
         }
 
         // Don't display in local if configured to skip
-        if (Config::get('recaptcha.skip_in_local', true) && app()->environment('local', 'testing')) {
+        if ($skipInLocal && in_array($environment, ['local', 'testing'])) {
             return false;
         }
 
-        return !empty(Config::get('recaptcha.site_key'));
+        return !empty($siteKey);
     }
 
     /**

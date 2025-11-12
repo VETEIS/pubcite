@@ -244,7 +244,8 @@ function generateDocx(type) {
         'Generating document...',
         'Document ready for download!'
     ];
-    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
+    // Use false for useRealProgress to avoid triggering submission progress messages
+    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, false);
 
     fetch('{{ route("citations.generate") }}', {
         method: 'POST',

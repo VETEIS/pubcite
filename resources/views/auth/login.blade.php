@@ -4,15 +4,15 @@
             <x-authentication-card-logo />
         </x-slot>
 
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h1>
+        <div class="text-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-900 mb-1">Welcome Back!</h1>
             <p class="text-gray-600">Sign in to your account to continue</p>
         </div>
 
-        <x-validation-errors class="mb-4" />
+        <x-validation-errors class="mb-3" />
 
         @session('status')
-            <div class="mb-4 font-medium text-sm text-maroon-600">
+            <div class="mb-3 font-medium text-sm text-maroon-600">
                 {{ $value }}
             </div>
         @endsession
@@ -26,12 +26,12 @@
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             </div>
 
-            <div class="mt-4">
+            <div class="mt-3">
                 <x-label for="password" value="{{ __('Password') }}" class="text-base text-gray-900 font-medium drop-shadow-sm" />
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
             </div>
 
-            <div class="flex items-center justify-between mt-4">
+            <div class="flex items-center justify-between mt-3">
                 <label class="flex items-center">
                     <input type="checkbox" class="form-checkbox rounded text-maroon-800 shadow-sm focus:ring-maroon-800" name="remember">
                     <span class="ml-2 text-gray-900 font-medium text-sm">Remember me</span>
@@ -43,21 +43,23 @@
                 @endif
             </div>
 
-            <x-recaptcha />
-
-            <div class="flex items-center justify-center mt-6">
-                <x-button class="w-full justify-center">
-                    {{ __('Sign in') }}
+            <div class="mt-4 space-y-3">
+                <x-recaptcha />
+                <x-button class="justify-center items-center" style="width: 256px; margin: 0 auto; display: flex; box-sizing: border-box; border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <svg class="mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 1em; height: 1em; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span style="line-height: 1;">{{ __('Sign in') }}</span>
                 </x-button>
             </div>
 
-            <div class="flex items-center justify-center mt-6">
+            <div class="flex items-center justify-center mt-4">
                 <div class="w-full border-t border-gray-300"></div>
                 <div class="px-4 text-sm text-gray-500">or</div>
                 <div class="w-full border-t border-gray-300"></div>
             </div>
 
-            <div class="flex justify-center mt-4">
+            <div class="flex justify-center mt-3">
                 <button type="button" id="google-login-btn" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
                     <img src="/images/google-logo.png" alt="Google logo" class="w-5 h-5 mr-2">
                     Sign in with Google

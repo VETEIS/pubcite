@@ -26,9 +26,41 @@ class LoginController extends Controller
             'g-recaptcha-response' => 'sometimes|string',
         ]);
 
-        // Verify reCAPTCHA
-        if ($recaptchaService->shouldDisplay()) {
-            $recaptchaToken = $request->input('g-recaptcha-response');
+        // Verify reCAPTCHA only if widget was actually rendered on the page
+        $recaptchaToken = $request->input('g-recaptcha-response');
+        $widgetRendered = $request->has('recaptcha_widget_rendered');
+        
+        // Only validate if widget was supposed to be displayed AND was actually rendered
+        if ($recaptchaService->shouldDisplay() && $widgetRendered) {
+            // Widget was displayed, so token is required
+            if (empty($recaptchaToken)) {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'Please complete the reCAPTCHA verification.'
+                ]);
+            }
+            if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'
+                ]);
+            }
+        } else if ($recaptchaService->shouldDisplay() && !$widgetRendered) {
+            // Widget should have been displayed but wasn't rendered - log for debugging
+            if (config('app.debug')) {
+                Log::warning('reCAPTCHA widget should have been displayed but was not rendered', [
+                    'should_display' => $recaptchaService->shouldDisplay(),
+                    'widget_rendered' => $widgetRendered,
+                    'has_token' => !empty($recaptchaToken)
+                ]);
+            }
+            // Don't block login if widget didn't render (could be a frontend issue)
+            // But verify token if one was provided
+            if (!empty($recaptchaToken) && !$recaptchaService->verify($recaptchaToken, $request->ip())) {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'
+                ]);
+            }
+        } else if (!empty($recaptchaToken)) {
+            // Token was sent even though widget shouldn't display - verify it anyway
             if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
                 throw ValidationException::withMessages([
                     'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'

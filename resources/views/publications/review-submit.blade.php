@@ -210,7 +210,7 @@ function generateDocx(type) {
     // Show comprehensive loading state with progress tracking
     const operationId = `generate-publication-docx-${type}-${Date.now()}`;
     
-    // Show real progress tracking for document generation
+    // Show progress tracking for document generation (without real progress tracking to avoid confusion)
     const progressSteps = [
         'Starting document generation...',
         'Processing form data...',
@@ -218,7 +218,8 @@ function generateDocx(type) {
         'Generating document...',
         'Document ready for download!'
     ];
-    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, true);
+    // Use false for useRealProgress to avoid triggering submission progress messages
+    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, false);
 
     fetch('{{ route("publications.generate") }}', {
         method: 'POST',

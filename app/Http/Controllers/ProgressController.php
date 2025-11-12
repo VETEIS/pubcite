@@ -10,6 +10,9 @@ class ProgressController extends Controller
 {
     public function streamProgress(Request $request)
     {
+        // Increase execution time limit for this specific request
+        set_time_limit(60);
+        
         // Set headers for Server-Sent Events
         $response = response()->stream(function () use ($request) {
             $requestId = $request->get('request_id');
@@ -21,89 +24,71 @@ class ProgressController extends Controller
                 'message' => 'Connected to progress stream'
             ]) . "\n\n";
             
-            // Flush the output buffer
-            if (ob_get_level()) {
-                ob_flush();
+            // Flush the output buffer immediately
+            while (ob_get_level() > 0) {
+                ob_end_flush();
             }
             flush();
             
-            // Monitor log file for new entries
-            $logFile = storage_path('logs/laravel.log');
-            $lastPosition = 0;
+            // Use a more efficient approach - check cache/status file instead of reading entire log
+            $statusFile = storage_path("app/temp/progress_{$requestId}.json");
+            $lastModified = 0;
             
-            // Get initial file size
-            if (file_exists($logFile)) {
-                $lastPosition = filesize($logFile);
-            }
-            
-            $timeout = 30; // 30 second timeout
+            $timeout = 60; // Increased to 60 seconds
             $startTime = time();
+            $newContent = '';
             
             while ((time() - $startTime) < $timeout) {
-                if (file_exists($logFile)) {
-                    $currentSize = filesize($logFile);
-                    
-                    if ($currentSize > $lastPosition) {
-                        // Read new content
-                        $handle = fopen($logFile, 'r');
-                        fseek($handle, $lastPosition);
-                        $newContent = fread($handle, $currentSize - $lastPosition);
-                        fclose($handle);
-                        
-                        // Parse log entries and send relevant ones
-                        $lines = explode("\n", $newContent);
-                        foreach ($lines as $line) {
-                            if (empty(trim($line))) continue;
+                // Check if status file exists and was modified
+                if (file_exists($statusFile)) {
+                    $currentModified = filemtime($statusFile);
+                    if ($currentModified > $lastModified) {
+                        $status = json_decode(file_get_contents($statusFile), true);
+                        if ($status && isset($status['message'])) {
+                            echo "data: " . json_encode([
+                                'type' => $status['type'] ?? 'progress',
+                                'message' => $status['message']
+                            ]) . "\n\n";
                             
-                            // Look for our specific log messages
-                            if (strpos($line, 'Publication request submission started') !== false ||
-                                strpos($line, 'Citation request submission started') !== false ||
-                                strpos($line, 'Processing file uploads') !== false ||
-                                strpos($line, 'Processing file upload') !== false ||
-                                strpos($line, 'Moving pre-generated DOCX files') !== false ||
-                                strpos($line, 'Creating admin notifications') !== false ||
-                                strpos($line, 'Email notifications queued successfully') !== false ||
-                                strpos($line, 'request submitted successfully') !== false ||
-                                strpos($line, 'DOCX generation - Received data') !== false ||
-                                strpos($line, 'Filtered data for') !== false ||
-                                strpos($line, 'DOCX generated and found, ready to serve') !== false) {
-                                
-                                // Extract the log message
-                                $message = $this->extractLogMessage($line);
-                                if ($message) {
-                                    echo "data: " . json_encode([
-                                        'type' => 'progress',
-                                        'message' => $message
-                                    ]) . "\n\n";
-                                    
-                                    if (ob_get_level()) {
-                                        ob_flush();
-                                    }
-                                    flush();
-                                }
+                            flush();
+                            
+                            if (($status['type'] ?? '') === 'complete') {
+                                // Clean up status file
+                                @unlink($statusFile);
+                                break;
                             }
                         }
-                        
-                        $lastPosition = $currentSize;
+                        $lastModified = $currentModified;
                     }
                 }
                 
-                // Check if request is complete
-                if (strpos($newContent ?? '', 'request submitted successfully') !== false) {
-                    echo "data: " . json_encode([
-                        'type' => 'complete',
-                        'message' => 'Request submitted successfully'
-                    ]) . "\n\n";
-                    
-                    if (ob_get_level()) {
-                        ob_flush();
+                // Fallback: Check log file (less frequently)
+                if ((time() - $startTime) % 2 === 0) { // Every 2 seconds
+                    $logFile = storage_path('logs/laravel.log');
+                    if (file_exists($logFile)) {
+                        $handle = @fopen($logFile, 'r');
+                        if ($handle) {
+                            // Read last few KB only
+                            fseek($handle, -8192, SEEK_END);
+                            $logContent = fread($handle, 8192);
+                            fclose($handle);
+                            
+                            // Check for completion
+                            if (strpos($logContent, 'request submitted successfully') !== false ||
+                                strpos($logContent, 'DOCX generated and found, ready to serve') !== false) {
+                                echo "data: " . json_encode([
+                                    'type' => 'complete',
+                                    'message' => 'Operation completed successfully'
+                                ]) . "\n\n";
+                                flush();
+                                break;
+                            }
+                        }
                     }
-                    flush();
-                    break;
                 }
                 
                 // Sleep for a short time before checking again
-                usleep(500000); // 0.5 seconds
+                usleep(1000000); // 1 second (reduced frequency)
             }
             
             // Send timeout message if we exit the loop
@@ -112,10 +97,6 @@ class ProgressController extends Controller
                     'type' => 'timeout',
                     'message' => 'Progress monitoring timed out'
                 ]) . "\n\n";
-                
-                if (ob_get_level()) {
-                    ob_flush();
-                }
                 flush();
             }
             
@@ -123,8 +104,7 @@ class ProgressController extends Controller
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',
             'Connection' => 'keep-alive',
-            // SECURITY FIX: Removed dangerous CORS wildcard
-            // Only allow same-origin requests for security
+            'X-Accel-Buffering' => 'no', // Disable nginx buffering
         ]);
         
         return $response;

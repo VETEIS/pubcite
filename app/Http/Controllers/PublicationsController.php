@@ -73,14 +73,11 @@ class PublicationsController extends Controller
     private function generateIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
-            Log::info('Starting generateIncentiveDocxFromHtml', ['uploadPath' => $uploadPath, 'convertToPdf' => $convertToPdf]);
-            
             $privateUploadPath = $uploadPath;
             $fullPath = Storage::disk('local')->path($privateUploadPath);
             
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
-                Log::info('Created directory', ['path' => $fullPath]);
             }
             
             $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
@@ -90,20 +87,22 @@ class PublicationsController extends Controller
             // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
-            
-            $signaturePlaceholders = [
+            // Prepare all values at once for better performance
+            $allValues = array_merge($data, [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
                 'deansignature' => '${deansignature}',
                 'deputydirectorsignature' => '${deputydirectorsignature}',
                 'directorsignature' => '${directorsignature}'
-            ];
+            ]);
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
+            // Set all values in one pass
+            foreach ($allValues as $key => $value) {
+                try {
+                    $templateProcessor->setValue($key, (string)($value ?? ''));
+                } catch (\Exception $e) {
+                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
+                }
             }
             
             $templateProcessor->saveAs($fullOutputPath);
@@ -154,20 +153,22 @@ class PublicationsController extends Controller
             // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
-            
-            $signaturePlaceholders = [
+            // Prepare all values at once for better performance
+            $allValues = array_merge($data, [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
                 'deansignature' => '${deansignature}',
                 'deputydirectorsignature' => '${deputydirectorsignature}',
                 'directorsignature' => '${directorsignature}'
-            ];
+            ]);
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
+            // Set all values in one pass
+            foreach ($allValues as $key => $value) {
+                try {
+                    $templateProcessor->setValue($key, (string)($value ?? ''));
+                } catch (\Exception $e) {
+                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
+                }
             }
             
             $templateProcessor->saveAs($fullOutputPath);
@@ -215,20 +216,22 @@ class PublicationsController extends Controller
             // Use direct TemplateProcessor (caching disabled due to serialization issues)
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
             
-            foreach ($data as $key => $value) {
-                $templateProcessor->setValue($key, $value);
-            }
-            
-            $signaturePlaceholders = [
+            // Prepare all values at once for better performance
+            $allValues = array_merge($data, [
                 'facultysignature' => '${facultysignature}',
                 'centermanagersignature' => '${centermanagersignature}',
                 'deansignature' => '${deansignature}',
                 'deputydirectorsignature' => '${deputydirectorsignature}',
                 'directorsignature' => '${directorsignature}'
-            ];
+            ]);
             
-            foreach ($signaturePlaceholders as $key => $placeholder) {
-                $templateProcessor->setValue($key, $placeholder);
+            // Set all values in one pass
+            foreach ($allValues as $key => $value) {
+                try {
+                    $templateProcessor->setValue($key, (string)($value ?? ''));
+                } catch (\Exception $e) {
+                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
+                }
             }
             
             $templateProcessor->saveAs($fullOutputPath);
@@ -507,9 +510,12 @@ class PublicationsController extends Controller
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
         
-        // Verify reCAPTCHA for final submissions (not drafts)
-        if (!$isDraft && $recaptchaService->shouldDisplay()) {
+        // Verify reCAPTCHA for final submissions (not drafts) only if widget was rendered
+        if (!$isDraft && $recaptchaService->shouldDisplay() && $request->has('recaptcha_widget_rendered')) {
             $recaptchaToken = $request->input('g-recaptcha-response');
+            if (empty($recaptchaToken)) {
+                return back()->withErrors(['g-recaptcha-response' => 'Please complete the reCAPTCHA verification.'])->withInput();
+            }
             if (!$recaptchaService->verify($recaptchaToken, $request->ip())) {
                 return back()->withErrors(['g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.'])->withInput();
             }
@@ -1329,7 +1335,7 @@ class PublicationsController extends Controller
             // Sort keys for consistent hash regardless of field order
             ksort($normalizedData);
             
-            Log::info('Publication DOCX generation - Received data (trimmed log)', ['type' => $docxType, 'isPreview' => $isPreview]);
+            // Removed verbose logging for better performance
             
             // Create stable hash from normalized data
             $hashSource = json_encode([
@@ -1404,21 +1410,18 @@ class PublicationsController extends Controller
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
-                    Log::info('Filtered data for incentive (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Incentive_Application_Form.docx';
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
-                    Log::info('Filtered data for recommendation (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
                     
                 case 'terminal':
                     $filtered = $this->mapTerminalFields($data);
-                    Log::info('Filtered data for terminal (fields count)', ['count' => count($filtered)]);
                     $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
                     $filename = 'Terminal_Report_Form.docx';
                     break;

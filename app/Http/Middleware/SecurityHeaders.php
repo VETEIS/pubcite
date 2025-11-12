@@ -35,20 +35,22 @@ class SecurityHeaders
         if (app()->environment('local', 'development')) {
             // Development CSP - More permissive for Vite, Alpine, and external services
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://192.168.56.1:5173 http://localhost:5173 https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-                   "style-src 'self' 'unsafe-inline' http://192.168.56.1:5173 http://localhost:5173 https://fonts.bunny.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://192.168.56.1:5173 http://localhost:5173 https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; " .
+                   "style-src 'self' 'unsafe-inline' http://192.168.56.1:5173 http://localhost:5173 https://fonts.bunny.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; " .
                    "font-src 'self' https://fonts.bunny.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
                    "img-src 'self' data: https: http:; " .
-                   "connect-src 'self' http://192.168.56.1:5173 http://localhost:5173 ws://192.168.56.1:5173 ws://localhost:5173 https:; " .
+                   "connect-src 'self' http://192.168.56.1:5173 http://localhost:5173 ws://192.168.56.1:5173 ws://localhost:5173 https: https://www.google.com; " .
+                   "frame-src 'self' https://www.google.com; " .
                    "frame-ancestors 'none';";
         } else {
             // Production CSP - Allow necessary external resources
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-                   "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; " .
+                   "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; " .
                    "font-src 'self' https://fonts.bunny.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
                    "img-src 'self' data: https: https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com; " .
-                   "connect-src 'self' https:; " .
+                   "connect-src 'self' https: https://www.google.com; " .
+                   "frame-src 'self' https://www.google.com; " .
                    "frame-ancestors 'none';";
         }
         

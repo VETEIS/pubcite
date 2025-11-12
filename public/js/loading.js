@@ -129,8 +129,8 @@
             return;
         }
         
-        // Initialize progress
-        currentStepEl.textContent = 'Starting submission...';
+        // Initialize progress - use generic message to avoid confusion
+        currentStepEl.textContent = 'Processing request...';
         stepCounter.textContent = '0/6';
         progressBar.style.width = '0%';
         

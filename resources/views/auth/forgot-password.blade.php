@@ -14,22 +14,22 @@
             </a>
         </div>
 
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
+        <div class="text-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-900 mb-1">Reset Password</h1>
             <p class="text-gray-600">Enter your email to receive a reset link</p>
         </div>
 
-        <div class="mb-4 text-base text-gray-900 font-medium drop-shadow-sm">
+        <div class="mb-3 text-base text-gray-900 font-medium drop-shadow-sm">
             {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
         </div>
 
         @session('status')
-            <div class="mb-4 font-medium text-sm text-green-600">
+            <div class="mb-3 font-medium text-sm text-green-600">
                 {{ $value }}
             </div>
         @endsession
 
-        <x-validation-errors class="mb-4" />
+        <x-validation-errors class="mb-3" />
 
         <form method="POST" action="{{ route('password.email') }}">
             @csrf
@@ -39,11 +39,13 @@
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             </div>
 
-            <x-recaptcha />
-
-            <div class="flex items-center justify-end mt-4">
-                <x-button>
-                    {{ __('Email Password Reset Link') }}
+            <div class="mt-3 space-y-3">
+                <x-recaptcha />
+                <x-button class="justify-center items-center" style="width: 256px; margin: 0 auto; display: flex; box-sizing: border-box; border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <svg class="mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 1em; height: 1em; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <span style="line-height: 1;">{{ __('Email Reset Link') }}</span>
                 </x-button>
             </div>
         </form>
