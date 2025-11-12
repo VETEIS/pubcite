@@ -882,6 +882,21 @@
                 console.log('Signatory type mismatch:', { signatoryType, expectedSignatoryType, workflowState });
             }
 
+            // Determine if user can perform redo action
+            // Can redo if:
+            // 1. Center manager in their workflow stage (signatory_type === 'center_manager' and workflow_state === 'pending_research_manager' and status === 'pending')
+            // 2. Admin (can redo any pending request)
+            const isAdmin = data.is_admin || false;
+            let canRedo = false;
+            
+            if (isAdmin && status === 'pending') {
+                // Admin can redo any pending request
+                canRedo = true;
+            } else if (signatoryType === 'center_manager' && workflowState === 'pending_research_manager' && status === 'pending') {
+                // Center manager can redo in their workflow stage
+                canRedo = true;
+            }
+
             // Setup upload button
             if (canUpload) {
                 uploadBtn.style.display = 'flex';
@@ -909,9 +924,9 @@
                 }
             }
 
-            // Show redo button only after content is loaded (same visibility as upload button)
+            // Show redo button only if user can perform redo action
             if (redoBtn) {
-                redoBtn.style.display = canUpload ? 'flex' : 'none';
+                redoBtn.style.display = canRedo ? 'flex' : 'none';
             }
         }
 

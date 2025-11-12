@@ -310,6 +310,7 @@ class SigningController extends Controller
             'signatories' => $formattedSignatories,
             'download_zip_url' => route('signing.download-files', ['requestId' => $userRequest->id]),
             'signatory_type' => $signatoryType,
+            'is_admin' => $user->role === 'admin',
         ]);
     }
 
@@ -1632,7 +1633,7 @@ class SigningController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (!$user || !$user->isSignatory()) {
+        if (!$user) {
             abort(403, 'Unauthorized');
         }
 
@@ -1668,11 +1669,26 @@ class SigningController extends Controller
             }
         }
 
-        $signatoryType = $user->signatoryType();
+        // Check if user is the request owner and can redo their own request
+        $isUserOwnRequest = $userRequest->user_id === $user->id && $userRequest->workflow_state === 'pending_user_signature';
         
-        // Only center managers can perform redo action
-        if ($signatoryType !== 'center_manager' && $user->role !== 'admin') {
-            abort(403, 'Only center managers or admins can perform this action');
+        // Check if user is a signatory
+        $isSignatory = $user->isSignatory();
+        $signatoryType = $isSignatory ? $user->signatoryType() : null;
+        
+        // Allow redo if:
+        // 1. User is the request owner and request is in pending_user_signature state
+        // 2. User is a center manager (for their workflow stage)
+        // 3. User is an admin
+        if (!$isUserOwnRequest && !$isSignatory && $user->role !== 'admin') {
+            abort(403, 'Unauthorized');
+        }
+        
+        if (!$isUserOwnRequest && $isSignatory) {
+            // For signatories, only center managers can perform redo action
+            if ($signatoryType !== 'center_manager' && $user->role !== 'admin') {
+                abort(403, 'Only center managers or admins can perform this action');
+            }
         }
 
         // Validate reason is provided
@@ -1695,9 +1711,19 @@ class SigningController extends Controller
         ]);
         
         // Only allow redo on pending requests (not endorsed or rejected)
-        // Also allow if workflow state is in center manager's stage (even if status might be different)
-        $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
-        $isInCorrectWorkflowState = $userRequest->workflow_state === $expectedWorkflowState;
+        // Check workflow state based on user type
+        if ($isUserOwnRequest) {
+            // User can redo their own request if it's in pending_user_signature state
+            $isInCorrectWorkflowState = $userRequest->workflow_state === 'pending_user_signature';
+        } else if ($isSignatory && $signatoryType) {
+            // Signatory can redo if workflow state matches their expected stage
+            $expectedWorkflowState = $this->getWorkflowStateForSignatory($signatoryType);
+            $isInCorrectWorkflowState = $userRequest->workflow_state === $expectedWorkflowState;
+        } else {
+            // Admin can redo any pending request
+            $isInCorrectWorkflowState = true;
+        }
+        
         $isPending = strtolower(trim($userRequest->status)) === 'pending';
         
         if (!$isPending && !$isInCorrectWorkflowState) {
@@ -1705,7 +1731,7 @@ class SigningController extends Controller
                 'request_id' => $userRequest->id,
                 'actual_status' => $userRequest->status,
                 'workflow_state' => $userRequest->workflow_state,
-                'expected_workflow_state' => $expectedWorkflowState,
+                'is_user_own_request' => $isUserOwnRequest,
                 'is_pending' => $isPending,
                 'is_in_correct_workflow_state' => $isInCorrectWorkflowState,
             ]);

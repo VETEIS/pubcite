@@ -463,7 +463,7 @@
                             <div id="modalSelectedFiles" class="text-xs text-gray-600 px-2"></div>
                             <!-- Separator between selected files and redo button -->
                             <div id="modalSelectedFilesSeparator" class="h-6 w-px bg-gray-300 hidden"></div>
-                            <button id="modalRedoBtn" onclick="openRedoConfirmationModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm" style="display: none;">
+                            <button id="modalRedoBtn" class="redo-modal-btn px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm" style="display: none;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
@@ -1324,6 +1324,25 @@
                 console.log('Signatory type mismatch:', { signatoryType, expectedSignatoryType, workflowState });
             }
 
+            // Determine if user can perform redo action
+            // Can redo if:
+            // 1. User signing their own request (signatory_type === 'user' and workflow_state === 'pending_user_signature' and status === 'pending')
+            // 2. Center manager in their workflow stage (signatory_type === 'center_manager' and workflow_state === 'pending_research_manager' and status === 'pending')
+            // 3. Admin (can redo any pending request)
+            const isAdmin = data.is_admin || false;
+            let canRedo = false;
+            
+            if (isAdmin && status === 'pending') {
+                // Admin can redo any pending request
+                canRedo = true;
+            } else if (signatoryType === 'user' && workflowState === 'pending_user_signature' && status === 'pending') {
+                // User can redo their own request
+                canRedo = true;
+            } else if (signatoryType === 'center_manager' && workflowState === 'pending_research_manager' && status === 'pending') {
+                // Center manager can redo in their workflow stage
+                canRedo = true;
+            }
+
             // Setup upload button
             if (canUpload) {
                 uploadBtn.style.display = 'flex';
@@ -1351,9 +1370,9 @@
                 }
             }
 
-            // Show redo button only after content is loaded (same visibility as upload button)
+            // Show redo button only if user can perform redo action
             if (redoBtn) {
-                redoBtn.style.display = canUpload ? 'flex' : 'none';
+                redoBtn.style.display = canRedo ? 'flex' : 'none';
             }
         }
 
@@ -1601,7 +1620,7 @@
         window.openReviewModal = openReviewModal;
         console.log('Review modal function defined outside component');
 
-        // Use event delegation on document level
+        // Use event delegation on document level for review button
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('.review-modal-btn');
             if (btn) {
@@ -1610,6 +1629,198 @@
                 const requestId = btn.getAttribute('data-review-request-id');
                 if (requestId && typeof window.openReviewModal === 'function') {
                     window.openReviewModal(parseInt(requestId));
+                }
+            }
+        });
+
+        // Store current request ID for Redo action
+        let currentRedoRequestId = null;
+
+        function openRedoConfirmationModal() {
+            // Get the request ID from the review modal's file input
+            const fileInput = document.getElementById('modalSignedDocuments');
+            if (!fileInput || !fileInput.getAttribute('data-request-id')) {
+                if (window.notificationManager) {
+                    window.notificationManager.error('Unable to determine request ID. Please try again.');
+                } else {
+                    alert('Unable to determine request ID. Please try again.');
+                }
+                return;
+            }
+            
+            currentRedoRequestId = fileInput.getAttribute('data-request-id');
+            const modal = document.getElementById('redoConfirmationModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+                // Focus on reason textarea
+                const reasonTextarea = document.getElementById('redoReason');
+                if (reasonTextarea) {
+                    reasonTextarea.value = '';
+                    reasonTextarea.focus();
+                }
+                // Reset cancel button visibility
+                const cancelBtn = document.getElementById('cancelRedoBtn');
+                if (cancelBtn) {
+                    cancelBtn.style.display = '';
+                }
+                // Reset confirm button state
+                const confirmBtn = document.getElementById('confirmRedoBtn');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    `;
+                }
+            }
+        }
+
+        function closeRedoConfirmationModal() {
+            const modal = document.getElementById('redoConfirmationModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                // Clear reason textarea
+                const reasonTextarea = document.getElementById('redoReason');
+                if (reasonTextarea) {
+                    reasonTextarea.value = '';
+                }
+                // Reset cancel button visibility
+                const cancelBtn = document.getElementById('cancelRedoBtn');
+                if (cancelBtn) {
+                    cancelBtn.style.display = '';
+                }
+                // Reset confirm button state
+                const confirmBtn = document.getElementById('confirmRedoBtn');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    `;
+                }
+                currentRedoRequestId = null;
+            }
+        }
+
+        async function confirmRedoAction() {
+            if (!currentRedoRequestId) {
+                if (window.notificationManager) {
+                    window.notificationManager.error('Unable to determine request ID. Please try again.');
+                } else {
+                    alert('Unable to determine request ID. Please try again.');
+                }
+                return;
+            }
+
+            const reasonTextarea = document.getElementById('redoReason');
+            const reason = reasonTextarea ? reasonTextarea.value.trim() : '';
+            
+            if (!reason) {
+                if (window.notificationManager) {
+                    window.notificationManager.warning('Please provide a reason for deleting the files.');
+                } else {
+                    alert('Please provide a reason for deleting the files.');
+                }
+                reasonTextarea?.focus();
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmRedoBtn');
+            const cancelBtn = document.getElementById('cancelRedoBtn');
+            
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>';
+            }
+            
+            // Hide cancel button after confirm is clicked
+            if (cancelBtn) {
+                cancelBtn.style.display = 'none';
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const response = await fetch(`/signing/request/${currentRedoRequestId}/redo`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        reason: reason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (window.notificationManager) {
+                        window.notificationManager.success(data.message || 'Files deleted successfully');
+                    } else {
+                        alert('Success: ' + data.message);
+                    }
+                    closeRedoConfirmationModal();
+                    closeReviewModal();
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    const errorMsg = data.message || 'Failed to delete files. Please try again.';
+                    if (window.notificationManager) {
+                        window.notificationManager.error(errorMsg);
+                    } else {
+                        alert('Error: ' + errorMsg);
+                    }
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = `
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Confirm Delete
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Redo action error:', error);
+                if (window.notificationManager) {
+                    window.notificationManager.error('Failed to delete files. Please try again.');
+                } else {
+                    alert('Failed to delete files. Please try again.');
+                }
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Confirm Delete
+                    `;
+                }
+                if (cancelBtn) {
+                    cancelBtn.style.display = '';
+                }
+            }
+        }
+
+        // Make functions globally available
+        window.openRedoConfirmationModal = openRedoConfirmationModal;
+        window.closeRedoConfirmationModal = closeRedoConfirmationModal;
+        window.confirmRedoAction = confirmRedoAction;
+
+        // Use event delegation on document level for redo button
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.redo-modal-btn');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof window.openRedoConfirmationModal === 'function') {
+                    window.openRedoConfirmationModal();
                 }
             }
         });
