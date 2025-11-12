@@ -245,9 +245,6 @@ function signatorySelect(type, nameField, inlineMode = false, phText = 'Select n
                     this.query = '';
                     this.selectedName = '';
                     this.isValidSelection = false;
-                    
-                    // Show a subtle notification
-                    console.warn(`Signatory "${invalidName}" no longer exists and has been cleared.`);
                 } else {
                     // Signatory is valid
                     this.selectedName = this.query;

@@ -1022,7 +1022,7 @@
                         this.updateTableData(data);
                         
                     } catch (error) {
-                        console.error('Error updating dashboard data:', error);
+                        // Error updating dashboard data
                     }
                 },
                 
@@ -1283,7 +1283,6 @@ function reinitializeChartsAndTable() {
         hideChartsLoading();
     })
     .catch(error => {
-        console.error('Error reinitializing dashboard:', error);
         hideChartsLoading();
     });
 }

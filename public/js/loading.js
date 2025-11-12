@@ -125,7 +125,6 @@
         const progressBar = document.getElementById('progress-bar');
         
         if (!currentStepEl || !stepCounter || !progressBar) {
-            console.error('Progress elements not found');
             return;
         }
         
@@ -165,12 +164,11 @@
                     eventSource.close();
                 }
             } catch (e) {
-                console.error('Error parsing progress data:', e);
+                // Error parsing progress data
             }
         };
         
         eventSource.onerror = function(event) {
-            console.error('SSE connection error:', event);
             currentStepEl.textContent = 'Processing...';
             eventSource.close();
         };

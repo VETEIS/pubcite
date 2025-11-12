@@ -1277,13 +1277,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Error - re-enable button and show error
                 privacyAcceptBtn.disabled = false;
                 privacyAcceptBtn.textContent = 'Accept';
-                console.error('Failed to accept privacy policy');
             }
         } catch (error) {
             // Error - re-enable button
             privacyAcceptBtn.disabled = false;
             privacyAcceptBtn.textContent = 'Accept';
-            console.error('Error accepting privacy policy:', error);
         }
     });
 

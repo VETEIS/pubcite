@@ -38,7 +38,6 @@
                     this.unreadCount = data.unread || 0;
                 } catch (error) {
                     // Silent fail for notifications
-                    console.warn('Failed to load notifications:', error);
                     this.notifications = [];
                     this.unreadCount = 0;
                 } finally {
@@ -79,7 +78,6 @@
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
                 } catch (error) {
                     // Silent fail for mark as read
-                    console.warn('Failed to mark notification as read:', error);
                 }
             },
 
@@ -107,7 +105,7 @@
     function initializeNotificationBell() {
         // Ensure notification bell is available
         if (!window.notificationBell) {
-            console.warn('Notification bell not properly initialized');
+            // Notification bell not properly initialized
         }
     }
     

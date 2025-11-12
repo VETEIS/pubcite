@@ -7,7 +7,6 @@ class LandingResearchers {
         this.errorElement = document.getElementById('researchers-error');
         
         if (!this.container) {
-            console.warn('Researchers container not found');
             return;
         }
         
@@ -51,7 +50,6 @@ class LandingResearchers {
             }
             
         } catch (error) {
-            console.error('Error loading researchers:', error);
             this.showError();
         }
     }
@@ -254,8 +252,6 @@ window.openResearcherModal = function(button) {
         const decoded = dataAttr.replace(/&#39;/g, "'").replace(/&quot;/g, '"');
         researcherData = JSON.parse(decoded);
     } catch (error) {
-        console.error('Error parsing researcher data:', error);
-        console.error('Raw data:', button.getAttribute('data-researcher'));
         return;
     }
     

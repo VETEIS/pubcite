@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Traits\SanitizesFilePaths;
 
 class SignatureController extends Controller
 {
+    use SanitizesFilePaths;
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -34,7 +36,11 @@ class SignatureController extends Controller
         $user = Auth::user();
         $file = $request->file('signature');
         
-        $path = $file->store("signatures/{$user->id}", 'local');
+        // Sanitize path to prevent directory traversal
+        $sanitizedPath = $this->sanitizePath("signatures/{$user->id}");
+        $sanitizedFilename = $this->sanitizePath(basename($file->getClientOriginalName()));
+        
+        $path = $file->storeAs($sanitizedPath, $sanitizedFilename, 'local');
         
         $signature = Signature::create([
             'user_id' => $user->id,
@@ -61,11 +67,14 @@ class SignatureController extends Controller
             abort(404);
         }
 
-        if (!Storage::disk('local')->exists($signature->path)) {
+        // Sanitize path to prevent directory traversal
+        $sanitizedPath = $this->sanitizePath($signature->path);
+        
+        if (!Storage::disk('local')->exists($sanitizedPath)) {
             abort(404);
         }
 
-        return response()->file(Storage::disk('local')->path($signature->path));
+        return response()->file(Storage::disk('local')->path($sanitizedPath));
     }
 
     public function edit(Signature $signature)
@@ -97,7 +106,11 @@ class SignatureController extends Controller
                 Storage::disk('local')->delete($signature->path);
             }
             
-            $path = $file->store("signatures/{$signature->user_id}", 'local');
+            // Sanitize path to prevent directory traversal
+            $sanitizedPath = $this->sanitizePath("signatures/{$signature->user_id}");
+            $sanitizedFilename = $this->sanitizePath(basename($file->getClientOriginalName()));
+            
+            $path = $file->storeAs($sanitizedPath, $sanitizedFilename, 'local');
             
             $data['path'] = $path;
             $data['mime_type'] = $file->getMimeType();

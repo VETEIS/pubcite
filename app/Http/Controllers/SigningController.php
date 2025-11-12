@@ -12,9 +12,11 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Enums\SignatureStatus;
 use Illuminate\Support\Facades\DB;
+use App\Traits\SanitizesFilePaths;
 
 class SigningController extends Controller
 {
+    use SanitizesFilePaths;
     public function index(Request $request)
     {
         /** @var User $user */
@@ -430,10 +432,11 @@ class SigningController extends Controller
             abort(404);
         }
 
+        // Sanitize file path to prevent directory traversal
+        $filePath = $this->sanitizePath($filePath);
+        
+        // Use local disk only (standardized storage)
         $fullPath = Storage::disk('local')->path($filePath);
-        if (!file_exists($fullPath)) {
-            $fullPath = storage_path('app/public/' . $filePath);
-        }
 
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
             Log::warning('Per-file download file not found or unreadable', [
@@ -759,10 +762,11 @@ class SigningController extends Controller
                     continue;
                 }
 
+                // Sanitize file path to prevent directory traversal
+                $filePath = $this->sanitizePath($filePath);
+                
+                // Use local disk only (standardized storage)
                 $fullPath = Storage::disk('local')->path($filePath);
-                if (!file_exists($fullPath)) {
-                    $fullPath = storage_path('app/public/' . $filePath);
-                }
 
                 if (!file_exists($fullPath) || !is_readable($fullPath)) {
                     continue;
@@ -802,10 +806,11 @@ class SigningController extends Controller
                     continue;
                 }
 
+                // Sanitize file path to prevent directory traversal
+                $filePath = $this->sanitizePath($filePath);
+                
+                // Use local disk only (standardized storage)
                 $fullPath = Storage::disk('local')->path($filePath);
-                if (!file_exists($fullPath)) {
-                    $fullPath = storage_path('app/public/' . $filePath);
-                }
 
                 if (!file_exists($fullPath) || !is_readable($fullPath)) {
                     continue;

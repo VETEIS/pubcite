@@ -15,7 +15,6 @@ document.addEventListener('turbo:before-fetch-request', (event) => {
 document.addEventListener('turbo:fetch-request-error', (event) => {
     // Silently handle prefetch errors to prevent console spam
     if (event.detail.fetchOptions && event.detail.fetchOptions.method === 'GET') {
-        console.debug('Turbo prefetch failed (non-critical):', event.detail.url);
         event.preventDefault(); // Prevent error from bubbling up
     }
 });
@@ -112,9 +111,8 @@ Alpine.store('adminModal', {
             this.reviewOpen = true;
             this.statusOpen = false; // Close other modal
             document.body.classList.add('overflow-hidden');
-            console.log('Review modal opened:', this.reviewOpen, this.data);
         } catch (error) {
-            console.error('Error opening review modal:', error);
+            // Error opening review modal
         }
     },
     
@@ -122,9 +120,8 @@ Alpine.store('adminModal', {
         try {
             this.reviewOpen = false;
             document.body.classList.remove('overflow-hidden');
-            console.log('Review modal closed');
         } catch (error) {
-            console.error('Error closing review modal:', error);
+            // Error closing review modal
         }
     },
     
@@ -134,9 +131,8 @@ Alpine.store('adminModal', {
             this.statusOpen = true;
             this.reviewOpen = false; // Close other modal
             document.body.classList.add('overflow-hidden');
-            console.log('Status modal opened:', this.statusOpen, this.data);
         } catch (error) {
-            console.error('Error opening status modal:', error);
+            // Error opening status modal
         }
     },
     
@@ -144,9 +140,8 @@ Alpine.store('adminModal', {
         try {
             this.statusOpen = false;
             document.body.classList.remove('overflow-hidden');
-            console.log('Status modal closed');
         } catch (error) {
-            console.error('Error closing status modal:', error);
+            // Error closing status modal
         }
     }
 });

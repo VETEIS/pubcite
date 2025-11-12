@@ -299,7 +299,6 @@
                 // Re-find the content element in case it was replaced by Turbo
                 this.contentElement = document.getElementById('guest-announcements-content');
                 if (!this.contentElement) {
-                    console.warn('Guest announcements content element not found');
                     return;
                 }
             }
@@ -331,7 +330,6 @@
                     this.cachedAnnouncements = announcements; // Cache the data
                 } catch (error) {
                     // Silent fail for preload
-                    console.warn('Failed to preload announcements:', error);
                 }
             }
 

@@ -98,8 +98,6 @@
             // Check if Vite assets loaded, if not, load built assets
             setTimeout(function() {
                 if (!window.Alpine && !document.querySelector('link[href*="app.css"]')) {
-                    console.log('Vite assets not loaded, loading built assets...');
-                    
                     // Load built CSS
                     var link = document.createElement('link');
                     link.rel = 'stylesheet';
@@ -110,10 +108,9 @@
                     var script = document.createElement('script');
                     script.src = '/build/assets/app-DaBYqt0m.js';
                     script.onload = function() {
-                        console.log('Built assets loaded successfully');
+                        // Built assets loaded successfully
                     };
                     script.onerror = function() {
-                        console.error('Built assets failed to load');
                         document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;"><h1>Application Loading Error</h1><p>The application assets failed to load. Please refresh the page or contact support.</p><p>Error: Assets not found</p><button onclick="location.reload()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh Page</button></div>';
                     };
                     document.head.appendChild(script);

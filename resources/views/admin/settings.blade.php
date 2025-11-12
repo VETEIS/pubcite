@@ -1214,13 +1214,6 @@
         // Initialize announcements state tracking
         initializeAnnouncementsState();
         
-        // Debug: Log initial announcements state
-        console.log('Initial announcements state:', {
-            inputs: document.querySelectorAll('input[name^="announcements"]').length,
-            rows: document.querySelectorAll('#announcementsRepeater tr').length,
-            saveBtnDisabled: document.querySelector('button[name="save_announcements"]')?.disabled
-        });
-        
         // Form submission handling with Turbo integration
         document.addEventListener('submit', function(e) {
             if (e.submitter && e.submitter.name === 'save_announcements') {

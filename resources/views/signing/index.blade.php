@@ -427,7 +427,7 @@
                     
                     <div class="mb-4">
                         <label for="redoReason" class="block text-sm font-medium text-gray-700 mb-2">
-                            Reason for deletion/rejection <span class="text-red-500">*</span>
+                            Reason for deletion <span class="text-red-500">*</span>
                         </label>
                         <textarea 
                             id="redoReason" 
@@ -600,7 +600,6 @@
                 setupModalUpload(requestId, data);
 
             } catch (error) {
-                console.error('Review modal error:', error);
                 if (window.notificationManager) {
                     window.notificationManager.error('Failed to load request data. Please try again.');
                 } else {
@@ -853,8 +852,6 @@
             const workflowState = data.workflow_state || '';
             const status = data.status || 'pending';
 
-            console.log('setupModalUpload (signatory) - signatoryType:', signatoryType, 'workflowState:', workflowState, 'status:', status);
-
             // Map workflow states to signatory types
             const workflowToSignatoryMap = {
                 'pending_user_signature': 'user',
@@ -876,10 +873,6 @@
                 
                 // Can upload if: hasn't signed yet AND status is not endorsed
                 canUpload = !hasSigned && status !== 'endorsed';
-                
-                console.log('Can upload check:', { signatoryType, expectedSignatoryType, hasSigned, status, canUpload });
-            } else {
-                console.log('Signatory type mismatch:', { signatoryType, expectedSignatoryType, workflowState });
             }
 
             // Determine if user can perform redo action
@@ -1119,7 +1112,6 @@
                     }
                 }
             } catch (error) {
-                console.error('Upload error:', error);
                 let errorMessage = 'Network error: Failed to upload signed documents. Please check your connection and try again.';
                 
                 // Check for rate limiting
@@ -1316,7 +1308,6 @@
                     }
                 }
             } catch (error) {
-                console.error('Redo action error:', error);
                 if (window.notificationManager) {
                     window.notificationManager.error('Failed to delete files. Please try again.');
                 } else {

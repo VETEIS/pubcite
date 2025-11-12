@@ -25,9 +25,11 @@ use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 use App\Services\RecaptchaService;
+use App\Traits\SanitizesFilePaths;
 
 class PublicationsController extends Controller
 {
+    use SanitizesFilePaths;
     // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
@@ -723,7 +725,11 @@ class PublicationsController extends Controller
                 ]);
                 
                 if ($file) {
-                    $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
+                    // Sanitize filename to prevent path injection
+                    $sanitizedFilename = $this->sanitizePath(basename($file->getClientOriginalName()));
+                    $sanitizedUploadPath = $this->sanitizePath($uploadPath);
+                    
+                    $storedPath = $file->storeAs($sanitizedUploadPath, $sanitizedFilename, 'local');
                     $cleanPath = $storedPath;
                     $attachments[$field] = [
                         'path' => $cleanPath,
@@ -977,9 +983,14 @@ class PublicationsController extends Controller
                 abort(404, 'File path not found');
             }
 
+            // Sanitize file path to prevent directory traversal
+            $storagePath = $this->sanitizePath($storagePath);
+            
+            // Use local disk only (standardized storage)
             $fullPath = Storage::disk('local')->path($storagePath);
+            
             if (!file_exists($fullPath)) {
-                $fullPath = Storage::disk('public')->path($storagePath);
+                abort(404, 'File not found: ' . basename($storagePath));
             }
 
             Log::info('Admin download attempt', [
@@ -1063,20 +1074,22 @@ class PublicationsController extends Controller
             }
 
             if ($fileType === 'pdf') {
-                // Check both local and public disks for generated PDFs
+                // Sanitize file path to prevent directory traversal
+                $filePath = $this->sanitizePath($filePath);
+                
+                // Use local disk only (standardized storage)
                 if (Storage::disk('local')->exists($filePath)) {
                     $fullPath = Storage::disk('local')->path($filePath);
-                } elseif (Storage::disk('public')->exists($filePath)) {
-                    $fullPath = Storage::disk('public')->path($filePath);
                 } else {
                     abort(404, 'PDF file not found on disk');
                 }
             } else {
-                // Check both local and public disks for DOCX files
+                // Sanitize file path to prevent directory traversal
+                $filePath = $this->sanitizePath($filePath);
+                
+                // Use local disk only (standardized storage)
                 if (Storage::disk('local')->exists($filePath)) {
                     $fullPath = Storage::disk('local')->path($filePath);
-                } elseif (Storage::disk('public')->exists($filePath)) {
-                    $fullPath = Storage::disk('public')->path($filePath);
                 } else {
                     abort(404, 'DOCX file not found on disk');
                 }

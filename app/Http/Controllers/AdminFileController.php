@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Request as RequestModel;
+use App\Traits\SanitizesFilePaths;
 
 class AdminFileController extends Controller
 {
+    use SanitizesFilePaths;
     public function download(Request $request, string $type, string $filename)
     {
         try {
@@ -47,21 +49,18 @@ class AdminFileController extends Controller
                 'request_id' => $requestId
             ]);
 
-            // Try public disk first (where files are actually stored)
-            $fullPath = Storage::disk('public')->path($filePath);
+            // Sanitize file path to prevent directory traversal
+            $filePath = $this->sanitizePath($filePath);
+            
+            // Use local disk only (standardized storage)
+            $fullPath = Storage::disk('local')->path($filePath);
             if (!file_exists($fullPath)) {
-                // Fallback to local disk
-                $fullPath = Storage::disk('local')->path($filePath);
-                if (!file_exists($fullPath)) {
-                    Log::error('File not found on any disk', [
-                        'file_path' => $filePath,
-                        'public_path' => Storage::disk('public')->path($filePath),
-                        'local_path' => Storage::disk('local')->path($filePath),
-                        'public_exists' => file_exists(Storage::disk('public')->path($filePath)),
-                        'local_exists' => file_exists(Storage::disk('local')->path($filePath))
-                    ]);
-                    abort(404, 'File not found on disk: ' . $filePath);
-                }
+                Log::error('File not found on local disk', [
+                    'file_path' => $filePath,
+                    'local_path' => $fullPath,
+                    'local_exists' => file_exists($fullPath)
+                ]);
+                abort(404, 'File not found: ' . basename($filePath));
             }
 
             Log::info('Admin file download', [
@@ -101,23 +100,19 @@ class AdminFileController extends Controller
         switch ($type) {
             case 'pdf':
             case 'docx':
-                return $basePath . '/' . $filename;
+                return $this->getSanitizedStoragePath($basePath, $filename);
             
             case 'signed':
-                // Remove storage/app/public/ prefix if present
                 $path = $request->signed_document_path;
-                if (str_starts_with($path, 'storage/app/public/')) {
-                    $path = substr($path, 19); // Remove 'storage/app/public/' prefix
-                }
-                return $path;
+                // Remove any storage path prefixes
+                $path = preg_replace('#^(storage/app/(public|local)/)?#', '', $path);
+                return $this->sanitizePath($path);
             
             case 'backup':
-                // Remove storage/app/public/ prefix if present
                 $path = $request->original_document_path;
-                if (str_starts_with($path, 'storage/app/public/')) {
-                    $path = substr($path, 19); // Remove 'storage/app/public/' prefix
-                }
-                return $path;
+                // Remove any storage path prefixes
+                $path = preg_replace('#^(storage/app/(public|local)/)?#', '', $path);
+                return $this->sanitizePath($path);
             
             default:
                 return null;

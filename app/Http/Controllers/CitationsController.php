@@ -24,9 +24,11 @@ use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 use App\Services\RecaptchaService;
+use App\Traits\SanitizesFilePaths;
 
 class CitationsController extends Controller
 {
+    use SanitizesFilePaths;
     // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
@@ -742,7 +744,12 @@ class CitationsController extends Controller
                 foreach ($fields as $field) {
                 if ($request->hasFile($field)) {
                     $file = $request->file($field);
-                    $storedPath = $file->storeAs($uploadPath, $file->getClientOriginalName(), 'local');
+                    
+                    // Sanitize filename to prevent path injection
+                    $sanitizedFilename = $this->sanitizePath(basename($file->getClientOriginalName()));
+                    $sanitizedUploadPath = $this->sanitizePath($uploadPath);
+                    
+                    $storedPath = $file->storeAs($sanitizedUploadPath, $sanitizedFilename, 'local');
                     // Store path as is since we're using private disk
                     $cleanPath = $storedPath;
                     $pdfPaths[$field] = [
@@ -944,11 +951,12 @@ class CitationsController extends Controller
             
             $filePath = $pdfData['pdfs'][$key]['path'];
             
-            // Check both local and public disks for generated PDFs
+            // Sanitize file path to prevent directory traversal
+            $filePath = $this->sanitizePath($filePath);
+            
+            // Use local disk only (standardized storage)
             if (Storage::disk('local')->exists($filePath)) {
                 $fullPath = Storage::disk('local')->path($filePath);
-            } elseif (Storage::disk('public')->exists($filePath)) {
-                $fullPath = Storage::disk('public')->path($filePath);
             } else {
                 return response()->json(['error' => 'File not found on disk'], 404);
             }
@@ -980,11 +988,12 @@ class CitationsController extends Controller
                 
                 $filePath = $pdfData['pdfs'][$key]['path'];
                 
-                // Check both local and public disks for generated PDFs
+                // Sanitize file path to prevent directory traversal
+                $filePath = $this->sanitizePath($filePath);
+                
+                // Use local disk only (standardized storage)
                 if (Storage::disk('local')->exists($filePath)) {
                     $fullPath = Storage::disk('local')->path($filePath);
-                } elseif (Storage::disk('public')->exists($filePath)) {
-                    $fullPath = Storage::disk('public')->path($filePath);
                 } else {
                     return response()->json(['error' => 'File not found on disk'], 404);
                 }

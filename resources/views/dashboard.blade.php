@@ -513,7 +513,7 @@
                     
                     <div class="mb-4">
                         <label for="redoReason" class="block text-sm font-medium text-gray-700 mb-2">
-                            Reason for deletion/rejection <span class="text-red-500">*</span>
+                            Reason for deletion <span class="text-red-500">*</span>
                         </label>
                         <textarea 
                             id="redoReason" 
@@ -950,7 +950,6 @@
                     resetUploadButton(uploadBtn, fileInput, requestId);
                 }
             } catch (error) {
-                console.error('Upload error:', error);
                 notify('error', 'Network error: Failed to upload signed documents. Please try again.');
                 resetUploadButton(uploadBtn, fileInput, requestId);
             }
@@ -1068,7 +1067,6 @@
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
             } catch (error) {
-                console.error('Review modal error:', error);
                 notify('error', 'Failed to load request data. Please try again.');
                 closeReviewModal();
             }
@@ -1076,8 +1074,6 @@
 
         // Make function globally available
         window.openReviewModal = openReviewModal;
-        
-        console.log('Review modal function defined and attached to window');
     </script>
 </x-app-layout>
 
@@ -1291,8 +1287,6 @@
             const workflowState = data.workflow_state || '';
             const status = data.status || 'pending';
 
-            console.log('setupModalUpload - signatoryType:', signatoryType, 'workflowState:', workflowState, 'status:', status);
-
             // Check if user can upload:
             // 1. User signing their own request (signatory_type === 'user' and workflow_state === 'pending_user_signature')
             // 2. Signatory signing in their workflow stage (workflow_state matches their expected stage)
@@ -1318,10 +1312,6 @@
                 
                 // Can upload if: hasn't signed yet AND status is not endorsed
                 canUpload = !hasSigned && status !== 'endorsed';
-                
-                console.log('Can upload check:', { signatoryType, expectedSignatoryType, hasSigned, status, canUpload });
-            } else {
-                console.log('Signatory type mismatch:', { signatoryType, expectedSignatoryType, workflowState });
             }
 
             // Determine if user can perform redo action
@@ -1504,7 +1494,6 @@
                     }
                     data = JSON.parse(text);
                 } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
                     // If response is OK but JSON parsing fails, assume success
                     notify('success', 'Signed documents uploaded successfully');
                     closeReviewModal();
@@ -1520,13 +1509,11 @@
                     notify('error', data.message || 'Failed to upload signed documents. Please try again.');
                 }
             } catch (error) {
-                console.error('Upload error:', error);
                 // Only show error if it's a real network error, not a parsing error
                 if (error.name === 'TypeError' && error.message.includes('fetch')) {
                     notify('error', 'Network error: Failed to upload signed documents. Please try again.');
                 } else {
                     // For other errors, assume success if we got this far
-                    console.log('Non-network error, assuming success:', error);
                     notify('success', 'Signed documents uploaded successfully');
                     closeReviewModal();
                     setTimeout(() => window.location.reload(), 500);
@@ -1610,7 +1597,6 @@
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
             } catch (error) {
-                console.error('Review modal error:', error);
                 notify('error', 'Failed to load request data. Please try again.');
                 closeReviewModal();
             }
@@ -1618,7 +1604,6 @@
 
         // Make function globally available
         window.openReviewModal = openReviewModal;
-        console.log('Review modal function defined outside component');
 
         // Use event delegation on document level for review button
         document.addEventListener('click', function(e) {
@@ -1787,7 +1772,6 @@
                     }
                 }
             } catch (error) {
-                console.error('Redo action error:', error);
                 if (window.notificationManager) {
                     window.notificationManager.error('Failed to delete files. Please try again.');
                 } else {

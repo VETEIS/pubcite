@@ -53,7 +53,6 @@ class LoadingManager {
 
         // Prevent duplicate loaders
         if (this.activeLoaders.has(operationId)) {
-            console.warn(`Loading operation '${operationId}' is already active`);
             return;
         }
 
@@ -82,7 +81,6 @@ class LoadingManager {
      */
     hide(operationId) {
         if (!this.activeLoaders.has(operationId)) {
-            console.warn(`Loading operation '${operationId}' was not active`);
             return;
         }
 

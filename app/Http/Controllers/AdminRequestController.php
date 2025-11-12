@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\SanitizesFilePaths;
 
 class AdminRequestController extends Controller
 {
+    use SanitizesFilePaths;
     public function index()
     {
         $user = Auth::user();
@@ -194,10 +196,11 @@ class AdminRequestController extends Controller
                     }
                     
                     if ($filePath && is_string($filePath)) {
+                        // Sanitize file path to prevent directory traversal
+                        $filePath = $this->sanitizePath($filePath);
+                        
+                        // Use local disk only (standardized storage)
                         $fullPath = Storage::disk('local')->path($filePath);
-                        if (!file_exists($fullPath)) {
-                            $fullPath = storage_path('app/public/' . $filePath);
-                        }
                         
                         if (file_exists($fullPath) && is_readable($fullPath)) {
                             $secureFilename = base64_encode($request->id . '|' . $originalName);
@@ -227,10 +230,11 @@ class AdminRequestController extends Controller
                     if ($isAbsolute) {
                         $fullPath = $docxPath;
                     } else {
+                        // Sanitize file path to prevent directory traversal
+                        $docxPath = $this->sanitizePath($docxPath);
+                        
+                        // Use local disk only (standardized storage)
                         $fullPath = Storage::disk('local')->path($docxPath);
-                        if (!file_exists($fullPath)) {
-                            $fullPath = storage_path('app/public/' . $docxPath);
-                        }
                     }
 
                     if ($fullPath && file_exists($fullPath) && is_readable($fullPath)) {
@@ -480,11 +484,12 @@ class AdminRequestController extends Controller
             if (isset($pdfPathData['pdfs']) && is_array($pdfPathData['pdfs'])) {
                 foreach ($pdfPathData['pdfs'] as $key => $fileInfo) {
                     if (isset($fileInfo['path']) && is_string($fileInfo['path'])) {
-                        // Check both local (private) and public disks like individual downloads do
-                        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($fileInfo['path'])) {
-                            $fullPath = \Illuminate\Support\Facades\Storage::disk('local')->path($fileInfo['path']);
-                        } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($fileInfo['path'])) {
-                            $fullPath = \Illuminate\Support\Facades\Storage::disk('public')->path($fileInfo['path']);
+                        // Sanitize file path to prevent directory traversal
+                        $sanitizedPath = $this->sanitizePath($fileInfo['path']);
+                        
+                        // Use local disk only (standardized storage)
+                        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($sanitizedPath)) {
+                            $fullPath = \Illuminate\Support\Facades\Storage::disk('local')->path($sanitizedPath);
                         } else {
                             $fullPath = null;
                         }

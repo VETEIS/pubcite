@@ -136,7 +136,6 @@
                                 }
                                 // Cache the render state
                                 sessionStorage.setItem(CACHE_KEY, 'true');
-                                console.log('reCAPTCHA completed');
                             },
                             'expired-callback': function() {
                                 // Reset the rendered input if reCAPTCHA expires
@@ -149,9 +148,7 @@
                         });
                         // Cache that we've rendered it
                         sessionStorage.setItem(CACHE_KEY, 'true');
-                        console.log('reCAPTCHA rendered successfully');
                     } catch (e) {
-                        console.error('reCAPTCHA render error:', e);
                         // Clear cache on error
                         sessionStorage.removeItem(CACHE_KEY);
                         // Remove the hidden input if rendering fails
