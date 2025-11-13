@@ -288,14 +288,21 @@ class CitationsController extends Controller
     private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
-            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
-            $fullPath = Storage::disk('local')->path($privateUploadPath);
-            
-            if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0777, true);
+            if (empty($uploadPath)) {
+                throw new \RuntimeException('Missing upload path for DOCX generation.');
             }
-            
+
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+
+            if (!Storage::disk('local')->exists($privateUploadPath)) {
+                Storage::disk('local')->makeDirectory($privateUploadPath, 0777, true);
+            }
+
             $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
+            if (!file_exists($templatePath)) {
+                throw new \RuntimeException("Template file not found: {$templatePath}");
+            }
+
             $filename = 'Incentive_Application_Form.docx';
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
@@ -360,14 +367,21 @@ class CitationsController extends Controller
     public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $convertToPdf = false)
     {
         try {
-            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
-            $fullPath = Storage::disk('local')->path($privateUploadPath);
-            
-            if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0777, true);
+            if (empty($uploadPath)) {
+                throw new \RuntimeException('Missing upload path for DOCX generation.');
             }
-            
+
+            $privateUploadPath = $uploadPath; // uploadPath is already in correct format
+
+            if (!Storage::disk('local')->exists($privateUploadPath)) {
+                Storage::disk('local')->makeDirectory($privateUploadPath, 0777, true);
+            }
+
             $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
+            if (!file_exists($templatePath)) {
+                throw new \RuntimeException("Template file not found: {$templatePath}");
+            }
+
             $filename = 'Recommendation_Letter_Form.docx';
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
