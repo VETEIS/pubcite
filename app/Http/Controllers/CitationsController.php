@@ -25,10 +25,11 @@ use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 use App\Services\RecaptchaService;
 use App\Traits\SanitizesFilePaths;
+use App\Traits\EnsuresTemplateFiles;
 
 class CitationsController extends Controller
 {
-    use SanitizesFilePaths;
+    use SanitizesFilePaths, EnsuresTemplateFiles;
     // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
@@ -298,7 +299,7 @@ class CitationsController extends Controller
                 Storage::disk('local')->makeDirectory($privateUploadPath, 0777, true);
             }
 
-            $templatePath = storage_path('app/templates/Cite_Incentive_Application.docx');
+            $templatePath = $this->ensureTemplateAvailable('Cite_Incentive_Application.docx');
             if (!file_exists($templatePath)) {
                 throw new \RuntimeException("Template file not found: {$templatePath}");
             }
@@ -377,7 +378,7 @@ class CitationsController extends Controller
                 Storage::disk('local')->makeDirectory($privateUploadPath, 0777, true);
             }
 
-            $templatePath = storage_path('app/templates/Cite_Recommendation_Letter.docx');
+            $templatePath = $this->ensureTemplateAvailable('Cite_Recommendation_Letter.docx');
             if (!file_exists($templatePath)) {
                 throw new \RuntimeException("Template file not found: {$templatePath}");
             }

@@ -26,10 +26,11 @@ use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 use App\Services\RecaptchaService;
 use App\Traits\SanitizesFilePaths;
+use App\Traits\EnsuresTemplateFiles;
 
 class PublicationsController extends Controller
 {
-    use SanitizesFilePaths;
+    use SanitizesFilePaths, EnsuresTemplateFiles;
     // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
     {
@@ -82,7 +83,7 @@ class PublicationsController extends Controller
                 mkdir($fullPath, 0777, true);
             }
             
-            $templatePath = storage_path('app/templates/Incentive_Application_Form.docx');
+            $templatePath = $this->ensureTemplateAvailable('Incentive_Application_Form.docx');
             $outputPath = $privateUploadPath . '/Incentive_Application_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
@@ -148,7 +149,7 @@ class PublicationsController extends Controller
                 mkdir($fullPath, 0777, true);
             }
             
-            $templatePath = storage_path('app/templates/Recommendation_Letter_Form.docx');
+            $templatePath = $this->ensureTemplateAvailable('Recommendation_Letter_Form.docx');
             $outputPath = $privateUploadPath . '/Recommendation_Letter_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
@@ -211,7 +212,7 @@ class PublicationsController extends Controller
                 mkdir($fullPath, 0777, true);
             }
             
-            $templatePath = storage_path('app/templates/Terminal_Report_Form.docx');
+            $templatePath = $this->ensureTemplateAvailable('Terminal_Report_Form.docx');
             $outputPath = $privateUploadPath . '/Terminal_Report_Form.docx';
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             

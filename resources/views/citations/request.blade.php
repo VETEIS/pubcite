@@ -274,17 +274,37 @@
                         
                         const response = await fetch('{{ route("citations.submit") }}', {
                             method: 'POST',
-                            body: formData
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
                         });
                         
                         if (response.ok) {
-                            this.lastSaved = new Date().toLocaleTimeString();
+                            const data = await response.json();
+                            if (data.success) {
+                                this.lastSaved = new Date().toLocaleTimeString();
+                            }
+                        } else if (response.status === 422) {
+                            // Validation errors - don't update lastSaved, but don't show error either (silent)
+                            // Draft might have validation issues, but we'll try again on next auto-save
                         } else if (response.status === 429) {
                             // Rate limited - disable auto-save temporarily
                             this.autoSaveDisabled = true;
                             setTimeout(() => {
                                 this.autoSaveDisabled = false;
                             }, 60000); // Re-enable after 1 minute
+                        } else {
+                            // Try to parse error response
+                            try {
+                                const errorData = await response.json();
+                                if (errorData.message) {
+                                    // Log error but don't show to user (silent auto-save)
+                                }
+                            } catch (e) {
+                                // Ignore parse errors
+                            }
                         }
                         // Silent save - no error notifications for auto-save
                     } catch (error) {
