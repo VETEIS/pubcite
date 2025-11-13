@@ -634,12 +634,12 @@ class CitationsController extends Controller
                     'scopus' => 'nullable',
                     'wos' => 'nullable',
                     'aci' => 'nullable',
-                    'faculty_name' => 'required|string',
+                    'faculty_name' => 'nullable|string',
                     'center_manager' => 'nullable|string',
                     'dean_name' => 'required|string',
                     'rec_collegeheader' => 'required|string',
                     'date' => 'required|string',
-                    'rec_faculty_name' => 'required|string',
+                    'rec_faculty_name' => 'nullable|string',
                     'rec_citing_details' => 'required|string',
                     'rec_indexing_details' => 'required|string',
                     'rec_dean_name' => 'required|string',
@@ -679,6 +679,21 @@ class CitationsController extends Controller
                 } else {
                     return back()->withErrors($validator)->withInput();
                 }
+            }
+            
+            // Auto-populate faculty_name from name field if not provided
+            $requestData = $request->all();
+            if (empty($requestData['faculty_name']) && !empty($requestData['name'])) {
+                $requestData['faculty_name'] = $requestData['name'];
+                // Merge back into request
+                $request->merge(['faculty_name' => $requestData['faculty_name']]);
+            }
+            
+            // Auto-populate rec_faculty_name from name field if not provided
+            if (empty($requestData['rec_faculty_name']) && !empty($requestData['name'])) {
+                $requestData['rec_faculty_name'] = $requestData['name'];
+                // Merge back into request
+                $request->merge(['rec_faculty_name' => $requestData['rec_faculty_name']]);
             }
 
             $userId = $user->id;
@@ -1161,7 +1176,8 @@ class CitationsController extends Controller
     private function mapRecommendationFields($data) {
         return [
             'collegeheader' => $data['rec_collegeheader'] ?? '',
-            'facultyname' => $data['rec_faculty_name'] ?? '',
+            'name' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Use name field (template uses ${name})
+            'facultyname' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Keep for backward compatibility
             'details' => $data['rec_citing_details'] ?? '',
             'indexing' => $data['rec_indexing_details'] ?? '',
             'dean' => $data['rec_dean_name'] ?? '',

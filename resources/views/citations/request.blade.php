@@ -65,8 +65,35 @@
                     return allValid;
                 },
                 
+                // Sync faculty_name from name field
+                syncFacultyName() {
+                    const nameField = document.querySelector('input[name="name"]');
+                    const facultyNameField = document.getElementById('faculty_name');
+                    const facultyNameDisplay = document.getElementById('faculty-name-display');
+                    if (nameField && facultyNameField && facultyNameDisplay) {
+                        const nameValue = nameField.value.trim();
+                        facultyNameField.value = nameValue;
+                        facultyNameDisplay.textContent = nameValue || '';
+                    }
+                    
+                    // Also sync rec_faculty_name for recommendation letter
+                    const recFacultyNameField = document.getElementById('rec_faculty_name');
+                    const recFacultyNameDisplay = document.getElementById('rec-faculty-name-display');
+                    if (nameField && recFacultyNameField && recFacultyNameDisplay) {
+                        const nameValue = nameField.value.trim();
+                        recFacultyNameField.value = nameValue;
+                        recFacultyNameDisplay.textContent = nameValue || '';
+                    }
+                },
+                
                 // Sequential tab switching with validation
                 switchTab(targetTab) {
+                    // Sync faculty_name when switching to incentive or recommendation tab
+                    if (targetTab === 'incentive' || targetTab === 'recommendation') {
+                        this.$nextTick(() => {
+                            this.syncFacultyName();
+                        });
+                    }
                     const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     const targetIndex = tabs.indexOf(targetTab);
@@ -120,8 +147,8 @@
                     
                     // Define required fields for other tabs
                     const tabFields = {
-                        'incentive': ['name', 'rank', 'college', 'bibentry', 'citedbibentry', 'issn', 'faculty_name', 'center_manager', 'dean_name'],
-                        'recommendation': ['rec_collegeheader', 'rec_faculty_name', 'rec_dean_name', 'rec_citing_details', 'rec_indexing_details']
+                        'incentive': ['name', 'rank', 'college', 'bibentry', 'citedbibentry', 'issn', 'center_manager', 'dean_name'],
+                        'recommendation': ['rec_collegeheader', 'rec_dean_name', 'rec_citing_details', 'rec_indexing_details']
                     };
                     
                     const requiredFields = tabFields[currentTab] || [];
@@ -394,9 +421,30 @@
                 // Restore signatory Alpine.js selections
                 restoreSignatorySelections(draftData) {
                     const signatoryFields = [
-                        'faculty_name', 'center_manager', 'dean_name',  // Incentive tab
-                        'rec_faculty_name', 'rec_dean_name'             // Recommendation tab
+                        'center_manager', 'dean_name',  // Incentive tab (faculty_name is auto-populated from name)
+                        'rec_dean_name'             // Recommendation tab (rec_faculty_name is auto-populated from name)
                     ];
+                    
+                    // Auto-populate faculty_name and rec_faculty_name from name field
+                    if (draftData.name) {
+                        const facultyNameField = document.getElementById('faculty_name');
+                        const facultyNameDisplay = document.getElementById('faculty-name-display');
+                        if (facultyNameField) {
+                            facultyNameField.value = draftData.name;
+                        }
+                        if (facultyNameDisplay) {
+                            facultyNameDisplay.textContent = draftData.name;
+                        }
+                        
+                        const recFacultyNameField = document.getElementById('rec_faculty_name');
+                        const recFacultyNameDisplay = document.getElementById('rec-faculty-name-display');
+                        if (recFacultyNameField) {
+                            recFacultyNameField.value = draftData.name;
+                        }
+                        if (recFacultyNameDisplay) {
+                            recFacultyNameDisplay.textContent = draftData.name;
+                        }
+                    }
                     
                     signatoryFields.forEach(fieldName => {
                         const value = draftData[fieldName];
@@ -603,9 +651,23 @@
                 
                 // Initialize form
             init() {
+                    // Sync faculty_name on initialization
+                    this.syncFacultyName();
+                    
+                    // Set up listener for name field changes
+                    const nameField = document.querySelector('input[name="name"]');
+                    if (nameField) {
+                        nameField.addEventListener('input', () => this.syncFacultyName());
+                        nameField.addEventListener('change', () => this.syncFacultyName());
+                    }
+                    
                     // Load draft data after a short delay to ensure DOM is ready
                     setTimeout(() => {
                         this.loadDraftData();
+                        // Sync faculty_name after draft data is loaded
+                        setTimeout(() => {
+                            this.syncFacultyName();
+                        }, 100);
                     }, 500);
                     
                     // Add event listener for confirmation checkbox

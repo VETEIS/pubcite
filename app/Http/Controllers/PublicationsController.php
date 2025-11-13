@@ -353,7 +353,8 @@ class PublicationsController extends Controller
             
             '{{rec_collegeheader}}' => $data['rec_collegeheader'] ?? '',
             '{{rec_date}}' => $data['rec_date'] ?? now()->format('Y-m-d'),
-            '{{rec_facultyname}}' => $data['rec_faculty_name'] ?? '',
+            '{{name}}' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Template uses ${name}
+            '{{rec_facultyname}}' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Keep for backward compatibility
             '{{details}}' => $data['rec_publication_details'] ?? '',
             '{{indexing}}' => $data['rec_indexing_details'] ?? '',
             '{{dean}}' => $data['rec_dean_name'] ?? '',
@@ -593,12 +594,12 @@ class PublicationsController extends Controller
                 'scopus' => 'nullable',
                 'wos' => 'nullable',
                 'aci' => 'nullable',
-                'faculty_name' => 'required|string',
+                'faculty_name' => 'nullable|string',
                 'center_manager' => 'nullable|string',
                 'dean_name' => 'required|string',
                 'rec_collegeheader' => 'required|string',
                 'date' => 'required|string',
-                'rec_faculty_name' => 'required|string',
+                'rec_faculty_name' => 'nullable|string',
                 'rec_publication_details' => 'required|string',
                 'rec_indexing_details' => 'required|string',
                 'rec_dean_name' => 'required|string',
@@ -649,6 +650,16 @@ class PublicationsController extends Controller
         }
 
         $data = $validator->validated();
+        
+        // Auto-populate faculty_name from name field if not provided
+        if (empty($data['faculty_name']) && !empty($data['name'])) {
+            $data['faculty_name'] = $data['name'];
+        }
+        
+        // Auto-populate rec_faculty_name from name field if not provided
+        if (empty($data['rec_faculty_name']) && !empty($data['name'])) {
+            $data['rec_faculty_name'] = $data['name'];
+        }
         
         try {
             $userId = $user->id;
@@ -1260,7 +1271,8 @@ class PublicationsController extends Controller
     private function mapRecommendationFields($data) {
         return [
             'collegeheader' => $data['rec_collegeheader'] ?? '',
-            'facultyname' => $data['rec_faculty_name'] ?? '',
+            'name' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Use name field (template uses ${name})
+            'facultyname' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Keep for backward compatibility
             'details' => $data['rec_publication_details'] ?? '',
             'indexing' => $data['rec_indexing_details'] ?? '',
             'dean' => $data['rec_dean_name'] ?? '',

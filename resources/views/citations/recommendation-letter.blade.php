@@ -44,9 +44,8 @@
             
             <div class="flex items-baseline gap-2 text-sm text-gray-700 mb-1">
                 <span>This is to endorse to your office the research citation of</span>
-                <div class="inline-block">
-                    <x-signatory-select name="rec_faculty_name" type="faculty" width="w-48" placeholder="Search faculty..." />
-                </div>
+                <span class="font-medium text-gray-900" id="rec-faculty-name-display">{{ old('name', $request->form_data['name'] ?? '') }}</span>
+                <input type="hidden" name="rec_faculty_name" id="rec_faculty_name" value="{{ old('name', $request->form_data['name'] ?? '') }}">
             </div>
             
             <p class="text-sm text-gray-700 mb-4">

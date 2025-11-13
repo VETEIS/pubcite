@@ -229,7 +229,27 @@ function generateDocx(type) {
         return;
     }
     
-    const formData = new FormData(form);
+    // Create FormData but exclude file inputs to avoid 413 errors
+    const formData = new FormData();
+    const formElements = form.querySelectorAll('input, textarea, select');
+    
+    formElements.forEach(element => {
+        // Skip file inputs - we don't need them for DOCX generation
+        if (element.type === 'file') {
+            return;
+        }
+        
+        // Handle checkboxes and radios
+        if (element.type === 'checkbox' || element.type === 'radio') {
+            if (element.checked) {
+                formData.append(element.name, element.value || '1');
+            }
+        } else if (element.name && element.value !== null) {
+            // Handle text inputs, textareas, selects, and hidden inputs
+            formData.append(element.name, element.value);
+        }
+    });
+    
     formData.append('docx_type', type);
 
 
