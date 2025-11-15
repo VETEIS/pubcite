@@ -105,6 +105,17 @@ class CitationsController extends Controller
             // Handle GET request for pre-generated files
             if ($request->isMethod('GET') && $request->has('file_path')) {
                 $filePath = $request->input('file_path');
+                // Validate path (remove directory traversal attempts but keep structure)
+                $filePath = str_replace(['../', '..\\'], '', $filePath);
+                $filePath = str_replace("\0", '', $filePath);
+                $filePath = trim($filePath, '/\\');
+                
+                Log::info('Fetching pre-generated DOCX file', [
+                    'file_path' => $filePath,
+                    'docx_type' => $request->input('docx_type', 'incentive'),
+                    'exists' => Storage::disk('local')->exists($filePath)
+                ]);
+                
                 if (Storage::disk('local')->exists($filePath)) {
                     $absolutePath = Storage::disk('local')->path($filePath);
                     $docxType = $request->input('docx_type', 'incentive');
@@ -121,9 +132,14 @@ class CitationsController extends Controller
                         'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
                     ]);
                 } else {
+                    Log::warning('Pre-generated DOCX file not found', [
+                        'file_path' => $filePath,
+                        'docx_type' => $request->input('docx_type', 'incentive'),
+                        'storage_path' => Storage::disk('local')->path($filePath)
+                    ]);
                     return response()->json([
                         'success' => false,
-                        'message' => 'File not found'
+                        'message' => 'File not found at path: ' . $filePath
                     ], 404);
                 }
             }
