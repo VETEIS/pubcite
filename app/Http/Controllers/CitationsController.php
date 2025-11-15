@@ -114,22 +114,21 @@ class CitationsController extends Controller
                 $exists = Storage::disk('local')->exists($filePath);
                 $fileExists = file_exists($absolutePath);
                 
-                // Check if PDF exists (meaning DOCX was converted and deleted)
+                $docxType = $request->input('docx_type', 'incentive');
+                
+                // First, check if PDF exists (from draft saves - preferred)
                 $pdfPath = preg_replace('/\.docx$/', '.pdf', $filePath);
                 $pdfExists = Storage::disk('local')->exists($pdfPath);
                 
-                $docxType = $request->input('docx_type', 'incentive');
-                
-                // Prefer PDF over DOCX - if PDF exists, serve it first
                 if ($pdfExists) {
                     $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
                     $pdfFilename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.pdf' 
                         : 'Recommendation_Letter_Form.pdf';
                     
-                    Log::info('Serving PDF (preferred over DOCX)', [
+                    Log::info('Serving existing citation PDF from draft save', [
                         'pdf_path' => $pdfPath,
-                        'original_docx_path' => $filePath
+                        'docx_type' => $docxType
                     ]);
                     
                     $userAgent = request()->header('User-Agent');
@@ -142,12 +141,25 @@ class CitationsController extends Controller
                     ]);
                 }
                 
-                // Fallback to DOCX if PDF doesn't exist
+                // Fallback: Check if DOCX exists (shouldn't happen if draft saves work correctly)
                 if ($exists || $fileExists) {
-                    $absolutePath = Storage::disk('local')->path($filePath);
+                    // Ensure we have the correct absolute path
+                    if (!$exists && $fileExists) {
+                        // Storage says no but file exists - use absolute path
+                    } else {
+                        // Both agree or Storage says it exists - use Storage path
+                        $absolutePath = Storage::disk('local')->path($filePath);
+                    }
+                    
+                    // Serve DOCX as fallback (should rarely happen)
                     $filename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.docx' 
                         : 'Recommendation_Letter_Form.docx';
+                    
+                    Log::info('Serving citation DOCX (PDF not found - should not happen if draft saves work correctly)', [
+                        'docx_path' => $filePath,
+                        'docx_type' => $docxType
+                    ]);
                     
                     $userAgent = request()->header('User-Agent');
                     $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
@@ -158,7 +170,7 @@ class CitationsController extends Controller
                         'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
                     ]);
                 } else {
-                    Log::warning('Pre-generated file not found (neither DOCX nor PDF)', [
+                    Log::warning('Citation file not found (neither PDF nor DOCX)', [
                         'file_path' => $filePath,
                         'pdf_path' => $pdfPath,
                         'docx_type' => $docxType
@@ -864,41 +876,90 @@ class CitationsController extends Controller
                 }
             }
 
-            // Check if we have pre-generated files to move instead of regenerating
+            // Check for existing PDFs from draft saves first (much faster - no regeneration needed)
             $docxPaths = [];
-            $tempFiles = $request->input('generated_docx_files', []);
+            $pdfFiles = [
+                'incentive' => $uploadPath . '/Incentive_Application_Form.pdf',
+                'recommendation' => $uploadPath . '/Recommendation_Letter_Form.pdf'
+            ];
             
-            // Debug: Log what we received
-            Log::info('Checking for pre-generated citation DOCX files', [
-                'has_tempFiles' => !empty($tempFiles),
-                'tempFiles' => $tempFiles,
-                'all_inputs' => array_keys($request->all())
+            Log::info('Checking for existing citation PDFs from draft saves', [
+                'upload_path' => $uploadPath,
+                'checking_files' => $pdfFiles
             ]);
             
+            // Use existing PDFs from draft saves if they exist
+            foreach ($pdfFiles as $type => $pdfPath) {
+                if (Storage::disk('local')->exists($pdfPath)) {
+                    $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' : 'Recommendation_Letter_Form.pdf';
+                    $docxPaths[$type] = [
+                        'path' => $pdfPath,
+                        'original_name' => $filename
+                    ];
+                    Log::info('Found existing citation PDF from draft save', [
+                        'type' => $type,
+                        'path' => $pdfPath
+                    ]);
+                }
+            }
+            
+            // Check for pre-generated DOCX files from "View PDF" clicks (fallback)
+            $tempFiles = $request->input('generated_docx_files', []);
             if (!empty($tempFiles) && is_array($tempFiles)) {
-                // Move pre-generated files instead of regenerating (much faster)
-                Log::info('Moving pre-generated citation DOCX files', ['tempFiles' => $tempFiles]);
+                Log::info('Checking for pre-generated citation DOCX files', [
+                    'has_tempFiles' => !empty($tempFiles),
+                    'tempFiles' => $tempFiles
+                ]);
                 foreach ($tempFiles as $type => $tempPath) {
-                    if ($tempPath && Storage::disk('local')->exists($tempPath)) {
-                        $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' : 'Recommendation_Letter_Form.docx';
-                        $finalPath = $uploadPath . '/' . $filename;
-                        
-                        // Move file from temp to final location (atomic operation)
-                        Storage::disk('local')->move($tempPath, $finalPath);
-                        $docxPaths[$type] = [
-                            'path' => $finalPath,
-                            'original_name' => $filename
-                        ];
-                        
-                        Log::info('Moved citation DOCX file', ['type' => $type, 'from' => $tempPath, 'to' => $finalPath]);
+                    // Only use if we don't already have a PDF for this type
+                    if (!isset($docxPaths[$type]) && $tempPath && Storage::disk('local')->exists($tempPath)) {
+                        // Check if PDF version exists
+                        $pdfPath = preg_replace('/\.docx$/', '.pdf', $tempPath);
+                        if (Storage::disk('local')->exists($pdfPath)) {
+                            // Use PDF version
+                            $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' : 'Recommendation_Letter_Form.pdf';
+                            $docxPaths[$type] = [
+                                'path' => $pdfPath,
+                                'original_name' => $filename
+                            ];
+                            Log::info('Found PDF version of pre-generated citation file', [
+                                'type' => $type,
+                                'pdf_path' => $pdfPath
+                            ]);
+                        } else {
+                            // Convert DOCX to PDF
+                            $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' : 'Recommendation_Letter_Form.docx';
+                            $finalPath = $uploadPath . '/' . $filename;
+                            
+                            // Move DOCX to final location first
+                            Storage::disk('local')->move($tempPath, $finalPath);
+                            
+                            // Convert to PDF
+                            $converter = new DocxToPdfConverter();
+                            $pdfPath = $converter->convertDocxToPdf($finalPath, $uploadPath);
+                            
+                            if ($pdfPath && Storage::disk('local')->exists($pdfPath)) {
+                                // Delete DOCX after successful conversion
+                                Storage::disk('local')->delete($finalPath);
+                                $docxPaths[$type] = [
+                                    'path' => $pdfPath,
+                                    'original_name' => preg_replace('/\.docx$/', '.pdf', $filename)
+                                ];
+                                Log::info('Converted pre-generated citation DOCX to PDF', [
+                                    'type' => $type,
+                                    'pdf_path' => $pdfPath
+                                ]);
+                            }
+                        }
                     }
                 }
             }
             
-            // Generate any missing DOCX files (convert to PDF for submission)
-            // Only generate what's missing to minimize processing time
+            // Generate any missing PDFs (only if they don't exist from draft saves)
+            // This should rarely happen now since draft saves create PDFs
             if (!$isDraft) {
                 if (!isset($docxPaths['incentive'])) {
+                    Log::info('Generating missing citation incentive PDF (no existing PDF found)');
                     try {
                         $filtered = $this->mapIncentiveFields($request->all());
                         $incentivePath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, true);
@@ -909,10 +970,11 @@ class CitationsController extends Controller
                             ];
                         }
                     } catch (\Exception $e) {
-                        Log::error('Error generating incentive DOCX: ' . $e->getMessage());
+                        Log::error('Error generating citation incentive PDF: ' . $e->getMessage());
                     }
                 }
                 if (!isset($docxPaths['recommendation'])) {
+                    Log::info('Generating missing citation recommendation PDF (no existing PDF found)');
                     try {
                         $filtered = $this->mapRecommendationFields($request->all());
                         $recommendationPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, true);
@@ -923,7 +985,7 @@ class CitationsController extends Controller
                             ];
                         }
                     } catch (\Exception $e) {
-                        Log::error('Error generating recommendation DOCX: ' . $e->getMessage());
+                        Log::error('Error generating citation recommendation PDF: ' . $e->getMessage());
                     }
                 }
             }

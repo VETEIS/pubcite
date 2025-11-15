@@ -291,58 +291,79 @@ function generateDocx(type) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => {
+    .then(async response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Check content type to determine if it's PDF or DOCX
+        // Check if response is JSON (when store_for_submit is true) or blob (direct download)
         const contentType = response.headers.get('content-type') || '';
-        const isPdf = contentType.includes('application/pdf');
         
-        return response.blob().then(blob => ({ blob, isPdf }));
-    })
-    .then(({ blob, isPdf }) => {
-        if (!blob || blob.size === 0) {
-            throw new Error('Generated file is empty or corrupted');
-        }
-        
-        const fileBlob = new Blob([blob], { 
-            type: isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        });
-        const url = window.URL.createObjectURL(fileBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        const timestamp = new Date().toISOString().slice(0, 10);
-        
-        if (isPdf) {
-            a.download = type === 'incentive' 
-                ? `Publication_Incentive_Application_${timestamp}.pdf` 
-                : type === 'recommendation'
-                ? `Publication_Recommendation_Letter_${timestamp}.pdf`
-                : `Publication_Terminal_Report_${timestamp}.pdf`;
+        if (contentType.includes('application/json')) {
+            // JSON response - file was stored, get the path and fetch it
+            const result = await response.json();
+            if (result.success && result.filePath) {
+                // Store the file path for future reference
+                if (alpineComponent && alpineComponent.generatedDocxPaths) {
+                    alpineComponent.generatedDocxPaths[type] = result.filePath;
+                    const currentHash = alpineComponent.calculateFormDataHash ? alpineComponent.calculateFormDataHash(type) : null;
+                    if (currentHash && alpineComponent.formDataHashes) {
+                        alpineComponent.formDataHashes[type] = currentHash;
+                    }
+                }
+                
+                // Fetch the file using the stored path (will convert DOCX to PDF on-the-fly if needed)
+                fetchPreGeneratedDocx(type, result.filePath);
+                return; // Exit early, fetchPreGeneratedDocx handles the download
+            } else {
+                throw new Error(result.message || 'Failed to generate document');
+            }
         } else {
-            a.download = type === 'incentive' 
-                ? `Publication_Incentive_Application_${timestamp}.docx` 
-                : type === 'recommendation'
-                ? `Publication_Recommendation_Letter_${timestamp}.docx`
-                : `Publication_Terminal_Report_${timestamp}.docx`;
-        }
-        
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up
-        setTimeout(() => {
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }, 100);
-        
-        // Update button states after generation
-        if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
+            // Blob response - direct download (preview mode)
+            const isPdf = contentType.includes('application/pdf');
+            const blob = await response.blob();
+            
+            if (!blob || blob.size === 0) {
+                throw new Error('Generated file is empty or corrupted');
+            }
+            
+            const fileBlob = new Blob([blob], { 
+                type: isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
+            const url = window.URL.createObjectURL(fileBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().slice(0, 10);
+            
+            if (isPdf) {
+                a.download = type === 'incentive' 
+                    ? `Publication_Incentive_Application_${timestamp}.pdf` 
+                    : type === 'recommendation'
+                    ? `Publication_Recommendation_Letter_${timestamp}.pdf`
+                    : `Publication_Terminal_Report_${timestamp}.pdf`;
+            } else {
+                a.download = type === 'incentive' 
+                    ? `Publication_Incentive_Application_${timestamp}.docx` 
+                    : type === 'recommendation'
+                    ? `Publication_Recommendation_Letter_${timestamp}.docx`
+                    : `Publication_Terminal_Report_${timestamp}.docx`;
+            }
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
             setTimeout(() => {
-                alpineComponent.updateDocumentButtonStates();
-            }, 500);
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 100);
+            
+            // Update button states after a delay
+            if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
+                setTimeout(() => {
+                    alpineComponent.updateDocumentButtonStates();
+                }, 1000);
+            }
         }
     })
     .catch(error => {

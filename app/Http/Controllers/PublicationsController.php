@@ -754,41 +754,93 @@ class PublicationsController extends Controller
                 }
             }
 
-            // Check if we have pre-generated files to move instead of regenerating
+            // Check for existing PDFs from draft saves first (much faster - no regeneration needed)
             $docxPaths = [];
-            $tempFiles = $request->input('generated_docx_files', []);
+            $pdfFiles = [
+                'incentive' => $uploadPath . '/Incentive_Application_Form.pdf',
+                'recommendation' => $uploadPath . '/Recommendation_Letter_Form.pdf',
+                'terminal' => $uploadPath . '/Terminal_Report_Form.pdf'
+            ];
             
-            // Debug: Log what we received
-            Log::info('Checking for pre-generated DOCX files', [
-                'has_tempFiles' => !empty($tempFiles),
-                'tempFiles' => $tempFiles,
-                'all_inputs' => array_keys($request->all())
+            Log::info('Checking for existing PDFs from draft saves', [
+                'upload_path' => $uploadPath,
+                'checking_files' => $pdfFiles
             ]);
             
+            // Use existing PDFs from draft saves if they exist
+            foreach ($pdfFiles as $type => $pdfPath) {
+                if (Storage::disk('local')->exists($pdfPath)) {
+                    $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' :
+                               ($type === 'recommendation' ? 'Recommendation_Letter_Form.pdf' : 'Terminal_Report_Form.pdf');
+                    $docxPaths[$type] = [
+                        'path' => $pdfPath,
+                        'original_name' => $filename
+                    ];
+                    Log::info('Found existing PDF from draft save', [
+                        'type' => $type,
+                        'path' => $pdfPath
+                    ]);
+                }
+            }
+            
+            // Check for pre-generated DOCX files from "View PDF" clicks (fallback)
+            $tempFiles = $request->input('generated_docx_files', []);
             if (!empty($tempFiles) && is_array($tempFiles)) {
-                // Move pre-generated files instead of regenerating (much faster)
-                Log::info('Moving pre-generated DOCX files', ['tempFiles' => $tempFiles]);
+                Log::info('Checking for pre-generated DOCX files', [
+                    'has_tempFiles' => !empty($tempFiles),
+                    'tempFiles' => $tempFiles
+                ]);
                 foreach ($tempFiles as $type => $tempPath) {
-                    if ($tempPath && Storage::disk('local')->exists($tempPath)) {
-                        $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' :
-                                   ($type === 'recommendation' ? 'Recommendation_Letter_Form.docx' : 'Terminal_Report_Form.docx');
-                        $finalPath = $uploadPath . '/' . $filename;
-                        
-                        // Move file from temp to final location (atomic operation)
-                        Storage::disk('local')->move($tempPath, $finalPath);
-                        $docxPaths[$type] = [
-                            'path' => $finalPath,
-                            'original_name' => $filename
-                        ];
-                        
-                        Log::info('Moved DOCX file', ['type' => $type, 'from' => $tempPath, 'to' => $finalPath]);
+                    // Only use if we don't already have a PDF for this type
+                    if (!isset($docxPaths[$type]) && $tempPath && Storage::disk('local')->exists($tempPath)) {
+                        // Check if PDF version exists
+                        $pdfPath = preg_replace('/\.docx$/', '.pdf', $tempPath);
+                        if (Storage::disk('local')->exists($pdfPath)) {
+                            // Use PDF version
+                            $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' :
+                                       ($type === 'recommendation' ? 'Recommendation_Letter_Form.pdf' : 'Terminal_Report_Form.pdf');
+                            $docxPaths[$type] = [
+                                'path' => $pdfPath,
+                                'original_name' => $filename
+                            ];
+                            Log::info('Found PDF version of pre-generated file', [
+                                'type' => $type,
+                                'pdf_path' => $pdfPath
+                            ]);
+                        } else {
+                            // Convert DOCX to PDF
+                            $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' :
+                                       ($type === 'recommendation' ? 'Recommendation_Letter_Form.docx' : 'Terminal_Report_Form.docx');
+                            $finalPath = $uploadPath . '/' . $filename;
+                            
+                            // Move DOCX to final location first
+                            Storage::disk('local')->move($tempPath, $finalPath);
+                            
+                            // Convert to PDF
+                            $converter = new DocxToPdfConverter();
+                            $pdfPath = $converter->convertDocxToPdf($finalPath, $uploadPath);
+                            
+                            if ($pdfPath && Storage::disk('local')->exists($pdfPath)) {
+                                // Delete DOCX after successful conversion
+                                Storage::disk('local')->delete($finalPath);
+                                $docxPaths[$type] = [
+                                    'path' => $pdfPath,
+                                    'original_name' => preg_replace('/\.docx$/', '.pdf', $filename)
+                                ];
+                                Log::info('Converted pre-generated DOCX to PDF', [
+                                    'type' => $type,
+                                    'pdf_path' => $pdfPath
+                                ]);
+                            }
+                        }
                     }
                 }
             }
             
-            // Generate any missing DOCX files (convert to PDF for submission)
-            // Only generate what's missing to minimize processing time
+            // Generate any missing PDFs (only if they don't exist from draft saves)
+            // This should rarely happen now since draft saves create PDFs
             if (!isset($docxPaths['incentive'])) {
+                Log::info('Generating missing incentive PDF (no existing PDF found)');
                 $filtered = $this->mapIncentiveFields($data);
                 $pdfPath = $this->generateIncentiveDocxFromHtml($filtered, $uploadPath, true);
                 if ($pdfPath) {
@@ -799,6 +851,7 @@ class PublicationsController extends Controller
                 }
             }
             if (!isset($docxPaths['recommendation'])) {
+                Log::info('Generating missing recommendation PDF (no existing PDF found)');
                 $filtered = $this->mapRecommendationFields($data);
                 $pdfPath = $this->generateRecommendationDocxFromHtml($filtered, $uploadPath, true);
                 if ($pdfPath) {
@@ -809,6 +862,7 @@ class PublicationsController extends Controller
                 }
             }
             if (!isset($docxPaths['terminal'])) {
+                Log::info('Generating missing terminal PDF (no existing PDF found)');
                 $filtered = $this->mapTerminalFields($data);
                 $pdfPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, true);
                 if ($pdfPath) {
@@ -1312,17 +1366,12 @@ class PublicationsController extends Controller
                 $filePath = str_replace("\0", '', $filePath);
                 $filePath = trim($filePath, '/\\');
                 
-                $absolutePath = Storage::disk('local')->path($filePath);
-                $exists = Storage::disk('local')->exists($filePath);
-                $fileExists = file_exists($absolutePath);
+                $docxType = $request->input('docx_type', 'incentive');
                 
-                // Check if PDF exists (meaning DOCX was converted and deleted)
+                // First, check if PDF exists (from draft saves - preferred)
                 $pdfPath = preg_replace('/\.docx$/', '.pdf', $filePath);
                 $pdfExists = Storage::disk('local')->exists($pdfPath);
                 
-                $docxType = $request->input('docx_type', 'incentive');
-                
-                // Prefer PDF over DOCX - if PDF exists, serve it first
                 if ($pdfExists) {
                     $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
                     $pdfFilename = $docxType === 'incentive' 
@@ -1331,9 +1380,9 @@ class PublicationsController extends Controller
                             ? 'Recommendation_Letter_Form.pdf'
                             : 'Terminal_Report_Form.pdf');
                     
-                    Log::info('Serving PDF (preferred over DOCX)', [
+                    Log::info('Serving existing PDF from draft save', [
                         'pdf_path' => $pdfPath,
-                        'original_docx_path' => $filePath
+                        'docx_type' => $docxType
                     ]);
                     
                     $userAgent = request()->header('User-Agent');
@@ -1346,7 +1395,11 @@ class PublicationsController extends Controller
                     ]);
                 }
                 
-                // Fallback to DOCX if PDF doesn't exist
+                // Fallback: Check if DOCX exists (shouldn't happen if draft saves work correctly)
+                $absolutePath = Storage::disk('local')->path($filePath);
+                $exists = Storage::disk('local')->exists($filePath);
+                $fileExists = file_exists($absolutePath);
+                
                 if ($exists || $fileExists) {
                     // Ensure we have the correct absolute path
                     if (!$exists && $fileExists) {
@@ -1356,11 +1409,17 @@ class PublicationsController extends Controller
                         $absolutePath = Storage::disk('local')->path($filePath);
                     }
                     
+                    // Serve DOCX as fallback (should rarely happen)
                     $filename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.docx' 
                         : ($docxType === 'recommendation'
                             ? 'Recommendation_Letter_Form.docx'
                             : 'Terminal_Report_Form.docx');
+                    
+                    Log::info('Serving DOCX (PDF not found - should not happen if draft saves work correctly)', [
+                        'docx_path' => $filePath,
+                        'docx_type' => $docxType
+                    ]);
                     
                     $userAgent = request()->header('User-Agent');
                     $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
@@ -1371,7 +1430,7 @@ class PublicationsController extends Controller
                         'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
                     ]);
                 } else {
-                    Log::warning('Pre-generated file not found (neither DOCX nor PDF)', [
+                    Log::warning('File not found (neither PDF nor DOCX)', [
                         'file_path' => $filePath,
                         'pdf_path' => $pdfPath,
                         'docx_type' => $docxType
