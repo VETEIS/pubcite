@@ -1316,6 +1316,12 @@ class PublicationsController extends Controller
                 $exists = Storage::disk('local')->exists($filePath);
                 $fileExists = file_exists($absolutePath);
                 
+                // List directory contents to debug
+                $dirPath = dirname($filePath);
+                $dirAbsolute = Storage::disk('local')->path($dirPath);
+                $dirExists = is_dir($dirAbsolute);
+                $dirContents = $dirExists ? @scandir($dirAbsolute) : [];
+                
                 Log::info('Fetching pre-generated DOCX file', [
                     'file_path' => $filePath,
                     'absolute_path' => $absolutePath,
@@ -1323,7 +1329,11 @@ class PublicationsController extends Controller
                     'storage_exists' => $exists,
                     'file_exists' => $fileExists,
                     'storage_path' => storage_path('app'),
-                    'local_disk_path' => Storage::disk('local')->path('')
+                    'local_disk_path' => Storage::disk('local')->path(''),
+                    'dir_path' => $dirPath,
+                    'dir_absolute' => $dirAbsolute,
+                    'dir_exists' => $dirExists,
+                    'dir_contents' => $dirContents ? array_slice($dirContents, 2) : [] // Remove . and ..
                 ]);
                 
                 // Check both Storage::exists() and file_exists() for debugging
