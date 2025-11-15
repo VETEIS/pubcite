@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ResubmissionNotification extends Mailable implements ShouldQueue
 {
@@ -23,6 +24,10 @@ class ResubmissionNotification extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      */
+    public $tries = 3; // Retry up to 3 times on failure
+    public $backoff = [60, 300, 900]; // Exponential backoff: 1min, 5min, 15min
+    public $timeout = 30; // Timeout after 30 seconds (faster failure)
+    
     public function __construct(Request $request, User $user, string $reason, string $centerManagerName)
     {
         $this->request = $request;
@@ -33,6 +38,19 @@ class ResubmissionNotification extends Mailable implements ShouldQueue
         // Set queue configuration for better performance
         $this->onQueue('emails');
         $this->delay(now()->addSeconds(1));
+    }
+    
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('Resubmission email sending failed after retries', [
+            'request_id' => $this->request->id,
+            'user_email' => $this->user->email,
+            'error' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString()
+        ]);
     }
 
     /**

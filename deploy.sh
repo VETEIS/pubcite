@@ -96,6 +96,25 @@ chown -R www-data:www-data storage bootstrap/cache
 
 echo "✅ Deployment completed successfully!"
 
+# Start the queue worker in the background
+echo "Starting queue worker..."
+# Create logs directory if it doesn't exist
+mkdir -p storage/logs
+# Start queue worker and log to file
+php artisan queue:work --queue=emails --tries=3 --timeout=30 --sleep=3 --max-jobs=1000 >> storage/logs/queue.log 2>&1 &
+QUEUE_PID=$!
+echo "✅ Queue worker started (PID: $QUEUE_PID)"
+echo "   Queue logs: storage/logs/queue.log"
+
+# Function to cleanup on exit
+cleanup() {
+    echo "Shutting down queue worker (PID: $QUEUE_PID)..."
+    kill $QUEUE_PID 2>/dev/null || true
+    wait $QUEUE_PID 2>/dev/null || true
+    echo "Queue worker stopped"
+}
+trap cleanup EXIT INT TERM
+
 # Start the web server
 echo "Starting web server..."
 php -S 0.0.0.0:10000 -t public 

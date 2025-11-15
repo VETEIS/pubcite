@@ -1508,10 +1508,10 @@ class PublicationsController extends Controller
                 }
             }
             
-            Log::info('Publication DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
+            Log::info('Publication DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview, 'storeForSubmit' => $storeForSubmit]);
             
-            // If storing for submit, return file path instead of downloading
-            if ($storeForSubmit && $isPreview) {
+            // If storing for submit, return file path instead of downloading (works for both preview and saved requests)
+            if ($storeForSubmit) {
                 return response()->json([
                     'success' => true,
                     'filePath' => $fullPath,

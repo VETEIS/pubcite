@@ -290,8 +290,8 @@ class CitationsController extends Controller
             
             Log::info('Citation DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
             
-            // If storing for submit, return file path instead of downloading
-            if ($storeForSubmit && $isPreview) {
+            // If storing for submit, return file path instead of downloading (works for both preview and saved requests)
+            if ($storeForSubmit) {
                 return response()->json([
                     'success' => true,
                     'filePath' => $fullPath,
