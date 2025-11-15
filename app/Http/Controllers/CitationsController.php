@@ -102,6 +102,32 @@ class CitationsController extends Controller
         }
         
         try {
+            // Handle GET request for pre-generated files
+            if ($request->isMethod('GET') && $request->has('file_path')) {
+                $filePath = $request->input('file_path');
+                if (Storage::disk('local')->exists($filePath)) {
+                    $absolutePath = Storage::disk('local')->path($filePath);
+                    $docxType = $request->input('docx_type', 'incentive');
+                    $filename = $docxType === 'incentive' 
+                        ? 'Incentive_Application_Form.docx' 
+                        : 'Recommendation_Letter_Form.docx';
+                    
+                    $userAgent = request()->header('User-Agent');
+                    $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                    $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    
+                    return response()->download($absolutePath, $filename, [
+                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'File not found'
+                    ], 404);
+                }
+            }
+            
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
@@ -919,17 +945,30 @@ class CitationsController extends Controller
             // Only send emails and create notifications for final submission, not for drafts
             if (!$isDraft) {
                 // Send email to user confirming submission
+                // Note: Email is queued asynchronously, so failures won't block the request
+                // If email fails, it will be logged and can be retried via queue:retry
                 try {
                     Mail::to($user->email)->queue(new SubmissionNotification($userRequest, $userRequest->user, false));
                     Log::info('User submission confirmation email queued', [
                         'requestId' => $userRequest->id,
+                        'requestCode' => $requestCode,
                         'userEmail' => $user->email
                     ]);
                 } catch (\Exception $e) {
-                    Log::error('Error queuing user confirmation email: ' . $e->getMessage());
+                    // Log detailed error for debugging email configuration issues
+                    Log::error('Error queuing user confirmation email', [
+                        'requestId' => $userRequest->id,
+                        'requestCode' => $requestCode,
+                        'userEmail' => $user->email,
+                        'error' => $e->getMessage(),
+                        'errorClass' => get_class($e),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Don't throw - email failure shouldn't block successful submission
                 }
                 
                 // Notify only the first signatory (Research Manager) in the workflow
+                // This is skipped if workflow_state is 'pending_user_signature' (user must sign first)
                 $this->notifyFirstSignatory($userRequest);
             }
 
@@ -1271,10 +1310,15 @@ class CitationsController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            // Log detailed error for debugging email configuration issues
             Log::error('Failed to queue signatory notifications', [
                 'requestId' => $request->id,
-                'error' => $e->getMessage()
+                'requestCode' => $request->request_code,
+                'error' => $e->getMessage(),
+                'errorClass' => get_class($e),
+                'trace' => $e->getTraceAsString()
             ]);
+            // Don't throw - email failure shouldn't block successful submission
         }
     }
     
@@ -1327,10 +1371,16 @@ class CitationsController extends Controller
             }
 
         } catch (\Exception $e) {
+            // Log detailed error for debugging email configuration issues
             Log::error('Failed to queue first signatory notification', [
                 'requestId' => $request->id,
-                'error' => $e->getMessage()
+                'requestCode' => $request->request_code,
+                'workflowState' => $request->workflow_state,
+                'error' => $e->getMessage(),
+                'errorClass' => get_class($e),
+                'trace' => $e->getTraceAsString()
             ]);
+            // Don't throw - email failure shouldn't block successful submission
         }
     }
     

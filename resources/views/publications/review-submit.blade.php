@@ -203,7 +203,20 @@ function generateDocx(type) {
         alert('Error: Form not found. Please refresh the page and try again.');
         return;
     }
-
+    
+    // Get Alpine.js component data
+    const alpineComponent = Alpine.$data(form.closest('[x-data]'));
+    
+    // Check if file is already generated and form data hasn't changed
+    if (alpineComponent && alpineComponent.generatedDocxPaths && alpineComponent.generatedDocxPaths[type]) {
+        const currentHash = alpineComponent.calculateFormDataHash(type);
+        if (alpineComponent.formDataHashes[type] === currentHash) {
+            // File exists and is up-to-date, fetch it directly
+            fetchPreGeneratedDocx(type, alpineComponent.generatedDocxPaths[type]);
+            return;
+        }
+    }
+    
     // Create FormData but exclude file inputs to avoid 413 errors
     const formData = new FormData();
     const formElements = form.querySelectorAll('input, textarea, select');
@@ -226,6 +239,7 @@ function generateDocx(type) {
     });
     
     formData.append('docx_type', type);
+    formData.append('store_for_submit', '1'); // Store for submission use
 
     // Show comprehensive loading state with progress tracking
     const operationId = `generate-publication-docx-${type}-${Date.now()}`;
@@ -294,5 +308,54 @@ function generateDocx(type) {
         // Hide loading state
         window.hideLoading();
     });
+}
+
+// Fetch pre-generated DOCX file
+async function fetchPreGeneratedDocx(type, filePath) {
+    try {
+        // Request the file from the server
+        const response = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(filePath)}&docx_type=${type}`, {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        if (!blob || blob.size === 0) {
+            throw new Error('Generated file is empty or corrupted');
+        }
+        
+        const docxBlob = new Blob([blob], { 
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        });
+        
+        const url = window.URL.createObjectURL(docxBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        const timestamp = new Date().toISOString().slice(0, 10);
+        a.download = type === 'incentive' 
+            ? `Publication_Incentive_Application_${timestamp}.docx` 
+            : type === 'recommendation'
+            ? `Publication_Recommendation_Letter_${timestamp}.docx`
+            : `Publication_Terminal_Report_${timestamp}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
+    } catch (error) {
+        // Fallback to normal generation if pre-generated file fetch fails
+        console.warn('Failed to fetch pre-generated file, generating new one:', error);
+        // Remove the store_for_submit flag and generate normally
+        generateDocx(type);
+    }
 }
 </script>

@@ -1297,6 +1297,34 @@ class PublicationsController extends Controller
     public function generatePublicationDocx(Request $request)
     {
         try {
+            // Handle GET request for pre-generated files
+            if ($request->isMethod('GET') && $request->has('file_path')) {
+                $filePath = $request->input('file_path');
+                if (Storage::disk('local')->exists($filePath)) {
+                    $absolutePath = Storage::disk('local')->path($filePath);
+                    $docxType = $request->input('docx_type', 'incentive');
+                    $filename = $docxType === 'incentive' 
+                        ? 'Incentive_Application_Form.docx' 
+                        : ($docxType === 'recommendation'
+                            ? 'Recommendation_Letter_Form.docx'
+                            : 'Terminal_Report_Form.docx');
+                    
+                    $userAgent = request()->header('User-Agent');
+                    $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                    $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    
+                    return response()->download($absolutePath, $filename, [
+                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'File not found'
+                    ], 404);
+                }
+            }
+            
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
