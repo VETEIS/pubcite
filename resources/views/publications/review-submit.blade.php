@@ -50,6 +50,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Incentive Application Preview -->
             <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
+                 id="incentive-doc-button"
                  onclick="generateDocx('incentive')">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
@@ -59,13 +60,14 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Incentive Application</h4>
-                        <p class="text-xs text-maroon-600" id="incentive-button-text">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="incentive-button-text">View PDF</p>
                     </div>
                 </div>
             </div>
 
             <!-- Recommendation Letter Preview -->
             <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
+                 id="recommendation-doc-button"
                  onclick="generateDocx('recommendation')">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
@@ -75,13 +77,14 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Recommendation Letter</h4>
-                        <p class="text-xs text-maroon-600" id="recommendation-button-text">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="recommendation-button-text">View PDF</p>
                     </div>
                 </div>
             </div>
 
             <!-- Terminal Report Preview -->
             <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
+                 id="terminal-doc-button"
                  onclick="generateDocx('terminal')">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
@@ -91,7 +94,7 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Terminal Report</h4>
-                        <p class="text-xs text-maroon-600" id="terminal-button-text">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="terminal-button-text">View PDF</p>
                     </div>
                 </div>
             </div>
@@ -194,6 +197,29 @@ function updateReviewFile(type, input) {
 // Display uploaded files when page loads
 document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
+    updateDocumentButtonsForTurbo();
+});
+
+// Update document buttons for Turbo compatibility
+function updateDocumentButtonsForTurbo() {
+    const form = document.getElementById('publication-request-form');
+    if (!form) return;
+    
+    const alpineComponent = Alpine.$data(form.closest('[x-data]'));
+    if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
+        setTimeout(() => {
+            alpineComponent.updateDocumentButtonStates();
+        }, 300);
+    }
+}
+
+// Re-initialize on Turbo navigation
+document.addEventListener('turbo:load', function() {
+    updateDocumentButtonsForTurbo();
+});
+
+document.addEventListener('turbo:render', function() {
+    updateDocumentButtonsForTurbo();
 });
 
 // Function to generate and download DOCX or serve PDF if available
@@ -242,19 +268,21 @@ function generateDocx(type) {
     formData.append('docx_type', type);
     formData.append('store_for_submit', '1'); // Store for submission use
 
-    // Show comprehensive loading state with progress tracking
-    const operationId = `generate-publication-docx-${type}-${Date.now()}`;
+    // Show loading modal for document generation
+    const docTypeNames = {
+        'incentive': 'Incentive Application',
+        'recommendation': 'Recommendation Letter',
+        'terminal': 'Terminal Report'
+    };
     
-    // Show progress tracking for document generation (without real progress tracking to avoid confusion)
     const progressSteps = [
-        'Starting document generation...',
+        'Preparing document template...',
         'Processing form data...',
-        'Filtering data for document type...',
         'Generating document...',
-        'Document ready for download!'
+        'Finalizing...'
     ];
-    // Use false for useRealProgress to avoid triggering submission progress messages
-    window.showLoading('Generating Document', `Creating ${type} document, please wait...`, progressSteps, false);
+    
+    window.showLoading('Generating Document', `Creating ${docTypeNames[type] || type} document, please wait...`, progressSteps, false);
 
     fetch('{{ route("publications.generate") }}', {
         method: 'POST',
@@ -268,29 +296,39 @@ function generateDocx(type) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Check content type
-        const contentType = response.headers.get('content-type');
+        // Check content type to determine if it's PDF or DOCX
+        const contentType = response.headers.get('content-type') || '';
+        const isPdf = contentType.includes('application/pdf');
         
-        return response.blob();
+        return response.blob().then(blob => ({ blob, isPdf }));
     })
-    .then(blob => {
+    .then(({ blob, isPdf }) => {
         if (!blob || blob.size === 0) {
             throw new Error('Generated file is empty or corrupted');
         }
         
-        // Ensure proper MIME type for DOCX
-        const docxBlob = new Blob([blob], { 
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        const fileBlob = new Blob([blob], { 
+            type: isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         });
-        const url = window.URL.createObjectURL(docxBlob);
+        const url = window.URL.createObjectURL(fileBlob);
         const a = document.createElement('a');
         a.href = url;
         const timestamp = new Date().toISOString().slice(0, 10);
-        a.download = type === 'incentive' 
-            ? `Publication_Incentive_Application_${timestamp}.docx` 
-            : type === 'recommendation'
-            ? `Publication_Recommendation_Letter_${timestamp}.docx`
-            : `Publication_Terminal_Report_${timestamp}.docx`;
+        
+        if (isPdf) {
+            a.download = type === 'incentive' 
+                ? `Publication_Incentive_Application_${timestamp}.pdf` 
+                : type === 'recommendation'
+                ? `Publication_Recommendation_Letter_${timestamp}.pdf`
+                : `Publication_Terminal_Report_${timestamp}.pdf`;
+        } else {
+            a.download = type === 'incentive' 
+                ? `Publication_Incentive_Application_${timestamp}.docx` 
+                : type === 'recommendation'
+                ? `Publication_Recommendation_Letter_${timestamp}.docx`
+                : `Publication_Terminal_Report_${timestamp}.docx`;
+        }
+        
         document.body.appendChild(a);
         a.click();
         
@@ -299,11 +337,16 @@ function generateDocx(type) {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }, 100);
+        
+        // Update button states after generation
+        if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
+            setTimeout(() => {
+                alpineComponent.updateDocumentButtonStates();
+            }, 500);
+        }
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
-        // Hide loading state
-        window.hideLoading();
     })
     .finally(() => {
         // Hide loading state
@@ -313,6 +356,15 @@ function generateDocx(type) {
 
 // Fetch pre-generated DOCX file or PDF if available
 async function fetchPreGeneratedDocx(type, filePath) {
+    // Show loading modal for file download
+    const docTypeNames = {
+        'incentive': 'Incentive Application',
+        'recommendation': 'Recommendation Letter',
+        'terminal': 'Terminal Report'
+    };
+    
+    window.showLoading('Preparing Download', `Preparing ${docTypeNames[type] || type} file for download...`, ['Loading file...'], false);
+    
     try {
         // Request the file from the server - it will serve PDF if available, DOCX otherwise
         const response = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(filePath)}&docx_type=${type}`, {
@@ -382,6 +434,9 @@ async function fetchPreGeneratedDocx(type, filePath) {
         
         // Generate fresh DOCX
         generateDocx(type);
+    } finally {
+        // Hide loading state
+        window.hideLoading();
     }
 }
 </script>

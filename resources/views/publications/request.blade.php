@@ -157,8 +157,8 @@
                             this.displayUploadedFiles();
                             // Update submit button state when switching to review
                             this.updateSubmitButton();
-                            // Check for PDFs and update button text
-                            this.updateDocumentButtonTexts();
+                            // Check file availability and update button states
+                            this.updateDocumentButtonStates();
                         }, 100);
                     }
                 },
@@ -733,65 +733,72 @@
                     this.refreshTabStates();
                 },
                 
-                // Check if PDF exists for a given DOCX path
-                async checkPdfExists(type, docxPath) {
+                // Check if file (PDF or DOCX) exists for a given path
+                async checkFileExists(type, docxPath) {
                     if (!docxPath) return false;
                     
                     try {
-                        // Convert DOCX path to PDF path
+                        // First check PDF (preferred)
                         const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
-                        
-                        // Try to fetch the PDF (use GET with range to check existence without full download)
-                        const response = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(pdfPath)}&docx_type=${type}`, {
-                            method: 'GET',
+                        const pdfResponse = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(pdfPath)}&docx_type=${type}`, {
+                            method: 'HEAD',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Range': 'bytes=0-1' // Only request first 2 bytes to check existence
+                                'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
                         
-                        return response.ok && response.headers.get('content-type')?.includes('application/pdf');
+                        if (pdfResponse.ok) return true;
+                        
+                        // Fallback: check DOCX
+                        const docxResponse = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(docxPath)}&docx_type=${type}`, {
+                            method: 'HEAD',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        return docxResponse.ok;
                     } catch (error) {
                         return false;
                     }
                 },
                 
-                // Update button text based on PDF existence (prefer PDF over DOCX)
-                async updateDocumentButtonTexts() {
+                // Update button enabled/disabled state based on file availability
+                async updateDocumentButtonStates() {
                     const types = ['incentive', 'recommendation', 'terminal'];
-                    const buttonTextIds = {
-                        'incentive': 'incentive-button-text',
-                        'recommendation': 'recommendation-button-text',
-                        'terminal': 'terminal-button-text'
+                    const buttonIds = {
+                        'incentive': 'incentive-doc-button',
+                        'recommendation': 'recommendation-doc-button',
+                        'terminal': 'terminal-doc-button'
                     };
                     
                     for (const type of types) {
-                        const textElement = document.getElementById(buttonTextIds[type]);
-                        if (!textElement) continue;
+                        const button = document.getElementById(buttonIds[type]);
+                        if (!button) continue;
                         
-                        // Always prefer PDF - check if PDF exists first
-                        // If we have a generated DOCX path, check if corresponding PDF exists
+                        // Check if we have a generated path
                         if (this.generatedDocxPaths && this.generatedDocxPaths[type]) {
                             const docxPath = this.generatedDocxPaths[type];
-                            const pdfExists = await this.checkPdfExists(type, docxPath);
+                            const fileExists = await this.checkFileExists(type, docxPath);
                             
-                            if (pdfExists) {
-                                // PDF exists - show "View PDF"
-                                textElement.textContent = 'View PDF';
-                                textElement.classList.remove('text-maroon-600');
-                                textElement.classList.add('text-green-600');
+                            if (fileExists) {
+                                // File exists - enable button
+                                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                                button.classList.add('cursor-pointer', 'hover:shadow-md');
+                                button.style.pointerEvents = 'auto';
                             } else {
-                                // PDF doesn't exist - show "Click to generate DOCX" (even if DOCX exists, we prefer PDF)
-                                textElement.textContent = 'Click to generate DOCX';
-                                textElement.classList.remove('text-green-600');
-                                textElement.classList.add('text-maroon-600');
+                                // File doesn't exist - disable button
+                                button.classList.add('opacity-50', 'cursor-not-allowed');
+                                button.classList.remove('hover:shadow-md');
+                                button.style.pointerEvents = 'none';
                             }
                         } else {
-                            // No generated path - show "Click to generate DOCX"
-                            textElement.textContent = 'Click to generate DOCX';
-                            textElement.classList.remove('text-green-600');
-                            textElement.classList.add('text-maroon-600');
+                            // No generated path - disable button
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                            button.classList.remove('hover:shadow-md');
+                            button.style.pointerEvents = 'none';
                         }
                     }
                 },
