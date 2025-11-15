@@ -1312,14 +1312,30 @@ class PublicationsController extends Controller
                 $filePath = str_replace("\0", '', $filePath);
                 $filePath = trim($filePath, '/\\');
                 
+                $absolutePath = Storage::disk('local')->path($filePath);
+                $exists = Storage::disk('local')->exists($filePath);
+                $fileExists = file_exists($absolutePath);
+                
                 Log::info('Fetching pre-generated DOCX file', [
                     'file_path' => $filePath,
+                    'absolute_path' => $absolutePath,
                     'docx_type' => $request->input('docx_type', 'incentive'),
-                    'exists' => Storage::disk('local')->exists($filePath)
+                    'storage_exists' => $exists,
+                    'file_exists' => $fileExists,
+                    'storage_path' => storage_path('app'),
+                    'local_disk_path' => Storage::disk('local')->path('')
                 ]);
                 
-                if (Storage::disk('local')->exists($filePath)) {
-                    $absolutePath = Storage::disk('local')->path($filePath);
+                // Check both Storage::exists() and file_exists() for debugging
+                if ($exists || $fileExists) {
+                    // Ensure we have the correct absolute path
+                    if (!$exists && $fileExists) {
+                        // Storage says no but file exists - file might be outside storage root
+                        // Try to use the absolute path we already computed
+                    } else {
+                        // Both agree or Storage says it exists - use Storage path
+                        $absolutePath = Storage::disk('local')->path($filePath);
+                    }
                     $docxType = $request->input('docx_type', 'incentive');
                     $filename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.docx' 
@@ -1524,10 +1540,32 @@ class PublicationsController extends Controller
                 }
             }
             
-            Log::info('Publication DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview, 'storeForSubmit' => $storeForSubmit]);
+            // Verify file exists before returning
+            $verifyPath = Storage::disk('local')->path($fullPath);
+            $fileExists = file_exists($verifyPath);
+            
+            Log::info('Publication DOCX generated and found, ready to serve', [
+                'type' => $docxType, 
+                'path' => $fullPath,
+                'absolute_path' => $verifyPath,
+                'file_exists' => $fileExists,
+                'isPreview' => $isPreview, 
+                'storeForSubmit' => $storeForSubmit
+            ]);
             
             // If storing for submit, return file path instead of downloading (works for both preview and saved requests)
             if ($storeForSubmit) {
+                if (!$fileExists) {
+                    Log::error('Generated file does not exist at path', [
+                        'path' => $fullPath,
+                        'absolute_path' => $verifyPath
+                    ]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Generated file not found at path: ' . $fullPath
+                    ], 500);
+                }
+                
                 return response()->json([
                     'success' => true,
                     'filePath' => $fullPath,
