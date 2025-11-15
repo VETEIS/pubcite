@@ -137,9 +137,11 @@
                         // Save draft immediately to generate PDFs (which enables buttons)
                         this.saveDraft().then(() => {
                             // After draft save completes, update button states
+                            // The saveDraft response now includes request_id and request_code
+                            // and updates generatedDocxPaths, so buttons should be enabled
                             setTimeout(() => {
                                 this.updateDocumentButtonStates();
-                            }, 1000); // Wait a bit for PDFs to be created
+                            }, 1500); // Wait a bit for PDFs to be created and paths to be updated
                         }).catch(() => {
                             // Silent error - buttons will remain disabled if save fails
                         });
@@ -315,6 +317,63 @@
                             const data = await response.json();
                             if (data.success) {
                                 this.lastSaved = new Date().toLocaleTimeString();
+                                
+                                // Update request_id and request_code if provided (from draft save response)
+                                if (data.request_id) {
+                                    const requestIdInput = document.getElementById('request_id');
+                                    if (requestIdInput) {
+                                        requestIdInput.value = data.request_id;
+                                    } else {
+                                        // Create hidden input if it doesn't exist
+                                        const form = document.getElementById('citation-request-form');
+                                        if (form) {
+                                            const input = document.createElement('input');
+                                            input.type = 'hidden';
+                                            input.id = 'request_id';
+                                            input.name = 'request_id';
+                                            input.value = data.request_id;
+                                            form.appendChild(input);
+                                        }
+                                    }
+                                }
+                                
+                                if (data.request_code) {
+                                    let requestCodeInput = document.querySelector('input[name="request_code"]');
+                                    if (!requestCodeInput) {
+                                        // Create hidden input if it doesn't exist
+                                        const form = document.getElementById('citation-request-form');
+                                        if (form) {
+                                            requestCodeInput = document.createElement('input');
+                                            requestCodeInput.type = 'hidden';
+                                            requestCodeInput.name = 'request_code';
+                                            requestCodeInput.value = data.request_code;
+                                            form.appendChild(requestCodeInput);
+                                        }
+                                    } else {
+                                        requestCodeInput.value = data.request_code;
+                                    }
+                                    
+                                    // Store PDF paths in generatedDocxPaths for button state management
+                                    if (!this.generatedDocxPaths) {
+                                        this.generatedDocxPaths = {};
+                                    }
+                                    
+                                    const userId = {{ Auth::id() ?? 'null' }};
+                                    if (userId && data.request_code) {
+                                        const types = ['incentive', 'recommendation'];
+                                        const fileNames = {
+                                            'incentive': 'Incentive_Application_Form.pdf',
+                                            'recommendation': 'Recommendation_Letter_Form.pdf'
+                                        };
+                                        
+                                        types.forEach(type => {
+                                            if (!this.generatedDocxPaths[type]) {
+                                                this.generatedDocxPaths[type] = `requests/${userId}/${data.request_code}/${fileNames[type]}`;
+                                            }
+                                        });
+                                    }
+                                }
+                                
                                 return Promise.resolve();
                             }
                             return Promise.reject(new Error('Save failed'));
@@ -752,6 +811,127 @@
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Submit';
                         submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                },
+                
+                // Check if file (PDF or DOCX) exists for a given path
+                async checkFileExists(type, docxPath) {
+                    if (!docxPath) return false;
+                    
+                    try {
+                        // First check PDF (preferred)
+                        const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
+                        const pdfResponse = await fetch(`{{ route("citations.generate") }}?file_path=${encodeURIComponent(pdfPath)}&docx_type=${type}`, {
+                            method: 'HEAD',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (pdfResponse.ok) return true;
+                        
+                        // Fallback: check DOCX
+                        const docxResponse = await fetch(`{{ route("citations.generate") }}?file_path=${encodeURIComponent(docxPath)}&docx_type=${type}`, {
+                            method: 'HEAD',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        return docxResponse.ok;
+                    } catch (error) {
+                        return false;
+                    }
+                },
+                
+                // Update button enabled/disabled state based on file availability
+                async updateDocumentButtonStates() {
+                    const types = ['incentive', 'recommendation'];
+                    const buttonIds = {
+                        'incentive': 'incentive-doc-button',
+                        'recommendation': 'recommendation-doc-button'
+                    };
+                    
+                    const requestId = document.getElementById('request_id')?.value;
+                    
+                    // Try to get request code from form or construct from request structure
+                    let requestCode = null;
+                    let userId = null;
+                    
+                    // Get request code from hidden input if available
+                    const requestCodeInput = document.querySelector('input[name="request_code"]');
+                    if (requestCodeInput) {
+                        requestCode = requestCodeInput.value;
+                    }
+                    
+                    // Get user ID from form or construct from URL
+                    const userIdInput = document.querySelector('input[name="user_id"]');
+                    if (userIdInput) {
+                        userId = userIdInput.value;
+                    }
+                    
+                    // Check each document type
+                    for (const type of types) {
+                        const button = document.getElementById(buttonIds[type]);
+                        if (!button) continue;
+                        
+                        let docxPath = null;
+                        
+                        // First, try generatedDocxPaths (from "View PDF" clicks or draft save)
+                        if (this.generatedDocxPaths && this.generatedDocxPaths[type]) {
+                            docxPath = this.generatedDocxPaths[type];
+                        } else if (requestId && requestCode) {
+                            // Construct path from request structure
+                            const fileName = type === 'incentive' 
+                                ? 'Incentive_Application_Form.docx'
+                                : 'Recommendation_Letter_Form.docx';
+                            
+                            if (userId) {
+                                docxPath = `requests/${userId}/${requestCode}/${fileName}`;
+                            }
+                        }
+                        
+                        if (docxPath) {
+                            const fileExists = await this.checkFileExists(type, docxPath);
+                            
+                            if (fileExists) {
+                                // File exists (PDF or DOCX) - enable button
+                                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                                button.classList.add('cursor-pointer', 'hover:shadow-md');
+                                button.style.pointerEvents = 'auto';
+                                
+                                // Store the path for future reference
+                                if (!this.generatedDocxPaths) {
+                                    this.generatedDocxPaths = {};
+                                }
+                                if (!this.generatedDocxPaths[type]) {
+                                    // Store PDF path if it exists, otherwise DOCX path
+                                    const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
+                                    this.generatedDocxPaths[type] = pdfPath;
+                                }
+                            } else {
+                                // File doesn't exist - disable button
+                                button.classList.add('opacity-50', 'cursor-not-allowed');
+                                button.classList.remove('hover:shadow-md');
+                                button.style.pointerEvents = 'none';
+                            }
+                        } else {
+                            // No path available - disable button
+                            if (requestId) {
+                                // Try to fetch request info or check files directly
+                                // For now, disable button if we can't determine path
+                                button.classList.add('opacity-50', 'cursor-not-allowed');
+                                button.classList.remove('hover:shadow-md');
+                                button.style.pointerEvents = 'none';
+                            } else {
+                                // No request ID - disable button (new request, files not generated yet)
+                                button.classList.add('opacity-50', 'cursor-not-allowed');
+                                button.classList.remove('hover:shadow-md');
+                                button.style.pointerEvents = 'none';
+                            }
+                        }
                     }
                 },
                 

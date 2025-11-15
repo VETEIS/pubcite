@@ -1092,7 +1092,12 @@ class CitationsController extends Controller
                 
                 // Check if this is an AJAX request (auto-save) or form submission (manual draft save)
                 if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+                    return response()->json([
+                        'success' => true, 
+                        'message' => 'Draft saved successfully!',
+                        'request_id' => $userRequest->id,
+                        'request_code' => $userRequest->request_code
+                    ]);
                 } else {
                     // For manual draft saves via form submission, redirect without notification
                     return redirect()->route('citations.request');

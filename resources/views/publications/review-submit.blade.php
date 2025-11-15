@@ -9,7 +9,7 @@
     <!-- Uploaded Files Review -->
     <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 p-6 shadow-sm">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Uploaded Documents</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Published Article Review -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div class="flex items-center gap-3 mb-3">
@@ -38,6 +38,21 @@
                 <p class="text-xs text-gray-600 mb-2" id="review-indexing-evidence">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('indexing-evidence-review').click()">Change File</button>
                 <input type="file" id="indexing-evidence-review" class="hidden" accept=".pdf" onchange="updateReviewFile('indexing_evidence', this)">
+            </div>
+
+            <!-- Terminal Report Review -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-sm font-medium text-gray-900">Terminal Report</h4>
+                </div>
+                <p class="text-xs text-gray-600 mb-2" id="review-terminal-report">No file uploaded</p>
+                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('terminal-report-review').click()">Change File</button>
+                <input type="file" id="terminal-report-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal_report', this)">
             </div>
         </div>
     </div>
@@ -82,22 +97,6 @@
                 </div>
             </div>
 
-            <!-- Terminal Report Preview -->
-            <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
-                 id="terminal-doc-button"
-                 onclick="generateDocx('terminal')">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-maroon-800">Terminal Report</h4>
-                        <p class="text-xs text-maroon-600" id="terminal-button-text">View PDF</p>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
     
@@ -164,7 +163,8 @@ function updateReviewFile(type, input) {
     // Map field names to element IDs
     const elementIdMap = {
         'published_article': 'review-published-article',
-        'indexing_evidence': 'review-indexing-evidence'
+        'indexing_evidence': 'review-indexing-evidence',
+        'terminal_report': 'review-terminal-report'
     };
     
     const reviewElementId = elementIdMap[type] || `review-${type}`;
@@ -271,8 +271,7 @@ function generateDocx(type) {
     // Show loading modal for document generation
     const docTypeNames = {
         'incentive': 'Incentive Application',
-        'recommendation': 'Recommendation Letter',
-        'terminal': 'Terminal Report'
+        'recommendation': 'Recommendation Letter'
     };
     
     const progressSteps = [
@@ -338,15 +337,11 @@ function generateDocx(type) {
             if (isPdf) {
                 a.download = type === 'incentive' 
                     ? `Publication_Incentive_Application_${timestamp}.pdf` 
-                    : type === 'recommendation'
-                    ? `Publication_Recommendation_Letter_${timestamp}.pdf`
-                    : `Publication_Terminal_Report_${timestamp}.pdf`;
+                    : `Publication_Recommendation_Letter_${timestamp}.pdf`;
             } else {
                 a.download = type === 'incentive' 
                     ? `Publication_Incentive_Application_${timestamp}.docx` 
-                    : type === 'recommendation'
-                    ? `Publication_Recommendation_Letter_${timestamp}.docx`
-                    : `Publication_Terminal_Report_${timestamp}.docx`;
+                    : `Publication_Recommendation_Letter_${timestamp}.docx`;
             }
             
             document.body.appendChild(a);
@@ -380,8 +375,7 @@ async function fetchPreGeneratedDocx(type, filePath) {
     // Show loading modal for file download
     const docTypeNames = {
         'incentive': 'Incentive Application',
-        'recommendation': 'Recommendation Letter',
-        'terminal': 'Terminal Report'
+        'recommendation': 'Recommendation Letter'
     };
     
     window.showLoading('Preparing Download', `Preparing ${docTypeNames[type] || type} file for download...`, ['Loading file...'], false);
@@ -421,15 +415,11 @@ async function fetchPreGeneratedDocx(type, filePath) {
         if (isPdf) {
             a.download = type === 'incentive' 
                 ? `Publication_Incentive_Application_${timestamp}.pdf` 
-                : type === 'recommendation'
-                ? `Publication_Recommendation_Letter_${timestamp}.pdf`
-                : `Publication_Terminal_Report_${timestamp}.pdf`;
+                : `Publication_Recommendation_Letter_${timestamp}.pdf`;
         } else {
             a.download = type === 'incentive' 
                 ? `Publication_Incentive_Application_${timestamp}.docx` 
-                : type === 'recommendation'
-                ? `Publication_Recommendation_Letter_${timestamp}.docx`
-                : `Publication_Terminal_Report_${timestamp}.docx`;
+                : `Publication_Recommendation_Letter_${timestamp}.docx`;
         }
         
         document.body.appendChild(a);

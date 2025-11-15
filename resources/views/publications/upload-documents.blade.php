@@ -8,7 +8,7 @@
     
     
     <!-- Upload Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 flex-1 items-start">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 items-start">
         <!-- Published Article Card -->
         <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer"
              x-data="{ fileName: '', displayName: '', isDragOver: false }"
@@ -53,6 +53,28 @@
                    @change="handleFileSelection($event, $data)">
         </div>
 
+        <!-- Terminal Report Card -->
+        <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer"
+             x-data="{ fileName: '', displayName: '', isDragOver: false }"
+             @click="$refs.terminalReport.click()"
+             @dragover.prevent="isDragOver = true"
+             @dragleave.prevent="isDragOver = false"
+             @drop.prevent="isDragOver = false; handleFileDrop($event, 'terminal_report')"
+             :class="isDragOver ? 'border-blue-400 bg-blue-50' : 'hover:border-maroon-300'">
+            <div class="p-4 text-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-maroon-100 to-maroon-200 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Terminal Report</h3>
+                <div class="text-xs text-maroon-600 font-medium mb-1 truncate" x-text="displayName || 'Click to upload'"></div>
+                <p class="text-xs text-gray-400">Max 20MB</p>
+            </div>
+            <input type="file" name="terminal_report" accept=".pdf" class="hidden" x-ref="terminalReport" required
+                   @change="handleFileSelection($event, $data)">
+        </div>
+
     </div>
 </div>
 
@@ -64,12 +86,14 @@ function handleFileDrop(event, fieldName) {
         const file = files[0];
         const allowedTypesByField = {
             'published_article': ['application/pdf'],
-            'indexing_evidence': ['application/pdf', 'image/png', 'image/jpeg']
+            'indexing_evidence': ['application/pdf', 'image/png', 'image/jpeg'],
+            'terminal_report': ['application/pdf']
         };
         const allowedTypes = allowedTypesByField[fieldName] || ['application/pdf'];
         const errorMessages = {
             'published_article': 'Please upload PDF files only.',
-            'indexing_evidence': 'Please upload PDF, PNG, or JPG files only.'
+            'indexing_evidence': 'Please upload PDF, PNG, or JPG files only.',
+            'terminal_report': 'Please upload PDF files only.'
         };
 
         if (allowedTypes.includes(file.type)) {
@@ -91,11 +115,13 @@ function handleFileSelection(event, componentData) {
     const inputName = event.target.name;
     const allowedTypesByField = {
         'published_article': ['application/pdf'],
-        'indexing_evidence': ['application/pdf', 'image/png', 'image/jpeg']
+        'indexing_evidence': ['application/pdf', 'image/png', 'image/jpeg'],
+        'terminal_report': ['application/pdf']
     };
     const errorMessages = {
         'published_article': 'Please upload PDF files only.',
-        'indexing_evidence': 'Please upload PDF, PNG, or JPG files only.'
+        'indexing_evidence': 'Please upload PDF, PNG, or JPG files only.',
+        'terminal_report': 'Please upload PDF files only.'
     };
     const allowedTypes = allowedTypesByField[inputName] || ['application/pdf'];
 
@@ -109,7 +135,8 @@ function handleFileSelection(event, componentData) {
     // Validate file size based on document type
     const maxSizes = {
         'published_article': 20,     // 20MB
-        'indexing_evidence': 10      // 10MB
+        'indexing_evidence': 10,    // 10MB
+        'terminal_report': 20        // 20MB
     };
     
     const maxSizeMB = maxSizes[inputName] || 20;

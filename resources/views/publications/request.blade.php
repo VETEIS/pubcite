@@ -17,22 +17,20 @@
                 confirmChecked: false,
                 uploadedFiles: {
                     published_article: null,
-                    indexing_evidence: null
+                    indexing_evidence: null,
+                    terminal_report: null
                 },
                 formDataHashes: {
                     incentive: null,
-                    recommendation: null,
-                    terminal: null
+                    recommendation: null
                 },
                 generatingDocs: {
                     incentive: false,
-                    recommendation: false,
-                    terminal: false
+                    recommendation: false
                 },
                 generatedDocxPaths: {
                     incentive: null,
-                    recommendation: null,
-                    terminal: null
+                    recommendation: null
                 },
                 
                 showError(message) {
@@ -116,7 +114,7 @@
                             this.syncFacultyName();
                         });
                     }
-                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     const targetIndex = tabs.indexOf(targetTab);
                     
@@ -149,9 +147,11 @@
                         // Save draft immediately to generate PDFs (which enables buttons)
                         this.saveDraft().then(() => {
                             // After draft save completes, update button states
+                            // The saveDraft response now includes request_id and request_code
+                            // and updates generatedDocxPaths, so buttons should be enabled
                             setTimeout(() => {
                                 this.updateDocumentButtonStates();
-                            }, 1000); // Wait a bit for PDFs to be created
+                            }, 1500); // Wait a bit for PDFs to be created and paths to be updated
                         }).catch(() => {
                             // Silent error - buttons will remain disabled if save fails
                         });
@@ -232,7 +232,7 @@
                 
                 // Get next tab in sequence
                 getNextTab() {
-                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     return tabs[currentIndex + 1] || 'review';
                 },
@@ -242,7 +242,7 @@
                     // Use the reactive property to force re-evaluation
                     const _ = this.tabStatesRefreshed;
                     
-                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     const targetIndex = tabs.indexOf(tabName);
                     
@@ -324,7 +324,65 @@
                         });
                         
                         if (response.ok) {
+                            const data = await response.json();
                             this.lastSaved = new Date().toLocaleTimeString();
+                            
+                            // Update request_id and request_code if provided (from draft save response)
+                            if (data.request_id) {
+                                const requestIdInput = document.getElementById('request_id');
+                                if (requestIdInput) {
+                                    requestIdInput.value = data.request_id;
+                                } else {
+                                    // Create hidden input if it doesn't exist
+                                    const form = document.getElementById('publication-request-form');
+                                    if (form) {
+                                        const input = document.createElement('input');
+                                        input.type = 'hidden';
+                                        input.id = 'request_id';
+                                        input.name = 'request_id';
+                                        input.value = data.request_id;
+                                        form.appendChild(input);
+                                    }
+                                }
+                            }
+                            
+                            if (data.request_code) {
+                                let requestCodeInput = document.querySelector('input[name="request_code"]');
+                                if (!requestCodeInput) {
+                                    // Create hidden input if it doesn't exist
+                                    const form = document.getElementById('publication-request-form');
+                                    if (form) {
+                                        requestCodeInput = document.createElement('input');
+                                        requestCodeInput.type = 'hidden';
+                                        requestCodeInput.name = 'request_code';
+                                        requestCodeInput.value = data.request_code;
+                                        form.appendChild(requestCodeInput);
+                                    }
+                                } else {
+                                    requestCodeInput.value = data.request_code;
+                                }
+                                
+                                // Store PDF paths in generatedDocxPaths for button state management
+                                if (!this.generatedDocxPaths) {
+                                    this.generatedDocxPaths = {};
+                                }
+                                
+                                const userId = {{ Auth::id() ?? 'null' }};
+                                if (userId && data.request_code) {
+                                    const types = ['incentive', 'recommendation'];
+                                    const fileNames = {
+                                        'incentive': 'Incentive_Application_Form.pdf',
+                                        'recommendation': 'Recommendation_Letter_Form.pdf'
+                                    };
+                                    
+                                    types.forEach(type => {
+                                        if (!this.generatedDocxPaths[type]) {
+                                            this.generatedDocxPaths[type] = `requests/${userId}/${data.request_code}/${fileNames[type]}`;
+                                        }
+                                    });
+                                }
+                            }
+                            
                             return Promise.resolve();
                         } else if (response.status === 429) {
                             // Rate limited - disable auto-save temporarily
@@ -611,8 +669,7 @@
                     // Get fields specific to each tab
                     const tabFields = {
                         'incentive': ['name', 'rank', 'college', 'title', 'journal', 'publisher', 'issn', 'doi', 'scopus', 'wos', 'aci', 'citescore', 'faculty_name', 'center_manager', 'dean_name', 'date'],
-                        'recommendation': ['name', 'rec_faculty_name', 'rec_collegeheader', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name', 'date'],
-                        'terminal': ['name', 'rank', 'college', 'title', 'journal', 'publisher', 'issn', 'doi', 'scopus', 'wos', 'aci', 'citescore', 'faculty_name', 'center_manager', 'dean_name', 'date']
+                        'recommendation': ['name', 'rec_faculty_name', 'rec_collegeheader', 'rec_citing_details', 'rec_indexing_details', 'rec_dean_name', 'date']
                     };
                     
                     const fields = tabFields[tabType] || [];
@@ -718,13 +775,13 @@
                 
                 // Simple tab navigation helpers
                 getNextTab() {
-                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     return tabs[currentIndex + 1] || this.activeTab;
                 },
                 
                 getPreviousTab() {
-                    const tabs = ['incentive', 'recommendation', 'terminal', 'upload', 'review'];
+                    const tabs = ['incentive', 'recommendation', 'upload', 'review'];
                     const currentIndex = tabs.indexOf(this.activeTab);
                     return tabs[currentIndex - 1] || this.activeTab;
                 },
@@ -777,37 +834,59 @@
                 
                 // Update button enabled/disabled state based on file availability
                 async updateDocumentButtonStates() {
-                    const types = ['incentive', 'recommendation', 'terminal'];
+                    const types = ['incentive', 'recommendation'];
                     const buttonIds = {
                         'incentive': 'incentive-doc-button',
-                        'recommendation': 'recommendation-doc-button',
-                        'terminal': 'terminal-doc-button'
+                        'recommendation': 'recommendation-doc-button'
                     };
                     
                     const requestId = document.getElementById('request_id')?.value;
-                    if (!requestId) {
-                        // No request ID - disable all buttons (new request, files not generated yet)
-                        for (const type of types) {
-                            const button = document.getElementById(buttonIds[type]);
-                            if (button) {
-                                button.classList.add('opacity-50', 'cursor-not-allowed');
-                                button.classList.remove('hover:shadow-md');
-                                button.style.pointerEvents = 'none';
-                            }
-                        }
-                        return;
+                    
+                    // Try to get request code from form or construct from request structure
+                    let requestCode = null;
+                    let userId = null;
+                    
+                    // Get request code from hidden input if available
+                    const requestCodeInput = document.querySelector('input[name="request_code"]');
+                    if (requestCodeInput) {
+                        requestCode = requestCodeInput.value;
                     }
                     
-                    // For existing requests, check if files exist
-                    // Use generatedDocxPaths if available, otherwise construct from request structure
+                    // Get user ID from form or construct from URL
+                    const userIdInput = document.querySelector('input[name="user_id"]');
+                    if (userIdInput) {
+                        userId = userIdInput.value;
+                    } else {
+                        // Try to extract from URL or use a default
+                        // For now, we'll construct paths based on request_id if available
+                    }
+                    
+                    // If we have request_id, we can construct paths
+                    // PDFs are stored in: requests/{userId}/{requestCode}/{filename}.pdf
+                    // But we need requestCode, which we might not have directly
+                    
+                    // Strategy: Check for PDFs using the paths from generatedDocxPaths first
+                    // If not available, try to construct paths from request structure
                     for (const type of types) {
                         const button = document.getElementById(buttonIds[type]);
                         if (!button) continue;
                         
-                        // Try to get path from generatedDocxPaths if available
                         let docxPath = null;
+                        
+                        // First, try generatedDocxPaths (from "View PDF" clicks)
                         if (this.generatedDocxPaths && this.generatedDocxPaths[type]) {
                             docxPath = this.generatedDocxPaths[type];
+                        } else if (requestId && requestCode) {
+                            // Construct path from request structure
+                            const fileName = type === 'incentive' 
+                                ? 'Incentive_Application_Form.docx'
+                                : type === 'recommendation'
+                                ? 'Recommendation_Letter_Form.docx'
+                                : 'Terminal_Report_Form.docx';
+                            
+                            if (userId) {
+                                docxPath = `requests/${userId}/${requestCode}/${fileName}`;
+                            }
                         }
                         
                         if (docxPath) {
@@ -818,6 +897,16 @@
                                 button.classList.remove('opacity-50', 'cursor-not-allowed');
                                 button.classList.add('cursor-pointer', 'hover:shadow-md');
                                 button.style.pointerEvents = 'auto';
+                                
+                                // Store the path for future reference
+                                if (!this.generatedDocxPaths) {
+                                    this.generatedDocxPaths = {};
+                                }
+                                if (!this.generatedDocxPaths[type]) {
+                                    // Store PDF path if it exists, otherwise DOCX path
+                                    const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
+                                    this.generatedDocxPaths[type] = pdfPath;
+                                }
                             } else {
                                 // File doesn't exist - disable button
                                 button.classList.add('opacity-50', 'cursor-not-allowed');
@@ -825,10 +914,21 @@
                                 button.style.pointerEvents = 'none';
                             }
                         } else {
-                            // No path available yet - disable button (will be enabled after first generation)
-                            button.classList.add('opacity-50', 'cursor-not-allowed');
-                            button.classList.remove('hover:shadow-md');
-                            button.style.pointerEvents = 'none';
+                            // No path available - try to find files by checking common locations
+                            // This is a fallback for when we don't have request info yet
+                            // We'll check if files exist in the expected draft location
+                            if (requestId) {
+                                // Try to fetch request info or check files directly
+                                // For now, disable button if we can't determine path
+                                button.classList.add('opacity-50', 'cursor-not-allowed');
+                                button.classList.remove('hover:shadow-md');
+                                button.style.pointerEvents = 'none';
+                            } else {
+                                // No request ID - disable button (new request, files not generated yet)
+                                button.classList.add('opacity-50', 'cursor-not-allowed');
+                                button.classList.remove('hover:shadow-md');
+                                button.style.pointerEvents = 'none';
+                            }
                         }
                     }
                 },
@@ -897,23 +997,6 @@
                         }
                     });
                     
-                    // Listen for changes on terminal tab fields
-                    const terminalFields = ['name', 'rank', 'college', 'title', 'journal', 'publisher', 'issn', 'doi', 'scopus', 'wos', 'aci', 'citescore', 'faculty_name', 'center_manager', 'dean_name', 'date'];
-                    terminalFields.forEach(fieldName => {
-                        const field = form.querySelector(`[name="${fieldName}"]`);
-                        if (field) {
-                            field.addEventListener('change', () => {
-                                // Invalidate terminal hash to trigger regeneration
-                                this.formDataHashes.terminal = null;
-                                this.generatedDocxPaths.terminal = null;
-                            });
-                            field.addEventListener('input', () => {
-                                // Also listen to input for real-time updates
-                                this.formDataHashes.terminal = null;
-                                this.generatedDocxPaths.terminal = null;
-                            });
-                        }
-                    });
                 },
                 
                 // Handle form submission - only show error popup on actual submit
@@ -985,14 +1068,6 @@
                             console.log('Added recommendation file path:', this.generatedDocxPaths.recommendation);
                         }
                         
-                        if (this.generatedDocxPaths.terminal) {
-                            const terminalInput = document.createElement('input');
-                            terminalInput.type = 'hidden';
-                            terminalInput.name = 'generated_docx_files[terminal]';
-                            terminalInput.value = this.generatedDocxPaths.terminal;
-                            form.appendChild(terminalInput);
-                            console.log('Added terminal file path:', this.generatedDocxPaths.terminal);
-                        }
                     }
                     
                     // Submit the form manually after a short delay to ensure loading screen shows
@@ -1232,13 +1307,6 @@
                             </button>
                             <button type="button" 
                                 class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
-                                :class="activeTab === 'terminal' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('terminal') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
-                                :disabled="!isTabEnabled('terminal')"
-                                @click="switchTab('terminal')">
-                                Terminal Report
-                            </button>
-                            <button type="button" 
-                                class="flex-1 px-4 py-3 text-sm font-semibold text-center border-b-2 transition-all duration-200 border-transparent hover:text-maroon-800 hover:bg-maroon-100"
                                 :class="activeTab === 'upload' ? 'border-maroon-600 text-maroon-800 bg-maroon-100' : isTabEnabled('upload') ? 'text-maroon-600' : 'text-gray-400 cursor-not-allowed bg-gray-50'"
                                 :disabled="!isTabEnabled('upload')"
                                 @click="switchTab('upload')">
@@ -1281,11 +1349,6 @@
                                 @include('publications.recommendation-letter')
                             </div>
 
-                            <!-- Terminal Report Tab -->
-                            <div x-show="activeTab === 'terminal'" class="space-y-6">
-                                @include('publications.terminal-report')
-                            </div>
-
                             <!-- Upload Documents Tab -->
                             <div x-show="activeTab === 'upload'" class="space-y-6">
                                 @include('publications.upload-documents')
@@ -1312,13 +1375,13 @@
                                 <!-- Step 1: Details (Incentive + Recommendation + Terminal) -->
                                 <div class="flex items-center gap-2">
                                     <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' 
                                             ? 'bg-maroon-600 text-white' 
                                             : 'bg-maroon-200 text-maroon-800'">
                                         <span class="font-bold text-sm">1</span>
                                     </div>
                                     <span class="font-medium text-sm"
-                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' || activeTab === 'terminal' 
+                                        :class="activeTab === 'incentive' || activeTab === 'recommendation' 
                                             ? 'text-maroon-600 font-semibold' 
                                             : 'text-maroon-800'">Details</span>
                                 </div>

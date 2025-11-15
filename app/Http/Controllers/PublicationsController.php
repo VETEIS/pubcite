@@ -202,68 +202,6 @@ class PublicationsController extends Controller
         }
     }
 
-    private function generateTerminalDocxFromHtml($data, $uploadPath, $convertToPdf = false)
-    {
-        try {
-            $privateUploadPath = $uploadPath;
-            $fullPath = Storage::disk('local')->path($privateUploadPath);
-            
-            if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0777, true);
-            }
-            
-            $templatePath = $this->ensureTemplateAvailable('Terminal_Report_Form.docx');
-            $outputPath = $privateUploadPath . '/Terminal_Report_Form.docx';
-            $fullOutputPath = Storage::disk('local')->path($outputPath);
-            
-            // Use direct TemplateProcessor (caching disabled due to serialization issues)
-            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
-            
-            // Prepare all values at once for better performance
-            $allValues = array_merge($data, [
-                'facultysignature' => '${facultysignature}',
-                'centermanagersignature' => '${centermanagersignature}',
-                'deansignature' => '${deansignature}',
-                'deputydirectorsignature' => '${deputydirectorsignature}',
-                'directorsignature' => '${directorsignature}'
-            ]);
-            
-            // Set all values in one pass
-            foreach ($allValues as $key => $value) {
-                try {
-                    $templateProcessor->setValue($key, (string)($value ?? ''));
-                } catch (\Exception $e) {
-                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
-                }
-            }
-            
-            $templateProcessor->saveAs($fullOutputPath);
-            
-            // Only convert to PDF if requested (for submission, not preview)
-            if ($convertToPdf) {
-                $converter = new DocxToPdfConverter();
-                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
-                
-                if ($pdfPath) {
-                    // Delete the original DOCX file
-                    Storage::disk('local')->delete($outputPath);
-                    Log::info('Converted DOCX to PDF and deleted original DOCX', [
-                        'original_docx' => $outputPath,
-                        'generated_pdf' => $pdfPath
-                    ]);
-                    return $pdfPath;
-                } else {
-                    Log::warning('PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
-                    return $outputPath;
-                }
-            }
-            
-            return $outputPath;
-        } catch (\Exception $e) {
-            Log::error('Error in generateTerminalDocxFromHtml: ' . $e->getMessage());
-            throw $e;
-        }
-    }
 
     private function generateDocxFromTemplate($templateName, $data, $typeChecked = [], $indexedChecked = [], $outputPath)
     {
@@ -507,7 +445,7 @@ class PublicationsController extends Controller
         
         Log::info('Publication request submission started', [
             'user_id' => $user->id,
-            'has_files' => $request->hasFile('published_article') || $request->hasFile('indexing_evidence'),
+            'has_files' => $request->hasFile('published_article') || $request->hasFile('indexing_evidence') || $request->hasFile('terminal_report'),
             'is_draft' => $request->has('save_draft')
         ]);
 
@@ -604,16 +542,6 @@ class PublicationsController extends Controller
                 'rec_publication_details' => 'required|string',
                 'rec_indexing_details' => 'required|string',
                 'rec_dean_name' => 'required|string',
-                'title' => 'required|string',
-                'author' => 'required|string',
-                'duration' => 'required|string',
-                'abstract' => 'required|string',
-                'introduction' => 'required|string',
-                'methodology' => 'required|string',
-                'rnd' => 'required|string',
-                'car' => 'required|string',
-                'references' => 'required|string',
-                'appendices' => 'nullable|string',
             ];
         }
         
@@ -622,12 +550,14 @@ class PublicationsController extends Controller
             $validationRules = array_merge($validationRules, [
                 'published_article' => 'required|file|mimes:pdf|max:20480',
                 'indexing_evidence' => 'required|file|mimes:pdf,jpg,jpeg,png|max:20480',
+                'terminal_report' => 'required|file|mimes:pdf|max:20480',
             ]);
         } else {
             // For drafts, make files optional
             $validationRules = array_merge($validationRules, [
                 'published_article' => 'nullable|file|mimes:pdf|max:20480',
                 'indexing_evidence' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+                'terminal_report' => 'nullable|file|mimes:pdf|max:20480',
             ]);
         }
 
@@ -724,7 +654,8 @@ class PublicationsController extends Controller
                 $attachments = [];
             foreach ([
                 'published_article',
-                'indexing_evidence'
+                'indexing_evidence',
+                'terminal_report'
             ] as $field) {
                 $file = $request->file($field);
                 
@@ -758,8 +689,7 @@ class PublicationsController extends Controller
             $docxPaths = [];
             $pdfFiles = [
                 'incentive' => $uploadPath . '/Incentive_Application_Form.pdf',
-                'recommendation' => $uploadPath . '/Recommendation_Letter_Form.pdf',
-                'terminal' => $uploadPath . '/Terminal_Report_Form.pdf'
+                'recommendation' => $uploadPath . '/Recommendation_Letter_Form.pdf'
             ];
             
             Log::info('Checking for existing PDFs from draft saves', [
@@ -770,8 +700,7 @@ class PublicationsController extends Controller
             // Use existing PDFs from draft saves if they exist
             foreach ($pdfFiles as $type => $pdfPath) {
                 if (Storage::disk('local')->exists($pdfPath)) {
-                    $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' :
-                               ($type === 'recommendation' ? 'Recommendation_Letter_Form.pdf' : 'Terminal_Report_Form.pdf');
+                    $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' : 'Recommendation_Letter_Form.pdf';
                     $docxPaths[$type] = [
                         'path' => $pdfPath,
                         'original_name' => $filename
@@ -858,17 +787,6 @@ class PublicationsController extends Controller
                     $docxPaths['recommendation'] = [
                         'path' => $pdfPath,
                         'original_name' => 'Recommendation_Letter_Form.pdf'
-                    ];
-                }
-            }
-            if (!isset($docxPaths['terminal'])) {
-                Log::info('Generating missing terminal PDF (no existing PDF found)');
-                $filtered = $this->mapTerminalFields($data);
-                $pdfPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, true);
-                if ($pdfPath) {
-                    $docxPaths['terminal'] = [
-                        'path' => $pdfPath,
-                        'original_name' => 'Terminal_Report_Form.pdf'
                     ];
                 }
             }
@@ -964,7 +882,12 @@ class PublicationsController extends Controller
                 
                 // Check if this is an AJAX request (auto-save) or form submission (manual draft save)
                 if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['success' => true, 'message' => 'Draft saved successfully!']);
+                    return response()->json([
+                        'success' => true, 
+                        'message' => 'Draft saved successfully!',
+                        'request_id' => $userRequest->id,
+                        'request_code' => $userRequest->request_code
+                    ]);
                 } else {
                     // For manual draft saves via form submission, redirect without notification
                     return redirect()->route('publications.request');
@@ -1376,9 +1299,7 @@ class PublicationsController extends Controller
                     $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
                     $pdfFilename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.pdf' 
-                        : ($docxType === 'recommendation'
-                            ? 'Recommendation_Letter_Form.pdf'
-                            : 'Terminal_Report_Form.pdf');
+                        : 'Recommendation_Letter_Form.pdf';
                     
                     Log::info('Serving existing PDF from draft save', [
                         'pdf_path' => $pdfPath,
@@ -1412,9 +1333,7 @@ class PublicationsController extends Controller
                     // Serve DOCX as fallback (should rarely happen)
                     $filename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.docx' 
-                        : ($docxType === 'recommendation'
-                            ? 'Recommendation_Letter_Form.docx'
-                            : 'Terminal_Report_Form.docx');
+                        : 'Recommendation_Letter_Form.docx';
                     
                     Log::info('Serving DOCX (PDF not found - should not happen if draft saves work correctly)', [
                         'docx_path' => $filePath,
@@ -1595,11 +1514,6 @@ class PublicationsController extends Controller
                     $filename = 'Recommendation_Letter_Form.docx';
                     break;
                     
-                case 'terminal':
-                    $filtered = $this->mapTerminalFields($data);
-                    $fullPath = $this->generateTerminalDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Terminal_Report_Form.docx';
-                    break;
                     
                 default:
                     throw new \Exception('Invalid document type: ' . $docxType);

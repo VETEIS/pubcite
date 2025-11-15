@@ -65,6 +65,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Incentive Application Preview -->
             <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
+                 id="incentive-doc-button"
                  onclick="generateDocx('incentive')">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
@@ -74,13 +75,14 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Incentive Application</h4>
-                        <p class="text-xs text-maroon-600">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="incentive-button-text">View PDF</p>
                     </div>
                 </div>
             </div>
 
             <!-- Recommendation Letter Preview -->
             <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
+                 id="recommendation-doc-button"
                  onclick="generateDocx('recommendation')">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-maroon-100 rounded-lg flex items-center justify-center">
@@ -90,7 +92,7 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Recommendation Letter</h4>
-                        <p class="text-xs text-maroon-600">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="recommendation-button-text">View PDF</p>
                     </div>
                 </div>
             </div>
@@ -338,6 +340,28 @@ function generateDocx(type) {
         window.hideLoading();
     });
 }
+
+// Update document button states for Turbo compatibility
+function updateDocumentButtonsForTurbo() {
+    const form = document.getElementById('citation-request-form');
+    if (!form) return;
+    
+    const alpineComponent = Alpine.$data(form.closest('[x-data]'));
+    if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
+        alpineComponent.updateDocumentButtonStates();
+    }
+}
+
+// Initialize button states on page load and Turbo navigation
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateDocumentButtonsForTurbo);
+} else {
+    updateDocumentButtonsForTurbo();
+}
+
+// Re-initialize on Turbo navigation
+document.addEventListener('turbo:load', updateDocumentButtonsForTurbo);
+document.addEventListener('turbo:render', updateDocumentButtonsForTurbo);
 
 // Fetch pre-generated DOCX file
 async function fetchPreGeneratedDocx(type, filePath) {
