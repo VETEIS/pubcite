@@ -847,7 +847,7 @@ class PublicationsController extends Controller
                         'request_code' => $requestCode,
                         'type' => 'Publication',
                         'status' => $isDraft ? 'draft' : 'pending',
-                        'workflow_state' => $isDraft ? null : 'pending_user_signature', // User must sign first
+                        'workflow_state' => 'pending_user_signature', // User must sign first (applies to drafts too)
                         'requested_at' => now(),
                         'form_data' => json_encode($data), // Ensure proper JSON encoding
                         'pdf_path' => json_encode([
@@ -1428,6 +1428,10 @@ class PublicationsController extends Controller
                 }
                 
                 // Create lock file to indicate we're generating
+                // Ensure the cache directory exists before creating the lock file
+                if (!Storage::disk('local')->exists($cacheBase)) {
+                    Storage::disk('local')->makeDirectory($cacheBase, 0777, true);
+                }
                 if (!file_exists($lockFile)) {
                     file_put_contents($lockFile, getmypid());
                 }

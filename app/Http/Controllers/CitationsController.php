@@ -223,6 +223,10 @@ class CitationsController extends Controller
                 }
                 
                 // Create lock file to indicate we're generating
+                // Ensure the cache directory exists before creating the lock file
+                if (!Storage::disk('local')->exists($cacheBase)) {
+                    Storage::disk('local')->makeDirectory($cacheBase, 0777, true);
+                }
                 if (!file_exists($lockFile)) {
                     file_put_contents($lockFile, getmypid());
                 }
@@ -879,7 +883,7 @@ class CitationsController extends Controller
                     $userRequest->request_code = $requestCode;
                     $userRequest->type = 'Citation';
                     $userRequest->status = $isDraft ? 'draft' : 'pending';
-                    $userRequest->workflow_state = $isDraft ? null : 'pending_user_signature'; // User must sign first
+                    $userRequest->workflow_state = 'pending_user_signature'; // User must sign first (applies to drafts too)
                     $userRequest->requested_at = now(); // Always set requested_at, even for drafts
                     $userRequest->pdf_path = json_encode([
                         'pdfs' => array_merge($pdfPaths, $docxPaths),
