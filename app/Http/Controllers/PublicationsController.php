@@ -758,6 +758,13 @@ class PublicationsController extends Controller
             $docxPaths = [];
             $tempFiles = $request->input('generated_docx_files', []);
             
+            // Debug: Log what we received
+            Log::info('Checking for pre-generated DOCX files', [
+                'has_tempFiles' => !empty($tempFiles),
+                'tempFiles' => $tempFiles,
+                'all_inputs' => array_keys($request->all())
+            ]);
+            
             if (!empty($tempFiles) && is_array($tempFiles)) {
                 // Move pre-generated files instead of regenerating (much faster)
                 Log::info('Moving pre-generated DOCX files', ['tempFiles' => $tempFiles]);

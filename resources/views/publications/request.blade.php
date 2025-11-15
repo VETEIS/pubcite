@@ -690,7 +690,12 @@
                                 this.generatedDocxPaths[docxType] = result.filePath;
                                 // Update hash to mark as generated
                                 this.formDataHashes[docxType] = currentHash;
+                                console.log(`Background DOCX generated: ${docxType}`, result.filePath);
+                            } else {
+                                console.warn(`Background DOCX generation failed for ${docxType}:`, result);
                             }
+                        } else {
+                            console.error(`Background DOCX generation HTTP error for ${docxType}:`, response.status);
                         }
                     } catch (error) {
                         // Silent fail - background generation shouldn't interrupt user
@@ -856,6 +861,9 @@
                         const existingInputs = form.querySelectorAll('input[name^="generated_docx_files"]');
                         existingInputs.forEach(input => input.remove());
                         
+                        // Debug: Log what we're about to send
+                        console.log('Pre-generated DOCX paths:', this.generatedDocxPaths);
+                        
                         // Add pre-generated file paths if they exist
                         if (this.generatedDocxPaths.incentive) {
                             const incentiveInput = document.createElement('input');
@@ -863,6 +871,7 @@
                             incentiveInput.name = 'generated_docx_files[incentive]';
                             incentiveInput.value = this.generatedDocxPaths.incentive;
                             form.appendChild(incentiveInput);
+                            console.log('Added incentive file path:', this.generatedDocxPaths.incentive);
                         }
                         
                         if (this.generatedDocxPaths.recommendation) {
@@ -871,6 +880,7 @@
                             recommendationInput.name = 'generated_docx_files[recommendation]';
                             recommendationInput.value = this.generatedDocxPaths.recommendation;
                             form.appendChild(recommendationInput);
+                            console.log('Added recommendation file path:', this.generatedDocxPaths.recommendation);
                         }
                         
                         if (this.generatedDocxPaths.terminal) {
@@ -879,6 +889,7 @@
                             terminalInput.name = 'generated_docx_files[terminal]';
                             terminalInput.value = this.generatedDocxPaths.terminal;
                             form.appendChild(terminalInput);
+                            console.log('Added terminal file path:', this.generatedDocxPaths.terminal);
                         }
                     }
                     
