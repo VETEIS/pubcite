@@ -110,15 +110,41 @@ class CitationsController extends Controller
                 $filePath = str_replace("\0", '', $filePath);
                 $filePath = trim($filePath, '/\\');
                 
-                Log::info('Fetching pre-generated DOCX file', [
-                    'file_path' => $filePath,
-                    'docx_type' => $request->input('docx_type', 'incentive'),
-                    'exists' => Storage::disk('local')->exists($filePath)
-                ]);
+                $absolutePath = Storage::disk('local')->path($filePath);
+                $exists = Storage::disk('local')->exists($filePath);
+                $fileExists = file_exists($absolutePath);
                 
-                if (Storage::disk('local')->exists($filePath)) {
+                // Check if PDF exists (meaning DOCX was converted and deleted)
+                $pdfPath = preg_replace('/\.docx$/', '.pdf', $filePath);
+                $pdfExists = Storage::disk('local')->exists($pdfPath);
+                
+                $docxType = $request->input('docx_type', 'incentive');
+                
+                // Prefer PDF over DOCX - if PDF exists, serve it first
+                if ($pdfExists) {
+                    $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
+                    $pdfFilename = $docxType === 'incentive' 
+                        ? 'Incentive_Application_Form.pdf' 
+                        : 'Recommendation_Letter_Form.pdf';
+                    
+                    Log::info('Serving PDF (preferred over DOCX)', [
+                        'pdf_path' => $pdfPath,
+                        'original_docx_path' => $filePath
+                    ]);
+                    
+                    $userAgent = request()->header('User-Agent');
+                    $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                    $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    
+                    return response()->download($pdfAbsolutePath, $pdfFilename, [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => $contentDisposition . '; filename="' . $pdfFilename . '"'
+                    ]);
+                }
+                
+                // Fallback to DOCX if PDF doesn't exist
+                if ($exists || $fileExists) {
                     $absolutePath = Storage::disk('local')->path($filePath);
-                    $docxType = $request->input('docx_type', 'incentive');
                     $filename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.docx' 
                         : 'Recommendation_Letter_Form.docx';
@@ -132,10 +158,10 @@ class CitationsController extends Controller
                         'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
                     ]);
                 } else {
-                    Log::warning('Pre-generated DOCX file not found', [
+                    Log::warning('Pre-generated file not found (neither DOCX nor PDF)', [
                         'file_path' => $filePath,
-                        'docx_type' => $request->input('docx_type', 'incentive'),
-                        'storage_path' => Storage::disk('local')->path($filePath)
+                        'pdf_path' => $pdfPath,
+                        'docx_type' => $docxType
                     ]);
                     return response()->json([
                         'success' => false,

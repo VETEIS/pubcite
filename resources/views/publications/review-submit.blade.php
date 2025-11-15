@@ -59,7 +59,7 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Incentive Application</h4>
-                        <p class="text-xs text-maroon-600">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="incentive-button-text">Click to generate DOCX</p>
                     </div>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Recommendation Letter</h4>
-                        <p class="text-xs text-maroon-600">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="recommendation-button-text">Click to generate DOCX</p>
                     </div>
                 </div>
             </div>
@@ -91,7 +91,7 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-maroon-800">Terminal Report</h4>
-                        <p class="text-xs text-maroon-600">Click to generate DOCX</p>
+                        <p class="text-xs text-maroon-600" id="terminal-button-text">Click to generate DOCX</p>
                     </div>
                 </div>
             </div>
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
 });
 
-// Function to generate and download DOCX (preview-only, PhpWord populate → download)
+// Function to generate and download DOCX or serve PDF if available
 function generateDocx(type) {
     const form = document.getElementById('publication-request-form');
     if (!form) {
@@ -208,10 +208,11 @@ function generateDocx(type) {
     const alpineComponent = Alpine.$data(form.closest('[x-data]'));
     
     // Check if file is already generated and form data hasn't changed
+    // If PDF exists (DOCX was converted), the server will serve PDF instead
     if (alpineComponent && alpineComponent.generatedDocxPaths && alpineComponent.generatedDocxPaths[type]) {
         const currentHash = alpineComponent.calculateFormDataHash(type);
         if (alpineComponent.formDataHashes[type] === currentHash) {
-            // File exists and is up-to-date, fetch it directly
+            // Try to fetch - server will serve PDF if it exists, DOCX otherwise
             fetchPreGeneratedDocx(type, alpineComponent.generatedDocxPaths[type]);
             return;
         }
@@ -310,10 +311,10 @@ function generateDocx(type) {
     });
 }
 
-// Fetch pre-generated DOCX file
+// Fetch pre-generated DOCX file or PDF if available
 async function fetchPreGeneratedDocx(type, filePath) {
     try {
-        // Request the file from the server
+        // Request the file from the server - it will serve PDF if available, DOCX otherwise
         const response = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(filePath)}&docx_type=${type}`, {
             method: 'GET',
             headers: {
@@ -331,19 +332,33 @@ async function fetchPreGeneratedDocx(type, filePath) {
             throw new Error('Generated file is empty or corrupted');
         }
         
-        const docxBlob = new Blob([blob], { 
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        // Check content type to determine if it's PDF or DOCX
+        const contentType = response.headers.get('content-type') || '';
+        const isPdf = contentType.includes('application/pdf') || blob.type.includes('pdf');
+        
+        const fileBlob = new Blob([blob], { 
+            type: isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         });
         
-        const url = window.URL.createObjectURL(docxBlob);
+        const url = window.URL.createObjectURL(fileBlob);
         const a = document.createElement('a');
         a.href = url;
         const timestamp = new Date().toISOString().slice(0, 10);
-        a.download = type === 'incentive' 
-            ? `Publication_Incentive_Application_${timestamp}.docx` 
-            : type === 'recommendation'
-            ? `Publication_Recommendation_Letter_${timestamp}.docx`
-            : `Publication_Terminal_Report_${timestamp}.docx`;
+        
+        if (isPdf) {
+            a.download = type === 'incentive' 
+                ? `Publication_Incentive_Application_${timestamp}.pdf` 
+                : type === 'recommendation'
+                ? `Publication_Recommendation_Letter_${timestamp}.pdf`
+                : `Publication_Terminal_Report_${timestamp}.pdf`;
+        } else {
+            a.download = type === 'incentive' 
+                ? `Publication_Incentive_Application_${timestamp}.docx` 
+                : type === 'recommendation'
+                ? `Publication_Recommendation_Letter_${timestamp}.docx`
+                : `Publication_Terminal_Report_${timestamp}.docx`;
+        }
+        
         document.body.appendChild(a);
         a.click();
         
@@ -354,7 +369,18 @@ async function fetchPreGeneratedDocx(type, filePath) {
     } catch (error) {
         // Fallback to normal generation if pre-generated file fetch fails
         console.warn('Failed to fetch pre-generated file, generating new one:', error);
-        // Remove the store_for_submit flag and generate normally
+        
+        // Clear the invalid path to prevent retry loops
+        const form = document.getElementById('publication-request-form');
+        if (form) {
+            const alpineComponent = Alpine.$data(form.closest('[x-data]'));
+            if (alpineComponent && alpineComponent.generatedDocxPaths) {
+                alpineComponent.generatedDocxPaths[type] = null;
+                alpineComponent.formDataHashes[type] = null;
+            }
+        }
+        
+        // Generate fresh DOCX
         generateDocx(type);
     }
 }

@@ -157,6 +157,8 @@
                             this.displayUploadedFiles();
                             // Update submit button state when switching to review
                             this.updateSubmitButton();
+                            // Check for PDFs and update button text
+                            this.updateDocumentButtonTexts();
                         }, 100);
                     }
                 },
@@ -729,6 +731,69 @@
                     
                     // Also refresh tab states when form changes
                     this.refreshTabStates();
+                },
+                
+                // Check if PDF exists for a given DOCX path
+                async checkPdfExists(type, docxPath) {
+                    if (!docxPath) return false;
+                    
+                    try {
+                        // Convert DOCX path to PDF path
+                        const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
+                        
+                        // Try to fetch the PDF (use GET with range to check existence without full download)
+                        const response = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(pdfPath)}&docx_type=${type}`, {
+                            method: 'GET',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Range': 'bytes=0-1' // Only request first 2 bytes to check existence
+                            }
+                        });
+                        
+                        return response.ok && response.headers.get('content-type')?.includes('application/pdf');
+                    } catch (error) {
+                        return false;
+                    }
+                },
+                
+                // Update button text based on PDF existence (prefer PDF over DOCX)
+                async updateDocumentButtonTexts() {
+                    const types = ['incentive', 'recommendation', 'terminal'];
+                    const buttonTextIds = {
+                        'incentive': 'incentive-button-text',
+                        'recommendation': 'recommendation-button-text',
+                        'terminal': 'terminal-button-text'
+                    };
+                    
+                    for (const type of types) {
+                        const textElement = document.getElementById(buttonTextIds[type]);
+                        if (!textElement) continue;
+                        
+                        // Always prefer PDF - check if PDF exists first
+                        // If we have a generated DOCX path, check if corresponding PDF exists
+                        if (this.generatedDocxPaths && this.generatedDocxPaths[type]) {
+                            const docxPath = this.generatedDocxPaths[type];
+                            const pdfExists = await this.checkPdfExists(type, docxPath);
+                            
+                            if (pdfExists) {
+                                // PDF exists - show "View PDF"
+                                textElement.textContent = 'View PDF';
+                                textElement.classList.remove('text-maroon-600');
+                                textElement.classList.add('text-green-600');
+                            } else {
+                                // PDF doesn't exist - show "Click to generate DOCX" (even if DOCX exists, we prefer PDF)
+                                textElement.textContent = 'Click to generate DOCX';
+                                textElement.classList.remove('text-green-600');
+                                textElement.classList.add('text-maroon-600');
+                            }
+                        } else {
+                            // No generated path - show "Click to generate DOCX"
+                            textElement.textContent = 'Click to generate DOCX';
+                            textElement.classList.remove('text-green-600');
+                            textElement.classList.add('text-maroon-600');
+                        }
+                    }
                 },
 
                 // Reset submit button after submission

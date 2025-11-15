@@ -1316,37 +1316,46 @@ class PublicationsController extends Controller
                 $exists = Storage::disk('local')->exists($filePath);
                 $fileExists = file_exists($absolutePath);
                 
-                // List directory contents to debug
-                $dirPath = dirname($filePath);
-                $dirAbsolute = Storage::disk('local')->path($dirPath);
-                $dirExists = is_dir($dirAbsolute);
-                $dirContents = $dirExists ? @scandir($dirAbsolute) : [];
+                // Check if PDF exists (meaning DOCX was converted and deleted)
+                $pdfPath = preg_replace('/\.docx$/', '.pdf', $filePath);
+                $pdfExists = Storage::disk('local')->exists($pdfPath);
                 
-                Log::info('Fetching pre-generated DOCX file', [
-                    'file_path' => $filePath,
-                    'absolute_path' => $absolutePath,
-                    'docx_type' => $request->input('docx_type', 'incentive'),
-                    'storage_exists' => $exists,
-                    'file_exists' => $fileExists,
-                    'storage_path' => storage_path('app'),
-                    'local_disk_path' => Storage::disk('local')->path(''),
-                    'dir_path' => $dirPath,
-                    'dir_absolute' => $dirAbsolute,
-                    'dir_exists' => $dirExists,
-                    'dir_contents' => $dirContents ? array_slice($dirContents, 2) : [] // Remove . and ..
-                ]);
+                $docxType = $request->input('docx_type', 'incentive');
                 
-                // Check both Storage::exists() and file_exists() for debugging
+                // Prefer PDF over DOCX - if PDF exists, serve it first
+                if ($pdfExists) {
+                    $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
+                    $pdfFilename = $docxType === 'incentive' 
+                        ? 'Incentive_Application_Form.pdf' 
+                        : ($docxType === 'recommendation'
+                            ? 'Recommendation_Letter_Form.pdf'
+                            : 'Terminal_Report_Form.pdf');
+                    
+                    Log::info('Serving PDF (preferred over DOCX)', [
+                        'pdf_path' => $pdfPath,
+                        'original_docx_path' => $filePath
+                    ]);
+                    
+                    $userAgent = request()->header('User-Agent');
+                    $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                    $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    
+                    return response()->download($pdfAbsolutePath, $pdfFilename, [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => $contentDisposition . '; filename="' . $pdfFilename . '"'
+                    ]);
+                }
+                
+                // Fallback to DOCX if PDF doesn't exist
                 if ($exists || $fileExists) {
                     // Ensure we have the correct absolute path
                     if (!$exists && $fileExists) {
-                        // Storage says no but file exists - file might be outside storage root
-                        // Try to use the absolute path we already computed
+                        // Storage says no but file exists - use absolute path
                     } else {
                         // Both agree or Storage says it exists - use Storage path
                         $absolutePath = Storage::disk('local')->path($filePath);
                     }
-                    $docxType = $request->input('docx_type', 'incentive');
+                    
                     $filename = $docxType === 'incentive' 
                         ? 'Incentive_Application_Form.docx' 
                         : ($docxType === 'recommendation'
@@ -1362,10 +1371,10 @@ class PublicationsController extends Controller
                         'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
                     ]);
                 } else {
-                    Log::warning('Pre-generated DOCX file not found', [
+                    Log::warning('Pre-generated file not found (neither DOCX nor PDF)', [
                         'file_path' => $filePath,
-                        'docx_type' => $request->input('docx_type', 'incentive'),
-                        'storage_path' => Storage::disk('local')->path($filePath)
+                        'pdf_path' => $pdfPath,
+                        'docx_type' => $docxType
                     ]);
                     return response()->json([
                         'success' => false,
