@@ -142,18 +142,10 @@
                     this.activeTab = targetTab;
                     
                     // Trigger draft save when upload tab becomes active to generate PDFs
-                    // This enables the "View PDF" buttons since PDFs are created during draft save
                     if (targetTab === 'upload') {
-                        // Save draft immediately to generate PDFs (which enables buttons)
-                        this.saveDraft().then(() => {
-                            // After draft save completes, update button states
-                            // The saveDraft response now includes request_id and request_code
-                            // and updates generatedDocxPaths, so buttons should be enabled
-                            setTimeout(() => {
-                                this.updateDocumentButtonStates();
-                            }, 1500); // Wait a bit for PDFs to be created and paths to be updated
-                        }).catch(() => {
-                            // Silent error - buttons will remain disabled if save fails
+                        // Save draft immediately to generate PDFs
+                        this.saveDraft().catch(() => {
+                            // Silent error
                         });
                     }
                     
@@ -163,8 +155,6 @@
                             this.displayUploadedFiles();
                             // Update submit button state when switching to review
                             this.updateSubmitButton();
-                            // Check file availability and update button states
-                            this.updateDocumentButtonStates();
                         }, 100);
                     }
                 },
@@ -800,138 +790,6 @@
                     this.refreshTabStates();
                 },
                 
-                // Check if file (PDF or DOCX) exists for a given path
-                async checkFileExists(type, docxPath) {
-                    if (!docxPath) return false;
-                    
-                    try {
-                        // First check PDF (preferred)
-                        const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
-                        const pdfResponse = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(pdfPath)}&docx_type=${type}`, {
-                            method: 'HEAD',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        
-                        if (pdfResponse.ok) return true;
-                        
-                        // Fallback: check DOCX
-                        const docxResponse = await fetch(`{{ route("publications.generate") }}?file_path=${encodeURIComponent(docxPath)}&docx_type=${type}`, {
-                            method: 'HEAD',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        
-                        return docxResponse.ok;
-                    } catch (error) {
-                        return false;
-                    }
-                },
-                
-                // Update button enabled/disabled state based on file availability
-                async updateDocumentButtonStates() {
-                    const types = ['incentive', 'recommendation'];
-                    const buttonIds = {
-                        'incentive': 'incentive-doc-button',
-                        'recommendation': 'recommendation-doc-button'
-                    };
-                    
-                    const requestId = document.getElementById('request_id')?.value;
-                    
-                    // Try to get request code from form or construct from request structure
-                    let requestCode = null;
-                    let userId = null;
-                    
-                    // Get request code from hidden input if available
-                    const requestCodeInput = document.querySelector('input[name="request_code"]');
-                    if (requestCodeInput) {
-                        requestCode = requestCodeInput.value;
-                    }
-                    
-                    // Get user ID from form or construct from URL
-                    const userIdInput = document.querySelector('input[name="user_id"]');
-                    if (userIdInput) {
-                        userId = userIdInput.value;
-                    } else {
-                        // Try to extract from URL or use a default
-                        // For now, we'll construct paths based on request_id if available
-                    }
-                    
-                    // If we have request_id, we can construct paths
-                    // PDFs are stored in: requests/{userId}/{requestCode}/{filename}.pdf
-                    // But we need requestCode, which we might not have directly
-                    
-                    // Strategy: Check for PDFs using the paths from generatedDocxPaths first
-                    // If not available, try to construct paths from request structure
-                    for (const type of types) {
-                        const button = document.getElementById(buttonIds[type]);
-                        if (!button) continue;
-                        
-                        let docxPath = null;
-                        
-                        // First, try generatedDocxPaths (from "View PDF" clicks)
-                        if (this.generatedDocxPaths && this.generatedDocxPaths[type]) {
-                            docxPath = this.generatedDocxPaths[type];
-                        } else if (requestId && requestCode) {
-                            // Construct path from request structure
-                            const fileName = type === 'incentive' 
-                                ? 'Incentive_Application_Form.docx'
-                                : type === 'recommendation'
-                                ? 'Recommendation_Letter_Form.docx'
-                                : 'Terminal_Report_Form.docx';
-                            
-                            if (userId) {
-                                docxPath = `requests/${userId}/${requestCode}/${fileName}`;
-                            }
-                        }
-                        
-                        if (docxPath) {
-                            const fileExists = await this.checkFileExists(type, docxPath);
-                            
-                            if (fileExists) {
-                                // File exists (PDF or DOCX) - enable button
-                                button.classList.remove('opacity-50', 'cursor-not-allowed');
-                                button.classList.add('cursor-pointer', 'hover:shadow-md');
-                                button.style.pointerEvents = 'auto';
-                                
-                                // Store the path for future reference
-                                if (!this.generatedDocxPaths) {
-                                    this.generatedDocxPaths = {};
-                                }
-                                if (!this.generatedDocxPaths[type]) {
-                                    // Store PDF path if it exists, otherwise DOCX path
-                                    const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
-                                    this.generatedDocxPaths[type] = pdfPath;
-                                }
-                            } else {
-                                // File doesn't exist - disable button
-                                button.classList.add('opacity-50', 'cursor-not-allowed');
-                                button.classList.remove('hover:shadow-md');
-                                button.style.pointerEvents = 'none';
-                            }
-                        } else {
-                            // No path available - try to find files by checking common locations
-                            // This is a fallback for when we don't have request info yet
-                            // We'll check if files exist in the expected draft location
-                            if (requestId) {
-                                // Try to fetch request info or check files directly
-                                // For now, disable button if we can't determine path
-                                button.classList.add('opacity-50', 'cursor-not-allowed');
-                                button.classList.remove('hover:shadow-md');
-                                button.style.pointerEvents = 'none';
-                            } else {
-                                // No request ID - disable button (new request, files not generated yet)
-                                button.classList.add('opacity-50', 'cursor-not-allowed');
-                                button.classList.remove('hover:shadow-md');
-                                button.style.pointerEvents = 'none';
-                            }
-                        }
-                    }
-                },
 
                 // Reset submit button after submission
                 resetSubmitButton() {

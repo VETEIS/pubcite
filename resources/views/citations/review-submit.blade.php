@@ -341,27 +341,6 @@ function generateDocx(type) {
     });
 }
 
-// Update document button states for Turbo compatibility
-function updateDocumentButtonsForTurbo() {
-    const form = document.getElementById('citation-request-form');
-    if (!form) return;
-    
-    const alpineComponent = Alpine.$data(form.closest('[x-data]'));
-    if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
-        alpineComponent.updateDocumentButtonStates();
-    }
-}
-
-// Initialize button states on page load and Turbo navigation
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateDocumentButtonsForTurbo);
-} else {
-    updateDocumentButtonsForTurbo();
-}
-
-// Re-initialize on Turbo navigation
-document.addEventListener('turbo:load', updateDocumentButtonsForTurbo);
-document.addEventListener('turbo:render', updateDocumentButtonsForTurbo);
 
 // Fetch pre-generated DOCX file
 async function fetchPreGeneratedDocx(type, filePath) {

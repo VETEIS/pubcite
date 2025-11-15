@@ -197,29 +197,6 @@ function updateReviewFile(type, input) {
 // Display uploaded files when page loads
 document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
-    updateDocumentButtonsForTurbo();
-});
-
-// Update document buttons for Turbo compatibility
-function updateDocumentButtonsForTurbo() {
-    const form = document.getElementById('publication-request-form');
-    if (!form) return;
-    
-    const alpineComponent = Alpine.$data(form.closest('[x-data]'));
-    if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
-        setTimeout(() => {
-            alpineComponent.updateDocumentButtonStates();
-        }, 300);
-    }
-}
-
-// Re-initialize on Turbo navigation
-document.addEventListener('turbo:load', function() {
-    updateDocumentButtonsForTurbo();
-});
-
-document.addEventListener('turbo:render', function() {
-    updateDocumentButtonsForTurbo();
 });
 
 // Function to generate and download DOCX or serve PDF if available
