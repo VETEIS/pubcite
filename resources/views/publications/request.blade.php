@@ -143,8 +143,19 @@
                     
                     this.activeTab = targetTab;
                     
-                    // Background pre-generation removed - files are generated on-demand when user clicks "View PDF"
-                    // This avoids unnecessary DOCX generation since we prefer PDF anyway
+                    // Trigger draft save when upload tab becomes active to generate PDFs
+                    // This enables the "View PDF" buttons since PDFs are created during draft save
+                    if (targetTab === 'upload') {
+                        // Save draft immediately to generate PDFs (which enables buttons)
+                        this.saveDraft().then(() => {
+                            // After draft save completes, update button states
+                            setTimeout(() => {
+                                this.updateDocumentButtonStates();
+                            }, 1000); // Wait a bit for PDFs to be created
+                        }).catch(() => {
+                            // Silent error - buttons will remain disabled if save fails
+                        });
+                    }
                     
                     // Display uploaded files when switching to review tab
                     if (targetTab === 'review') {
@@ -301,8 +312,8 @@
                         
                         // Don't save if no meaningful data
                         if (!hasData) {
-                return;
-            }
+                            return Promise.resolve();
+                        }
                         
                         formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
                         formData.append('save_draft', '1');
@@ -314,16 +325,20 @@
                         
                         if (response.ok) {
                             this.lastSaved = new Date().toLocaleTimeString();
+                            return Promise.resolve();
                         } else if (response.status === 429) {
                             // Rate limited - disable auto-save temporarily
                             this.autoSaveDisabled = true;
                             setTimeout(() => {
                                 this.autoSaveDisabled = false;
                             }, 60000); // Re-enable after 1 minute
+                            return Promise.reject(new Error('Rate limited'));
                         }
                         // Silent save - no error notifications for auto-save
+                        return Promise.reject(new Error('Save failed'));
                     } catch (error) {
                         // Silent error - don't show notifications for auto-save
+                        return Promise.reject(error);
                     } finally {
                         this.savingDraft = false;
                     }
