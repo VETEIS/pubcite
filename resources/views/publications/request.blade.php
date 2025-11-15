@@ -165,7 +165,7 @@
                     
                     // Special handling for upload tab
                     if (currentTab === 'upload') {
-                        const requiredFiles = ['published_article', 'indexing_evidence'];
+                        const requiredFiles = ['published_article', 'indexing_evidence', 'terminal_report'];
                         
                         for (let fileName of requiredFiles) {
                             const fileInput = document.querySelector(`input[name="${fileName}"]`);
@@ -627,7 +627,8 @@
                     // File state mapping
             const fileFields = [
                         { fieldName: 'published_article', elementId: 'review-published-article' },
-                        { fieldName: 'indexing_evidence', elementId: 'review-indexing-evidence' }
+                        { fieldName: 'indexing_evidence', elementId: 'review-indexing-evidence' },
+                        { fieldName: 'terminal_report', elementId: 'review-terminal-report' }
                     ];
                     
                     fileFields.forEach(({ fieldName, elementId }) => {

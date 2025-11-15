@@ -194,6 +194,12 @@ function updateReviewFile(type, input) {
     }
 }
 
+function displayUploadedFiles() {
+    syncFileDisplay('published_article');
+    syncFileDisplay('indexing_evidence');
+    syncFileDisplay('terminal_report');
+}
+
 // Display uploaded files when page loads
 document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
