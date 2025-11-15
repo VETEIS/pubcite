@@ -65,10 +65,10 @@ Route::middleware([
     Route::post('/publications/submit', [\App\Http\Controllers\PublicationsController::class, 'submitPublicationRequest'])->name('publications.submit')->middleware('mobile.restrict');
     Route::get('/citations/request', [\App\Http\Controllers\CitationsController::class, 'create'])->name('citations.request')->middleware('mobile.restrict');
     Route::post('/citations/submit', [\App\Http\Controllers\CitationsController::class, 'submitCitationRequest'])->name('citations.submit')->middleware('mobile.restrict');
-    Route::post('/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate')->middleware('mobile.restrict');
+    Route::match(['GET', 'POST'], '/citations/generate', [\App\Http\Controllers\CitationsController::class, 'generateCitationDocx'])->name('citations.generate')->middleware('mobile.restrict');
     Route::get('/citations/success', [\App\Http\Controllers\CitationsController::class, 'success'])->name('citations.success')->middleware('mobile.restrict');
     // publication DOCX generations
-    Route::post('/publications/generate', [\App\Http\Controllers\PublicationsController::class, 'generatePublicationDocx'])->name('publications.generate')->middleware('mobile.restrict');
+    Route::match(['GET', 'POST'], '/publications/generate', [\App\Http\Controllers\PublicationsController::class, 'generatePublicationDocx'])->name('publications.generate')->middleware('mobile.restrict');
     Route::post('/publications/preload-templates', [\App\Http\Controllers\PublicationsController::class, 'preloadTemplates'])->name('publications.preloadTemplates')->middleware('mobile.restrict');
     Route::post('/citations/preload-templates', [\App\Http\Controllers\CitationsController::class, 'preloadTemplates'])->name('citations.preloadTemplates')->middleware('mobile.restrict');
     // Nudge
