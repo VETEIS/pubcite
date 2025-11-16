@@ -623,14 +623,14 @@ class PublicationsController extends Controller
         if (!$isDraft) {
             $validationRules = array_merge($validationRules, [
                 'published_article' => 'required|file|mimes:pdf|max:20480',
-                'indexing_evidence' => 'required|file|mimes:pdf,jpg,jpeg,png|max:20480',
+                'indexing_evidence' => 'required|file|mimes:jpg,jpeg,png,webp|max:10240',
                 'terminal_report' => 'required|file|mimes:pdf|max:20480',
             ]);
         } else {
             // For drafts, make files optional
             $validationRules = array_merge($validationRules, [
                 'published_article' => 'nullable|file|mimes:pdf|max:20480',
-                'indexing_evidence' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+                'indexing_evidence' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
                 'terminal_report' => 'nullable|file|mimes:pdf|max:20480',
             ]);
         }

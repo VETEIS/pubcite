@@ -3,7 +3,7 @@
     <!-- Header Section -->
     <div class="text-center py-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
         <h2 class="text-2xl font-bold text-blue-800 mb-2">Upload Required Documents</h2>
-        <p class="text-sm text-blue-600">Please upload all required PDF documents for your publication request</p>
+        <p class="text-sm text-blue-600">Please upload all required documents for your publication request</p>
     </div>
     
     
@@ -31,28 +31,6 @@
                    @change="handleFileSelection($event, $data)">
         </div>
 
-        <!-- Indexing Evidence Card -->
-        <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer"
-             x-data="{ fileName: '', displayName: '', isDragOver: false }"
-             @click="$refs.indexingEvidence.click()"
-             @dragover.prevent="isDragOver = true"
-             @dragleave.prevent="isDragOver = false"
-             @drop.prevent="isDragOver = false; handleFileDrop($event, 'indexing_evidence')"
-             :class="isDragOver ? 'border-blue-400 bg-blue-50' : 'hover:border-maroon-300'">
-            <div class="p-4 text-center">
-                <div class="w-10 h-10 bg-gradient-to-br from-maroon-100 to-maroon-200 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
-                    <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
-                </div>
-                <h3 class="text-sm font-medium text-gray-900 mb-3">WOS / Scopus Evidence</h3>
-                <div class="text-xs text-maroon-600 font-medium mb-1 truncate" x-text="displayName || 'Click to upload'"></div>
-                <p class="text-xs text-gray-400">Upload screenshot evidence (Max 10MB)</p>
-            </div>
-            <input type="file" name="indexing_evidence" accept=".pdf,.png,.jpg,.jpeg" class="hidden" x-ref="indexingEvidence" required
-                   @change="handleFileSelection($event, $data)">
-        </div>
-
         <!-- Terminal Report Card -->
         <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer"
              x-data="{ fileName: '', displayName: '', isDragOver: false }"
@@ -75,6 +53,28 @@
                    @change="handleFileSelection($event, $data)">
         </div>
 
+        <!-- Indexing Evidence Card -->
+        <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer"
+             x-data="{ fileName: '', displayName: '', isDragOver: false }"
+             @click="$refs.indexingEvidence.click()"
+             @dragover.prevent="isDragOver = true"
+             @dragleave.prevent="isDragOver = false"
+             @drop.prevent="isDragOver = false; handleFileDrop($event, 'indexing_evidence')"
+             :class="isDragOver ? 'border-blue-400 bg-blue-50' : 'hover:border-maroon-300'">
+            <div class="p-4 text-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-maroon-100 to-maroon-200 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Indexing Evidence</h3>
+                <div class="text-xs text-maroon-600 font-medium mb-1 truncate" x-text="displayName || 'Click to upload'"></div>
+                <p class="text-xs text-gray-400">Upload screenshot evidence (Images only, Max 10MB)</p>
+            </div>
+            <input type="file" name="indexing_evidence" accept=".png,.jpg,.jpeg,.webp" class="hidden" x-ref="indexingEvidence" required
+                   @change="handleFileSelection($event, $data)">
+        </div>
+
     </div>
 </div>
 
@@ -86,13 +86,13 @@ function handleFileDrop(event, fieldName) {
         const file = files[0];
         const allowedTypesByField = {
             'published_article': ['application/pdf'],
-            'indexing_evidence': ['application/pdf', 'image/png', 'image/jpeg'],
+            'indexing_evidence': ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
             'terminal_report': ['application/pdf']
         };
         const allowedTypes = allowedTypesByField[fieldName] || ['application/pdf'];
         const errorMessages = {
             'published_article': 'Please upload PDF files only.',
-            'indexing_evidence': 'Please upload PDF, PNG, or JPG files only.',
+            'indexing_evidence': 'Please upload image files only (PNG, JPG, JPEG, or WEBP).',
             'terminal_report': 'Please upload PDF files only.'
         };
 
@@ -115,12 +115,12 @@ function handleFileSelection(event, componentData) {
     const inputName = event.target.name;
     const allowedTypesByField = {
         'published_article': ['application/pdf'],
-        'indexing_evidence': ['application/pdf', 'image/png', 'image/jpeg'],
+        'indexing_evidence': ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
         'terminal_report': ['application/pdf']
     };
     const errorMessages = {
         'published_article': 'Please upload PDF files only.',
-        'indexing_evidence': 'Please upload PDF, PNG, or JPG files only.',
+        'indexing_evidence': 'Please upload image files only (PNG, JPG, JPEG, or WEBP).',
         'terminal_report': 'Please upload PDF files only.'
     };
     const allowedTypes = allowedTypesByField[inputName] || ['application/pdf'];

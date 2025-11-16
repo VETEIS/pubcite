@@ -25,21 +25,6 @@
                 <input type="file" id="published-article-review" class="hidden" accept=".pdf" onchange="updateReviewFile('published_article', this)">
             </div>
 
-            <!-- Indexing Evidence Review -->
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                        </svg>
-                    </div>
-                    <h4 class="text-sm font-medium text-gray-900">WOS / Scopus Evidence</h4>
-                </div>
-                <p class="text-xs text-gray-600 mb-2" id="review-indexing-evidence">No file uploaded</p>
-                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('indexing-evidence-review').click()">Change File</button>
-                <input type="file" id="indexing-evidence-review" class="hidden" accept=".pdf" onchange="updateReviewFile('indexing_evidence', this)">
-            </div>
-
             <!-- Terminal Report Review -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div class="flex items-center gap-3 mb-3">
@@ -53,6 +38,21 @@
                 <p class="text-xs text-gray-600 mb-2" id="review-terminal-report">No file uploaded</p>
                 <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('terminal-report-review').click()">Change File</button>
                 <input type="file" id="terminal-report-review" class="hidden" accept=".pdf" onchange="updateReviewFile('terminal_report', this)">
+            </div>
+
+            <!-- Indexing Evidence Review -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 bg-maroon-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-sm font-medium text-gray-900">Indexing Evidence</h4>
+                </div>
+                <p class="text-xs text-gray-600 mb-2" id="review-indexing-evidence">No file uploaded</p>
+                <button type="button" class="text-xs text-maroon-600 hover:text-maroon-800 font-medium" onclick="document.getElementById('indexing-evidence-review').click()">Change File</button>
+                <input type="file" id="indexing-evidence-review" class="hidden" accept=".png,.jpg,.jpeg,.webp" onchange="updateReviewFile('indexing_evidence', this)">
             </div>
         </div>
     </div>
