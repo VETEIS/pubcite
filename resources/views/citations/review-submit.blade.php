@@ -234,15 +234,9 @@ function generateDocx(type) {
     // Get Alpine.js component data
     const alpineComponent = Alpine.$data(form.closest('[x-data]'));
     
-    // Check if file is already generated and form data hasn't changed
-    if (alpineComponent && alpineComponent.generatedDocxPaths && alpineComponent.generatedDocxPaths[type]) {
-        const currentHash = alpineComponent.calculateFormDataHash(type === 'incentive' ? 'incentive' : 'recommendation');
-        if (alpineComponent.formDataHashes[type] === currentHash) {
-            // File exists and is up-to-date, fetch it directly
-            fetchPreGeneratedDocx(type, alpineComponent.generatedDocxPaths[type]);
-            return;
-        }
-    }
+    // Always regenerate when generating from review page to ensure latest form data is used
+    // Don't use cached files - always send form data via POST to force regeneration
+    // This ensures that any changes to form fields (like name, others, etc.) are reflected
     
     // Create FormData but exclude file inputs to avoid 413 errors
     const formData = new FormData();
@@ -267,6 +261,7 @@ function generateDocx(type) {
     
     formData.append('docx_type', type);
     formData.append('store_for_submit', '1'); // Store for submission use
+    formData.append('force_regenerate', '1'); // Always force regeneration to ensure latest data
 
 
     // Show comprehensive loading state with progress tracking

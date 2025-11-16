@@ -33,6 +33,11 @@ class SettingsController extends Controller
             'wos_publications_count' => Setting::get('wos_publications_count', '0'),
             'aci_publications_count' => Setting::get('aci_publications_count', '0'),
             'peer_publications_count' => Setting::get('peer_publications_count', '0'),
+            // Academic ranks and colleges for dropdowns
+            'academic_ranks' => json_decode(Setting::get('academic_ranks', '[]'), true) ?? [],
+            'colleges' => json_decode(Setting::get('colleges', '[]'), true) ?? [],
+            // Others indexing options for dropdown
+            'others_indexing_options' => json_decode(Setting::get('others_indexing_options', '[]'), true) ?? [],
         ];
         return view('admin.settings', $data);
     }
@@ -54,6 +59,8 @@ class SettingsController extends Controller
             return $this->updateResearchers($request);
         } elseif ($request->has('save_publication_counts')) {
             return $this->updatePublicationCounts($request);
+        } elseif ($request->has('save_form_dropdowns')) {
+            return $this->updateFormDropdowns($request);
         }
         
         return back()->with('error', 'Invalid form submission.');
@@ -338,6 +345,55 @@ class SettingsController extends Controller
         });
 
         return back()->with('success', 'Researchers updated successfully.');
+    }
+
+    private function updateFormDropdowns(Request $request)
+    {
+        $validated = $request->validate([
+            'academic_ranks' => 'nullable|array',
+            'academic_ranks.*' => 'nullable|string|max:255',
+            'colleges' => 'nullable|array',
+            'colleges.*' => 'nullable|string|max:255',
+            'others_indexing_options' => 'nullable|array',
+            'others_indexing_options.*' => 'nullable|string|max:255',
+        ]);
+
+        // Filter out empty values and trim
+        $academicRanks = [];
+        if (!empty($validated['academic_ranks']) && is_array($validated['academic_ranks'])) {
+            foreach ($validated['academic_ranks'] as $rank) {
+                $trimmed = trim((string)$rank);
+                if ($trimmed !== '') {
+                    $academicRanks[] = $trimmed;
+                }
+            }
+        }
+
+        $colleges = [];
+        if (!empty($validated['colleges']) && is_array($validated['colleges'])) {
+            foreach ($validated['colleges'] as $college) {
+                $trimmed = trim((string)$college);
+                if ($trimmed !== '') {
+                    $colleges[] = $trimmed;
+                }
+            }
+        }
+
+        $othersIndexingOptions = [];
+        if (!empty($validated['others_indexing_options']) && is_array($validated['others_indexing_options'])) {
+            foreach ($validated['others_indexing_options'] as $option) {
+                $trimmed = trim((string)$option);
+                if ($trimmed !== '') {
+                    $othersIndexingOptions[] = $trimmed;
+                }
+            }
+        }
+
+        Setting::set('academic_ranks', json_encode($academicRanks));
+        Setting::set('colleges', json_encode($colleges));
+        Setting::set('others_indexing_options', json_encode($othersIndexingOptions));
+
+        return back()->with('success', 'Form dropdown options updated successfully.');
     }
 
     private function authorizeAdmin(): void

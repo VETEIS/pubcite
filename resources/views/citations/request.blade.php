@@ -34,6 +34,17 @@
                     incentive: null,
                     recommendation: null
                 },
+                uploadTabVisited: false, // Track if upload tab has been visited
+                reviewTabVisited: false, // Track if review tab has been visited
+                needsRegeneration: {
+                    incentive: false,
+                    recommendation: false
+                },
+                pdfRegenerationTimer: null, // Timer for debounced PDF regeneration
+                pdfGenerationStatus: {
+                    incentive: 'idle', // 'idle', 'generating', 'ready', 'error'
+                    recommendation: 'idle'
+                },
                 
                 showError(message) {
                     this.errorMessage = message;
@@ -68,10 +79,40 @@
                         }
                     });
                     
+                    // Validate that at least one indexing option is selected
+                    const scopus = document.querySelector('input[name="scopus"]');
+                    const wos = document.querySelector('input[name="wos"]');
+                    const aci = document.querySelector('input[name="aci"]');
+                    const others = document.querySelector('select[name="others"]');
+                    
+                    const hasScopus = scopus && scopus.checked;
+                    const hasWos = wos && wos.checked;
+                    const hasAci = aci && aci.checked;
+                    const hasOthers = others && others.value && others.value.trim() !== '';
+                    
+                    if (!hasScopus && !hasWos && !hasAci && !hasOthers) {
+                        allValid = false;
+                        if (showError) {
+                            this.showError('Please select at least one indexing option (Scopus, Web of Science, ACI, or Others).');
+                            // Highlight the indexing section
+                            const scopusLabel = document.querySelector('input[name="scopus"]')?.closest('label');
+                            const indexedSection = scopusLabel?.closest('.space-y-4');
+                            if (indexedSection) {
+                                indexedSection.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
+                                setTimeout(() => indexedSection.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2'), 3000);
+                                indexedSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                    }
+                    
                     if (!allValid && firstInvalidField && showError) {
                         firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         firstInvalidField.focus();
-                        this.showError('Please complete all required fields before submitting.');
+                        if (!hasScopus && !hasWos && !hasAci && !hasOthers) {
+                            // Error already shown above
+                        } else {
+                            this.showError('Please complete all required fields before submitting.');
+                        }
                     }
                     
                     return allValid;
@@ -131,20 +172,22 @@
                     
                     this.activeTab = targetTab;
                     
-                    // Trigger draft save when upload tab becomes active to generate PDFs
+                    // Generate PDFs when upload tab becomes active (forms are complete)
                     if (targetTab === 'upload') {
-                        // Save draft immediately to generate PDFs
-                        this.saveDraft().catch(() => {
-                            // Silent error
-                        });
+                        this.uploadTabVisited = true;
+                        // Generate PDFs in background
+                        this.generatePdfsInBackground();
                     }
                     
                     // Display uploaded files when switching to review tab
                     if (targetTab === 'review') {
+                        this.reviewTabVisited = true;
                         setTimeout(() => {
                             this.displayUploadedFiles();
                             // Update submit button state when switching to review
                             this.updateSubmitButton();
+                            // Generate PDFs if hash changed (lazy generation)
+                            this.generatePdfsIfNeeded();
                         }, 100);
                     }
                 },
@@ -275,6 +318,18 @@
                                 if (input.checked) {
                                     formData.append(input.name, input.value);
                                     hasData = true;
+                                }
+                            } else if (input.tagName === 'SELECT') {
+                                // Handle select elements explicitly
+                                // Always include select values if they're not disabled and have a name
+                                if (!input.disabled && input.name) {
+                                    const value = input.value || '';
+                                    // Include even empty values for selects (they might be cleared)
+                                    formData.append(input.name, value);
+                                    // Only mark as hasData if there's an actual value
+                                    if (value.trim() !== '') {
+                                        hasData = true;
+                                    }
                                 }
                             } else {
                                 // Only save fields that have actual content
@@ -416,18 +471,49 @@
                         return;
                     }
                     
+                    // If upload tab has been visited, check if regeneration is needed
+                    if (this.uploadTabVisited) {
+                        // Calculate current hashes
+                        const incentiveHash = this.calculateFormDataHash('incentive');
+                        const recommendationHash = this.calculateFormDataHash('recommendation');
+                        
+                        // Check if hashes actually changed
+                        const incentiveChanged = this.formDataHashes.incentive !== incentiveHash;
+                        const recommendationChanged = this.formDataHashes.recommendation !== recommendationHash;
+                        
+                        // Only mark for regeneration if hash changed
+                        if (incentiveChanged) {
+                            this.needsRegeneration.incentive = true;
+                        }
+                        if (recommendationChanged) {
+                            this.needsRegeneration.recommendation = true;
+                        }
+                        
+                        // Only trigger regeneration if something changed AND review tab has been visited
+                        // (If review tab not visited yet, generate lazily when user switches to it)
+                        if ((incentiveChanged || recommendationChanged) && this.reviewTabVisited) {
+                            // Debounce PDF regeneration (5 seconds after last form change)
+                            if (this.pdfRegenerationTimer) {
+                                clearTimeout(this.pdfRegenerationTimer);
+                            }
+                            this.pdfRegenerationTimer = setTimeout(() => {
+                                this.generatePdfsInBackground();
+                            }, 5000); // Wait 5 seconds after last change
+                        }
+                    }
+                    
                     // Clear existing timer
                     if (this.autoSaveTimer) {
                         clearTimeout(this.autoSaveTimer);
                     }
                     
-                    // Set new timer - save after 5 seconds of inactivity (reduced frequency)
+                    // Set new timer - save after 2 seconds of inactivity
                     this.autoSaveTimer = setTimeout(() => {
                         // Double-check before saving
                         if (!this.autoSaveDisabled && !this.isSubmitting && !this.savingDraft) {
                             this.saveDraft();
                         }
-                    }, 5000);
+                    }, 2000);
                 },
                 
                 // Disable auto-save (called after form submission)
@@ -688,17 +774,32 @@
                     return btoa(json).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
                 },
                 
-                // Auto-generate DOCX files in background when upload tab becomes active
-                async autoGenerateDocxFiles() {
-                    // Generate both documents in parallel
+                // Generate PDFs if needed (check hash first)
+                generatePdfsIfNeeded() {
+                    const incentiveHash = this.calculateFormDataHash('incentive');
+                    const recommendationHash = this.calculateFormDataHash('recommendation');
+                    
+                    const incentiveNeeded = !this.generatedDocxPaths.incentive || 
+                                          this.formDataHashes.incentive !== incentiveHash;
+                    const recommendationNeeded = !this.generatedDocxPaths.recommendation || 
+                                               this.formDataHashes.recommendation !== recommendationHash;
+                    
+                    if (incentiveNeeded || recommendationNeeded) {
+                        this.generatePdfsInBackground();
+                    }
+                },
+                
+                // Generate PDFs in background when upload tab is visited
+                async generatePdfsInBackground() {
+                    // Generate both PDFs in parallel
                     await Promise.all([
-                        this.generateDocxInBackground('incentive'),
-                        this.generateDocxInBackground('recommendation')
+                        this.generatePdfInBackground('incentive'),
+                        this.generatePdfInBackground('recommendation')
                     ]);
                 },
                 
-                // Generate a single DOCX file in background
-                async generateDocxInBackground(docxType) {
+                // Generate a single PDF file in background (with regeneration on form changes)
+                async generatePdfInBackground(docxType, retryCount = 0) {
                     // Check if already generating
                     if (this.generatingDocs[docxType]) {
                         return;
@@ -707,18 +808,27 @@
                     // Calculate current form data hash
                     const currentHash = this.calculateFormDataHash(docxType === 'incentive' ? 'incentive' : 'recommendation');
                     
-                    // Check if regeneration is needed (form data changed)
-                    if (this.formDataHashes[docxType] === currentHash && this.generatedDocxPaths[docxType]) {
+                    // Check if regeneration is needed (form data changed or not yet generated)
+                    const needsRegen = this.needsRegeneration[docxType] || 
+                                      this.formDataHashes[docxType] !== currentHash || 
+                                      !this.generatedDocxPaths[docxType];
+                    
+                    if (!needsRegen && this.generatedDocxPaths[docxType]) {
                         // No changes, file already generated
                         return;
                     }
                     
                     // Mark as generating
                     this.generatingDocs[docxType] = true;
+                    this.needsRegeneration[docxType] = false;
+                    this.pdfGenerationStatus[docxType] = 'generating';
                     
                     try {
                         const form = document.getElementById('citation-request-form');
-                        if (!form) return;
+                        if (!form) {
+                            this.pdfGenerationStatus[docxType] = 'error';
+                            return;
+                        }
                         
                         // Create FormData but exclude file inputs
                         const formData = new FormData();
@@ -738,6 +848,7 @@
                         
                         formData.append('docx_type', docxType);
                         formData.append('store_for_submit', '1'); // Store for later use in submission
+                        formData.append('force_regenerate', '1'); // Always force regeneration to ensure latest data
                         
                         const response = await fetch('{{ route("citations.generate") }}', {
                             method: 'POST',
@@ -755,17 +866,35 @@
                                 this.generatedDocxPaths[docxType] = result.filePath;
                                 // Update hash to mark as generated
                                 this.formDataHashes[docxType] = currentHash;
-                                console.log(`Background DOCX generated: ${docxType}`, result.filePath);
+                                this.pdfGenerationStatus[docxType] = 'ready';
+                                console.log(`Background PDF generated: ${docxType}`, result.filePath);
                             } else {
-                                console.warn(`Background DOCX generation failed for ${docxType}:`, result);
+                                throw new Error(result.message || 'PDF generation failed');
                             }
                         } else {
-                            console.error(`Background DOCX generation HTTP error for ${docxType}:`, response.status);
+                            const errorText = await response.text();
+                            throw new Error(`HTTP ${response.status}: ${errorText}`);
                         }
                     } catch (error) {
-                        // Silent fail - background generation shouldn't interrupt user
+                        console.error(`Background PDF generation error for ${docxType}:`, error);
+                        
+                        // Retry logic (max 2 retries)
+                        if (retryCount < 2) {
+                            console.log(`Retrying PDF generation for ${docxType} (attempt ${retryCount + 1})`);
+                            setTimeout(() => {
+                                this.generatingDocs[docxType] = false;
+                                this.generatePdfInBackground(docxType, retryCount + 1);
+                            }, 3000); // Wait 3 seconds before retry
+                            return;
+                        } else {
+                            // Max retries reached, mark as error
+                            this.pdfGenerationStatus[docxType] = 'error';
+                            console.error(`PDF generation failed after ${retryCount + 1} attempts for ${docxType}`);
+                        }
                     } finally {
-                        this.generatingDocs[docxType] = false;
+                        if (this.pdfGenerationStatus[docxType] !== 'generating' || retryCount >= 2) {
+                            this.generatingDocs[docxType] = false;
+                        }
                     }
                 },
                 
@@ -899,37 +1028,8 @@
                     // Prevent default form submission and submit manually
                     event.preventDefault();
                     
-                    // Add pre-generated DOCX file paths to form before submission
-                    const form = document.getElementById('citation-request-form');
-                    if (form) {
-                        // Remove any existing generated_docx_files inputs
-                        const existingInputs = form.querySelectorAll('input[name^="generated_docx_files"]');
-                        existingInputs.forEach(input => input.remove());
-                        
-                        // Debug: Log what we're about to send
-                        console.log('Pre-generated DOCX paths:', this.generatedDocxPaths);
-                        
-                        // Add pre-generated file paths if they exist
-                        if (this.generatedDocxPaths.incentive) {
-                            const incentiveInput = document.createElement('input');
-                            incentiveInput.type = 'hidden';
-                            incentiveInput.name = 'generated_docx_files[incentive]';
-                            incentiveInput.value = this.generatedDocxPaths.incentive;
-                            form.appendChild(incentiveInput);
-                            console.log('Added incentive file path:', this.generatedDocxPaths.incentive);
-                        }
-                        
-                        if (this.generatedDocxPaths.recommendation) {
-                            const recommendationInput = document.createElement('input');
-                            recommendationInput.type = 'hidden';
-                            recommendationInput.name = 'generated_docx_files[recommendation]';
-                            recommendationInput.value = this.generatedDocxPaths.recommendation;
-                            form.appendChild(recommendationInput);
-                            console.log('Added recommendation file path:', this.generatedDocxPaths.recommendation);
-                        }
-                    }
-                    
                     // Submit the form manually after a short delay to ensure loading screen shows
+                    const form = document.getElementById('citation-request-form');
                     setTimeout(() => {
                         if (form) {
                             form.submit();

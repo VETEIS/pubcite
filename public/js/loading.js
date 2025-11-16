@@ -45,6 +45,23 @@
             </div>
         ` : '';
         
+        // Add notice for document generation
+        const isGeneratingDocument = title === 'Generating Document';
+        const generationNotice = isGeneratingDocument ? `
+            <div style="
+                margin-top: 15px;
+                padding: 10px;
+                background: #FFF3CD;
+                border: 1px solid #FFC107;
+                border-radius: 6px;
+                font-size: 12px;
+                color: #856404;
+                line-height: 1.4;
+            ">
+                <strong>Note:</strong> The first generation may take some time. Please be patient.
+            </div>
+        ` : '';
+        
         loadingOverlay.innerHTML = `
             <div style="
                 background: white;
@@ -69,6 +86,7 @@
                 "></div>
                 <h3 style="margin: 0 0 10px; color: #333; font-size: 20px; font-weight: 600;" id="loading-title">${title}</h3>
                 <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.4;" id="loading-message">${message}</p>
+                ${generationNotice}
                 ${progressHTML}
             </div>
             <style>

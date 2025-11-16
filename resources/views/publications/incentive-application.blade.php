@@ -31,19 +31,43 @@
             </div>
             <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">Academic Rank</label>
-                <input type="text" name="rank" required
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
-                       placeholder="e.g., Assistant Professor"
-                       value="{{ old('rank', $request->form_data['rank'] ?? '') }}">
+                <select name="rank" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200">
+                    <option value="">Select Academic Rank</option>
+                    @php($selectedRank = old('rank', $request->form_data['rank'] ?? ''))
+                    @foreach($academicRanks ?? [] as $rank)
+                        <option value="{{ $rank }}" {{ $selectedRank === $rank ? 'selected' : '' }}>{{ $rank }}</option>
+                    @endforeach
+                </select>
+                @if($selectedRank && !empty($academicRanks) && !in_array($selectedRank, $academicRanks))
+                    <p class="text-xs text-amber-600 mt-1">
+                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Previously saved value "{{ $selectedRank }}" is no longer available. Please select a new value.
+                    </p>
+                @endif
             </div>
             <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">
                     College <span class="text-red-500">*</span>
                 </label>
-                <input type="text" name="college" required 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200" 
-                       placeholder="Enter your college"
-                       value="{{ old('college', $request->form_data['college'] ?? '') }}">
+                <select name="college" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200">
+                    <option value="">Select College</option>
+                    @php($selectedCollege = old('college', $request->form_data['college'] ?? ''))
+                    @foreach($colleges ?? [] as $college)
+                        <option value="{{ $college }}" {{ $selectedCollege === $college ? 'selected' : '' }}>{{ $college }}</option>
+                    @endforeach
+                </select>
+                @if($selectedCollege && !empty($colleges) && !in_array($selectedCollege, $colleges))
+                    <p class="text-xs text-amber-600 mt-1">
+                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Previously saved value "{{ $selectedCollege }}" is no longer available. Please select a new value.
+                    </p>
+                @endif
             </div>
         </div>
     </div>
@@ -144,6 +168,34 @@
                         </div>
                     </label>
                 </div>
+            </div>
+            
+            <!-- Others Indexing Option -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Others</label>
+                @php($othersIndexingOptions = $othersIndexingOptions ?? [])
+                @php($selectedOthers = old('others', $request->form_data['others'] ?? ''))
+                <select name="others" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all duration-200"
+                       {{ empty($othersIndexingOptions) ? 'disabled' : '' }}
+                       @change="autoSave()">
+                    <option value="">Select Others Indexing Option</option>
+                    @if(!empty($othersIndexingOptions))
+                        @foreach($othersIndexingOptions as $option)
+                            <option value="{{ $option }}" {{ $selectedOthers === $option ? 'selected' : '' }}>{{ $option }}</option>
+                        @endforeach
+                    @else
+                        <option value="" disabled>No options configured. Please contact administrator.</option>
+                    @endif
+                </select>
+                @if($selectedOthers && !empty($othersIndexingOptions) && !in_array($selectedOthers, $othersIndexingOptions))
+                    <p class="text-xs text-amber-600 mt-1">
+                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Previously saved value "{{ $selectedOthers }}" is no longer available. Please select a new value.
+                    </p>
+                @endif
             </div>
         </div>
     </div>

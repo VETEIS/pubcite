@@ -15,32 +15,59 @@ class CleanupTempFiles extends Command
     {
         $this->info('Starting cleanup of temporary files...');
         
+        // Standardized temp directories
+        // Note: temp/docx_cache is handled by cleanup:preview-cache command
         $tempDirectories = [
-            'temp',
-            'uploads/temp',
-            'public/temp'
+            'temp', // storage/app/temp/ (ZIP files, progress files)
         ];
+        
+        // Also check public/temp for legacy files (will be migrated to temp/)
+        if (Storage::disk('public')->exists('temp')) {
+            $this->info('Found legacy public/temp directory. Consider migrating files to storage/app/temp/');
+        }
         
         $deletedCount = 0;
         $totalSize = 0;
         
         foreach ($tempDirectories as $directory) {
-            if (Storage::exists($directory)) {
-                $files = Storage::files($directory);
+            // Use local disk for temp directory (storage/app/temp/)
+            if (Storage::disk('local')->exists($directory)) {
+                $files = Storage::disk('local')->files($directory);
                 
                 foreach ($files as $file) {
-                    $lastModified = Storage::lastModified($file);
+                    $lastModified = Storage::disk('local')->lastModified($file);
                     $fileAge = Carbon::createFromTimestamp($lastModified);
                     
                     // Delete files older than 24 hours
                     if ($fileAge->diffInHours(now()) > 24) {
-                        $size = Storage::size($file);
-                        Storage::delete($file);
+                        $size = Storage::disk('local')->size($file);
+                        Storage::disk('local')->delete($file);
                         $deletedCount++;
                         $totalSize += $size;
                         
                         $this->line("Deleted: {$file} (Size: " . $this->formatBytes($size) . ")");
                     }
+                }
+            }
+        }
+        
+        // Also check legacy public/temp directory if it exists
+        if (Storage::disk('public')->exists('temp')) {
+            $this->warn('Found legacy public/temp directory. Files should be migrated to storage/app/temp/');
+            $publicFiles = Storage::disk('public')->files('temp');
+            
+            foreach ($publicFiles as $file) {
+                $lastModified = Storage::disk('public')->lastModified($file);
+                $fileAge = Carbon::createFromTimestamp($lastModified);
+                
+                // Delete files older than 24 hours
+                if ($fileAge->diffInHours(now()) > 24) {
+                    $size = Storage::disk('public')->size($file);
+                    Storage::disk('public')->delete($file);
+                    $deletedCount++;
+                    $totalSize += $size;
+                    
+                    $this->line("Deleted (legacy): {$file} (Size: " . $this->formatBytes($size) . ")");
                 }
             }
         }

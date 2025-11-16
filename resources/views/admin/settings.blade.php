@@ -500,6 +500,149 @@
                             </div>
                         </div>
                         
+                        <!-- Form Dropdowns Management Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
+                            <form method="POST" action="{{ route('admin.settings.update') }}" id="form-dropdowns-form">
+                                @csrf
+                                @method('PUT')
+                                
+                                <!-- Header -->
+                                <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-gray-900">Form Dropdown Options</h3>
+                                                <p class="text-sm text-gray-600 mt-1">Manage academic ranks and colleges for incentive application forms</p>
+                                            </div>
+                                        </div>
+                                        <button type="submit" name="save_form_dropdowns" value="1"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 font-medium text-sm">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="p-6 space-y-6">
+                                    <!-- Academic Ranks -->
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <h4 class="text-md font-semibold text-gray-900">Academic Ranks</h4>
+                                            <button type="button" onclick="addRankRow()" 
+                                                    class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
+                                                    title="Add Academic Rank">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div id="academicRanksContainer" class="space-y-2">
+                                            @php($ranks = old('academic_ranks', $academic_ranks ?? []))
+                                            @if(empty($ranks))
+                                                @php($ranks = [''])
+                                            @endif
+                                            @foreach($ranks as $idx => $rank)
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" name="academic_ranks[]" value="{{ $rank }}" 
+                                                       placeholder="e.g., Assistant Professor" 
+                                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                @if($idx > 0 || count($ranks) > 1)
+                                                <button type="button" onclick="removeRankRow(this)" 
+                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                        title="Remove">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                @endif
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Colleges -->
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <h4 class="text-md font-semibold text-gray-900">Colleges</h4>
+                                            <button type="button" onclick="addCollegeRow()" 
+                                                    class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
+                                                    title="Add College">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div id="collegesContainer" class="space-y-2">
+                                            @php($colleges = old('colleges', $colleges ?? []))
+                                            @if(empty($colleges))
+                                                @php($colleges = [''])
+                                            @endif
+                                            @foreach($colleges as $idx => $college)
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" name="colleges[]" value="{{ $college }}" 
+                                                       placeholder="e.g., College of Engineering" 
+                                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                @if($idx > 0 || count($colleges) > 1)
+                                                <button type="button" onclick="removeCollegeRow(this)" 
+                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                        title="Remove">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                @endif
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Others Indexing Options -->
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <h4 class="text-md font-semibold text-gray-900">Others Indexing Options</h4>
+                                            <button type="button" onclick="addOthersIndexingRow()" 
+                                                    class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
+                                                    title="Add Others Indexing Option">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div id="othersIndexingContainer" class="space-y-2">
+                                            @php($othersIndexing = old('others_indexing_options', $others_indexing_options ?? []))
+                                            @if(empty($othersIndexing))
+                                                @php($othersIndexing = [''])
+                                            @endif
+                                            @foreach($othersIndexing as $idx => $option)
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" name="others_indexing_options[]" value="{{ $option }}" 
+                                                       placeholder="e.g., Google Scholar" 
+                                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                                                @if($idx > 0 || count($othersIndexing) > 1)
+                                                <button type="button" onclick="removeOthersIndexingRow(this)" 
+                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                                                        title="Remove">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                @endif
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
                         <!-- Removed standalone Calendar Settings Section (merged into Landing Page card) -->
                         </div>
 
@@ -1420,6 +1563,75 @@
             }
         }
 
+        function addRankRow() {
+            const container = document.getElementById('academicRanksContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'flex items-center gap-2';
+            newRow.innerHTML = `
+                <input type="text" name="academic_ranks[]" value="" 
+                       placeholder="e.g., Assistant Professor" 
+                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                <button type="button" onclick="removeRankRow(this)" 
+                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                        title="Remove">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removeRankRow(btn) {
+            btn.closest('div').remove();
+        }
+        
+        function addCollegeRow() {
+            const container = document.getElementById('collegesContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'flex items-center gap-2';
+            newRow.innerHTML = `
+                <input type="text" name="colleges[]" value="" 
+                       placeholder="e.g., College of Engineering" 
+                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                <button type="button" onclick="removeCollegeRow(this)" 
+                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                        title="Remove">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removeCollegeRow(btn) {
+            btn.closest('div').remove();
+        }
+        
+        function addOthersIndexingRow() {
+            const container = document.getElementById('othersIndexingContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'flex items-center gap-2';
+            newRow.innerHTML = `
+                <input type="text" name="others_indexing_options[]" value="" 
+                       placeholder="e.g., Google Scholar" 
+                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
+                <button type="button" onclick="removeOthersIndexingRow(this)" 
+                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
+                        title="Remove">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removeOthersIndexingRow(btn) {
+            btn.closest('div').remove();
+        }
+        
         function removeAnnouncementRow(btn) {
             const row = btn.closest('tr');
             const container = document.getElementById('announcementsRepeater');

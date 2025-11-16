@@ -23,12 +23,19 @@ use App\Services\TemplatePreloader;
 use App\Mail\SubmissionNotification;
 use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
+use App\Services\DocumentGenerationService;
 use App\Services\RecaptchaService;
 use App\Traits\SanitizesFilePaths;
 use App\Traits\EnsuresTemplateFiles;
 
 class CitationsController extends Controller
 {
+    protected $docGenService;
+    
+    public function __construct(DocumentGenerationService $docGenService)
+    {
+        $this->docGenService = $docGenService;
+    }
     use SanitizesFilePaths, EnsuresTemplateFiles;
     // use DraftSessionManager; // Temporarily disabled for production fix
     public function create()
@@ -60,12 +67,17 @@ class CitationsController extends Controller
         $request->request_code = $existingDraft ? $existingDraft->request_code : null;
         $request->form_data = $existingDraft ? (is_string($existingDraft->form_data) ? json_decode($existingDraft->form_data, true) : $existingDraft->form_data) : [];
         
+        // Get dropdown options from settings
+        $academicRanks = json_decode(\App\Models\Setting::get('academic_ranks', '[]'), true) ?? [];
+        $colleges = json_decode(\App\Models\Setting::get('colleges', '[]'), true) ?? [];
+        $othersIndexingOptions = json_decode(\App\Models\Setting::get('others_indexing_options', '[]'), true) ?? [];
+        
         // Show notification if draft was loaded
         if ($existingDraft) {
-            return view('citations.request', compact('request'))->with('success', 'Draft loaded successfully!');
+            return view('citations.request', compact('request', 'academicRanks', 'colleges', 'othersIndexingOptions'))->with('success', 'Draft loaded successfully!');
         }
         
-        return view('citations.request', compact('request'));
+        return view('citations.request', compact('request', 'academicRanks', 'colleges', 'othersIndexingOptions'));
     }
 
     public function adminUpdate(Request $httpRequest, \App\Models\Request $request)
@@ -185,29 +197,37 @@ class CitationsController extends Controller
             $reqId = $request->input('request_id');
             $docxType = $request->input('docx_type', 'incentive');
             $storeForSubmit = $request->input('store_for_submit', false);
+            $forceRegenerate = $request->input('force_regenerate', false);
             
             $isPreview = !$reqId;
             
-            if ($isPreview) {
-                // Deterministic cache path for previews to avoid regenerating the same DOCX repeatedly
-                // Hash will be computed below once data is merged
-                $uploadPath = null; // set after computing unique hash
-            } else {
-                $userRequest = \App\Models\Request::find($reqId);
-                if (!$userRequest) {
-                    throw new \Exception('Request not found for DOCX generation');
+            // Check if form data is provided
+            $hasFormData = !empty($request->except(['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft', 'force_regenerate']));
+            
+            // Calculate hash from request data ONLY (before fallback merge) for consistent caching
+            $requestData = $request->all();
+            $uniqueHash = $this->docGenService->calculateDataHash($requestData, $docxType);
+            
+            // Validate required fields BEFORE merging fallback data
+            $validationErrors = $this->docGenService->validateRequiredFields($requestData, $docxType);
+            if (!empty($validationErrors)) {
+                Log::warning('Required fields missing for document generation', [
+                    'docx_type' => $docxType,
+                    'errors' => $validationErrors,
+                    'request_id' => $reqId
+                ]);
+                // For previews, we'll still generate but log warning
+                // For saved requests, this shouldn't happen (validation should catch it earlier)
+                if (!$isPreview) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Required fields missing: ' . implode(', ', $validationErrors)
+                    ], 400);
                 }
-                $reqCode = $userRequest->request_code;
-                $userId = $userRequest->user_id;
-                $uploadPath = "requests/{$userId}/{$reqCode}";
-                Log::info('Generating Citation DOCX for saved request', ['request_id' => $reqId, 'request_code' => $reqCode]);
             }
             
-            // Add fallback data if form data is corrupted
+            // Add fallback data for optional fields only (after validation)
             $fallbackData = [
-                'name' => 'Sample Name',
-                'rank' => 'Sample Rank', 
-                'college' => 'Sample College',
                 'bibentry' => 'Sample Bibliography Entry',
                 'citedbibentry' => 'Sample Cited Bibliography',
                 'issn' => 'Sample ISSN',
@@ -215,6 +235,7 @@ class CitationsController extends Controller
                 'scopus' => '1',
                 'wos' => '1',
                 'aci' => '1',
+                'others' => '',
                 'facultyname' => 'Sample Faculty',
                 'centermanager' => 'Sample Manager',
                 'dean' => 'Sample Dean',
@@ -229,69 +250,41 @@ class CitationsController extends Controller
                 'rec_dean_name' => 'Sample Dean'
             ];
             
-            // Merge fallback data with form data
-            $data = array_merge($fallbackData, $request->all());
+            // Merge fallback data with form data (form data takes precedence)
+            $data = array_merge($fallbackData, $requestData);
             
-            // Normalize data for consistent hashing (remove system fields and sort keys)
-            $normalizedData = $data;
-            // Remove system fields that don't affect document content
-            $systemFields = ['_token', 'docx_type', 'store_for_submit', 'request_id', 'save_draft'];
-            foreach ($systemFields as $field) {
-                unset($normalizedData[$field]);
-            }
-            // Sort keys for consistent hash regardless of field order
-            ksort($normalizedData);
-            
-            // Removed verbose logging for better performance
-            
-            // Create stable hash from normalized data
-            $hashSource = json_encode([
-                'type' => $docxType,
-                'data' => $normalizedData
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $uniqueHash = substr(hash('sha256', $hashSource), 0, 16);
-            $filename = null;
-            $fullPath = null;
-            
-            // If preview, set a stable cache directory based on the hash and short-circuit if exists
             if ($isPreview) {
-                $cacheBase = "temp/docx_cache/{$docxType}_{$uniqueHash}";
+                // Deterministic cache path for previews
+                $cacheBase = $this->docGenService->getPreviewCachePath($docxType, $uniqueHash);
                 $uploadPath = $cacheBase;
-                // Determine expected output filename based on type
-                $expectedFile = $docxType === 'incentive'
-                    ? "{$cacheBase}/Incentive_Application_Form.docx"
-                    : "{$cacheBase}/Recommendation_Letter_Form.docx";
+                $expectedFile = $cacheBase . '/' . $this->docGenService->getDocumentFilename($docxType, false);
                 $expectedAbsolute = Storage::disk('local')->path($expectedFile);
                 $lockFile = $expectedAbsolute . '.lock';
                 
-                // Use Storage::exists() for better performance and atomicity
-                if (Storage::disk('local')->exists($expectedFile)) {
-                    // Serve cached file immediately
-                    $serveName = $docxType === 'incentive'
-                        ? 'Incentive_Application_Form.docx'
-                        : 'Recommendation_Letter_Form.docx';
+                // Only serve cached file if not forcing regeneration and file exists
+                if (!$forceRegenerate && Storage::disk('local')->exists($expectedFile)) {
+                    $serveName = $this->docGenService->getDocumentFilename($docxType, false);
                     $userAgent = request()->header('User-Agent');
                     $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
                     $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                    Log::info('Serving cached preview file', ['file' => $expectedFile]);
                     return response()->download($expectedAbsolute, $serveName, [
                         'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                         'Content-Disposition' => $contentDisposition . '; filename="' . $serveName . '"'
                     ]);
                 }
                 
-                // If file doesn't exist, check if another process is generating it
-                // Wait up to 5 seconds for the file to be generated by another request
-                $maxWait = 5; // seconds
-                $waitInterval = 0.1; // 100ms
-                $waited = 0;
-                while (file_exists($lockFile) && $waited < $maxWait) {
-                    usleep($waitInterval * 1000000); // Convert to microseconds
-                    $waited += $waitInterval;
-                    // Check again if file was created
+                // If forcing regeneration, delete cached file
+                if ($forceRegenerate && Storage::disk('local')->exists($expectedFile)) {
+                    Storage::disk('local')->delete($expectedFile);
+                    Log::info('Deleted cached preview file to force regeneration', ['file' => $expectedFile]);
+                }
+                
+                // Wait for lock to be released if another process is generating
+                if (!$this->docGenService->waitForLock($lockFile, 5, 0.1)) {
+                    // Lock still exists, check if file was created
                     if (Storage::disk('local')->exists($expectedFile)) {
-                        $serveName = $docxType === 'incentive'
-                            ? 'Incentive_Application_Form.docx'
-                            : 'Recommendation_Letter_Form.docx';
+                        $serveName = $this->docGenService->getDocumentFilename($docxType, false);
                         $userAgent = request()->header('User-Agent');
                         $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
                         $contentDisposition = $isIOS ? 'inline' : 'attachment';
@@ -302,31 +295,89 @@ class CitationsController extends Controller
                     }
                 }
                 
-                // Create lock file to indicate we're generating
-                // Ensure the cache directory exists before creating the lock file
-                if (!Storage::disk('local')->exists($cacheBase)) {
-                    Storage::disk('local')->makeDirectory($cacheBase, 0777, true);
+                // Try to acquire lock for generation
+                if (!$this->docGenService->acquireLock($lockFile)) {
+                    // Another process is generating, wait and retry
+                    sleep(1);
+                    if (Storage::disk('local')->exists($expectedFile)) {
+                        $serveName = $this->docGenService->getDocumentFilename($docxType, false);
+                        $userAgent = request()->header('User-Agent');
+                        $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
+                        $contentDisposition = $isIOS ? 'inline' : 'attachment';
+                        return response()->download($expectedAbsolute, $serveName, [
+                            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'Content-Disposition' => $contentDisposition . '; filename="' . $serveName . '"'
+                        ]);
+                    }
                 }
-                if (!file_exists($lockFile)) {
-                    file_put_contents($lockFile, getmypid());
+            } else {
+                $userRequest = \App\Models\Request::find($reqId);
+                if (!$userRequest) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Request not found for DOCX generation'
+                    ], 404);
                 }
+                $reqCode = $userRequest->request_code;
+                $userId = $userRequest->user_id;
+                $uploadPath = "requests/{$userId}/{$reqCode}";
+                
+                // Check if regeneration is needed using smart caching
+                $expectedPdfPath = $uploadPath . '/' . $this->docGenService->getDocumentFilename($docxType, true);
+                $shouldRegenerate = $this->docGenService->shouldRegenerate($expectedPdfPath, $uniqueHash, $forceRegenerate, $hasFormData);
+                
+                if (!$shouldRegenerate && Storage::disk('local')->exists($expectedPdfPath)) {
+                    // File exists and is valid, return it
+                    Log::info('Using existing PDF file (no regeneration needed)', [
+                        'path' => $expectedPdfPath,
+                        'request_id' => $reqId
+                    ]);
+                    if ($storeForSubmit) {
+                        return response()->json([
+                            'success' => true,
+                            'filePath' => $expectedPdfPath,
+                            'filename' => $this->docGenService->getDocumentFilename($docxType, true)
+                        ]);
+                    }
+                }
+                
+                Log::info('Generating Citation DOCX for saved request', [
+                    'request_id' => $reqId, 
+                    'request_code' => $reqCode,
+                    'has_form_data' => $hasFormData,
+                    'force_regenerate' => $forceRegenerate,
+                    'should_regenerate' => $shouldRegenerate
+                ]);
             }
+            $filename = null;
+            $fullPath = null;
             
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
-                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Incentive_Application_Form.docx';
+                    // Convert to PDF if storing for submit (saved requests) or if explicitly requested
+                    $convertToPdf = $storeForSubmit && !$isPreview;
+                    
+                    // Generate normally - safe file replacement handled in generation method if needed
+                    $fullPath = $this->generateCitationIncentiveDocxFromHtml($filtered, $uploadPath, $convertToPdf);
+                    $filename = $convertToPdf ? 'Incentive_Application_Form.pdf' : 'Incentive_Application_Form.docx';
                     break;
                     
                 case 'recommendation':
                     $filtered = $this->mapRecommendationFields($data);
-                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, false); // No PDF conversion for preview
-                    $filename = 'Recommendation_Letter_Form.docx';
+                    // Convert to PDF if storing for submit (saved requests) or if explicitly requested
+                    $convertToPdf = $storeForSubmit && !$isPreview;
+                    
+                    // Generate normally - safe file replacement handled in generation method if needed
+                    $fullPath = $this->generateCitationRecommendationDocxFromHtml($filtered, $uploadPath, $convertToPdf);
+                    $filename = $convertToPdf ? 'Recommendation_Letter_Form.pdf' : 'Recommendation_Letter_Form.docx';
                     break;
                     
                 default:
-                    throw new \Exception('Invalid document type: ' . $docxType);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid document type: ' . $docxType
+                    ], 400);
             }
             
             $absolutePath = Storage::disk('local')->path($fullPath);
@@ -337,9 +388,7 @@ class CitationsController extends Controller
             // Clean up lock file if it exists (for preview cache)
             if ($isPreview) {
                 $lockFile = $absolutePath . '.lock';
-                if (file_exists($lockFile)) {
-                    @unlink($lockFile);
-                }
+                $this->docGenService->releaseLock($lockFile);
             }
             
             Log::info('Citation DOCX generated and found, ready to serve', ['type' => $docxType, 'path' => $fullPath, 'isPreview' => $isPreview]);
@@ -357,12 +406,20 @@ class CitationsController extends Controller
             $userAgent = request()->header('User-Agent');
             $isIOS = preg_match('/iPhone|iPad|iPod/i', $userAgent);
             $contentDisposition = $isIOS ? 'inline' : 'attachment';
+            $contentType = str_ends_with($filename, '.pdf') 
+                ? 'application/pdf' 
+                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
             return response()->download($absolutePath, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'Content-Type' => $contentType,
                 'Content-Disposition' => $contentDisposition . '; filename="' . $filename . '"'
             ]);
         } catch (\Exception $e) {
-            Log::error('Error generating Citation DOCX: ' . $e->getMessage());
+            Log::error('Error generating Citation DOCX', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error generating document: ' . $e->getMessage()
@@ -370,7 +427,7 @@ class CitationsController extends Controller
         }
     }
 
-    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false)
+    private function generateCitationIncentiveDocxFromHtml($data, $uploadPath, $convertToPdf = false, $customFilename = null)
     {
         try {
             if (empty($uploadPath)) {
@@ -388,7 +445,13 @@ class CitationsController extends Controller
                 throw new \RuntimeException("Template file not found: {$templatePath}");
             }
 
-            $filename = 'Incentive_Application_Form.docx';
+            $filename = $customFilename ?? 'Incentive_Application_Form.docx';
+            
+            // Generate to temp file first for safe replacement
+            $tempFilename = $filename . '.tmp.' . uniqid();
+            $tempOutputPath = $privateUploadPath . '/' . $tempFilename;
+            $tempFullPath = Storage::disk('local')->path($tempOutputPath);
+            
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
@@ -404,37 +467,79 @@ class CitationsController extends Controller
                 'directorsignature' => '${directorsignature}'
             ]);
             
-            // Set all values in one pass
-            foreach ($allValues as $key => $value) {
-                try {
-                    $templateProcessor->setValue($key, (string)($value ?? ''));
-                } catch (\Exception $e) {
-                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
-                }
+            // Set all values using service method (with logging in debug mode)
+            $logMissing = config('app.debug', false);
+            $missingPlaceholders = $this->docGenService->setTemplateValues($templateProcessor, $allValues, $logMissing);
+            
+            if (!empty($missingPlaceholders) && $logMissing) {
+                Log::debug('Missing template placeholders in citation incentive', [
+                    'missing' => $missingPlaceholders
+                ]);
             }
             
             try {
-                $templateProcessor->saveAs($fullOutputPath);
+                // Save to temp file first
+                $templateProcessor->saveAs($tempFullPath);
+                
+                // Verify temp file is valid
+                if (!file_exists($tempFullPath) || filesize($tempFullPath) === 0) {
+                    throw new \RuntimeException('Generated temp file is empty or does not exist');
+                }
+                
+                // Move temp file to final location (atomic operation)
+                if (Storage::disk('local')->exists($outputPath)) {
+                    Storage::disk('local')->delete($outputPath);
+                }
+                Storage::disk('local')->move($tempOutputPath, $outputPath);
+                
             } catch (\Exception $e) {
+                // Clean up temp file on error
+                if (Storage::disk('local')->exists($tempOutputPath)) {
+                    Storage::disk('local')->delete($tempOutputPath);
+                }
                 Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
                 throw $e;
             }
             
             // Only convert to PDF if requested (for submission, not preview)
             if ($convertToPdf) {
-                $converter = new DocxToPdfConverter();
-                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
-                
-                if ($pdfPath) {
-                    // Delete the original DOCX file
-                    Storage::disk('local')->delete($outputPath);
-                    Log::info('Converted DOCX to PDF and deleted original DOCX', [
-                        'original_docx' => $outputPath,
-                        'generated_pdf' => $pdfPath
+                try {
+                    $converter = new DocxToPdfConverter();
+                    $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                    
+                    if ($pdfPath && Storage::disk('local')->exists($pdfPath)) {
+                        // Verify PDF file exists and is not empty
+                        $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
+                        $pdfSize = filesize($pdfAbsolutePath);
+                        
+                        if ($pdfSize > 0) {
+                            // Delete the original DOCX file
+                            Storage::disk('local')->delete($outputPath);
+                            Log::info('Converted DOCX to PDF and deleted original DOCX', [
+                                'original_docx' => $outputPath,
+                                'generated_pdf' => $pdfPath,
+                                'pdf_size' => $pdfSize
+                            ]);
+                            return $pdfPath;
+                        } else {
+                            Log::error('Generated PDF is empty', ['pdf_path' => $pdfPath]);
+                            // Keep DOCX if PDF is empty
+                            return $outputPath;
+                        }
+                    } else {
+                        Log::warning('PDF conversion failed or file not found', [
+                            'docx_path' => $outputPath,
+                            'pdf_path' => $pdfPath,
+                            'pdf_exists' => $pdfPath ? Storage::disk('local')->exists($pdfPath) : false
+                        ]);
+                        return $outputPath;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Exception during PDF conversion', [
+                        'error' => $e->getMessage(),
+                        'docx_path' => $outputPath,
+                        'trace' => $e->getTraceAsString()
                     ]);
-                    return $pdfPath;
-                } else {
-                    Log::warning('PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
                     return $outputPath;
                 }
             }
@@ -449,7 +554,7 @@ class CitationsController extends Controller
         }
     }
 
-    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $convertToPdf = false)
+    public function generateCitationRecommendationDocxFromHtml($data, $uploadPath, $convertToPdf = false, $customFilename = null)
     {
         try {
             if (empty($uploadPath)) {
@@ -467,7 +572,13 @@ class CitationsController extends Controller
                 throw new \RuntimeException("Template file not found: {$templatePath}");
             }
 
-            $filename = 'Recommendation_Letter_Form.docx';
+            $filename = $customFilename ?? 'Recommendation_Letter_Form.docx';
+            
+            // Generate to temp file first for safe replacement
+            $tempFilename = $filename . '.tmp.' . uniqid();
+            $tempOutputPath = $privateUploadPath . '/' . $tempFilename;
+            $tempFullPath = Storage::disk('local')->path($tempOutputPath);
+            
             $outputPath = $privateUploadPath . '/' . $filename;
             $fullOutputPath = Storage::disk('local')->path($outputPath);
             
@@ -483,32 +594,79 @@ class CitationsController extends Controller
                 'directorsignature' => '${directorsignature}'
             ]);
             
-            // Set all values in one pass
-            foreach ($allValues as $key => $value) {
-                try {
-                    $templateProcessor->setValue($key, (string)($value ?? ''));
-                } catch (\Exception $e) {
-                    // Skip if placeholder doesn't exist in template (silent fail for better performance)
-                }
+            // Set all values using service method (with logging in debug mode)
+            $logMissing = config('app.debug', false);
+            $missingPlaceholders = $this->docGenService->setTemplateValues($templateProcessor, $allValues, $logMissing);
+            
+            if (!empty($missingPlaceholders) && $logMissing) {
+                Log::debug('Missing template placeholders in citation recommendation', [
+                    'missing' => $missingPlaceholders
+                ]);
             }
             
-            $templateProcessor->saveAs($fullOutputPath);
+            try {
+                // Save to temp file first
+                $templateProcessor->saveAs($tempFullPath);
+                
+                // Verify temp file is valid
+                if (!file_exists($tempFullPath) || filesize($tempFullPath) === 0) {
+                    throw new \RuntimeException('Generated temp file is empty or does not exist');
+                }
+                
+                // Move temp file to final location (atomic operation)
+                if (Storage::disk('local')->exists($outputPath)) {
+                    Storage::disk('local')->delete($outputPath);
+                }
+                Storage::disk('local')->move($tempOutputPath, $outputPath);
+                
+            } catch (\Exception $e) {
+                // Clean up temp file on error
+                if (Storage::disk('local')->exists($tempOutputPath)) {
+                    Storage::disk('local')->delete($tempOutputPath);
+                }
+                Log::error('Exception during DOCX save', ['error' => $e->getMessage(), 'path' => $fullOutputPath]);
+                throw $e;
+            }
             
             // Only convert to PDF if requested (for submission, not preview)
             if ($convertToPdf) {
-                $converter = new DocxToPdfConverter();
-                $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
-                
-                if ($pdfPath) {
-                    // Delete the original DOCX file
-                    Storage::disk('local')->delete($outputPath);
-                    Log::info('CITATION RECO: Converted DOCX to PDF and deleted original DOCX', [
-                        'original_docx' => $outputPath,
-                        'generated_pdf' => $pdfPath
+                try {
+                    $converter = new DocxToPdfConverter();
+                    $pdfPath = $converter->convertDocxToPdf($outputPath, $privateUploadPath);
+                    
+                    if ($pdfPath && Storage::disk('local')->exists($pdfPath)) {
+                        // Verify PDF file exists and is not empty
+                        $pdfAbsolutePath = Storage::disk('local')->path($pdfPath);
+                        $pdfSize = filesize($pdfAbsolutePath);
+                        
+                        if ($pdfSize > 0) {
+                            // Delete the original DOCX file
+                            Storage::disk('local')->delete($outputPath);
+                            Log::info('Converted DOCX to PDF and deleted original DOCX', [
+                                'original_docx' => $outputPath,
+                                'generated_pdf' => $pdfPath,
+                                'pdf_size' => $pdfSize
+                            ]);
+                            return $pdfPath;
+                        } else {
+                            Log::error('Generated PDF is empty', ['pdf_path' => $pdfPath]);
+                            // Keep DOCX if PDF is empty
+                            return $outputPath;
+                        }
+                    } else {
+                        Log::warning('PDF conversion failed or file not found', [
+                            'docx_path' => $outputPath,
+                            'pdf_path' => $pdfPath,
+                            'pdf_exists' => $pdfPath ? Storage::disk('local')->exists($pdfPath) : false
+                        ]);
+                        return $outputPath;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Exception during PDF conversion', [
+                        'error' => $e->getMessage(),
+                        'docx_path' => $outputPath,
+                        'trace' => $e->getTraceAsString()
                     ]);
-                    return $pdfPath;
-                } else {
-                    Log::warning('CITATION RECO: PDF conversion failed, keeping original DOCX', ['docx_path' => $outputPath]);
                     return $outputPath;
                 }
             }
@@ -650,12 +808,6 @@ class CitationsController extends Controller
             'is_draft' => $request->has('save_draft')
         ]);
 
-        $citations_request_enabled = \App\Models\Setting::get('citations_request_enabled', '1');
-        
-        if ($citations_request_enabled !== '1') {
-            return redirect()->route('dashboard')->with('error', 'Citations requests are currently disabled by administrators.');
-        }
-
         // Check if this is a draft save
         $isDraft = $request->has('save_draft');
         
@@ -710,6 +862,7 @@ class CitationsController extends Controller
                     'scopus' => 'nullable',
                     'wos' => 'nullable',
                     'aci' => 'nullable',
+                    'others' => 'nullable|string',
                     'faculty_name' => 'nullable|string',
                     'center_manager' => 'nullable|string',
                     'dean_name' => 'nullable|string',
@@ -733,6 +886,7 @@ class CitationsController extends Controller
                     'scopus' => 'nullable',
                     'wos' => 'nullable',
                     'aci' => 'nullable',
+                    'others' => 'nullable|string',
                     'faculty_name' => 'nullable|string',
                     'center_manager' => 'nullable|string',
                     'dean_name' => 'required|string',
@@ -762,7 +916,21 @@ class CitationsController extends Controller
             }
 
             $validator = Validator::make($request->all(), $validationRules);
-
+            
+            // Custom validation: At least one indexing option must be selected (for final submission only)
+            if (!$isDraft) {
+                $validator->after(function ($validator) use ($request) {
+                    $hasScopus = $request->has('scopus') && $request->input('scopus') == '1';
+                    $hasWos = $request->has('wos') && $request->input('wos') == '1';
+                    $hasAci = $request->has('aci') && $request->input('aci') == '1';
+                    $hasOthers = !empty($request->input('others'));
+                    
+                    if (!$hasScopus && !$hasWos && !$hasAci && !$hasOthers) {
+                        $validator->errors()->add('indexed_in', 'Please select at least one indexing option (Scopus, Web of Science, ACI, or Others).');
+                    }
+                });
+            }
+            
             if ($validator->fails()) {
                 Log::info('Citation request validation failed', [
                     'errors' => $validator->errors()->toArray()
@@ -900,58 +1068,6 @@ class CitationsController extends Controller
                         'type' => $type,
                         'path' => $pdfPath
                     ]);
-                }
-            }
-            
-            // Check for pre-generated DOCX files from "View PDF" clicks (fallback)
-            $tempFiles = $request->input('generated_docx_files', []);
-            if (!empty($tempFiles) && is_array($tempFiles)) {
-                Log::info('Checking for pre-generated citation DOCX files', [
-                    'has_tempFiles' => !empty($tempFiles),
-                    'tempFiles' => $tempFiles
-                ]);
-                foreach ($tempFiles as $type => $tempPath) {
-                    // Only use if we don't already have a PDF for this type
-                    if (!isset($docxPaths[$type]) && $tempPath && Storage::disk('local')->exists($tempPath)) {
-                        // Check if PDF version exists
-                        $pdfPath = preg_replace('/\.docx$/', '.pdf', $tempPath);
-                        if (Storage::disk('local')->exists($pdfPath)) {
-                            // Use PDF version
-                            $filename = $type === 'incentive' ? 'Incentive_Application_Form.pdf' : 'Recommendation_Letter_Form.pdf';
-                            $docxPaths[$type] = [
-                                'path' => $pdfPath,
-                                'original_name' => $filename
-                            ];
-                            Log::info('Found PDF version of pre-generated citation file', [
-                                'type' => $type,
-                                'pdf_path' => $pdfPath
-                            ]);
-                        } else {
-                            // Convert DOCX to PDF
-                            $filename = $type === 'incentive' ? 'Incentive_Application_Form.docx' : 'Recommendation_Letter_Form.docx';
-                            $finalPath = $uploadPath . '/' . $filename;
-                            
-                            // Move DOCX to final location first
-                            Storage::disk('local')->move($tempPath, $finalPath);
-                            
-                            // Convert to PDF
-                            $converter = new DocxToPdfConverter();
-                            $pdfPath = $converter->convertDocxToPdf($finalPath, $uploadPath);
-                            
-                            if ($pdfPath && Storage::disk('local')->exists($pdfPath)) {
-                                // Delete DOCX after successful conversion
-                                Storage::disk('local')->delete($finalPath);
-                                $docxPaths[$type] = [
-                                    'path' => $pdfPath,
-                                    'original_name' => preg_replace('/\.docx$/', '.pdf', $filename)
-                                ];
-                                Log::info('Converted pre-generated citation DOCX to PDF', [
-                                    'type' => $type,
-                                    'pdf_path' => $pdfPath
-                                ]);
-                            }
-                        }
-                    }
                 }
             }
             
@@ -1333,6 +1449,7 @@ class CitationsController extends Controller
             'scopus' => isset($data['scopus']) ? '☑' : '☐',
             'wos' => isset($data['wos']) ? '☑' : '☐',
             'aci' => isset($data['aci']) ? '☑' : '☐',
+            'others' => $data['others'] ?? '',
             // Placeholders kept for template compatibility (set blank)
             'title' => '',
             'journal' => '',
