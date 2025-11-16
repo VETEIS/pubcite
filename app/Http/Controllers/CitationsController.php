@@ -787,9 +787,6 @@ class CitationsController extends Controller
                 ]);
             }
             
-            // Delete associated admin notifications for this request
-            \App\Models\AdminNotification::where('request_id', $request->id)->delete();
-            
             $request->delete();
             return back()->with('success', 'Request and files deleted successfully.');
         } catch (\Exception $e) {

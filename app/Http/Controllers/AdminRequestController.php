@@ -83,7 +83,8 @@ class AdminRequestController extends Controller
                 'quarter' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()])->count(),
             ],
         ];
-        $statusQuery = \App\Models\Request::query();
+        // Include both pending and completed requests for filter counts
+        $statusQuery = \App\Models\Request::query()->where('status', '!=', 'draft');
         if ($type && in_array($type, ['Publication', 'Citation'])) {
             $statusQuery->where('type', $type);
         }
@@ -96,10 +97,13 @@ class AdminRequestController extends Controller
                 $statusQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
             }
         }
+        // Pending = requests still in workflow (workflow_state != 'completed')
+        // Endorsed = requests that completed workflow (status = 'endorsed' AND workflow_state = 'completed')
+        // Rejected = requests with status = 'rejected'
         $filterCounts = [
-            'pending' => $statusQuery->where('status', 'pending')->count(),
-            'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
-            'rejected' => $statusQuery->where('status', 'rejected')->count(),
+            'pending' => (clone $statusQuery)->where('workflow_state', '!=', 'completed')->count(),
+            'endorsed' => (clone $statusQuery)->where('status', 'endorsed')->where('workflow_state', 'completed')->count(),
+            'rejected' => (clone $statusQuery)->where('status', 'rejected')->count(),
         ];
         return view('admin.requests', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription'));
     }
@@ -138,11 +142,25 @@ class AdminRequestController extends Controller
                 ]);
             }
             
+            // Extract academic rank and college from form_data
+            $formData = is_string($request->form_data) ? json_decode($request->form_data, true) : $request->form_data;
+            $academicRank = 'N/A';
+            $college = 'N/A';
+            
+            if (is_array($formData)) {
+                // Academic rank can be stored as 'academicrank' or 'rank'
+                $academicRank = $formData['academicrank'] ?? $formData['rank'] ?? 'N/A';
+                // College is stored as 'college'
+                $college = $formData['college'] ?? 'N/A';
+            }
+            
             return response()->json([
                 'id' => $request->id,
                 'request_code' => $request->request_code,
                 'type' => $request->type,
                 'status' => $request->status,
+                'academic_rank' => $academicRank,
+                'college' => $college,
                 'requested_at' => $request->requested_at,
                 'form_data' => $request->form_data,
                 'pdf_path' => $request->pdf_path,

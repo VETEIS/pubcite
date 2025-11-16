@@ -70,8 +70,8 @@ class DashboardController extends Controller
             // Exclude drafts from dashboard by default - only show submitted requests
             $query->where('status', '!=', 'draft');
             
-            // Only show completed requests (those that have gone through the full signature workflow)
-            $query->where('workflow_state', 'completed');
+            // Include both pending (in workflow) and completed requests
+            // No workflow_state filter - show all non-draft requests
             
             if (in_array($sortBy, ['requested_at', 'request_code', 'type', 'status'])) {
                 if ($sortBy === 'requested_at') {
@@ -87,8 +87,8 @@ class DashboardController extends Controller
                 $query->orderByDesc('requested_at');
             }
             
-            if ($status && $status === 'endorsed') {
-                $query->where('status', 'endorsed');
+            if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
+                $query->where('status', $status);
             }
             if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
                 $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
@@ -151,7 +151,8 @@ class DashboardController extends Controller
                     'year' => \App\Models\Request::where('type', 'Citation')->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()])->count(),
                 ],
             ];
-            $statusQuery = \App\Models\Request::query();
+            // Calculate filter counts (include both pending and completed requests)
+            $statusQuery = \App\Models\Request::query()->where('status', '!=', 'draft');
             if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
                 $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                 $statusQuery->where('type', $dbType);
@@ -167,10 +168,14 @@ class DashboardController extends Controller
                     $statusQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
                 }
             }
+            // Calculate filter counts (include both pending and completed requests)
+            // Pending = requests still in workflow (workflow_state != 'completed')
+            // Endorsed = requests that completed workflow (status = 'endorsed' AND workflow_state = 'completed')
+            // Rejected = requests with status = 'rejected'
             $filterCounts = [
-                'pending' => $statusQuery->where('status', 'pending')->count(),
-                'endorsed' => $statusQuery->where('status', 'endorsed')->count(),
-                'rejected' => $statusQuery->where('status', 'rejected')->count(),
+                'pending' => (clone $statusQuery)->where('workflow_state', '!=', 'completed')->count(),
+                'endorsed' => (clone $statusQuery)->where('status', 'endorsed')->where('workflow_state', 'completed')->count(),
+                'rejected' => (clone $statusQuery)->where('status', 'rejected')->count(),
             ];
             // Chart Data Aggregation
             $chartType = $type;
@@ -178,7 +183,8 @@ class DashboardController extends Controller
             $chartNow = $now;
             $chartStartMonth = $chartNow->copy()->subMonths(11)->startOfMonth();
             $chartEndMonth = $chartNow->copy()->endOfMonth();
-            $chartBaseQuery = \App\Models\Request::query()->where('workflow_state', 'completed');
+            // Include both pending and completed requests in charts
+            $chartBaseQuery = \App\Models\Request::query()->where('status', '!=', 'draft');
             if ($chartType && in_array($chartType, ['Publication', 'Citation', 'Publications', 'Citations'])) {
                 $dbType = $chartType === 'Publications' ? 'Publication' : ($chartType === 'Citations' ? 'Citation' : $chartType);
                 $chartBaseQuery->where('type', $dbType);
@@ -204,7 +210,7 @@ class DashboardController extends Controller
             }
             $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
                 ->where('status', '!=', 'draft') // Exclude drafts from chart data
-                ->where('workflow_state', 'completed') // Only include completed workflows
+                // Include both pending and completed requests
                 ->when($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
                     $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
                     $q->where('type', $dbType);
@@ -254,20 +260,72 @@ class DashboardController extends Controller
             foreach ($rawCounts as $row) {
                 $monthlyCounts[$row->type][$row->month] = $row->count;
             }
+            
+            // Calculate status counts from the same filtered dataset as the table
+            // Use the same query logic as the table to ensure consistency
+            $statusCountsQuery = \App\Models\Request::query()->where('status', '!=', 'draft');
+            if ($type && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $statusCountsQuery->where('type', $dbType);
+            }
+            if ($period) {
+                if ($period === 'week' || $period === 'This Week') {
+                    $statusCountsQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $statusCountsQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $statusCountsQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $statusCountsQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                }
+            }
+            if ($status && in_array($status, ['pending', 'endorsed', 'rejected'])) {
+                // Apply the same status filter logic as the table
+                if ($status === 'pending') {
+                    $statusCountsQuery->where('workflow_state', '!=', 'completed');
+                } elseif ($status === 'endorsed') {
+                    $statusCountsQuery->where('status', 'endorsed')->where('workflow_state', 'completed');
+                } else {
+                    $statusCountsQuery->where('status', $status);
+                }
+            }
+            
+            // Calculate status counts using the same logic as the table
             $statusCounts = [
-                'pending' => 0,
-                'endorsed' => 0,
-                'rejected' => 0,
+                'pending' => (clone $statusCountsQuery)->where('workflow_state', '!=', 'completed')->count(),
+                'endorsed' => (clone $statusCountsQuery)->where('status', 'endorsed')->where('workflow_state', 'completed')->count(),
+                'rejected' => (clone $statusCountsQuery)->where('status', 'rejected')->count(),
             ];
-            // Only count endorsed requests since that's all that reaches admin dashboard
-            $statusCounts['endorsed'] = $chartBaseQuery->where('status', 'endorsed')->count();
             $recentApplications = \App\Models\Request::with('user')->where('status', '!=', 'draft')->orderByDesc('requested_at')->limit(5)->get();
             $activityLogs = \App\Models\ActivityLog::with('user')
                 ->whereNotIn('action', ['created']) // Exclude submission requests
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get();
-            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs'));
+            
+            // Extract college data with academic rank breakdown from requests
+            $collegeCounts = [];
+            $collegeRankBreakdown = [];
+            $allRequestsForCollege = \App\Models\Request::where('status', '!=', 'draft')->get();
+            foreach ($allRequestsForCollege as $req) {
+                $formData = is_string($req->form_data) ? json_decode($req->form_data, true) : $req->form_data;
+                if (is_array($formData) && isset($formData['college']) && !empty($formData['college'])) {
+                    $college = $formData['college'];
+                    $academicRank = $formData['academicrank'] ?? $formData['rank'] ?? 'Unknown';
+                    
+                    // Count total per college
+                    $collegeCounts[$college] = ($collegeCounts[$college] ?? 0) + 1;
+                    
+                    // Count per college and academic rank
+                    if (!isset($collegeRankBreakdown[$college])) {
+                        $collegeRankBreakdown[$college] = [];
+                    }
+                    $collegeRankBreakdown[$college][$academicRank] = ($collegeRankBreakdown[$college][$academicRank] ?? 0) + 1;
+                }
+            }
+            arsort($collegeCounts); // Sort by count descending
+            
+            return view('admin.dashboard', compact('requests', 'stats', 'status', 'search', 'filterCounts', 'type', 'period', 'rangeDescription', 'recentApplications', 'monthlyCounts', 'statusCounts', 'months', 'activityLogs', 'collegeCounts', 'collegeRankBreakdown'));
         } catch (\Exception $e) {
             Log::error('Admin dashboard error: ' . $e->getMessage(), [
                 'user_id' => $user->id,
@@ -394,22 +452,6 @@ class DashboardController extends Controller
         
         // Send nudge to current stage signatory
         if ($signatoryEmail) {
-            // Create notification for the signatory if we have a user ID
-            if ($signatoryUserId) {
-                \App\Models\AdminNotification::create([
-                    'user_id' => $signatoryUserId,
-                    'request_id' => $request->id,
-                    'type' => 'nudge',
-                    'title' => 'Nudge: ' . $request->request_code,
-                    'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
-                    'data' => [
-                        'request_code' => $request->request_code,
-                        'type' => $request->type,
-                        'user_name' => $user->name,
-                        'user_email' => $user->email,
-                    ],
-                ]);
-            }
             
             try {
                 Mail::to($signatoryEmail)->send(new NudgeNotification($request, $user));
@@ -436,19 +478,6 @@ class DashboardController extends Controller
             
             $admins = \App\Models\User::where('role', 'admin')->get();
             foreach ($admins as $admin) {
-                \App\Models\AdminNotification::create([
-                    'user_id' => $admin->id,
-                    'request_id' => $request->id,
-                    'type' => 'nudge',
-                    'title' => 'Nudge: ' . $request->request_code,
-                    'message' => $user->name . ' nudged a pending ' . strtolower($request->type) . ' request.',
-                    'data' => [
-                        'request_code' => $request->request_code,
-                        'type' => $request->type,
-                        'user_name' => $user->name,
-                        'user_email' => $user->email,
-                    ],
-                ]);
                 try {
                     Mail::to($admin->email)->send(new NudgeNotification($request, $user));
                 } catch (\Exception $e) {
@@ -478,11 +507,20 @@ class DashboardController extends Controller
             // Exclude drafts from dashboard by default - only show submitted requests
             $tableQuery->where('status', '!=', 'draft');
             
-            // Only show completed requests (those that have gone through the full signature workflow)
-            $tableQuery->where('workflow_state', 'completed');
+            // Include both pending (in workflow) and completed requests - match the table display
+            // No workflow_state filter - show all non-draft requests
             
             if ($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected'])) {
-                $tableQuery->where('status', $status);
+                // For pending: workflow_state != 'completed'
+                // For endorsed: status = 'endorsed' AND workflow_state = 'completed'
+                // For rejected: status = 'rejected'
+                if ($status === 'pending') {
+                    $tableQuery->where('workflow_state', '!=', 'completed');
+                } elseif ($status === 'endorsed') {
+                    $tableQuery->where('status', 'endorsed')->where('workflow_state', 'completed');
+                } else {
+                    $tableQuery->where('status', $status);
+                }
             }
             
             if ($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
@@ -522,9 +560,12 @@ class DashboardController extends Controller
             }
             
             $allRequests = $tableQuery->get();
+            
+            // Calculate status counts from the same filtered dataset as the table
+            // This ensures charts match the table exactly
             $statusCounts = [
-                'pending' => $allRequests->where('status', 'pending')->count(),
-                'endorsed' => $allRequests->where('status', 'endorsed')->count(),
+                'pending' => $allRequests->where('workflow_state', '!=', 'completed')->count(),
+                'endorsed' => $allRequests->where('status', 'endorsed')->where('workflow_state', 'completed')->count(),
                 'rejected' => $allRequests->where('status', 'rejected')->count(),
             ];
             
@@ -599,86 +640,67 @@ class DashboardController extends Controller
                 }
             }
             
-            $rawCounts = \App\Models\Request::selectRaw("type, $monthExpr as month, COUNT(*) as count")
-                ->where('status', '!=', 'draft') // Exclude drafts from chart data
-                ->where('workflow_state', 'completed') // Only include completed workflows
-                ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
-                    $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
-                    $q->where('type', $dbType);
-                })
-                ->when($period && $period !== 'null', function($q) use ($period, $now) {
-                    if ($period === 'week' || $period === 'This Week') {
-                        $q->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
-                    } elseif ($period === 'month' || $period === 'This Month') {
-                        $q->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
-                    } elseif ($period === 'quarter' || $period === 'This Quarter') {
-                        $q->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
-                    } elseif ($period === 'year' || $period === 'This Year') {
-                        $q->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+            // Use the same base query as the table to ensure charts match table data
+            $chartBaseQuery = \App\Models\Request::query()
+                ->where('status', '!=', 'draft'); // Exclude drafts
+            
+            // Apply the same filters as the table
+            if ($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations'])) {
+                $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
+                $chartBaseQuery->where('type', $dbType);
+            }
+            if ($period && $period !== 'null') {
+                if ($period === 'week' || $period === 'This Week') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                } elseif ($period === 'month' || $period === 'This Month') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                } elseif ($period === 'quarter' || $period === 'This Quarter') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfQuarter(), $now->copy()->endOfQuarter()]);
+                } elseif ($period === 'year' || $period === 'This Year') {
+                    $chartBaseQuery->whereBetween('requested_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                }
+            }
+            if ($search && $search !== 'null') {
+                $chartBaseQuery->where(function($q) use ($search) {
+                    if (config('database.default') === 'pgsql') {
+                        $q->where('request_code', 'ilike', "%$search%")
+                          ->orWhere('type', 'ilike', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'ilike', "%$search%")
+                                 ->orWhere('email', 'ilike', "%$search%") ;
+                          });
+                    } else {
+                        $q->where('request_code', 'like', "%$search%")
+                          ->orWhere('type', 'like', "%$search%")
+                          ->orWhereHas('user', function($uq) use ($search) {
+                              $uq->where('name', 'like', "%$search%")
+                                 ->orWhere('email', 'like', "%$search%") ;
+                          });
                     }
-                })
-                ->when($search && $search !== 'null', function($q) use ($search) {
-                    $q->where(function($sq) use ($search) {
-                        if (config('database.default') === 'pgsql') {
-                            $sq->where('request_code', 'ilike', "%$search%")
-                              ->orWhere('type', 'ilike', "%$search%")
-                              ->orWhereHas('user', function($uq) use ($search) {
-                                  $uq->where('name', 'ilike', "%$search%")
-                                     ->orWhere('email', 'ilike', "%$search%") ;
-                              });
-                        } else {
-                            $sq->where('request_code', 'like', "%$search%")
-                              ->orWhere('type', 'like', "%$search%")
-                              ->orWhereHas('user', function($uq) use ($search) {
-                                  $uq->where('name', 'like', "%$search%")
-                                     ->orWhere('email', 'like', "%$search%") ;
-                              });
-                        }
-                    });
-                })
-                ->when($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected']), function($q) use ($status) {
-                    $q->where('status', $status);
-                })
+                });
+            }
+            if ($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected'])) {
+                // Apply the same status filter logic as the table
+                if ($status === 'pending') {
+                    $chartBaseQuery->where('workflow_state', '!=', 'completed');
+                } elseif ($status === 'endorsed') {
+                    $chartBaseQuery->where('status', 'endorsed')->where('workflow_state', 'completed');
+                } else {
+                    $chartBaseQuery->where('status', $status);
+                }
+            }
+            
+            $rawCounts = (clone $chartBaseQuery)
+                ->selectRaw("type, $monthExpr as month, COUNT(*) as count")
                 ->groupBy('type', 'month')
                 ->orderBy('month')
                 ->get();
 
             $dateDetails = [];
             if ($period === 'month' || $period === 'This Month') {
-                $dateDetails = \App\Models\Request::selectRaw("DATE(requested_at) as date, COUNT(*) as count")
-                    ->where('status', '!=', 'draft') // Exclude drafts from date details
-                    ->where('workflow_state', 'completed') // Only include completed workflows
-                    ->when($type && $type !== 'null' && in_array($type, ['Publication', 'Citation', 'Publications', 'Citations']), function($q) use ($type) {
-                        $dbType = $type === 'Publications' ? 'Publication' : ($type === 'Citations' ? 'Citation' : $type);
-                        $q->where('type', $dbType);
-                    })
-                    ->when($period && $period !== 'null', function($q) use ($period, $now) {
-                        if ($period === 'month' || $period === 'This Month') {
-                            $q->whereBetween('requested_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
-                        }
-                    })
-                    ->when($search && $search !== 'null', function($q) use ($search) {
-                        $q->where(function($sq) use ($search) {
-                            if (config('database.default') === 'pgsql') {
-                                $sq->where('request_code', 'ilike', "%$search%")
-                                  ->orWhere('type', 'ilike', "%$search%")
-                                  ->orWhereHas('user', function($uq) use ($search) {
-                                      $uq->where('name', 'ilike', "%$search%")
-                                         ->orWhere('email', 'ilike', "%$search%") ;
-                                  });
-                            } else {
-                                $sq->where('request_code', 'like', "%$search%")
-                                  ->orWhere('type', 'like', "%$search%")
-                                  ->orWhereHas('user', function($uq) use ($search) {
-                                      $uq->where('name', 'like', "%$search%")
-                                         ->orWhere('email', 'like', "%$search%") ;
-                                  });
-                            }
-                        });
-                    })
-                    ->when($status && $status !== 'null' && in_array($status, ['pending', 'endorsed', 'rejected']), function($q) use ($status) {
-                        $q->where('status', $status);
-                    })
+                // Use the same base query as the table for date details (chartBaseQuery already has all filters)
+                $dateDetailsQuery = (clone $chartBaseQuery);
+                $dateDetails = $dateDetailsQuery->selectRaw("DATE(requested_at) as date, COUNT(*) as count")
                     ->groupBy('date')
                     ->orderBy('date')
                     ->get()
@@ -712,23 +734,51 @@ class DashboardController extends Controller
             // Get paginated requests for table (limit to 10 for real-time updates)
             $paginatedRequests = $tableQuery->limit(10)->get();
             
-            // Format requests for frontend
+            // Format requests for frontend (include signature progress)
             $formattedRequests = $paginatedRequests->map(function($request) {
+                // Load signatures count for progress calculation
+                $request->loadCount('signatures');
                 return [
                     'id' => $request->id,
                     'request_code' => $request->request_code,
                     'type' => $request->type,
                     'status' => $request->status,
+                    'workflow_state' => $request->workflow_state,
                     'requested_at' => $request->requested_at->format('M d, Y H:i'),
                     'user_name' => $request->user ? $request->user->name : 'Unknown',
                     'user_email' => $request->user ? $request->user->email : 'Unknown',
+                    'signature_progress' => $request->getSignatureProgress(),
+                    'workflow_stage' => $request->getWorkflowStageName(),
                 ];
             });
+            
+            // Extract college data with academic rank breakdown from filtered requests
+            $collegeCounts = [];
+            $collegeRankBreakdown = [];
+            foreach ($allRequests as $req) {
+                $formData = is_string($req->form_data) ? json_decode($req->form_data, true) : $req->form_data;
+                if (is_array($formData) && isset($formData['college']) && !empty($formData['college'])) {
+                    $college = $formData['college'];
+                    $academicRank = $formData['academicrank'] ?? $formData['rank'] ?? 'Unknown';
+                    
+                    // Count total per college
+                    $collegeCounts[$college] = ($collegeCounts[$college] ?? 0) + 1;
+                    
+                    // Count per college and academic rank
+                    if (!isset($collegeRankBreakdown[$college])) {
+                        $collegeRankBreakdown[$college] = [];
+                    }
+                    $collegeRankBreakdown[$college][$academicRank] = ($collegeRankBreakdown[$college][$academicRank] ?? 0) + 1;
+                }
+            }
+            arsort($collegeCounts); // Sort by count descending
             
             return response()->json([
                 'months' => $months,
                 'monthlyCounts' => $monthlyCounts,
                 'statusCounts' => $statusCounts,
+                'collegeCounts' => $collegeCounts,
+                'collegeRankBreakdown' => $collegeRankBreakdown,
                 'type' => $type,
                 'period' => $period,
                 'totalRecords' => $allRequests->count(),

@@ -229,9 +229,9 @@
         @include('admin.partials.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 ml-60 h-screen overflow-y-auto">
+        <div class="flex-1 ml-60 overflow-y-auto">
             <!-- Content Area -->
-            <main class="p-4 rounded-bl-lg flex flex-col main-content fouc-prevent h-full" id="mainContent">
+            <main class="p-4 rounded-bl-lg flex flex-col main-content fouc-prevent min-h-full" id="mainContent">
                 <!-- Dashboard Header with Modern Compact Filters -->
                 <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
                     <!-- Date Range Display -->
@@ -245,11 +245,11 @@
                         </div>
                         
                         <!-- Compact Date Range Display -->
-                        <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 h-8 hover:border-gray-300 transition-colors">
-                            <svg class="w-3.5 h-3.5 text-maroon-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 h-8 cursor-default">
+                            <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            <span class="text-xs font-medium text-gray-700">
+                            <span class="text-xs font-medium text-gray-500">
                                 @if($rangeDescription)
                                     {{ $rangeDescription }}
                                 @else
@@ -286,6 +286,7 @@
                                 </button>
                                 <div class="absolute top-full left-0 mt-1 bg-white text-md font-semibold border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[120px]">
                                     <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => null])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ !$currentStatus ? 'bg-maroon-50 text-maroon-700' : '' }}">All Status</a>
+                                    <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => 'pending'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'pending' ? 'bg-maroon-50 text-maroon-700' : '' }}">Pending</a>
                                     <a href="{{ route('admin.dashboard', array_merge(request()->except('status', 'page'), ['status' => 'endorsed'])) }}" class="block px-3 py-2 text-md text-gray-700 hover:bg-gray-50 {{ $currentStatus === 'endorsed' ? 'bg-maroon-50 text-maroon-700' : '' }}">Endorsed</a>
                 </div>
             </div>
@@ -340,20 +341,16 @@
                         <!-- Subtle Separator -->
                         <div class="w-px h-8 bg-gray-200"></div>
                         
-                        <!-- Notification Bell (like user dashboard) -->
-                        <div class="relative" x-data="notificationBell()" x-cloak>
-                            <button @click="toggleNotifications" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
+                        <!-- Logs Dropdown -->
+                        <div class="relative" x-data="{ showLogs: false }">
+                            <button @click="showLogs = !showLogs" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group relative">
                             <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                                <!-- Notification Badge -->
-                                <div x-show="unreadCount > 0" 
-                                     x-text="unreadCount" 
-                                     class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse"></div>
                         </button>
                             
-                            <!-- Notification Dropdown -->
-                            <div x-show="showDropdown" 
+                            <!-- Logs Dropdown -->
+                            <div x-show="showLogs" 
                                  x-cloak
                                  x-transition:enter="transition ease-out duration-200"
                                  x-transition:enter-start="opacity-0 scale-95"
@@ -361,54 +358,123 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 scale-100"
                                  x-transition:leave-end="opacity-0 scale-95"
-                                 @click.away="showDropdown = false"
-                                 class="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+                                 @click.away="showLogs = false"
+                                 class="absolute right-0 top-12 w-[650px] bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[600px] overflow-hidden flex flex-col">
                                 
                                 <!-- Header -->
-                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
-                                        <button @click="markAllAsRead" 
-                                                x-show="unreadCount > 0"
-                                                class="text-xs text-maroon-600 hover:text-maroon-800 font-medium">
-                                            Mark all as read
-                                        </button>
-                                    </div>
+                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+                                    <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Activity Log
+                                    </h3>
                                 </div>
                                 
-                                <!-- Notifications List -->
-                                <div class="max-h-80 overflow-y-auto relative">
-                                    <!-- Loading Overlay -->
-                                    <div x-show="loading" 
-                                         class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
-                                        <div class="text-center text-gray-500">
-                                            <div class="animate-spin w-5 h-5 border-2 border-maroon-600 border-t-transparent rounded-full mx-auto mb-2"></div>
-                                            Loading notifications...
+                                <!-- Activity Logs List -->
+                                <div class="overflow-y-auto flex-1 p-4">
+                                    @if($activityLogs->isEmpty())
+                                        <div class="text-center text-gray-500 py-8">
+                                            <p class="text-sm">No activity logs yet</p>
                                         </div>
-                                    </div>
-                                    
-                                    <!-- Empty State -->
-                                    <div x-show="!loading && notifications.length === 0" class="p-4 text-center text-gray-500">
-                                        No notifications yet
-                                    </div>
-                                    
-                                    <!-- Notifications List -->
-                                    <template x-for="notification in notifications" :key="notification.id">
-                                        <div class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                                             x-show="notification"
-                                             :class="{ 'bg-blue-50': notification && !notification.read_at }"
-                                             @click="markAsRead(notification.id)">
-                                            <div class="flex items-start gap-3">
-                                                <div class="w-2 h-2 bg-maroon-500 rounded-full mt-2 flex-shrink-0" 
-                                                     x-show="notification && !notification.read_at"></div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-medium text-gray-900" x-text="notification ? notification.title : ''"></p>
-                                                    <p class="text-xs text-gray-600 mt-1" x-text="notification ? notification.message : ''"></p>
-                                                    <p class="text-xs text-gray-400 mt-1" x-text="notification ? formatTime(notification.created_at) : ''"></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
+                                    @else
+                                        <ul class="space-y-2">
+                                            @foreach($activityLogs as $log)
+                                                <li class="grid grid-cols-[auto_1fr_auto_16px_100px] items-center gap-3 bg-gray-50 hover:bg-white hover:shadow-md rounded-lg p-2 transition-all duration-300 cursor-pointer group relative">
+                                                    @php
+                                                        $icon = match($log->action) {
+                                                            'created' => 'plus-circle',
+                                                            'status_changed' => 'refresh-cw',
+                                                            'deleted' => 'trash-2',
+                                                            default => 'activity',
+                                                        };
+                                                        $iconColor = match($log->action) {
+                                                            'created' => 'text-green-500',
+                                                            'status_changed' => 'text-blue-500',
+                                                            'deleted' => 'text-red-500',
+                                                            default => 'text-maroon-400',
+                                                        };
+                                                        $desc = '';
+                                                        if ($log->action === 'created') {
+                                                            $desc = 'Request&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>&nbsp;submitted';
+                                                        } elseif ($log->action === 'status_changed') {
+                                                            $oldStatus = e($log->details['old_status'] ?? '');
+                                                            $newStatus = e($log->details['new_status'] ?? '');
+                                                            $requestCode = e($log->details['request_code'] ?? '');
+                                                            
+                                                            // Color mapping for status
+                                                            $oldColor = match($oldStatus) {
+                                                                'pending' => 'text-yellow-600',
+                                                                'endorsed' => 'text-green-600',
+                                                                'rejected' => 'text-red-600',
+                                                                default => 'text-gray-600'
+                                                            };
+                                                            $newColor = match($newStatus) {
+                                                                'pending' => 'text-yellow-600',
+                                                                'endorsed' => 'text-green-600',
+                                                                'rejected' => 'text-red-600',
+                                                                default => 'text-gray-600'
+                                                            };
+                                                            
+                                                            $desc = '<b>' . $requestCode . '</b>:&nbsp;<span class="' . $oldColor . ' font-semibold">' . ucfirst($oldStatus) . '</span>&nbsp;<span class="text-gray-400 mx-1">→</span>&nbsp;<span class="' . $newColor . ' font-semibold">' . ucfirst($newStatus) . '</span>';
+                                                        } elseif ($log->action === 'deleted') {
+                                                            $desc = 'Request&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>&nbsp;deleted';
+                                                        } elseif ($log->action === 'nudged') {
+                                                            $desc = 'Nudge&nbsp;for&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>';
+                                                        } else {
+                                                            $desc = ucfirst($log->action);
+                                                        }
+                                                    @endphp
+                                                    <span class="flex items-center justify-center w-7 h-7 rounded-full 
+    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication') bg-maroon-800 @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation') bg-maroon-800 @elseif($icon === 'plus-circle') bg-green-500 @elseif($icon === 'refresh-cw') bg-blue-500 @elseif($icon === 'trash-2') bg-red-500 @else bg-maroon-400 @endif border">
+    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0H3m9 0h9" /></svg>
+    @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 3v4M7 3v4" /></svg>
+    @elseif($icon === 'plus-circle')
+        <svg class="w-5 h-5" fill="white" stroke="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    @elseif($icon === 'refresh-cw')
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>
+    @elseif($icon === 'trash-2')
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    @else
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    @endif
+</span>
+                                                    <span class="min-w-0 text-xs text-gray-900 font-medium group-hover:whitespace-normal group-hover:break-words group-hover:overflow-visible transition-all duration-200">
+                                                        {!! $desc !!}
+                                                    </span>
+                                                    <span class="text-xs text-right whitespace-nowrap min-w-[80px] pl-2 @if($log->user && $log->user->role === 'admin') text-maroon-900 font-extrabold @else text-gray-700 font-semibold @endif">
+                                                        @if($log->user)
+                                                            @php
+                                                                $nameParts = preg_split('/\s+/', trim($log->user->name ?? ''));
+                                                                if (count($nameParts) === 1) {
+                                                                    $shortName = $log->user->name;
+                                                                } else {
+                                                                    $last = array_pop($nameParts);
+                                                                    $initials = '';
+                                                                    foreach ($nameParts as $p) {
+                                                                        if ($p !== '') $initials .= mb_substr($p, 0, 1) . '.';
+                                                                    }
+                                                                    $shortName = $initials . $last;
+                                                                }
+                                                            @endphp
+                                                            {{ $shortName }}
+                                                            @if($log->user->role === 'admin')
+                                                                <svg class="inline w-3 h-3 text-maroon-900 ml-1 align-baseline relative" style="top:1px;line-height:1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l7 4v5c0 5.25-3.5 9.25-7 11-3.5-1.75-7-5.75-7-11V7l7-4z" /><circle cx="12" cy="10" r="2" fill="currentColor"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17a3 3 0 00-6 0" /></svg>
+                                                            @endif
+                                                        @else
+                                                            System
+                                                        @endif
+                                                    </span>
+                                                    <span class="text-xs text-gray-400 text-center w-4 flex items-center justify-center">&middot;</span>
+                                                    <span class="text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1 font-semibold">
+                                                        <span title="{{ $log->created_at->setTimezone('Asia/Manila')->toDayDateTimeString() }}">{{ $log->created_at->setTimezone('Asia/Manila')->diffForHumans() }}</span>
+                                                    </span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -466,7 +532,9 @@
                                                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                                 <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-maroon-500">
                                                     <option value="">All Status</option>
+                                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                                                     <option value="endorsed" {{ request('status') == 'endorsed' ? 'selected' : '' }}>Endorsed</option>
+                                                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -507,12 +575,12 @@
                      </div>
                 </div>
 
-                <!-- Charts and Activity Log Section -->
+                <!-- Charts Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 flex-shrink-0">
                     <!-- Charts Card -->
-                    <div class="bg-white border border-gray-200 rounded-lg shadow overflow-hidden min-h-[280px] flex flex-col">
+                    <div class="bg-white border border-gray-200 rounded-lg shadow overflow-hidden min-h-[240px] flex flex-col">
                         <!-- Card Header -->
-                        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <div class="px-4 py-2 border-b border-gray-200 bg-gray-50">
                             <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -522,32 +590,32 @@
                         </div>
                         
                         <!-- Card Content -->
-                        <div class="flex flex-col md:flex-row items-stretch justify-center overflow-y-auto flex-1 gap-4">
+                        <div class="flex flex-col md:flex-row items-stretch justify-center overflow-y-auto flex-1 gap-2">
                             <!-- Request Stats (Line Chart) -->
-                            <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden relative pl-4 pr-0 py-1">
-                            <div class="w-full h-48 flex items-center justify-center relative overflow-hidden">
+                            <div class="flex-[3_3_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden relative pl-3 pr-0 py-1">
+                            <div class="w-full h-40 flex items-center justify-center relative overflow-hidden">
                                 <!-- Loading Overlay for Line Chart -->
                                 <div id="lineChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-maroon-600"></div>
-                                        <p class="text-sm text-gray-600 font-medium">Loading chart...</p>
+                                    <div class="flex flex-col items-center gap-2">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-maroon-600"></div>
+                                        <p class="text-xs text-gray-600 font-medium">Loading...</p>
                                     </div>
                                 </div>
-                                <canvas id="monthlyChart" class="w-full h-48 max-h-[200px] transition-opacity duration-500 opacity-0" style="max-height:200px;"></canvas>
+                                <canvas id="monthlyChart" class="w-full h-40 max-h-[160px] transition-opacity duration-500 opacity-0" style="max-height:160px;"></canvas>
                             </div>
                         </div>
                                                  <!-- Status Breakdown (Donut Chart + Legend) -->
-                         <div class="flex-[1_1_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden border-t md:border-t-0 md:border-l border-gray-200 px-4 relative">
-                             <div class="w-full max-w-xs mx-auto h-64 flex flex-col items-center justify-center relative overflow-hidden">
+                         <div class="flex-[1_1_0%] flex flex-col items-center justify-center min-w-0 overflow-hidden border-t md:border-t-0 md:border-l border-gray-200 px-3 relative">
+                             <div class="w-full max-w-xs mx-auto h-52 flex flex-col items-center justify-center relative overflow-hidden">
                                  <!-- Loading Overlay for Pie Chart -->
                                  <div id="pieChartLoading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
-                                     <div class="flex flex-col items-center gap-3">
-                                         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-maroon-600"></div>
-                                         <p class="text-sm text-gray-600 font-medium">Loading chart...</p>
+                                     <div class="flex flex-col items-center gap-2">
+                                         <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-maroon-600"></div>
+                                         <p class="text-xs text-gray-600 font-medium">Loading...</p>
                                      </div>
                                  </div>
-                                 <canvas id="statusChart" class="w-28 h-28 max-w-[112px] max-h-[112px] transition-opacity duration-500 opacity-0" style="max-width:112px;max-height:112px;"></canvas>
-                                 <div id="statusLegend" class="mt-2 w-full px-2 transition-all duration-500">
+                                 <canvas id="statusChart" class="w-24 h-24 max-w-[96px] max-h-[96px] transition-opacity duration-500 opacity-0" style="max-width:96px;max-height:96px;"></canvas>
+                                 <div id="statusLegend" class="mt-1 w-full px-2 transition-all duration-500">
                                     <table class="w-full text-xs min-w-0">
                                         <thead>
                                             <tr class="border-b border-gray-200">
@@ -558,23 +626,24 @@
                                         </thead>
                                         <tbody>
                                             @php
-                                                $statusLabels = ['END'];
-                                                $statusColors = ['bg-green-500'];
-                                                $total = $statusCounts['endorsed'] ?? 0;
+                                                $statusLabels = ['PEND', 'END'];
+                                                $statusColors = ['bg-yellow-500', 'bg-green-500'];
+                                                $statusKeys = ['pending', 'endorsed'];
+                                                $total = ($statusCounts['pending'] ?? 0) + ($statusCounts['endorsed'] ?? 0);
                                             @endphp
                                             @foreach($statusLabels as $i => $label)
+                                                @php
+                                                    $count = $statusCounts[$statusKeys[$i]] ?? 0;
+                                                    $percentage = $total > 0 ? round(($count / $total) * 100) : 0;
+                                                @endphp
                                                 <tr class="hover:bg-gray-50 transition-all duration-300">
                                                     <td class="py-1 flex items-center truncate">
                                                         <span class="inline-block w-2 h-2 rounded-full {{ $statusColors[$i] }} mr-1 flex-shrink-0"></span>
                                                         <span class="font-semibold truncate">{{ $label }}</span>
                                                     </td>
-                                                    <td class="py-1 text-center font-semibold">{{ $statusCounts['endorsed'] ?? 0 }}</td>
+                                                    <td class="py-1 text-center font-semibold">{{ $count }}</td>
                                                     <td class="py-1 text-right text-gray-500">
-                                                        @if($total > 0)
-                                                            100%
-                                                        @else
-                                                            0%
-                                                        @endif
+                                                        {{ $percentage }}%
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -586,124 +655,56 @@
                                     </div>
                                 </div>
                     
-                        <!-- Activity Log Card -->
-                    <div class="bg-white border border-gray-200 rounded-lg shadow overflow-visible" style="overflow: visible;">
-                        <div class="bg-gray-50 sticky top-0 left-0 right-0 z-10 px-4 py-3 rounded-t-lg">
-                            <h2 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <!-- College Requests Card -->
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden min-h-[240px] flex flex-col">
+                        <!-- Card Header -->
+                        <div class="px-4 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                            <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                 </svg>
-                                Activity Log
+                                <span>Requests by College</span>
                             </h2>
+                            <div id="collegeTotalCount" class="text-xs font-semibold text-maroon-600 bg-maroon-100 px-2.5 py-0.5 rounded-full">
+                                <span id="collegeTotalValue">-</span> total
                             </div>
-                        <div class="overflow-y-auto max-h-[220px] p-4 table-scroll-area always-scroll scrollbar-gutter-stable" style="overflow-x: visible;">
-                            <ul class="space-y-2">
-                                @foreach($activityLogs as $log)
-                                    <li class="grid grid-cols-[auto_1fr_auto_16px_80px] items-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md rounded-lg p-2 transition-all duration-300 cursor-pointer group relative">
-                                        @php
-                                            $icon = match($log->action) {
-                                                'created' => 'plus-circle',
-                                                'status_changed' => 'refresh-cw',
-                                                'deleted' => 'trash-2',
-                                                default => 'activity',
-                                            };
-                                            $iconColor = match($log->action) {
-                                                'created' => 'text-green-500',
-                                                'status_changed' => 'text-blue-500',
-                                                'deleted' => 'text-red-500',
-                                                default => 'text-maroon-400',
-                                            };
-                                            $desc = '';
-                                            if ($log->action === 'created') {
-                                                $desc = 'Request&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>&nbsp;submitted';
-                                            } elseif ($log->action === 'status_changed') {
-                                                $oldStatus = e($log->details['old_status'] ?? '');
-                                                $newStatus = e($log->details['new_status'] ?? '');
-                                                $requestCode = e($log->details['request_code'] ?? '');
-                                                
-                                                // Color mapping for status
-                                                $oldColor = match($oldStatus) {
-                                                    'pending' => 'text-yellow-600',
-                                                    'endorsed' => 'text-green-600',
-                                                    'rejected' => 'text-red-600',
-                                                    default => 'text-gray-600'
-                                                };
-                                                $newColor = match($newStatus) {
-                                                    'pending' => 'text-yellow-600',
-                                                    'endorsed' => 'text-green-600',
-                                                    'rejected' => 'text-red-600',
-                                                    default => 'text-gray-600'
-                                                };
-                                                
-                                                $desc = '<b>' . $requestCode . '</b>:&nbsp;<span class="' . $oldColor . ' font-semibold">' . ucfirst($oldStatus) . '</span>&nbsp;<span class="text-gray-400 mx-1">→</span>&nbsp;<span class="' . $newColor . ' font-semibold">' . ucfirst($newStatus) . '</span>';
-                                            } elseif ($log->action === 'deleted') {
-                                                $desc = 'Request&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>&nbsp;deleted';
-                                            } elseif ($log->action === 'nudged') {
-                                                $desc = 'Nudge&nbsp;for&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>';
-                                            } else {
-                                                $desc = ucfirst($log->action);
-                                    }
-                                @endphp
-                                        <span class="flex items-center justify-center w-7 h-7 rounded-full 
-    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication') bg-maroon-800 @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation') bg-maroon-800 @elseif($icon === 'plus-circle') bg-green-500 @elseif($icon === 'refresh-cw') bg-blue-500 @elseif($icon === 'trash-2') bg-red-500 @else bg-maroon-400 @endif border">
-    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication')
-        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0H3m9 0h9" /></svg>
-    @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation')
-        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 3v4M7 3v4" /></svg>
-    @elseif($icon === 'plus-circle')
-        <svg class="w-5 h-5" fill="white" stroke="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    @elseif($icon === 'refresh-cw')
-        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>
-    @elseif($icon === 'trash-2')
-        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-    @else
-        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    @endif
-</span>
-                                        <span class="min-w-0 text-xs text-gray-900 font-medium group-hover:whitespace-normal group-hover:break-words group-hover:overflow-visible transition-all duration-200">
-                                            {!! $desc !!}
-                                        </span>
-                                        <span class="text-xs text-right whitespace-nowrap min-w-[80px] pl-2 @if($log->user && $log->user->role === 'admin') text-maroon-900 font-extrabold @else text-gray-700 font-semibold @endif">
-                                            @if($log->user)
-                                                @php
-                                                    $nameParts = preg_split('/\s+/', trim($log->user->name ?? ''));
-                                                    if (count($nameParts) === 1) {
-                                                        $shortName = $log->user->name;
-                                                    } else {
-                                                        $last = array_pop($nameParts);
-                                                        $initials = '';
-                                                        foreach ($nameParts as $p) {
-                                                            if ($p !== '') $initials .= mb_substr($p, 0, 1) . '.';
-                                                        }
-                                                        $shortName = $initials . $last;
-                                                    }
-                                    @endphp
-                                                {{ $shortName }}
-                                                @if($log->user->role === 'admin')
-                                                    <svg class="inline w-3 h-3 text-maroon-900 ml-1 align-baseline relative" style="top:1px;line-height:1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l7 4v5c0 5.25-3.5 9.25-7 11-3.5-1.75-7-5.75-7-11V7l7-4z" /><circle cx="12" cy="10" r="2" fill="currentColor"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17a3 3 0 00-6 0" /></svg>
-                                    @endif
-                                @else
-                                                System
-                                @endif
-                                        </span>
-                                        <span class="text-xs text-gray-400 text-center w-4 flex items-center justify-center">&middot;</span>
-                                        <span class="text-xs text-gray-500 text-right whitespace-nowrap min-w-[60px] max-w-[80px] w-full block pr-1 font-semibold">
-                                            <span title="{{ $log->created_at->setTimezone('Asia/Manila')->toDayDateTimeString() }}">{{ $log->created_at->setTimezone('Asia/Manila')->diffForHumans() }}</span>
-                                        </span>
-                                    </li>
-                                @endforeach
-                            </ul>
+                        </div>
+                        
+                        <!-- Card Content -->
+                        <div class="flex-1 p-3 flex flex-col relative overflow-hidden">
+                            <!-- Loading Overlay -->
+                            <div id="collegeChartLoading" class="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50 transition-opacity duration-300" style="opacity: 1;">
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-maroon-600"></div>
+                                    <p class="text-xs text-gray-600 font-medium">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="flex-1 flex items-center justify-center min-h-0">
+                                <canvas id="collegeChart" class="w-full h-full max-h-[220px] transition-opacity duration-500 opacity-0"></canvas>
+                            </div>
+                            <!-- Empty State (shown when no data) -->
+                            <div id="collegeChartEmpty" class="hidden flex-1 flex items-center justify-center">
+                                <div class="text-center py-6">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-sm font-medium text-gray-600">No college data available</p>
+                                    <p class="text-xs text-gray-400 mt-1">Requests will appear here once submitted</p>
+                                </div>
+                            </div>
                             </div>
                         </div>
                                 </div>
 
                 <!-- Requests Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-full">
                     <!-- Table (Combined Header and Body) -->
-                    <div class="flex-1 overflow-y-auto min-h-0">
+                    <div class="flex-1">
                         @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
-                            <div class="h-full flex items-center justify-center">
+                            <div class="min-h-[400px] flex items-center justify-center">
                                 <div class="flex flex-col items-center justify-center gap-3 text-center">
                                     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -812,6 +813,9 @@
                                                 </a>
                                             </th>
                                             <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Signed
+                                            </th>
+                                            <th class="w-24 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Actions
                                             </th>
                                         </tr>
@@ -841,10 +845,42 @@
                                         </td>
                                         <td class="w-28 px-6 py-3 overflow-hidden text-center">
                                             <div class="w-full flex justify-center">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 w-20 justify-center">
-                                                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                                                    Endorsed
+                                                @php
+                                                    $statusColor = match($request->status) {
+                                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                                        'endorsed' => 'bg-green-100 text-green-800',
+                                                        'rejected' => 'bg-red-100 text-red-800',
+                                                        default => 'bg-gray-100 text-gray-800'
+                                                    };
+                                                    $statusDot = match($request->status) {
+                                                        'pending' => 'bg-yellow-400',
+                                                        'endorsed' => 'bg-green-400',
+                                                        'rejected' => 'bg-red-400',
+                                                        default => 'bg-gray-400'
+                                                    };
+                                                @endphp
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusColor }} w-20 justify-center">
+                                                    <div class="w-2 h-2 {{ $statusDot }} rounded-full mr-2"></div>
+                                                    {{ ucfirst($request->status) }}
                                                 </span>
+                                            </div>
+                                        </td>
+                                        <td class="w-24 px-6 py-3 text-center text-sm font-medium overflow-hidden">
+                                            @php
+                                                $request->loadCount('signatures');
+                                                $progress = $request->getSignatureProgress();
+                                                $progressParts = explode('/', $progress);
+                                                $current = (int)$progressParts[0];
+                                                $total = (int)$progressParts[1];
+                                                $isComplete = $current === $total;
+                                            @endphp
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-xs font-semibold {{ $isComplete ? 'text-green-600' : 'text-gray-600' }}">
+                                                    {{ $progress }}
+                                                </span>
+                                                @if(!$isComplete)
+                                                    <span class="text-xs text-gray-400">{{ $request->getWorkflowStageName() }}</span>
+                                                @endif
                                             </div>
                                         </td>
                                         <td class="w-24 px-6 py-3 text-center text-sm font-medium overflow-hidden">
@@ -870,11 +906,18 @@
                     <!-- Pagination (Fixed at bottom) -->
                     <div class="bg-white px-4 py-2 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
                         <div class="text-sm text-gray-700 min-w-0">
-                            <span class="whitespace-nowrap">Showing <span class="font-medium w-8 inline-block text-center">1</span> to <span class="font-medium w-8 inline-block text-center" data-count="filtered_count">{{ $filteredRequests->count() }}</span> of <span class="font-medium w-8 inline-block text-center" data-count="total_count">{{ $requests->count() }}</span> results</span>
+                            <span class="whitespace-nowrap">
+                                Showing 
+                                <span class="font-medium">{{ $requests->firstItem() ?? 0 }}</span> 
+                                to 
+                                <span class="font-medium">{{ $requests->lastItem() ?? 0 }}</span> 
+                                of 
+                                <span class="font-medium">{{ $requests->total() }}</span> 
+                                results
+                            </span>
                             </div>
                         <div class="flex items-center space-x-2 flex-shrink-0">
                             {{ $requests->links() }}
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -888,325 +931,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-        // Initialize notification bell
-        window.notificationBell = function() {
-            return {
-                showDropdown: false,
-                notifications: [],
-                unreadCount: 0,
-                
-                init() {
-                    // No polling; notifications load on demand when opened
-                    this.unreadCount = this.unreadCount || 0;
-                },
-                
-                toggleNotifications() {
-                    this.showDropdown = !this.showDropdown;
-                    if (this.showDropdown) {
-                        this.loadNotifications();
-                    }
-                },
-                
-                async loadNotifications() {
-                    this.loading = true;
-                    try {
-                        const response = await fetch('/admin/notifications');
-                        const data = await response.json();
-                        this.notifications = data.items || [];
-                        this.unreadCount = data.unread || 0;
-                    } catch (error) {
-                        // Silent fail for notifications
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async checkForNewNotifications() {
-                    try {
-                        const response = await fetch('/admin/notifications');
-                        const data = await response.json();
-                        const currentUnreadCount = data.unread || 0;
-                        
-                        // Update the count silently without reloading
-                        if (currentUnreadCount !== this.unreadCount) {
-                            this.unreadCount = currentUnreadCount;
-                            // Optionally update notifications list if dropdown is open
-                            if (this.showDropdown) {
-                                this.notifications = data.items || [];
-                            }
-                        }
-                    } catch (error) {
-                        // Silent fail for notification check
-                    }
-                },
-                
-                async markAsRead(notificationId) {
-                    try {
-                        await fetch(`/admin/notifications/${notificationId}/read`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        // Update local state
-                        const notification = this.notifications.find(n => n.id === notificationId);
-                        if (notification) {
-                            notification.read_at = new Date().toISOString();
-                        }
-                        this.unreadCount = Math.max(0, this.unreadCount - 1);
-                    } catch (error) {
-                        // Silent fail for mark as read
-                    }
-                },
-                
-                async markAllAsRead() {
-                    try {
-                        await fetch('/admin/notifications/mark-all-read', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        // Update local state
-                        this.notifications.forEach(n => n.read_at = new Date().toISOString());
-                        this.unreadCount = 0;
-                    } catch (error) {
-                        // Silent fail for mark all as read
-                    }
-                },
-                
-                formatTime(dateString) {
-                    const date = new Date(dateString);
-                    const now = new Date();
-                    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-                    
-                    if (diffInMinutes < 1) return 'Just now';
-                    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-                    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-                    return date.toLocaleDateString();
-                },
-                
-                // Real-time dashboard updates
-                initializeDashboardUpdates() {
-                    // Poll for dashboard data every 7 seconds
-                    setInterval(() => this.updateDashboardData(), 7000);
-                },
-                
-                async updateDashboardData() {
-                    try {
-                        // Get current filter values
-                        const currentFilters = this.getCurrentFilters();
-                        const params = new URLSearchParams(currentFilters).toString();
-                        
-                        const response = await fetch(`/admin/dashboard/data?${params}`);
-                        if (!response.ok) return;
-                        
-                        const data = await response.json();
-                        if (!data.months || !data.monthlyCounts || !data.statusCounts) return;
-                        
-                        // Update charts with new data
-                        updateChartsWithData({
-                            months: data.months,
-                            monthlyCounts: data.monthlyCounts,
-                            statusCounts: data.statusCounts,
-                            type: data.type || currentFilters.type,
-                            period: data.period || currentFilters.period,
-                            dateDetails: data.dateDetails || {}
-                        });
-                        
-                        // Update table data if needed
-                        this.updateTableData(data);
-                        
-                    } catch (error) {
-                        // Error updating dashboard data
-                    }
-                },
-                
-                updateTableData(data) {
-                    if (!data.requests || !Array.isArray(data.requests)) return;
-                    
-                    const tbody = document.querySelector('.requests-table tbody');
-                    if (!tbody) return;
-                    
-                    // Store current request IDs to detect new ones
-                    const currentRequestIds = new Set();
-                    const existingRows = tbody.querySelectorAll('tr');
-                    existingRows.forEach(row => {
-                        const requestId = row.getAttribute('data-request-id');
-                        if (requestId) currentRequestIds.add(requestId);
-                    });
-                    
-                    // Clear existing rows
-                    tbody.innerHTML = '';
-                    
-                    // Add new rows
-                    data.requests.forEach(request => {
-                        const isNewRequest = !currentRequestIds.has(request.id.toString());
-                        const row = this.createTableRow(request, isNewRequest);
-                        tbody.appendChild(row);
-                    });
-                    
-                    // Show notification for new requests
-                    const newRequests = data.requests.filter(req => !currentRequestIds.has(req.id.toString()));
-                    if (newRequests.length > 0 && window.notificationManager) {
-                        window.notificationManager.success(`${newRequests.length} new request(s) received!`);
-                    }
-                },
-                
-                createTableRow(request, isNewRequest = false) {
-                    const row = document.createElement('tr');
-                    row.setAttribute('data-request-id', request.id);
-                    
-                    // Add highlight class for new requests
-                    if (isNewRequest) {
-                        row.classList.add('bg-green-50', 'border-l-4', 'border-green-400');
-                        // Remove highlight after 5 seconds
-                        setTimeout(() => {
-                            row.classList.remove('bg-green-50', 'border-l-4', 'border-green-400');
-                        }, 5000);
-                    }
-                    
-                    // Status badge classes
-                    const statusClasses = {
-                        'pending': 'bg-yellow-100 text-yellow-800',
-                        'endorsed': 'bg-green-100 text-green-800',
-                        'rejected': 'bg-red-100 text-red-800'
-                    };
-                    
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${request.request_code}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${request.type}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="status-badge inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[request.status] || 'bg-gray-100 text-gray-800'}">
-                                ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${request.requested_at}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${request.user_name}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${request.user_email}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
-                                <button type="button" onclick="openReviewModal(${request.id})" class="text-indigo-600 hover:text-indigo-900 transition-colors">
-                                    Review
-                                </button>
-                                <button type="button" onclick="openDeleteModal(${request.id}, '${request.request_code}')" class="text-red-600 hover:text-red-900 transition-colors">
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    
-                    return row;
-                },
-                
-                getCurrentFilters() {
-                    // Get current filter values from the page
-                    const typeFilter = document.querySelector('select[name="type"]')?.value || '';
-                    const periodFilter = document.querySelector('select[name="period"]')?.value || '12months';
-                    const statusFilter = document.querySelector('select[name="status"]')?.value || '';
-                    
-                    return {
-                        type: typeFilter,
-                        period: periodFilter,
-                        status: statusFilter
-                    };
-                },
-                
-                // Removed complex real-time update - now using simple reinitialization
-                
-                updateChartTitle(period) {
-                    const titleElement = document.getElementById('chartTitle');
-                    if (!titleElement) return;
-                    
-                    let title = 'Request Stats';
-                    if (period) {
-                        switch(period) {
-                            case '7days': title += ' (Last 7 Days)'; break;
-                            case '30days': title += ' (Last 30 Days)'; break;
-                            case '12months': title += ' (Last 12 Months)'; break;
-                            case 'all': title += ' (All Time)'; break;
-                            default: title += ' (Last 12 Months)';
-                        }
-                    }
-                    titleElement.textContent = title;
-                },
-                
-                updateStatusLegend(statusCounts) {
-                    const legendElement = document.getElementById('statusLegend');
-                    if (!legendElement) return;
-                    
-                    const total = statusCounts.endorsed || 0;
-                    
-                    if (total === 0) {
-                        legendElement.innerHTML = `
-                            <div class="text-center py-4 text-gray-500">
-                                <div class="flex items-center justify-center mb-2">
-                                    <span class="inline-block w-2 h-2 rounded-full bg-gray-400 mr-2"></span>
-                                    <span class="text-sm font-medium">No Data Available</span>
-                                </div>
-                                <p class="text-xs text-gray-400">No requests found for the selected period</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    const statusLabels = ['END'];
-                    const statusColors = ['bg-green-500'];
-                    const statusKeys = ['endorsed'];
-                    
-                    let legendHTML = `
-                        <table class="w-full text-xs min-w-0 table-fixed">
-                            <thead>
-                                <tr class="border-b border-gray-200">
-                                    <th class="text-left py-1 font-semibold text-gray-700 w-16">Status</th>
-                                    <th class="text-center py-1 font-semibold text-gray-700 w-8">Count</th>
-                                    <th class="text-right py-1 font-semibold text-gray-700 w-8">%</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    
-                    statusLabels.forEach((label, i) => {
-                        const count = statusCounts[statusKeys[i]] || 0;
-                        const percentage = total > 0 ? (count / total * 100) : 0;
-                        
-                        legendHTML += `
-                            <tr class="hover:bg-gray-50 transition-all duration-300">
-                                <td class="py-1 flex items-center truncate">
-                                    <span class="inline-block w-2 h-2 rounded-full ${statusColors[i]} mr-1 flex-shrink-0"></span>
-                                    <span class="font-semibold truncate">${label}</span>
-                                </td>
-                                <td class="py-1 text-center font-semibold">${count}</td>
-                                <td class="py-1 text-right text-gray-500">
-                                    ${percentage === 100 ? '100' : percentage.toFixed(1)}%
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    
-                    legendHTML += `
-                            </tbody>
-                        </table>
-                    `;
-                    
-                    legendElement.innerHTML = legendHTML;
-                }
-            };
-        };
 
         // Chart instances are now global to prevent redeclaration errors
         // let monthlyChartInstance = null;
@@ -1266,6 +990,10 @@ function reinitializeChartsAndTable() {
             window.statusChartInstance.destroy();
             window.statusChartInstance = null;
         }
+        if (window.collegeChartInstance) {
+            window.collegeChartInstance.destroy();
+            window.collegeChartInstance = null;
+        }
         
         // Recreate charts with fresh data
         initializeCharts(data);
@@ -1285,6 +1013,63 @@ function reinitializeChartsAndTable() {
     .catch(error => {
         hideChartsLoading();
     });
+}
+
+// Function to abbreviate college names
+function abbreviateCollegeName(fullName) {
+    const abbreviations = {
+        'College of Information and Computing': 'CIC',
+        'College of Engineering': 'COE',
+        'College of Architecture': 'COA',
+        'College of Arts and Letters': 'CAL',
+        'College of Business Administration': 'CBA',
+        'College of Education': 'COED',
+        'College of Fine Arts': 'CFA',
+        'College of Home Economics': 'CHE',
+        'College of Human Kinetics': 'CHK',
+        'College of Law': 'COL',
+        'College of Mass Communication': 'CMC',
+        'College of Music': 'COM',
+        'College of Nursing': 'CON',
+        'College of Public Administration': 'CPA',
+        'College of Science': 'COS',
+        'College of Social Work and Community Development': 'CSWCD',
+        'College of Statistics': 'COSTAT',
+        'School of Economics': 'SOE',
+        'School of Labor and Industrial Relations': 'SOLAIR',
+        'School of Library and Information Studies': 'SLIS',
+        'UP College of Medicine': 'UPCM',
+        'UP Open University': 'UPOU'
+    };
+    
+    // Check for exact match first
+    if (abbreviations[fullName]) {
+        return abbreviations[fullName];
+    }
+    
+    // Check for case-insensitive match
+    const lowerFullName = fullName.toLowerCase();
+    for (const [key, value] of Object.entries(abbreviations)) {
+        if (key.toLowerCase() === lowerFullName) {
+            return value;
+        }
+    }
+    
+    // If no match, generate abbreviation from first letters of significant words
+    // Skip common words like "of", "and", "the"
+    const skipWords = ['of', 'and', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for'];
+    const words = fullName.split(' ');
+    const significantWords = words.filter(word => 
+        word.length > 0 && !skipWords.includes(word.toLowerCase())
+    );
+    
+    if (significantWords.length > 0) {
+        // Take first letter of each significant word
+        return significantWords.map(word => word.charAt(0).toUpperCase()).join('');
+    }
+    
+    // Fallback: return first 3-4 letters if it's a short name
+    return fullName.length <= 4 ? fullName : fullName.substring(0, 4).toUpperCase();
 }
 
 // Initialize charts with fresh data
@@ -1357,8 +1142,9 @@ function initializeCharts(data) {
     // Initialize status chart
     const statusChartElement = document.getElementById('statusChart');
     if (statusChartElement) {
-        const statusCounts = [data.statusCounts.endorsed || 0];
-        const totalCount = statusCounts[0];
+        const pendingCount = data.statusCounts.pending || 0;
+        const endorsedCount = data.statusCounts.endorsed || 0;
+        const totalCount = pendingCount + endorsedCount;
         
         if (totalCount === 0) {
             // Show empty state
@@ -1384,10 +1170,10 @@ function initializeCharts(data) {
             window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Endorsed'],
+                    labels: ['Pending', 'Endorsed'],
                     datasets: [{
-                        data: statusCounts,
-                        backgroundColor: ['#10b981'],
+                        data: [pendingCount, endorsedCount],
+                        backgroundColor: ['#eab308', '#10b981'], // Yellow for pending, green for endorsed
                         borderWidth: 0
                     }]
                 },
@@ -1404,6 +1190,220 @@ function initializeCharts(data) {
     
     // Update status legend
     updateStatusLegend(data.statusCounts);
+    
+    // Initialize college chart with academic rank breakdown
+    const collegeChartElement = document.getElementById('collegeChart');
+    const collegeChartEmpty = document.getElementById('collegeChartEmpty');
+    const collegeTotalValue = document.getElementById('collegeTotalValue');
+    
+    if (collegeChartElement) {
+        const collegeCounts = data.collegeCounts || {};
+        const collegeRankBreakdown = data.collegeRankBreakdown || {};
+        const colleges = Object.keys(collegeCounts);
+        
+        // Calculate total
+        const total = Object.values(collegeCounts).reduce((sum, count) => sum + count, 0);
+        if (collegeTotalValue) {
+            collegeTotalValue.textContent = total;
+        }
+        
+        // Limit to top 10 colleges for readability
+        const topColleges = colleges.slice(0, 10);
+        
+        if (topColleges.length === 0) {
+            // Show empty state
+            if (collegeChartEmpty) {
+                collegeChartEmpty.classList.remove('hidden');
+            }
+            collegeChartElement.style.opacity = '0';
+            
+            // Create a minimal chart to prevent errors
+            window.collegeChartInstance = new Chart(collegeChartElement.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        } else {
+            // Hide empty state
+            if (collegeChartEmpty) {
+                collegeChartEmpty.classList.add('hidden');
+            }
+            
+            // Collect all unique academic ranks across all colleges
+            const allRanks = new Set();
+            topColleges.forEach(college => {
+                const ranks = collegeRankBreakdown[college] || {};
+                Object.keys(ranks).forEach(rank => allRanks.add(rank));
+            });
+            const uniqueRanks = Array.from(allRanks).sort();
+            
+            // Color palette for academic ranks (distinct colors)
+            const rankColorPalette = [
+                { bg: 'rgba(139, 21, 56, 0.9)', border: 'rgba(139, 21, 56, 1)' }, // Maroon
+                { bg: 'rgba(220, 38, 38, 0.9)', border: 'rgba(220, 38, 38, 1)' }, // Red-600
+                { bg: 'rgba(239, 68, 68, 0.9)', border: 'rgba(239, 68, 68, 1)' }, // Red-500
+                { bg: 'rgba(99, 102, 241, 0.9)', border: 'rgba(99, 102, 241, 1)' }, // Indigo
+                { bg: 'rgba(124, 58, 237, 0.9)', border: 'rgba(124, 58, 237, 1)' }, // Violet
+                { bg: 'rgba(168, 85, 247, 0.9)', border: 'rgba(168, 85, 247, 1)' }, // Purple
+                { bg: 'rgba(236, 72, 153, 0.9)', border: 'rgba(236, 72, 153, 1)' }, // Pink
+                { bg: 'rgba(34, 197, 94, 0.9)', border: 'rgba(34, 197, 94, 1)' }, // Green
+                { bg: 'rgba(59, 130, 246, 0.9)', border: 'rgba(59, 130, 246, 1)' }, // Blue
+                { bg: 'rgba(245, 158, 11, 0.9)', border: 'rgba(245, 158, 11, 1)' }  // Amber
+            ];
+            
+            // Create datasets for each academic rank
+            const datasets = uniqueRanks.map((rank, rankIndex) => {
+                const color = rankColorPalette[rankIndex % rankColorPalette.length];
+                return {
+                    label: rank,
+                    data: topColleges.map(college => {
+                        const ranks = collegeRankBreakdown[college] || {};
+                        return ranks[rank] || 0;
+                    }),
+                    backgroundColor: color.bg,
+                    borderColor: color.border,
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                };
+            });
+            
+            const ctx = collegeChartElement.getContext('2d');
+            
+            window.collegeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topColleges.map(c => abbreviateCollegeName(c)),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    layout: {
+                        padding: {
+                            left: 5,
+                            right: 10,
+                            top: 5,
+                            bottom: 5
+                        }
+                    },
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { 
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: 12,
+                            titleFont: {
+                                size: 13,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                title: function(context) {
+                                    // Show full college name in tooltip
+                                    const index = context[0].dataIndex;
+                                    return topColleges[index] || '';
+                                },
+                                label: function(context) {
+                                    const rank = context.dataset.label;
+                                    const count = context.parsed.x;
+                                    const collegeIndex = context.dataIndex;
+                                    const collegeTotal = collegeCounts[topColleges[collegeIndex]] || 0;
+                                    const rankPercentage = collegeTotal > 0 ? ((count / collegeTotal) * 100).toFixed(1) : 0;
+                                    return [
+                                        `${rank}: ${count} request${count !== 1 ? 's' : ''}`,
+                                        `${rankPercentage}% of ${abbreviateCollegeName(topColleges[collegeIndex])}`
+                                    ];
+                                },
+                                footer: function(tooltipItems) {
+                                    const collegeIndex = tooltipItems[0].dataIndex;
+                                    const collegeTotal = collegeCounts[topColleges[collegeIndex]] || 0;
+                                    return `Total: ${collegeTotal} request${collegeTotal !== 1 ? 's' : ''}`;
+                                },
+                                labelColor: function(context) {
+                                    const rankIndex = uniqueRanks.indexOf(context.dataset.label);
+                                    const color = rankColorPalette[rankIndex % rankColorPalette.length];
+                                    return {
+                                        borderColor: color.border,
+                                        backgroundColor: color.bg
+                                    };
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0,
+                                font: {
+                                    size: 11,
+                                    weight: '500'
+                                },
+                                color: 'rgba(107, 114, 128, 0.8)',
+                                padding: 8
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    weight: '500'
+                                },
+                                color: 'rgba(107, 114, 128, 0.8)',
+                                padding: 10
+                            }
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        collegeChartElement.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    }
+                }
+            });
+        }
+        
+        // Hide loading overlay
+        const collegeChartLoading = document.getElementById('collegeChartLoading');
+        if (collegeChartLoading) {
+            collegeChartLoading.style.opacity = '0';
+            collegeChartLoading.style.pointerEvents = 'none';
+        }
+        
+        // Show chart
+        collegeChartElement.style.opacity = '1';
+    }
 }
 
 // Helper function to update table with fresh data
@@ -1448,6 +1448,7 @@ function updateStatsWithData(stats) {
         function showChartsLoading() {
             const lineChartLoading = document.getElementById('lineChartLoading');
             const pieChartLoading = document.getElementById('pieChartLoading');
+            const collegeChartLoading = document.getElementById('collegeChartLoading');
             
             if (lineChartLoading) {
                 lineChartLoading.style.opacity = '1';
@@ -1457,9 +1458,13 @@ function updateStatsWithData(stats) {
                 pieChartLoading.style.opacity = '1';
                 pieChartLoading.style.pointerEvents = 'auto';
             }
+            if (collegeChartLoading) {
+                collegeChartLoading.style.opacity = '1';
+                collegeChartLoading.style.pointerEvents = 'auto';
+            }
             
             // Fade out charts
-            const charts = document.querySelectorAll('#monthlyChart, #statusChart');
+            const charts = document.querySelectorAll('#monthlyChart, #statusChart, #collegeChart');
             charts.forEach(chart => {
                 chart.style.opacity = '0.3';
             });
@@ -1468,6 +1473,7 @@ function updateStatsWithData(stats) {
         function hideChartsLoading() {
             const lineChartLoading = document.getElementById('lineChartLoading');
             const pieChartLoading = document.getElementById('pieChartLoading');
+            const collegeChartLoading = document.getElementById('collegeChartLoading');
             
             if (lineChartLoading) {
                 lineChartLoading.style.opacity = '0';
@@ -1477,9 +1483,13 @@ function updateStatsWithData(stats) {
                 pieChartLoading.style.opacity = '0';
                 pieChartLoading.style.pointerEvents = 'none';
             }
+            if (collegeChartLoading) {
+                collegeChartLoading.style.opacity = '0';
+                collegeChartLoading.style.pointerEvents = 'none';
+            }
             
             // Fade in charts smoothly
-            const charts = document.querySelectorAll('#monthlyChart, #statusChart');
+            const charts = document.querySelectorAll('#monthlyChart, #statusChart, #collegeChart');
             charts.forEach(chart => {
                 chart.style.opacity = '1';
             });
@@ -1518,7 +1528,7 @@ function updateStatsWithData(stats) {
             const legendElement = document.getElementById('statusLegend');
             if (!legendElement) return;
             
-            const total = statusCounts.endorsed || 0;
+            const total = (statusCounts.pending || 0) + (statusCounts.endorsed || 0);
             
             // If no data, show empty state
             if (total === 0) {
@@ -1534,9 +1544,9 @@ function updateStatsWithData(stats) {
                 return;
             }
             
-            const statusLabels = ['END'];
-            const statusColors = ['bg-green-500'];
-            const statusKeys = ['endorsed'];
+            const statusLabels = ['PEND', 'END'];
+            const statusColors = ['bg-yellow-500', 'bg-green-500'];
+            const statusKeys = ['pending', 'endorsed'];
             
             legendElement.innerHTML = `
                 <table class="w-full text-xs min-w-0">
@@ -1782,8 +1792,9 @@ function updateStatsWithData(stats) {
                     window.statusChartInstance.destroy();
                 }
                 
-                const statusCounts = [data.statusCounts.endorsed || 0];
-                const totalCount = statusCounts[0];
+                const pendingCount = data.statusCounts.pending || 0;
+                const endorsedCount = data.statusCounts.endorsed || 0;
+                const totalCount = pendingCount + endorsedCount;
                 
                 // If no data, show grayed-out pie chart
                 if (totalCount === 0) {
@@ -1824,17 +1835,20 @@ function updateStatsWithData(stats) {
                 window.statusChartInstance = new Chart(statusChartElement.getContext('2d'), {
                     type: 'doughnut',
                     data: {
-                        labels: ['Endorsed'],
+                        labels: ['Pending', 'Endorsed'],
                         datasets: [{
-                            data: statusCounts,
+                            data: [pendingCount, endorsedCount],
                             backgroundColor: [
-                                'rgba(16, 185, 129, 0.8)'
+                                'rgba(234, 179, 8, 0.8)', // Yellow for pending
+                                'rgba(16, 185, 129, 0.8)' // Green for endorsed
                             ],
                             borderColor: [
+                                'rgba(234, 179, 8, 1)',
                                 'rgba(16, 185, 129, 1)'
                             ],
                             borderWidth: 2,
                             hoverBackgroundColor: [
+                                'rgba(234, 179, 8, 1)',
                                 'rgba(16, 185, 129, 1)'
                             ]
                         }]
@@ -1858,6 +1872,214 @@ function updateStatsWithData(stats) {
             
             // Update status legend with smooth transitions
             updateStatusLegend(data.statusCounts);
+            
+            // Update College Chart with smooth transition (stacked by academic rank)
+            const collegeChartElement = document.getElementById('collegeChart');
+            const collegeChartEmpty = document.getElementById('collegeChartEmpty');
+            const collegeTotalValue = document.getElementById('collegeTotalValue');
+            
+            if (collegeChartElement) {
+                if (window.collegeChartInstance) {
+                    window.collegeChartInstance.destroy();
+                }
+                
+                const collegeCounts = data.collegeCounts || {};
+                const collegeRankBreakdown = data.collegeRankBreakdown || {};
+                const colleges = Object.keys(collegeCounts);
+                
+                // Calculate total
+                const total = Object.values(collegeCounts).reduce((sum, count) => sum + count, 0);
+                if (collegeTotalValue) {
+                    collegeTotalValue.textContent = total;
+                }
+                
+                // Limit to top 10 colleges for readability
+                const topColleges = colleges.slice(0, 10);
+                
+                if (topColleges.length === 0) {
+                    // Show empty state
+                    if (collegeChartEmpty) {
+                        collegeChartEmpty.classList.remove('hidden');
+                    }
+                    collegeChartElement.style.opacity = '0';
+                    
+                    // Create a minimal chart to prevent errors
+                    window.collegeChartInstance = new Chart(collegeChartElement.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: [],
+                            datasets: []
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+                } else {
+                    // Hide empty state
+                    if (collegeChartEmpty) {
+                        collegeChartEmpty.classList.add('hidden');
+                    }
+                    
+                    // Collect all unique academic ranks across all colleges
+                    const allRanks = new Set();
+                    topColleges.forEach(college => {
+                        const ranks = collegeRankBreakdown[college] || {};
+                        Object.keys(ranks).forEach(rank => allRanks.add(rank));
+                    });
+                    const uniqueRanks = Array.from(allRanks).sort();
+                    
+                    // Color palette for academic ranks (distinct colors)
+                    const rankColorPalette = [
+                        { bg: 'rgba(139, 21, 56, 0.9)', border: 'rgba(139, 21, 56, 1)' }, // Maroon
+                        { bg: 'rgba(220, 38, 38, 0.9)', border: 'rgba(220, 38, 38, 1)' }, // Red-600
+                        { bg: 'rgba(239, 68, 68, 0.9)', border: 'rgba(239, 68, 68, 1)' }, // Red-500
+                        { bg: 'rgba(99, 102, 241, 0.9)', border: 'rgba(99, 102, 241, 1)' }, // Indigo
+                        { bg: 'rgba(124, 58, 237, 0.9)', border: 'rgba(124, 58, 237, 1)' }, // Violet
+                        { bg: 'rgba(168, 85, 247, 0.9)', border: 'rgba(168, 85, 247, 1)' }, // Purple
+                        { bg: 'rgba(236, 72, 153, 0.9)', border: 'rgba(236, 72, 153, 1)' }, // Pink
+                        { bg: 'rgba(34, 197, 94, 0.9)', border: 'rgba(34, 197, 94, 1)' }, // Green
+                        { bg: 'rgba(59, 130, 246, 0.9)', border: 'rgba(59, 130, 246, 1)' }, // Blue
+                        { bg: 'rgba(245, 158, 11, 0.9)', border: 'rgba(245, 158, 11, 1)' }  // Amber
+                    ];
+                    
+                    // Create datasets for each academic rank
+                    const datasets = uniqueRanks.map((rank, rankIndex) => {
+                        const color = rankColorPalette[rankIndex % rankColorPalette.length];
+                        return {
+                            label: rank,
+                            data: topColleges.map(college => {
+                                const ranks = collegeRankBreakdown[college] || {};
+                                return ranks[rank] || 0;
+                            }),
+                            backgroundColor: color.bg,
+                            borderColor: color.border,
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        };
+                    });
+                    
+                    const ctx = collegeChartElement.getContext('2d');
+                    
+                    window.collegeChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: topColleges.map(c => abbreviateCollegeName(c)),
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            layout: {
+                                padding: {
+                                    left: 5,
+                                    right: 10,
+                                    top: 5,
+                                    bottom: 5
+                                }
+                            },
+                            animation: {
+                                duration: 1200,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: {
+                                legend: { 
+                                    display: false
+                                },
+                                tooltip: {
+                                    enabled: true,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                                    padding: 12,
+                                    titleFont: {
+                                        size: 13,
+                                        weight: 'bold'
+                                    },
+                                    bodyFont: {
+                                        size: 12
+                                    },
+                                    cornerRadius: 8,
+                                    displayColors: true,
+                                    callbacks: {
+                                        title: function(context) {
+                                            // Show full college name in tooltip
+                                            const index = context[0].dataIndex;
+                                            return topColleges[index] || '';
+                                        },
+                                        label: function(context) {
+                                            const rank = context.dataset.label;
+                                            const count = context.parsed.x;
+                                            const collegeIndex = context.dataIndex;
+                                            const collegeTotal = collegeCounts[topColleges[collegeIndex]] || 0;
+                                            const rankPercentage = collegeTotal > 0 ? ((count / collegeTotal) * 100).toFixed(1) : 0;
+                                            return [
+                                                `${rank}: ${count} request${count !== 1 ? 's' : ''}`,
+                                                `${rankPercentage}% of ${abbreviateCollegeName(topColleges[collegeIndex])}`
+                                            ];
+                                        },
+                                        footer: function(tooltipItems) {
+                                            const collegeIndex = tooltipItems[0].dataIndex;
+                                            const collegeTotal = collegeCounts[topColleges[collegeIndex]] || 0;
+                                            return `Total: ${collegeTotal} request${collegeTotal !== 1 ? 's' : ''}`;
+                                        },
+                                        labelColor: function(context) {
+                                            const rankIndex = uniqueRanks.indexOf(context.dataset.label);
+                                            const color = rankColorPalette[rankIndex % rankColorPalette.length];
+                                            return {
+                                                borderColor: color.border,
+                                                backgroundColor: color.bg
+                                            };
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    stacked: true,
+                                    beginAtZero: true,
+                                    grid: {
+                                        display: true,
+                                        color: 'rgba(0, 0, 0, 0.05)',
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        stepSize: 1,
+                                        precision: 0,
+                                        font: {
+                                            size: 11,
+                                            weight: '500'
+                                        },
+                                        color: 'rgba(107, 114, 128, 0.8)',
+                                        padding: 8
+                                    }
+                                },
+                                y: {
+                                    stacked: true,
+                                    grid: {
+                                        display: false,
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11,
+                                            weight: '500'
+                                        },
+                                        color: 'rgba(107, 114, 128, 0.8)',
+                                        padding: 10
+                                    }
+                                }
+                            },
+                            onHover: (event, activeElements) => {
+                                collegeChartElement.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                            }
+                        }
+                    });
+                }
+            }
             
             // Hide loading state after a short delay to ensure smooth transition
             setTimeout(() => {
@@ -1915,6 +2137,8 @@ function updateStatsWithData(stats) {
                         months: data.months,
                         monthlyCounts: data.monthlyCounts,
                         statusCounts: data.statusCounts,
+                        collegeCounts: data.collegeCounts || {},
+                        collegeRankBreakdown: data.collegeRankBreakdown || {},
                         type: data.type || filters.type,
                         period: data.period || filters.period,
                         dateDetails: data.dateDetails || {}
@@ -1959,6 +2183,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     
     // Initial fetch for charts on first non-Turbo load
     if (!window.Turbo) {
+        // Initialize charts with server-side data first
+        @php
+            $initialChartData = [
+                'months' => $months ?? [],
+                'monthlyCounts' => $monthlyCounts ?? [],
+                'statusCounts' => $statusCounts ?? [],
+                'collegeCounts' => $collegeCounts ?? [],
+                'collegeRankBreakdown' => $collegeRankBreakdown ?? [],
+                'type' => request('type'),
+                'period' => request('period'),
+                'dateDetails' => []
+            ];
+        @endphp
+        const initialData = @json($initialChartData);
+        if (initialData.months && initialData.monthlyCounts && initialData.statusCounts) {
+            initializeCharts(initialData);
+        }
+        // Then fetch updated data
         fetchAndUpdateCharts(getGlobalFilters());
     } else {
         // If Turbo is enabled, hide loading state after a delay if no turbo:load event fires
@@ -2155,14 +2397,12 @@ window.addEventListener('beforeunload', function() {
                                                     <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalRequestCode" title="">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Type</td>
-                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalType" title="">-</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Academic Rank</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalAcademicRank" title="">-</td>
                                                 </tr>
                                                 <tr class="bg-gray-50">
-                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Status</td>
-                                                    <td class="px-2 py-0.5 w-1/2 truncate">
-                                                        <div id="modalStatus" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full" title="">-</div>
-                                                    </td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">College</td>
+                                                    <td class="px-2 py-0.5 font-bold text-gray-900 w-1/2 truncate" id="modalCollege" title="">-</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="px-2 py-0.5 font-bold text-gray-700 border-r border-gray-300 w-1/2 truncate">Submitted</td>
@@ -2371,8 +2611,8 @@ function closeReviewModal() {
     document.getElementById('reviewModal').classList.add('hidden');
     // Reset modal content
     document.getElementById('modalRequestCode').textContent = '-';
-    document.getElementById('modalType').textContent = '-';
-    document.getElementById('modalStatus').textContent = '-';
+    document.getElementById('modalAcademicRank').textContent = '-';
+    document.getElementById('modalCollege').textContent = '-';
     document.getElementById('modalDate').textContent = '-';
     document.getElementById('modalUserName').textContent = '-';
     document.getElementById('modalUserEmail').textContent = '-';
@@ -2386,35 +2626,24 @@ function closeReviewModal() {
 function populateModal(data) {
     // Populate basic info
     const requestCode = data.request_code || 'N/A';
-    const type = data.type || 'N/A';
+    const academicRank = data.academic_rank || 'N/A';
+    const college = data.college || 'N/A';
     const date = formatDate(data.requested_at);
     const userName = data.user?.name || 'N/A';
     const userEmail = data.user?.email || 'N/A';
     
     document.getElementById('modalRequestCode').textContent = requestCode;
     document.getElementById('modalRequestCode').title = requestCode;
-    document.getElementById('modalType').textContent = type;
-    document.getElementById('modalType').title = type;
+    document.getElementById('modalAcademicRank').textContent = academicRank;
+    document.getElementById('modalAcademicRank').title = academicRank;
+    document.getElementById('modalCollege').textContent = college;
+    document.getElementById('modalCollege').title = college;
     document.getElementById('modalDate').textContent = date;
     document.getElementById('modalDate').title = date;
     document.getElementById('modalUserName').textContent = userName;
     document.getElementById('modalUserName').title = userName;
     document.getElementById('modalUserEmail').textContent = userEmail;
     document.getElementById('modalUserEmail').title = userEmail;
-            
-    // Status
-    const statusElement = document.getElementById('modalStatus');
-    const status = data.status || 'N/A';
-    statusElement.textContent = status;
-    statusElement.title = status;
-    statusElement.className = 'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-full';
-    if (data.status === 'pending') {
-                statusElement.classList.add('bg-yellow-100', 'text-yellow-800');
-    } else if (data.status === 'endorsed') {
-                statusElement.classList.add('bg-green-100', 'text-green-800');
-    } else if (data.status === 'rejected') {
-                statusElement.classList.add('bg-red-100', 'text-red-800');
-    }
             
     // Signatories
     const formDataContainer = document.getElementById('modalFormData');

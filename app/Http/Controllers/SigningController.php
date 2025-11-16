@@ -1596,22 +1596,6 @@ class SigningController extends Controller
                 'adminCount' => $admins->count()
             ]);
             
-            foreach ($admins as $admin) {
-                \App\Models\AdminNotification::create([
-                    'user_id' => $admin->id,
-                    'request_id' => $request->id,
-                    'type' => 'workflow_completed',
-                    'title' => 'Request Ready for Download',
-                    'message' => $request->user->name . '\'s ' . $request->type . ' request has completed the signature workflow and is ready for download: ' . $request->request_code,
-                    'data' => [
-                        'request_code' => $request->request_code,
-                        'user_name' => $request->user->name,
-                        'user_email' => $request->user->email,
-                        'type' => $request->type,
-                        'workflow_state' => 'completed'
-                    ]
-                ]);
-            }
             
             // Send email notifications to admins
             foreach ($admins as $admin) {

@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use App\Models\AdminNotification;
 
 class AdminUserController extends Controller
 {
@@ -156,49 +155,4 @@ class AdminUserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 
-    public function listNotifications(Request $request)
-    {
-        $admin = Auth::user();
-        if (!$admin || $admin->role !== 'admin') {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        $notifications = AdminNotification::where('user_id', $admin->id)
-            ->orderByDesc('created_at')
-            ->limit(50)
-            ->get();
-        $unreadCount = AdminNotification::where('user_id', $admin->id)->whereNull('read_at')->count();
-        return response()->json([
-            'unread' => $unreadCount,
-            'items' => $notifications,
-        ]);
-    }
-
-    public function markNotificationsRead(Request $request)
-    {
-        $admin = Auth::user();
-        if (!$admin || $admin->role !== 'admin') {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        AdminNotification::where('user_id', $admin->id)->whereNull('read_at')->update(['read_at' => now()]);
-        return response()->json(['success' => true]);
-    }
-
-    public function markNotificationAsRead($id)
-    {
-        $admin = Auth::user();
-        if (!$admin || $admin->role !== 'admin') {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        
-        $notification = AdminNotification::where('id', $id)
-            ->where('user_id', $admin->id)
-            ->first();
-            
-        if (!$notification) {
-            return response()->json(['error' => 'Notification not found'], 404);
-        }
-        
-        $notification->update(['read_at' => now()]);
-        return response()->json(['success' => true]);
-    }
 } 

@@ -501,9 +501,6 @@ class PublicationsController extends Controller
             'created_at' => now(),
         ]);
         
-        // Delete associated admin notifications for this request
-        \App\Models\AdminNotification::where('request_id', $request->id)->delete();
-        
         $request->delete();
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Request and files deleted successfully.']);

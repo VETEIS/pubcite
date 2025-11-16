@@ -149,11 +149,6 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     
     // Announcements
     // Announcements management integrated with main settings
-    // notifications endpoints
-    Route::get('/notifications', [\App\Http\Controllers\AdminUserController::class, 'listNotifications'])->name('admin.notifications.list');
-    Route::post('/notifications/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.read');
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationsRead'])->name('admin.notifications.mark-all-read');
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\AdminUserController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     
     // request management
     // REMOVED: Admin status update routes - Status changes are now automated through the 5-stage signature workflow
