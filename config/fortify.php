@@ -145,7 +145,7 @@ return [
 
     'features' => [
         Features::registration(),
-        Features::resetPasswords(),
+        // Features::resetPasswords(), // Disabled - USEP-only authentication, admin creates accounts manually
         // Features::emailVerification(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),

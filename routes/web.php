@@ -50,10 +50,6 @@ Route::post('/logout', [\App\Http\Controllers\Auth\LogoutController::class, 'log
 
 // Registration
 
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
-})->name('password.request');
-
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
