@@ -62,7 +62,7 @@
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Generated Documents</h3>
         <p class="text-sm text-gray-600 mb-4">Your documents will be automatically generated after submission. You can preview them here:</p>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Incentive Application Preview -->
             <div class="bg-gradient-to-r from-maroon-50 to-burgundy-50 rounded-lg p-4 border border-maroon-200 hover:shadow-md transition-all duration-200 cursor-pointer" 
                  id="incentive-doc-button"
@@ -97,6 +97,32 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+    
+    <!-- IMPORTANT: Sign Documents First Warning -->
+    <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300 p-6 shadow-lg">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-bold text-amber-900 mb-2">⚠️ Important: Sign Documents First</h3>
+                <p class="text-sm text-amber-800 mb-3">
+                    <strong>After submitting your request, you must:</strong>
+                </p>
+                <ol class="list-decimal list-inside space-y-2 text-sm text-amber-800 mb-4">
+                    <li><strong>Sign</strong> the documents with your signature</li>
+                    <li><strong>Upload</strong> the signed documents to the system</li>
+                </ol>
+                <p class="text-sm text-amber-700 font-medium">
+                    Your request will be set to "Pending User Signature" until you upload the signed documents.
+                </p>
+            </div>
         </div>
     </div>
     

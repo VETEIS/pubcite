@@ -99,6 +99,32 @@
         </div>
     </div>
     
+    <!-- IMPORTANT: Sign Documents First Warning -->
+    <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300 p-6 shadow-lg">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-bold text-amber-900 mb-2">⚠️ Important: Sign Documents First</h3>
+                <p class="text-sm text-amber-800 mb-3">
+                    <strong>After submitting your request, you must:</strong>
+                </p>
+                <ol class="list-decimal list-inside space-y-2 text-sm text-amber-800 mb-4">
+                    <li><strong>Sign</strong> the documents with your signature</li>
+                    <li><strong>Upload</strong> the signed documents to the system</li>
+                </ol>
+                <p class="text-sm text-amber-700 font-medium">
+                    Your request will be set to "Pending User Signature" until you upload the signed documents.
+                </p>
+            </div>
+        </div>
+    </div>
+    
     <!-- Final Confirmation -->
     <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
         <div class="flex items-start gap-4">
@@ -219,6 +245,12 @@ function updateReviewFile(type, input) {
     }
 }
 
+function displayUploadedFiles() {
+    syncFileDisplay('citing_article');
+    syncFileDisplay('cited_article');
+    syncFileDisplay('indexing_evidence');
+}
+
 // Display uploaded files when page loads
 document.addEventListener('DOMContentLoaded', function() {
     displayUploadedFiles();
@@ -285,43 +317,76 @@ function generateDocx(type) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => {
+    .then(async response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Check content type
-        const contentType = response.headers.get('content-type');
+        // Check if response is JSON (when store_for_submit is true) or blob (direct download)
+        const contentType = response.headers.get('content-type') || '';
         
-        return response.blob();
-    })
-    .then(blob => {
-        // Check if blob is valid
-        if (!blob || blob.size === 0) {
-            throw new Error('Generated file is empty or corrupted');
+        if (contentType.includes('application/json')) {
+            // JSON response - file was stored, get the path and fetch it
+            const result = await response.json();
+            if (result.success && result.filePath) {
+                // Store the file path for future reference
+                if (alpineComponent && alpineComponent.generatedDocxPaths) {
+                    alpineComponent.generatedDocxPaths[type] = result.filePath;
+                    const currentHash = alpineComponent.calculateFormDataHash ? alpineComponent.calculateFormDataHash(type) : null;
+                    if (currentHash && alpineComponent.formDataHashes) {
+                        alpineComponent.formDataHashes[type] = currentHash;
+                    }
+                }
+                
+                // Fetch the file using the stored path (will convert DOCX to PDF on-the-fly if needed)
+                fetchPreGeneratedDocx(type, result.filePath);
+                return; // Exit early, fetchPreGeneratedDocx handles the download
+            } else {
+                throw new Error(result.message || 'Failed to generate document');
+            }
+        } else {
+            // Blob response - direct download (preview mode)
+            const isPdf = contentType.includes('application/pdf');
+            const blob = await response.blob();
+            
+            if (!blob || blob.size === 0) {
+                throw new Error('Generated file is empty or corrupted');
+            }
+            
+            const fileBlob = new Blob([blob], { 
+                type: isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
+            const url = window.URL.createObjectURL(fileBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().slice(0, 10);
+            
+            if (isPdf) {
+                a.download = type === 'incentive' 
+                    ? `Citation_Incentive_Application_${timestamp}.pdf` 
+                    : `Citation_Recommendation_Letter_${timestamp}.pdf`;
+            } else {
+                a.download = type === 'incentive' 
+                    ? `Citation_Incentive_Application_${timestamp}.docx` 
+                    : `Citation_Recommendation_Letter_${timestamp}.docx`;
+            }
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 100);
+            
+            // Update button states after a delay
+            if (alpineComponent && alpineComponent.updateDocumentButtonStates) {
+                setTimeout(() => {
+                    alpineComponent.updateDocumentButtonStates();
+                }, 1000);
+            }
         }
-        
-        
-        // Ensure proper MIME type for DOCX
-        const docxBlob = new Blob([blob], { 
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-        });
-        
-        const url = window.URL.createObjectURL(docxBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        const timestamp = new Date().toISOString().slice(0, 10);
-        a.download = type === 'incentive' 
-            ? `Citation_Incentive_Application_${timestamp}.docx` 
-            : `Citation_Recommendation_Letter_${timestamp}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up
-        setTimeout(() => {
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }, 100);
     })
     .catch(error => {
         alert(`Error generating document: ${error.message}. Please check your form data and try again.`);
@@ -337,10 +402,18 @@ function generateDocx(type) {
 }
 
 
-// Fetch pre-generated DOCX file
+// Fetch pre-generated DOCX file or PDF if available
 async function fetchPreGeneratedDocx(type, filePath) {
+    // Show loading modal for file download
+    const docTypeNames = {
+        'incentive': 'Incentive Application',
+        'recommendation': 'Recommendation Letter'
+    };
+    
+    window.showLoading('Preparing Download', `Preparing ${docTypeNames[type] || type} file for download...`, ['Loading file...'], false);
+    
     try {
-        // Request the file from the server
+        // Request the file from the server - it will serve PDF if available, DOCX otherwise
         const response = await fetch(`{{ route("citations.generate") }}?file_path=${encodeURIComponent(filePath)}&docx_type=${type}`, {
             method: 'GET',
             headers: {
@@ -358,17 +431,29 @@ async function fetchPreGeneratedDocx(type, filePath) {
             throw new Error('Generated file is empty or corrupted');
         }
         
-        const docxBlob = new Blob([blob], { 
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        // Check content type to determine if it's PDF or DOCX
+        const contentType = response.headers.get('content-type') || '';
+        const isPdf = contentType.includes('application/pdf') || blob.type.includes('pdf');
+        
+        const fileBlob = new Blob([blob], { 
+            type: isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         });
         
-        const url = window.URL.createObjectURL(docxBlob);
+        const url = window.URL.createObjectURL(fileBlob);
         const a = document.createElement('a');
         a.href = url;
         const timestamp = new Date().toISOString().slice(0, 10);
-        a.download = type === 'incentive' 
-            ? `Citation_Incentive_Application_${timestamp}.docx` 
-            : `Citation_Recommendation_Letter_${timestamp}.docx`;
+        
+        if (isPdf) {
+            a.download = type === 'incentive' 
+                ? `Citation_Incentive_Application_${timestamp}.pdf` 
+                : `Citation_Recommendation_Letter_${timestamp}.pdf`;
+        } else {
+            a.download = type === 'incentive' 
+                ? `Citation_Incentive_Application_${timestamp}.docx` 
+                : `Citation_Recommendation_Letter_${timestamp}.docx`;
+        }
+        
         document.body.appendChild(a);
         a.click();
         
@@ -379,8 +464,22 @@ async function fetchPreGeneratedDocx(type, filePath) {
     } catch (error) {
         // Fallback to normal generation if pre-generated file fetch fails
         console.warn('Failed to fetch pre-generated file, generating new one:', error);
-        // Remove the store_for_submit flag and generate normally
+        
+        // Clear the invalid path to prevent retry loops
+        const form = document.getElementById('citation-request-form');
+        if (form) {
+            const alpineComponent = Alpine.$data(form.closest('[x-data]'));
+            if (alpineComponent && alpineComponent.generatedDocxPaths) {
+                alpineComponent.generatedDocxPaths[type] = null;
+                alpineComponent.formDataHashes[type] = null;
+            }
+        }
+        
+        // Generate fresh DOCX
         generateDocx(type);
+    } finally {
+        // Hide loading state
+        window.hideLoading();
     }
 }
 </script>

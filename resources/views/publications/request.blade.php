@@ -348,8 +348,9 @@
                         const form = document.getElementById('publication-request-form');
                         
                         if (!form) {
-                            console.error('Publication form not found');
-                            return Promise.reject(new Error('Form not found'));
+                            // Form doesn't exist (page might be unloading) - silently skip
+                            this.savingDraft = false;
+                            return Promise.resolve();
                         }
                         
                         // Collect ALL form data from ALL tabs (including hidden ones)
@@ -471,18 +472,20 @@
                                 
                                 return Promise.resolve();
                             }
-                            return Promise.reject(new Error('Save failed'));
+                            // Save failed - silently resolve to prevent uncaught promise errors
+                            return Promise.resolve();
                         } else if (response.status === 422) {
-                            // Validation errors - don't update lastSaved, but don't show error either (silent)
-                            // Draft might have validation issues, but we'll try again on next auto-save
-                            return Promise.reject(new Error('Validation failed'));
+                            // Validation errors - silently resolve, will retry on next auto-save
+                            return Promise.resolve();
                         } else if (response.status === 429) {
-                            // Rate limited - disable auto-save temporarily
+                            // Rate limited - this shouldn't happen for drafts, but handle gracefully
+                            // Disable auto-save temporarily
                             this.autoSaveDisabled = true;
                             setTimeout(() => {
                                 this.autoSaveDisabled = false;
                             }, 60000); // Re-enable after 1 minute
-                            return Promise.reject(new Error('Rate limited'));
+                            // Silently resolve to prevent uncaught promise errors
+                            return Promise.resolve();
                         } else {
                             // Try to parse error response
                             try {
@@ -493,12 +496,13 @@
                             } catch (e) {
                                 // Ignore parse errors
                             }
-                            return Promise.reject(new Error('Save failed'));
+                            // Silently resolve to prevent uncaught promise errors
+                            return Promise.resolve();
                         }
-                        // Silent save - no error notifications for auto-save
                     } catch (error) {
-                        // Silent error - don't show notifications for auto-save
-                        return Promise.reject(error);
+                        // Silent error - resolve instead of reject to prevent uncaught promise errors
+                        // Auto-save failures should be silent
+                        return Promise.resolve();
                     } finally {
                         this.savingDraft = false;
                     }
@@ -684,7 +688,7 @@
                             recFacultyNameField.value = draftData.name;
                         }
                         if (recFacultyNameDisplay) {
-                            recFacultyNameDisplay.textContent = draftData.name;
+                            recFacultyNameDisplay.textContent = draftData.name ? draftData.name.toUpperCase() : '';
                         }
                     }
                     
@@ -918,7 +922,6 @@
                                 // Update hash to mark as generated
                                 this.formDataHashes[docxType] = currentHash;
                                 this.pdfGenerationStatus[docxType] = 'ready';
-                                console.log(`Background PDF generated: ${docxType}`, result.filePath);
                             } else {
                                 throw new Error(result.message || 'PDF generation failed');
                             }
@@ -1112,7 +1115,7 @@
                     if (nameField && recFacultyNameField && recFacultyNameDisplay) {
                         const nameValue = nameField.value.trim();
                         recFacultyNameField.value = nameValue;
-                        recFacultyNameDisplay.textContent = nameValue || '';
+                        recFacultyNameDisplay.textContent = nameValue ? nameValue.toUpperCase() : '';
                     }
                 },
                 

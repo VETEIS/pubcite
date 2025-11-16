@@ -375,6 +375,33 @@ class CitationsController extends Controller
             switch ($docxType) {
                 case 'incentive':
                     $filtered = $this->mapIncentiveFields($data);
+                    
+                    // FORCE UPPERCASE for faculty name fields - DEBUG
+                    Log::info('BEFORE mapIncentiveFields - Raw data', [
+                        'faculty_name' => $data['faculty_name'] ?? 'NOT SET',
+                        'name' => $data['name'] ?? 'NOT SET',
+                        'facultyname' => $data['facultyname'] ?? 'NOT SET'
+                    ]);
+                    
+                    Log::info('AFTER mapIncentiveFields - Filtered data', [
+                        'faculty' => $filtered['faculty'] ?? 'NOT SET',
+                        'facultyname' => $filtered['facultyname'] ?? 'NOT SET',
+                        'name' => $filtered['name'] ?? 'NOT SET'
+                    ]);
+                    
+                    // FORCE UPPERCASE - ensure both fields are uppercase
+                    if (isset($filtered['faculty'])) {
+                        $filtered['faculty'] = mb_strtoupper(trim($filtered['faculty']));
+                    }
+                    if (isset($filtered['facultyname'])) {
+                        $filtered['facultyname'] = mb_strtoupper(trim($filtered['facultyname']));
+                    }
+                    
+                    Log::info('AFTER FORCE UPPERCASE - Final data', [
+                        'faculty' => $filtered['faculty'] ?? 'NOT SET',
+                        'facultyname' => $filtered['facultyname'] ?? 'NOT SET'
+                    ]);
+                    
                     // Convert to PDF if storing for submit (saved requests) or if explicitly requested
                     $convertToPdf = $storeForSubmit && !$isPreview;
                     
@@ -489,6 +516,28 @@ class CitationsController extends Controller
             
             // Set all values using service method (with logging in debug mode)
             $logMissing = config('app.debug', false);
+            
+            // Log ALL faculty-related values for debugging
+            Log::info('Setting values in citation incentive template', [
+                'facultyname' => $allValues['facultyname'] ?? 'NOT SET',
+                'faculty' => $allValues['faculty'] ?? 'NOT SET',
+                'name' => $allValues['name'] ?? 'NOT SET',
+                'all_keys' => array_keys($allValues)
+            ]);
+            
+            // FORCE UPPERCASE one more time before setting in template
+            if (isset($allValues['faculty'])) {
+                $allValues['faculty'] = mb_strtoupper(trim($allValues['faculty']));
+            }
+            if (isset($allValues['facultyname'])) {
+                $allValues['facultyname'] = mb_strtoupper(trim($allValues['facultyname']));
+            }
+            
+            Log::info('FINAL VALUES being set in template', [
+                'facultyname' => $allValues['facultyname'] ?? 'NOT SET',
+                'faculty' => $allValues['faculty'] ?? 'NOT SET'
+            ]);
+            
             $missingPlaceholders = $this->docGenService->setTemplateValues($templateProcessor, $allValues, $logMissing);
             
             if (!empty($missingPlaceholders) && $logMissing) {
@@ -839,28 +888,30 @@ class CitationsController extends Controller
             }
         }
         
-        // Prevent duplicate submissions for both drafts and final submissions
-        $recentSubmission = \App\Models\Request::where('user_id', $user->id)
-            ->where('type', 'Citation')
-            ->where('status', $isDraft ? 'draft' : 'pending')
-            ->where('requested_at', '>=', now()->subSeconds(10)) // Within last 10 seconds
-            ->first();
-            
-        if ($recentSubmission) {
-            Log::info('Duplicate citation submission prevented', [
-                'user_id' => $user->id,
-                'is_draft' => $isDraft,
-                'recent_submission_id' => $recentSubmission->id,
-                'recent_submission_time' => $recentSubmission->requested_at
-            ]);
-            
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Duplicate submission prevented. Please wait a moment before trying again.'
-                ], 429);
-            } else {
-                return back()->with('error', 'Duplicate submission prevented. Please wait a moment before trying again.');
+        // Prevent duplicate submissions for final submissions only (not drafts)
+        // Drafts can be saved multiple times - they just update the existing draft
+        if (!$isDraft) {
+            $recentSubmission = \App\Models\Request::where('user_id', $user->id)
+                ->where('type', 'Citation')
+                ->where('status', 'pending')
+                ->where('requested_at', '>=', now()->subSeconds(10)) // Within last 10 seconds
+                ->first();
+                
+            if ($recentSubmission) {
+                Log::info('Duplicate citation submission prevented', [
+                    'user_id' => $user->id,
+                    'recent_submission_id' => $recentSubmission->id,
+                    'recent_submission_time' => $recentSubmission->requested_at
+                ]);
+                
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Duplicate submission prevented. Please wait a moment before trying again.'
+                    ], 429);
+                } else {
+                    return back()->with('error', 'Duplicate submission prevented. Please wait a moment before trying again.');
+                }
             }
         }
         
@@ -1259,7 +1310,10 @@ class CitationsController extends Controller
                 
                 // Clear draft session when submitting final request
                 session()->forget("draft_citation_{$userId}");
-                return redirect()->route('dashboard')->with('success', 'Citation request submitted successfully! Request Code: ' . $requestCode);
+                return redirect()->route('dashboard')->with([
+                    'success' => 'Citation request submitted successfully! Request Code: ' . $requestCode,
+                    'new_request_id' => $request->id
+                ]);
             }
         } catch (\Exception $e) {
             Log::error('Error submitting citation request: ' . $e->getMessage());
@@ -1479,7 +1533,7 @@ class CitationsController extends Controller
     private function mapIncentiveFields($data) {
         return [
             'college' => $data['college'] ?? '',
-            'name' => $data['name'] ?? '',
+            'name' => mb_strtoupper(trim((!empty(trim($data['faculty_name'] ?? '')) ? trim($data['faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // UPPERCASE for signatory area - template may use ${name}
             'rank' => $data['rank'] ?? '',
             'bibentry' => $data['bibentry'] ?? '',
             'issn' => $data['issn'] ?? '',
@@ -1495,7 +1549,10 @@ class CitationsController extends Controller
             'citescore' => '',
             // Citation detail fields from form data
             'citedbibentry' => $data['citedbibentry'] ?? '',
-            'facultyname' => !empty($data['faculty_name']) ? mb_strtoupper($data['faculty_name']) : '',
+            // Get faculty name - prefer faculty_name, fallback to name, ensure it's not empty
+            // Use explicit check to handle empty strings properly - FORCE UPPERCASE
+            'faculty' => mb_strtoupper(trim((!empty(trim($data['faculty_name'] ?? '')) ? trim($data['faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // Support both field names - uppercase for signatory area
+            'facultyname' => mb_strtoupper(trim((!empty(trim($data['faculty_name'] ?? '')) ? trim($data['faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // Support both field names - uppercase for signatory area
             'centermanager' => $data['center_manager'] ?? '',
             'dean' => $data['dean_name'] ?? '',
             'date' => $data['date'] ?? now()->format('Y-m-d'),
@@ -1505,8 +1562,8 @@ class CitationsController extends Controller
     private function mapRecommendationFields($data) {
         return [
             'collegeheader' => $data['rec_collegeheader'] ?? '',
-            'name' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Use name field (template uses ${name})
-            'facultyname' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Keep for backward compatibility
+            'name' => mb_strtoupper(trim((!empty(trim($data['rec_faculty_name'] ?? '')) ? trim($data['rec_faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // UPPERCASE for signatory area - template may use ${name}
+            'facultyname' => mb_strtoupper(trim((!empty(trim($data['rec_faculty_name'] ?? '')) ? trim($data['rec_faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // UPPERCASE for signatory area
             'details' => $data['rec_citing_details'] ?? '',
             'indexing' => $data['rec_indexing_details'] ?? '',
             'dean' => $data['rec_dean_name'] ?? '',

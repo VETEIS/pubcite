@@ -135,7 +135,7 @@
                     if (nameField && recFacultyNameField && recFacultyNameDisplay) {
                         const nameValue = nameField.value.trim();
                         recFacultyNameField.value = nameValue;
-                        recFacultyNameDisplay.textContent = nameValue || '';
+                        recFacultyNameDisplay.textContent = nameValue ? nameValue.toUpperCase() : '';
                     }
                 },
                 
@@ -320,8 +320,15 @@
                 async saveDraft() {
                     this.savingDraft = true;
                     try {
+                        const form = document.getElementById('citation-request-form');
+                        
+                        if (!form) {
+                            // Form doesn't exist (page might be unloading) - silently skip
+                            this.savingDraft = false;
+                            return Promise.resolve();
+                        }
+                        
                         const formData = new FormData();
-        const form = document.getElementById('citation-request-form');
                         
                         // Collect ALL form data from ALL tabs
                         const inputs = form.querySelectorAll('input, textarea, select');
@@ -442,18 +449,20 @@
                                 
                                 return Promise.resolve();
                             }
-                            return Promise.reject(new Error('Save failed'));
+                            // Save failed - silently resolve to prevent uncaught promise errors
+                            return Promise.resolve();
                         } else if (response.status === 422) {
-                            // Validation errors - don't update lastSaved, but don't show error either (silent)
-                            // Draft might have validation issues, but we'll try again on next auto-save
-                            return Promise.reject(new Error('Validation failed'));
+                            // Validation errors - silently resolve, will retry on next auto-save
+                            return Promise.resolve();
                         } else if (response.status === 429) {
-                            // Rate limited - disable auto-save temporarily
+                            // Rate limited - this shouldn't happen for drafts, but handle gracefully
+                            // Disable auto-save temporarily
                             this.autoSaveDisabled = true;
                             setTimeout(() => {
                                 this.autoSaveDisabled = false;
                             }, 60000); // Re-enable after 1 minute
-                            return Promise.reject(new Error('Rate limited'));
+                            // Silently resolve to prevent uncaught promise errors
+                            return Promise.resolve();
                         } else {
                             // Try to parse error response
                             try {
@@ -464,12 +473,13 @@
                             } catch (e) {
                                 // Ignore parse errors
                             }
-                            return Promise.reject(new Error('Save failed'));
+                            // Silently resolve to prevent uncaught promise errors
+                            return Promise.resolve();
                         }
-                        // Silent save - no error notifications for auto-save
                     } catch (error) {
-                        // Silent error - don't show notifications for auto-save
-                        return Promise.reject(error);
+                        // Silent error - resolve instead of reject to prevent uncaught promise errors
+                        // Auto-save failures should be silent
+                        return Promise.resolve();
                     } finally {
                         this.savingDraft = false;
                     }
@@ -566,21 +576,29 @@
                     // Set timestamp to show draft was loaded
                     this.lastSaved = 'Draft loaded';
                     
-                    // Populate all form fields
+                    // List of signatory fields that should be handled by restoreSignatorySelections
+                    const signatoryFields = ['center_manager', 'dean_name', 'rec_dean_name'];
+                    
+                    // Populate all form fields (except signatory fields)
                     Object.keys(draftData).forEach(key => {
+                        // Skip signatory fields - they'll be handled by restoreSignatorySelections
+                        if (signatoryFields.includes(key)) {
+                            return;
+                        }
+                        
                         const element = document.querySelector(`[name="${key}"]`);
                         if (element) {
                             if (element.type === 'checkbox' || element.type === 'radio') {
                                 element.checked = draftData[key] === '1' || draftData[key] === 'on';
                             } else if (element.type === 'file') {
                                 // Files can't be restored, skip
-        } else {
+                            } else {
                                 element.value = draftData[key] || '';
                             }
                         }
                     });
                     
-                    // Restore signatory selections
+                    // Restore signatory selections (handles Alpine.js components properly)
                     this.restoreSignatorySelections(draftData);
                     
                     // Update submit button state
@@ -600,8 +618,16 @@
                             // Set timestamp to show draft was loaded
                             this.lastSaved = 'Draft loaded';
                             
-                            // Populate all form fields
+                            // List of signatory fields that should be handled by restoreSignatorySelections
+                            const signatoryFields = ['center_manager', 'dean_name', 'rec_dean_name'];
+                            
+                            // Populate all form fields (except signatory fields)
                             Object.keys(draftData).forEach(key => {
+                                // Skip signatory fields - they'll be handled by restoreSignatorySelections
+                                if (signatoryFields.includes(key)) {
+                                    return;
+                                }
+                                
                                 const element = document.querySelector(`[name="${key}"]`);
                                 if (element) {
                                     if (element.type === 'checkbox' || element.type === 'radio') {
@@ -614,7 +640,7 @@
                                 }
                             });
                             
-                            // Restore signatory selections
+                            // Restore signatory selections (handles Alpine.js components properly)
                             this.restoreSignatorySelections(draftData);
                             
                             // Update submit button state
@@ -654,7 +680,7 @@
                             recFacultyNameField.value = draftData.name;
                         }
                         if (recFacultyNameDisplay) {
-                            recFacultyNameDisplay.textContent = draftData.name;
+                            recFacultyNameDisplay.textContent = draftData.name ? draftData.name.toUpperCase() : '';
                         }
                     }
                     
@@ -888,7 +914,6 @@
                                 // Update hash to mark as generated
                                 this.formDataHashes[docxType] = currentHash;
                                 this.pdfGenerationStatus[docxType] = 'ready';
-                                console.log(`Background PDF generated: ${docxType}`, result.filePath);
                             } else {
                                 throw new Error(result.message || 'PDF generation failed');
                             }

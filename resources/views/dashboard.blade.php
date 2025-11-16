@@ -34,6 +34,9 @@
         @if(session('error'))
             <div id="error-notification" class="hidden">{{ session('error') }}</div>
         @endif
+        @if(session('new_request_id'))
+            <div id="new-request-id" class="hidden">{{ session('new_request_id') }}</div>
+        @endif
 
         <!-- Error message overlay -->
         <div x-show="errorMessage" x-transition class="fixed top-20 right-4 z-[60] bg-red-600 text-white px-4 py-2 rounded shadow" style="display:none;">
@@ -179,7 +182,7 @@
                                 <table class="w-full table-fixed divide-y divide-gray-200">
                                     <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($filteredRequests as $index => $request)
-                                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                    <tr class="hover:bg-gray-50 transition-colors duration-200" data-request-id="{{ $request->id }}">
                                             <td class="w-28 px-6 py-4 whitespace-nowrap text-center">
                                             <span class="text-sm font-medium text-gray-900">{{ $request->request_code }}</span>
                                         </td>
@@ -218,11 +221,22 @@
                                                 </td>
                                             <td class="w-20 px-6 py-4 whitespace-nowrap text-center">
                                                 @php
-                                                    $signedCount = \App\Models\RequestSignature::where('request_id', $request->id)->count();
-                                                    $totalSignatories = 5; // user, center_manager, college_dean, deputy_director, rdd_director
+                                                    $request->loadCount('signatures');
+                                                    $progress = $request->getSignatureProgress();
+                                                    $progressParts = explode('/', $progress);
+                                                    $current = (int)$progressParts[0];
+                                                    $total = (int)$progressParts[1];
+                                                    $isComplete = $current === $total;
                                                 @endphp
-                                                <span class="text-sm font-medium text-gray-900">{{ $signedCount }}/{{ $totalSignatories }}</span>
-                                                </td>
+                                                <div class="flex flex-col items-center gap-1">
+                                                    <span class="text-xs font-semibold {{ $isComplete ? 'text-green-600' : 'text-gray-600' }}">
+                                                        {{ $progress }}
+                                                    </span>
+                                                    @if(!$isComplete)
+                                                        <span class="text-xs text-gray-400">{{ $request->getWorkflowStageName() }}</span>
+                                                    @endif
+                                                </div>
+                                            </td>
                                             <td class="w-24 px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                     @if($request->status === 'pending')
                                                         <div class="flex flex-col items-center gap-2">
@@ -1809,4 +1823,6 @@
             }
         });
     })();
+
 </script>
+

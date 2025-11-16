@@ -58,7 +58,7 @@
             
             <div class="flex items-baseline gap-2 text-sm text-gray-700 mb-1">
                 <span>This is to endorse to your office the research citation of</span>
-                <span class="font-medium text-gray-900" id="rec-faculty-name-display">{{ old('name', $request->form_data['name'] ?? '') }}</span>
+                <span class="font-medium text-gray-900" id="rec-faculty-name-display">{{ strtoupper(old('name', $request->form_data['name'] ?? '')) }}</span>
                 <input type="hidden" name="rec_faculty_name" id="rec_faculty_name" value="{{ old('name', $request->form_data['name'] ?? '') }}">
             </div>
             

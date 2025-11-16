@@ -134,6 +134,17 @@ class PublicationsController extends Controller
             
             // Set all values using service method (with logging in debug mode)
             $logMissing = config('app.debug', false);
+            
+            // Log facultyname value for debugging
+            if (isset($allValues['facultyname'])) {
+                Log::info('Setting facultyname in publication incentive template', [
+                    'facultyname' => $allValues['facultyname'],
+                    'original_facultyname' => $data['facultyname'] ?? null,
+                    'original_faculty_name' => $data['faculty_name'] ?? null,
+                    'original_name' => $data['name'] ?? null
+                ]);
+            }
+            
             $missingPlaceholders = $this->docGenService->setTemplateValues($templateProcessor, $allValues, $logMissing);
             
             if (!empty($missingPlaceholders) && $logMissing) {
@@ -551,28 +562,30 @@ class PublicationsController extends Controller
             }
         }
         
-        // Prevent duplicate submissions for both drafts and final submissions
-        $recentSubmission = \App\Models\Request::where('user_id', $user->id)
-            ->where('type', 'Publication')
-            ->where('status', $isDraft ? 'draft' : 'pending')
-            ->where('requested_at', '>=', now()->subSeconds(10)) // Within last 10 seconds
-            ->first();
-            
-        if ($recentSubmission) {
-            Log::info('Duplicate submission prevented', [
-                'user_id' => $user->id,
-                'is_draft' => $isDraft,
-                'recent_submission_id' => $recentSubmission->id,
-                'recent_submission_time' => $recentSubmission->requested_at
-            ]);
-            
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Duplicate submission prevented. Please wait a moment before trying again.'
-                ], 429);
-            } else {
-                return back()->with('error', 'Duplicate submission prevented. Please wait a moment before trying again.');
+        // Prevent duplicate submissions for final submissions only (not drafts)
+        // Drafts can be saved multiple times - they just update the existing draft
+        if (!$isDraft) {
+            $recentSubmission = \App\Models\Request::where('user_id', $user->id)
+                ->where('type', 'Publication')
+                ->where('status', 'pending')
+                ->where('requested_at', '>=', now()->subSeconds(10)) // Within last 10 seconds
+                ->first();
+                
+            if ($recentSubmission) {
+                Log::info('Duplicate submission prevented', [
+                    'user_id' => $user->id,
+                    'recent_submission_id' => $recentSubmission->id,
+                    'recent_submission_time' => $recentSubmission->requested_at
+                ]);
+                
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Duplicate submission prevented. Please wait a moment before trying again.'
+                    ], 429);
+                } else {
+                    return back()->with('error', 'Duplicate submission prevented. Please wait a moment before trying again.');
+                }
             }
         }
         
@@ -989,7 +1002,10 @@ class PublicationsController extends Controller
                 
                 // Clear draft session when submitting final request
                 session()->forget("draft_publication_{$userId}");
-                return redirect()->route('dashboard')->with('success', 'Publication request submitted successfully! Request Code: ' . $requestCode);
+                return redirect()->route('dashboard')->with([
+                    'success' => 'Publication request submitted successfully! Request Code: ' . $requestCode,
+                    'new_request_id' => $request->id
+                ]);
             }
 
         } catch (\Exception $e) {
@@ -1328,7 +1344,7 @@ class PublicationsController extends Controller
     private function mapIncentiveFields($data) {
         return [
             'college' => $data['college'] ?? '',
-            'name' => $data['name'] ?? '',
+            'name' => mb_strtoupper(trim((!empty(trim($data['faculty_name'] ?? '')) ? trim($data['faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // UPPERCASE for signatory area - template may use ${name}
             'academicrank' => $data['academicrank'] ?? $data['rank'] ?? '', // Support both field names
             'bibentry' => $data['bibentry'] ?? '',
             'issn' => $data['issn'] ?? '',
@@ -1341,8 +1357,8 @@ class PublicationsController extends Controller
             'national' => isset($data['national']) ? '☑' : '☐',
             'international' => isset($data['international']) ? '☑' : '☐',
             'particulars' => $data['particulars'] ?? '',
-            'faculty' => $data['facultyname'] ?? $data['faculty_name'] ?? '', // Support both field names
-            'facultyname' => !empty($data['facultyname'] ?? $data['faculty_name'] ?? '') ? mb_strtoupper($data['facultyname'] ?? $data['faculty_name'] ?? '') : '', // Support both field names - uppercase for signatory area
+            'faculty' => !empty($data['facultyname'] ?? $data['faculty_name'] ?? $data['name'] ?? '') ? mb_strtoupper($data['facultyname'] ?? $data['faculty_name'] ?? $data['name'] ?? '') : '', // Support both field names - uppercase for signatory area
+            'facultyname' => !empty($data['facultyname'] ?? $data['faculty_name'] ?? $data['name'] ?? '') ? mb_strtoupper($data['facultyname'] ?? $data['faculty_name'] ?? $data['name'] ?? '') : '', // Support both field names - uppercase for signatory area
             'centermanager' => $data['centermanager'] ?? $data['center_manager'] ?? '', // Support both field names
             'dean' => $data['collegedean'] ?? $data['dean_name'] ?? '', // Support both field names
             'date' => $data['date'] ?? now()->format('Y-m-d'),
@@ -1351,8 +1367,8 @@ class PublicationsController extends Controller
     private function mapRecommendationFields($data) {
         return [
             'collegeheader' => $data['rec_collegeheader'] ?? '',
-            'name' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Use name field (template uses ${name})
-            'facultyname' => $data['name'] ?? $data['rec_faculty_name'] ?? '', // Keep for backward compatibility
+            'name' => mb_strtoupper(trim((!empty(trim($data['rec_faculty_name'] ?? '')) ? trim($data['rec_faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // UPPERCASE for signatory area - template may use ${name}
+            'facultyname' => mb_strtoupper(trim((!empty(trim($data['rec_faculty_name'] ?? '')) ? trim($data['rec_faculty_name']) : (!empty(trim($data['name'] ?? '')) ? trim($data['name']) : '')))), // UPPERCASE for signatory area
             'details' => $data['rec_publication_details'] ?? '',
             'indexing' => $data['rec_indexing_details'] ?? '',
             'dean' => $data['rec_dean_name'] ?? '',
