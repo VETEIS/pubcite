@@ -151,8 +151,30 @@
         stepCounter.textContent = '0/6';
         progressBar.style.width = '0%';
         
-        // Connect to Server-Sent Events
-        const eventSource = new EventSource('/progress/stream');
+        // Get progress ID from form or generate one
+        const form = document.querySelector('form[id$="-request-form"]');
+        let progressId = null;
+        if (form) {
+            // Check if there's a hidden input with progress_id
+            const progressIdInput = form.querySelector('input[name="progress_id"]');
+            if (progressIdInput) {
+                progressId = progressIdInput.value;
+            } else {
+                // Generate a unique ID and add it to the form
+                progressId = 'progress_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'progress_id';
+                hiddenInput.value = progressId;
+                form.appendChild(hiddenInput);
+            }
+        } else {
+            // Fallback: use session ID + timestamp
+            progressId = 'progress_' + Date.now();
+        }
+        
+        // Connect to Server-Sent Events with progress ID
+        const eventSource = new EventSource(`/progress/stream?request_id=${encodeURIComponent(progressId)}`);
         let currentStep = 0;
         const totalSteps = 6;
         
