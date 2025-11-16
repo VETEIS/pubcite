@@ -1342,7 +1342,7 @@ class PublicationsController extends Controller
             'international' => isset($data['international']) ? '☑' : '☐',
             'particulars' => $data['particulars'] ?? '',
             'faculty' => $data['facultyname'] ?? $data['faculty_name'] ?? '', // Support both field names
-            'facultyname' => $data['facultyname'] ?? $data['faculty_name'] ?? '', // Support both field names
+            'facultyname' => !empty($data['facultyname'] ?? $data['faculty_name'] ?? '') ? mb_strtoupper($data['facultyname'] ?? $data['faculty_name'] ?? '') : '', // Support both field names - uppercase for signatory area
             'centermanager' => $data['centermanager'] ?? $data['center_manager'] ?? '', // Support both field names
             'dean' => $data['collegedean'] ?? $data['dean_name'] ?? '', // Support both field names
             'date' => $data['date'] ?? now()->format('Y-m-d'),

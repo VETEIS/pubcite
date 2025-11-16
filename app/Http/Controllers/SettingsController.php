@@ -9,6 +9,7 @@ use App\Models\ResearcherProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,13 +18,20 @@ class SettingsController extends Controller
     public function index()
     {
         $this->authorizeAdmin();
+        
+        // Check if accounts exist and get their emails
+        $deputyDirectorUser = User::where('signatory_type', 'deputy_director')->first();
+        $rddDirectorUser = User::where('signatory_type', 'rdd_director')->first();
+        
         $data = [
             'official_deputy_director_name' => Setting::get('official_deputy_director_name', 'RANDY A. TUDY, PhD'),
             'official_deputy_director_title' => Setting::get('official_deputy_director_title', 'Deputy Director, Publication Unit'),
             'official_rdd_director_name' => Setting::get('official_rdd_director_name', 'MERLINA H. JURUENA, PhD'),
             'official_rdd_director_title' => Setting::get('official_rdd_director_title', 'Director, Research and Development Division'),
-            'deputy_director_email' => Setting::get('deputy_director_email', ''),
-            'rdd_director_email' => Setting::get('rdd_director_email', ''),
+            'deputy_director_email' => $deputyDirectorUser ? $deputyDirectorUser->email : Setting::get('deputy_director_email', ''),
+            'rdd_director_email' => $rddDirectorUser ? $rddDirectorUser->email : Setting::get('rdd_director_email', ''),
+            'deputy_director_account_exists' => $deputyDirectorUser ? true : false,
+            'rdd_director_account_exists' => $rddDirectorUser ? true : false,
             'citations_request_enabled' => Setting::get('citations_request_enabled', '1'),
             'calendar_marks' => json_decode(Setting::get('calendar_marks', '[]'), true) ?? [],
             'announcements' => json_decode(Setting::get('landing_page_announcements', '[]'), true) ?? [],
@@ -46,23 +54,54 @@ class SettingsController extends Controller
     {
         $this->authorizeAdmin();
         
+        Log::info('[DEBUG] SettingsController::update called', [
+            'all_inputs' => $request->all(),
+            'has_save_official_info' => $request->has('save_official_info'),
+            'has_save_application_controls' => $request->has('save_application_controls'),
+            'has_save_calendar' => $request->has('save_calendar'),
+            'has_save_announcements' => $request->has('save_announcements'),
+            'has_save_researchers' => $request->has('save_researchers'),
+            'has_save_publication_counts' => $request->has('save_publication_counts'),
+            'has_save_form_dropdowns' => $request->has('save_form_dropdowns'),
+        ]);
+        
         // Check which save button was clicked
         if ($request->has('save_official_info')) {
+            Log::info('[DEBUG] Routing to updateOfficialInfo');
             return $this->updateOfficialInfo($request);
         } elseif ($request->has('save_application_controls')) {
+            Log::info('[DEBUG] Routing to updateApplicationControls');
             return $this->updateApplicationControls($request);
         } elseif ($request->has('save_calendar')) {
+            Log::info('[DEBUG] Routing to updateCalendar');
             return $this->updateCalendar($request);
         } elseif ($request->has('save_announcements')) {
+            Log::info('[DEBUG] Routing to updateAnnouncements');
+            Log::info('[DEBUG] Announcements data received:', [
+                'announcements' => $request->input('announcements'),
+                'calendar_marks' => $request->input('calendar_marks'),
+                'scopus_count' => $request->input('scopus_publications_count'),
+                'wos_count' => $request->input('wos_publications_count'),
+                'aci_count' => $request->input('aci_publications_count'),
+                'peer_count' => $request->input('peer_publications_count'),
+            ]);
             return $this->updateAnnouncements($request);
         } elseif ($request->has('save_researchers')) {
+            Log::info('[DEBUG] Routing to updateResearchers');
+            Log::info('[DEBUG] Researchers data received:', [
+                'researchers_count' => count($request->input('researchers', [])),
+                'researchers' => $request->input('researchers'),
+            ]);
             return $this->updateResearchers($request);
         } elseif ($request->has('save_publication_counts')) {
+            Log::info('[DEBUG] Routing to updatePublicationCounts');
             return $this->updatePublicationCounts($request);
         } elseif ($request->has('save_form_dropdowns')) {
+            Log::info('[DEBUG] Routing to updateFormDropdowns');
             return $this->updateFormDropdowns($request);
         }
         
+        Log::warning('[DEBUG] No matching save button found!');
         return back()->with('error', 'Invalid form submission.');
     }
 
@@ -140,6 +179,17 @@ class SettingsController extends Controller
     
     private function updateAnnouncements(Request $request)
     {
+        Log::info('[DEBUG] updateAnnouncements called', [
+            'raw_announcements' => $request->input('announcements'),
+            'raw_calendar_marks' => $request->input('calendar_marks'),
+            'raw_publication_counts' => [
+                'scopus' => $request->input('scopus_publications_count'),
+                'wos' => $request->input('wos_publications_count'),
+                'aci' => $request->input('aci_publications_count'),
+                'peer' => $request->input('peer_publications_count'),
+            ],
+        ]);
+        
         $validated = $request->validate([
             'announcements' => 'nullable|array',
             'announcements.*.title' => 'nullable|string|max:255',
@@ -184,9 +234,17 @@ class SettingsController extends Controller
             }
         }
 
+        Log::info('[DEBUG] Processed announcements:', ['count' => count($announcements), 'data' => $announcements]);
+        
         Setting::set('landing_page_announcements', json_encode($announcements));
 
         // Persist publication counters if present
+        Log::info('[DEBUG] Processing publication counts', [
+            'has_scopus' => array_key_exists('scopus_publications_count', $validated),
+            'has_wos' => array_key_exists('wos_publications_count', $validated),
+            'has_aci' => array_key_exists('aci_publications_count', $validated),
+            'has_peer' => array_key_exists('peer_publications_count', $validated),
+        ]);
         if (array_key_exists('scopus_publications_count', $validated)) {
             Setting::set('scopus_publications_count', (string)($validated['scopus_publications_count'] ?? 0));
         }
@@ -217,9 +275,11 @@ class SettingsController extends Controller
                 }
             }
             Setting::set('calendar_marks', json_encode($marks));
+            Log::info('[DEBUG] Calendar marks saved:', ['count' => count($marks), 'data' => $marks]);
         }
 
-        return back()->with('success', 'Announcements updated successfully.');
+        Log::info('[DEBUG] updateAnnouncements completed successfully');
+        return back()->with('success', 'Landing Page updated successfully.');
     }
 
     public function createAccount(Request $request)
@@ -273,8 +333,58 @@ class SettingsController extends Controller
         }
     }
 
+    public function deleteAccount(Request $request)
+    {
+        $this->authorizeAdmin();
+        
+        $validator = Validator::make($request->all(), [
+            'role' => 'required|in:deputy_director,rdd_director'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        try {
+            $user = User::where('signatory_type', $request->role)->first();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account not found'
+                ], 404);
+            }
+
+            // Delete the user account
+            $user->delete();
+
+            // Clear email from settings
+            $emailKey = $request->role . '_email';
+            Setting::set($emailKey, '');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account deleted successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete account: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function updateResearchers(Request $request)
     {
+        Log::info('[DEBUG] updateResearchers called', [
+            'raw_researchers' => $request->input('researchers'),
+            'researchers_count' => count($request->input('researchers', [])),
+        ]);
+        
         $validated = $request->validate([
             'researchers' => 'nullable|array',
             'researchers.*.name' => 'nullable|string|max:255',
@@ -292,9 +402,12 @@ class SettingsController extends Controller
         ]);
 
         $existingResearchers = ResearcherProfile::ordered()->get()->values();
+        Log::info('[DEBUG] Existing researchers count:', ['count' => $existingResearchers->count()]);
 
         $payloads = [];
+        Log::info('[DEBUG] Processing researchers from validated data', ['count' => count($validated['researchers'] ?? [])]);
         foreach ($validated['researchers'] ?? [] as $index => $row) {
+            Log::info("[DEBUG] Processing researcher index {$index}", ['data' => $row]);
             $name = trim($row['name'] ?? '');
             $title = trim($row['title'] ?? '');
             $bio = trim($row['bio'] ?? '');
@@ -337,13 +450,20 @@ class SettingsController extends Controller
             ];
         }
 
+        Log::info('[DEBUG] Final payloads to save:', ['count' => count($payloads), 'payloads' => $payloads]);
+        
         DB::transaction(function () use ($payloads) {
+            Log::info('[DEBUG] Starting database transaction');
             ResearcherProfile::query()->delete();
-            foreach ($payloads as $data) {
+            Log::info('[DEBUG] Deleted existing researchers');
+            foreach ($payloads as $index => $data) {
+                Log::info("[DEBUG] Creating researcher {$index}", ['data' => $data]);
                 ResearcherProfile::create($data);
             }
+            Log::info('[DEBUG] All researchers created');
         });
 
+        Log::info('[DEBUG] updateResearchers completed successfully');
         return back()->with('success', 'Researchers updated successfully.');
     }
 

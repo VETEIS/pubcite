@@ -280,7 +280,7 @@
                     <!-- Left Column (Signatory) -->
                     <div class="space-y-2">
                         <div class="h-12 flex items-center justify-center">
-                            <p class="text-sm font-medium text-gray-700 text-center" id="faculty-name-display">{{ old('name', $request->form_data['name'] ?? '') }}</p>
+                            <p class="text-sm font-medium text-gray-700 text-center" id="faculty-name-display">{{ strtoupper(old('name', $request->form_data['name'] ?? '')) }}</p>
                             <input type="hidden" name="faculty_name" id="faculty_name" value="{{ old('name', $request->form_data['name'] ?? '') }}">
                         </div>
                         <div class="border-b-2 border-gray-400 h-2"></div>

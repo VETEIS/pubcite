@@ -130,24 +130,30 @@
                                                         <div>
                                                             <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
                                                             <input type="email" name="deputy_director_email" value="{{ old('deputy_director_email', $deputy_director_email ?? '') }}" 
-                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
-                                                                   placeholder="deputy.director@example.com">
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm {{ ($deputy_director_account_exists ?? false) ? 'bg-gray-100' : 'bg-white' }} focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                                   placeholder="deputy.director@example.com"
+                                                                   {{ ($deputy_director_account_exists ?? false) ? 'readonly' : '' }}>
                                                         </div>
-                                                        <div>
+                                                        <div id="deputy-password-field" style="{{ ($deputy_director_account_exists ?? false) ? 'display: none;' : '' }}" class="{{ ($deputy_director_account_exists ?? false) ? 'hidden' : '' }}">
                                                             <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
                                                             <input type="password" name="deputy_director_password" 
                                                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
                                                                    placeholder="Enter password for account creation">
                                                         </div>
                                                         <div class="flex items-center gap-2">
-                                                            <button type="button" onclick="createDeputyDirectorAccount()" 
-                                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-maroon-600 text-white text-xs font-medium rounded-md hover:bg-maroon-700 transition-colors">
+                                                            <button type="button" id="deputy-account-button" onclick="createDeputyDirectorAccount()" 
+                                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-maroon-600 hover:bg-maroon-700 text-white text-xs font-medium rounded-md transition-colors {{ ($deputy_director_account_exists ?? false) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                                                    {{ ($deputy_director_account_exists ?? false) ? 'disabled' : '' }}>
                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                                 </svg>
                                                                 Create Account
                                                             </button>
-                                                            <span class="text-xs text-gray-500" id="deputy-account-status"></span>
+                                                            <span class="text-xs text-gray-500" id="deputy-account-status">
+                                                                @if($deputy_director_account_exists ?? false)
+                                                                    <span class="text-green-600">Account exists</span>
+                                                                @endif
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -184,24 +190,30 @@
                                                         <div>
                                                             <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
                                                             <input type="email" name="rdd_director_email" value="{{ old('rdd_director_email', $rdd_director_email ?? '') }}" 
-                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
-                                                                   placeholder="rdd.director@example.com">
+                                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm {{ ($rdd_director_account_exists ?? false) ? 'bg-gray-100' : 'bg-white' }} focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
+                                                                   placeholder="rdd.director@example.com"
+                                                                   {{ ($rdd_director_account_exists ?? false) ? 'readonly' : '' }}>
                                                         </div>
-                                                        <div>
+                                                        <div id="rdd-password-field" style="{{ ($rdd_director_account_exists ?? false) ? 'display: none;' : '' }}" class="{{ ($rdd_director_account_exists ?? false) ? 'hidden' : '' }}">
                                                             <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
                                                             <input type="password" name="rdd_director_password" 
                                                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500/20 transition-all" 
                                                                    placeholder="Enter password for account creation">
                                                         </div>
                                                         <div class="flex items-center gap-2">
-                                                            <button type="button" onclick="createRddDirectorAccount()" 
-                                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                                            <button type="button" id="rdd-account-button" onclick="createRddDirectorAccount()" 
+                                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors {{ ($rdd_director_account_exists ?? false) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                                                    {{ ($rdd_director_account_exists ?? false) ? 'disabled' : '' }}>
                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                                 </svg>
                                                                 Create Account
                                                             </button>
-                                                            <span class="text-xs text-gray-500" id="rdd-account-status"></span>
+                                                            <span class="text-xs text-gray-500" id="rdd-account-status">
+                                                                @if($rdd_director_account_exists ?? false)
+                                                                    <span class="text-green-600">Account exists</span>
+                                                                @endif
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -342,7 +354,8 @@
                                             </div>
                                         </div>
                                         <button type="submit" name="save_form_dropdowns" value="1"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 font-medium text-sm">
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
+                                                disabled>
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
@@ -461,7 +474,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </form>
                         </div>
                         
                         <!-- Removed standalone Calendar Settings Section (merged into Landing Page card) -->
@@ -886,6 +898,9 @@
                             </div>
                         </div>
                 </div>
+                        
+                    </form>
+                </div>
 
             
 
@@ -982,56 +997,58 @@
                 updateSaveButton(saveBtn, hasChanges);
             }
             
-            // Check for changes in calendar section
-            function checkCalendarChanges() {
-                const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
+            // Check for changes in form dropdown section
+            function checkFormDropdownChanges() {
+                const rankInputs = document.querySelectorAll('input[name="academic_ranks[]"]');
+                const collegeInputs = document.querySelectorAll('input[name="colleges[]"]');
+                const othersInputs = document.querySelectorAll('input[name="others_indexing_options[]"]');
                 
-                // Get all calendar mark values (both date and note fields)
-                const currentMarks = [];
-                calendarInputs.forEach(input => {
-                    const name = input.name;
-                    const match = name.match(/calendar_marks\[(\d+)\]\[(date|note)\]/);
-                    if (match) {
-                        const index = parseInt(match[1]);
-                        const field = match[2];
-                        if (!currentMarks[index]) {
-                            currentMarks[index] = { date: '', note: '' };
-                        }
-                        currentMarks[index][field] = input.value;
-                    }
-                });
+                const currentRanks = Array.from(rankInputs).map(input => input.value.trim());
+                const currentColleges = Array.from(collegeInputs).map(input => input.value.trim());
+                const currentOthers = Array.from(othersInputs).map(input => input.value.trim());
                 
-                const originalMarks = window.originalValues.calendar?.marks || [];
+                const originalRanks = window.originalValues.formDropdowns?.academic_ranks || [];
+                const originalColleges = window.originalValues.formDropdowns?.colleges || [];
+                const originalOthers = window.originalValues.formDropdowns?.others_indexing_options || [];
                 
-                // Compare arrays of objects
-                const hasCalendarChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
+                const hasRankChanges = JSON.stringify(currentRanks) !== JSON.stringify(originalRanks);
+                const hasCollegeChanges = JSON.stringify(currentColleges) !== JSON.stringify(originalColleges);
+                const hasOthersChanges = JSON.stringify(currentOthers) !== JSON.stringify(originalOthers);
                 
-                // Also check announcements changes since they share the same save button
-                const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
-                const currentAnnouncements = announcementInputs.length > 0 
-                    ? Array.from(announcementInputs).map(input => input.value)
-                    : [];
-                const originalAnnouncements = window.originalValues.announcements?.announcements || [];
-                const hasAnnouncementChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
+                const hasChanges = hasRankChanges || hasCollegeChanges || hasOthersChanges;
                 
-                // Enable button if either section has changes
-                const hasChanges = hasCalendarChanges || hasAnnouncementChanges;
-                
-                // Calendar section uses the announcements save button (same card)
-                const saveBtn = document.querySelector('button[name="save_announcements"]');
+                const saveBtn = document.querySelector('button[name="save_form_dropdowns"]');
                 if (saveBtn) {
                     updateSaveButton(saveBtn, hasChanges);
                 }
             }
             
+            // Check for changes in calendar section
+            // Note: Calendar marks share the same save button with announcements, so we just call checkAnnouncementsChanges
+            function checkCalendarChanges() {
+                // Calendar marks share the save button with announcements, so trigger that check
+                if (window.checkAnnouncementsChanges) {
+                    checkAnnouncementsChanges();
+                }
+            }
+            
             function checkAnnouncementsChanges() {
+                // Build announcements as nested array structure
                 const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
-                
-                const currentAnnouncements = announcementInputs.length > 0 
-                    ? Array.from(announcementInputs).map(input => input.value)
-                    : [];
+                const currentAnnouncements = [];
+                announcementInputs.forEach(input => {
+                    const name = input.name;
+                    const match = name.match(/announcements\[(\d+)\]\[(title|description)\]/);
+                    if (match) {
+                        const index = parseInt(match[1]);
+                        const field = match[2];
+                        if (!currentAnnouncements[index]) {
+                            currentAnnouncements[index] = { title: '', description: '' };
+                        }
+                        currentAnnouncements[index][field] = input.value;
+                    }
+                });
                 const originalAnnouncements = window.originalValues.announcements?.announcements || [];
-                
                 const hasAnnouncementChanges = JSON.stringify(currentAnnouncements) !== JSON.stringify(originalAnnouncements);
                 
                 // Also check calendar changes since they share the same save button
@@ -1052,8 +1069,23 @@
                 const originalMarks = window.originalValues.calendar?.marks || [];
                 const hasCalendarChanges = JSON.stringify(currentMarks) !== JSON.stringify(originalMarks);
                 
-                // Enable button if either section has changes
-                const hasChanges = hasAnnouncementChanges || hasCalendarChanges;
+                // Check publication counts changes
+                const scopusCount = document.querySelector('input[name="scopus_publications_count"]');
+                const wosCount = document.querySelector('input[name="wos_publications_count"]');
+                const aciCount = document.querySelector('input[name="aci_publications_count"]');
+                const peerCount = document.querySelector('input[name="peer_publications_count"]');
+                
+                const currentCounts = {
+                    scopus: scopusCount ? scopusCount.value : '',
+                    wos: wosCount ? wosCount.value : '',
+                    aci: aciCount ? aciCount.value : '',
+                    peer: peerCount ? peerCount.value : ''
+                };
+                const originalCounts = window.originalValues.publicationCounts || {};
+                const hasPublicationCountChanges = JSON.stringify(currentCounts) !== JSON.stringify(originalCounts);
+                
+                // Enable button if any section has changes
+                const hasChanges = hasAnnouncementChanges || hasCalendarChanges || hasPublicationCountChanges;
                 
                 const saveBtn = document.querySelector('button[name="save_announcements"]');
                 if (saveBtn) {
@@ -1078,6 +1110,9 @@
                 const calendarInputs = document.querySelectorAll('input[name^="calendar_marks"]');
                 const announcementInputs = document.querySelectorAll('input[name^="announcements"]');
                 const researcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
+                const rankInputs = document.querySelectorAll('input[name="academic_ranks[]"]');
+                const collegeInputs = document.querySelectorAll('input[name="colleges[]"]');
+                const othersInputs = document.querySelectorAll('input[name="others_indexing_options[]"]');
                 
                 window.originalValues = {
                     official: {
@@ -1109,10 +1144,54 @@
                         })()
                     },
                     announcements: {
-                        announcements: Array.from(announcementInputs).map(input => input.value)
+                        announcements: (function() {
+                            // Build announcements as nested array structure
+                            const announcements = [];
+                            announcementInputs.forEach(input => {
+                                const name = input.name;
+                                const match = name.match(/announcements\[(\d+)\]\[(title|description)\]/);
+                                if (match) {
+                                    const index = parseInt(match[1]);
+                                    const field = match[2];
+                                    if (!announcements[index]) {
+                                        announcements[index] = { title: '', description: '' };
+                                    }
+                                    announcements[index][field] = input.value;
+                                }
+                            });
+                            return announcements;
+                        })()
+                    },
+                    publicationCounts: {
+                        scopus: document.querySelector('input[name="scopus_publications_count"]')?.value || '',
+                        wos: document.querySelector('input[name="wos_publications_count"]')?.value || '',
+                        aci: document.querySelector('input[name="aci_publications_count"]')?.value || '',
+                        peer: document.querySelector('input[name="peer_publications_count"]')?.value || ''
                     },
                     researchers: {
-                        researchers: Array.from(researcherInputs).map(input => input.value)
+                        researchers: (function() {
+                            // Build researchers as nested array structure
+                            const researchers = [];
+                            researcherInputs.forEach(input => {
+                                if (input.type === 'file') return; // Skip file inputs
+                                const name = input.name;
+                                const match = name.match(/researchers\[(\d+)\]\[(.+)\]/);
+                                if (match) {
+                                    const index = parseInt(match[1]);
+                                    const field = match[2];
+                                    if (!researchers[index]) {
+                                        researchers[index] = {};
+                                    }
+                                    researchers[index][field] = input.value || '';
+                                }
+                            });
+                            return researchers;
+                        })()
+                    },
+                    formDropdowns: {
+                        academic_ranks: Array.from(rankInputs).map(input => input.value.trim()),
+                        colleges: Array.from(collegeInputs).map(input => input.value.trim()),
+                        others_indexing_options: Array.from(othersInputs).map(input => input.value.trim())
                     }
                 };
                 
@@ -1126,16 +1205,40 @@
                 // Citations checkbox change is handled by updateCheckboxUI function
                 
                 calendarInputs.forEach(input => {
-                    input.addEventListener('input', checkCalendarChanges);
-                    input.addEventListener('change', checkCalendarChanges); // Also listen to change for date inputs
+                    input.addEventListener('input', checkAnnouncementsChanges); // Calendar shares save button with announcements
+                    input.addEventListener('change', checkAnnouncementsChanges); // Also listen to change for date inputs
                 });
                 
                 announcementInputs.forEach(input => {
                     input.addEventListener('input', checkAnnouncementsChanges);
                 });
                 
+                // Add event listeners for publication counters
+                const scopusCount = document.querySelector('input[name="scopus_publications_count"]');
+                const wosCount = document.querySelector('input[name="wos_publications_count"]');
+                const aciCount = document.querySelector('input[name="aci_publications_count"]');
+                const peerCount = document.querySelector('input[name="peer_publications_count"]');
+                if (scopusCount) scopusCount.addEventListener('input', checkAnnouncementsChanges);
+                if (wosCount) wosCount.addEventListener('input', checkAnnouncementsChanges);
+                if (aciCount) aciCount.addEventListener('input', checkAnnouncementsChanges);
+                if (peerCount) peerCount.addEventListener('input', checkAnnouncementsChanges);
+                
                 researcherInputs.forEach(input => {
-                    input.addEventListener('input', checkResearcherChanges);
+                    if (input.type !== 'file') { // Skip file inputs
+                        input.addEventListener('input', checkResearcherChanges);
+                    }
+                });
+                
+                rankInputs.forEach(input => {
+                    input.addEventListener('input', checkFormDropdownChanges);
+                });
+                
+                collegeInputs.forEach(input => {
+                    input.addEventListener('input', checkFormDropdownChanges);
+                });
+                
+                othersInputs.forEach(input => {
+                    input.addEventListener('input', checkFormDropdownChanges);
                 });
                 
                 // Make functions globally available
@@ -1144,6 +1247,7 @@
                 window.checkCalendarChanges = checkCalendarChanges;
                 window.checkAnnouncementsChanges = checkAnnouncementsChanges;
                 window.checkResearcherChanges = checkResearcherChanges;
+                window.checkFormDropdownChanges = checkFormDropdownChanges;
                 
                 // Check initial state
                 checkOfficialChanges();
@@ -1151,6 +1255,7 @@
                 checkCalendarChanges();
         checkAnnouncementsChanges();
         checkResearcherChanges();
+        checkFormDropdownChanges();
         
         // Initialize name header updates for existing researchers
         function initResearcherNameDisplays() {
@@ -1178,14 +1283,137 @@
         // Initialize announcements state tracking
         initializeAnnouncementsState();
         
+        // Add click event listeners to save buttons that are outside the form
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('button[name="save_announcements"]')) {
+                const btn = e.target.closest('button[name="save_announcements"]');
+                console.log('[DEBUG] save_announcements button clicked');
+                console.log('[DEBUG] Button disabled?', btn.disabled);
+                
+                // Prevent default button behavior
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // If button is disabled, don't submit
+                if (btn.disabled) {
+                    console.log('[DEBUG] Button is disabled, not submitting');
+                    return;
+                }
+                
+                // Find the main settings form
+                const form = document.getElementById('settings-form');
+                if (!form) {
+                    console.error('[DEBUG] Main settings form not found!');
+                    return;
+                }
+                
+                console.log('[DEBUG] Found form, submitting...');
+                
+                // Create a hidden input to indicate which button was clicked
+                let submitterInput = form.querySelector('input[name="save_announcements"]');
+                if (!submitterInput) {
+                    submitterInput = document.createElement('input');
+                    submitterInput.type = 'hidden';
+                    submitterInput.name = 'save_announcements';
+                    submitterInput.value = '1';
+                    form.appendChild(submitterInput);
+                }
+                
+                // Submit the form
+                form.submit();
+                
+            } else if (e.target.closest('button[name="save_researchers"]')) {
+                const btn = e.target.closest('button[name="save_researchers"]');
+                console.log('[DEBUG] save_researchers button clicked');
+                console.log('[DEBUG] Button disabled?', btn.disabled);
+                
+                // Prevent default button behavior
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // If button is disabled, don't submit
+                if (btn.disabled) {
+                    console.log('[DEBUG] Button is disabled, not submitting');
+                    return;
+                }
+                
+                // Find the main settings form
+                const form = document.getElementById('settings-form');
+                if (!form) {
+                    console.error('[DEBUG] Main settings form not found!');
+                    return;
+                }
+                
+                console.log('[DEBUG] Found form, submitting...');
+                
+                // Create a hidden input to indicate which button was clicked
+                let submitterInput = form.querySelector('input[name="save_researchers"]');
+                if (!submitterInput) {
+                    submitterInput = document.createElement('input');
+                    submitterInput.type = 'hidden';
+                    submitterInput.name = 'save_researchers';
+                    submitterInput.value = '1';
+                    form.appendChild(submitterInput);
+                }
+                
+                // Submit the form
+                form.submit();
+            }
+        }, true); // Use capture phase to catch before any preventDefault
+        
         // Form submission handling with Turbo integration
         document.addEventListener('submit', function(e) {
+            console.log('[DEBUG] Form submit event triggered');
+            console.log('[DEBUG] Submitter:', e.submitter);
+            console.log('[DEBUG] Submitter name:', e.submitter?.name);
+            console.log('[DEBUG] Submitter value:', e.submitter?.value);
+            console.log('[DEBUG] Form action:', e.target.action);
+            console.log('[DEBUG] Form method:', e.target.method);
+            
             if (e.submitter && e.submitter.name === 'save_announcements') {
+                console.log('[DEBUG] Saving announcements/calendar/publication counts');
+                
+                // Collect form data for debugging
+                const formData = new FormData(e.target);
+                const data = {};
+                for (let [key, value] of formData.entries()) {
+                    if (data[key]) {
+                        if (Array.isArray(data[key])) {
+                            data[key].push(value);
+                        } else {
+                            data[key] = [data[key], value];
+                        }
+                    } else {
+                        data[key] = value;
+                    }
+                }
+                console.log('[DEBUG] Form data being submitted:', data);
+                console.log('[DEBUG] Announcements data:', formData.getAll('announcements[]'));
+                console.log('[DEBUG] Calendar marks:', Array.from(formData.entries()).filter(([k]) => k.startsWith('calendar_marks')));
+                console.log('[DEBUG] Publication counts:', {
+                    scopus: formData.get('scopus_publications_count'),
+                    wos: formData.get('wos_publications_count'),
+                    aci: formData.get('aci_publications_count'),
+                    peer: formData.get('peer_publications_count')
+                });
+                
                 // Let the form submit normally - don't prevent default
                 // The server will handle the submission and redirect back
-            } else if (e.submitter && e.submitter.name === 'save_calendar') {
+            } else if (e.submitter && e.submitter.name === 'save_researchers') {
+                console.log('[DEBUG] Saving researchers');
+                
+                // Collect form data for debugging
+                const formData = new FormData(e.target);
+                const researcherData = Array.from(formData.entries()).filter(([key]) => key.startsWith('researchers'));
+                console.log('[DEBUG] Researcher form data entries:', researcherData.length);
+                console.log('[DEBUG] Sample researcher data:', researcherData.slice(0, 10));
+                
                 // Let the form submit normally - don't prevent default
                 // The server will handle the submission and redirect back
+            } else if (e.submitter) {
+                console.log('[DEBUG] Other save button clicked:', e.submitter.name);
+            } else {
+                console.warn('[DEBUG] Form submitted but no submitter found!');
             }
         });
         
@@ -1291,24 +1519,24 @@
             // Add event listeners to new inputs
             row.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', function() {
-                    // Trigger calendar change detection
-                    if (window.checkCalendarChanges) {
-                        window.checkCalendarChanges();
+                    // Trigger announcements change detection (calendar shares the same save button)
+                    if (window.checkAnnouncementsChanges) {
+                        window.checkAnnouncementsChanges();
                     }
                 });
                 input.addEventListener('change', function() {
                     // Also trigger on change for date inputs
-                    if (window.checkCalendarChanges) {
-                        window.checkCalendarChanges();
+                    if (window.checkAnnouncementsChanges) {
+                        window.checkAnnouncementsChanges();
                     }
                 });
             });
             
             // Trigger change detection immediately since we added a new row
-            if (window.checkCalendarChanges) {
+            if (window.checkAnnouncementsChanges) {
                 // Use setTimeout to ensure DOM is updated
                 setTimeout(() => {
-                    window.checkCalendarChanges();
+                    window.checkAnnouncementsChanges();
                 }, 0);
             }
         }
@@ -1324,9 +1552,9 @@
                     addMarkRow();
                 }
                 
-                // Trigger calendar change detection
-                if (window.checkCalendarChanges) {
-                    window.checkCalendarChanges();
+                // Trigger announcements change detection (calendar shares the same save button)
+                if (window.checkAnnouncementsChanges) {
+                    window.checkAnnouncementsChanges();
                 }
             }
         }
@@ -1401,10 +1629,23 @@
                 </button>
             `;
             container.appendChild(newRow);
+            // Add event listener to new input
+            const newInput = newRow.querySelector('input[name="academic_ranks[]"]');
+            if (newInput && window.checkFormDropdownChanges) {
+                newInput.addEventListener('input', window.checkFormDropdownChanges);
+            }
+            // Trigger change detection
+            if (window.checkFormDropdownChanges) {
+                window.checkFormDropdownChanges();
+            }
         }
         
         function removeRankRow(btn) {
             btn.closest('div').remove();
+            // Trigger change detection
+            if (window.checkFormDropdownChanges) {
+                window.checkFormDropdownChanges();
+            }
         }
         
         function addCollegeRow() {
@@ -1424,10 +1665,23 @@
                 </button>
             `;
             container.appendChild(newRow);
+            // Add event listener to new input
+            const newInput = newRow.querySelector('input[name="colleges[]"]');
+            if (newInput && window.checkFormDropdownChanges) {
+                newInput.addEventListener('input', window.checkFormDropdownChanges);
+            }
+            // Trigger change detection
+            if (window.checkFormDropdownChanges) {
+                window.checkFormDropdownChanges();
+            }
         }
         
         function removeCollegeRow(btn) {
             btn.closest('div').remove();
+            // Trigger change detection
+            if (window.checkFormDropdownChanges) {
+                window.checkFormDropdownChanges();
+            }
         }
         
         function addOthersIndexingRow() {
@@ -1447,10 +1701,23 @@
                 </button>
             `;
             container.appendChild(newRow);
+            // Add event listener to new input
+            const newInput = newRow.querySelector('input[name="others_indexing_options[]"]');
+            if (newInput && window.checkFormDropdownChanges) {
+                newInput.addEventListener('input', window.checkFormDropdownChanges);
+            }
+            // Trigger change detection
+            if (window.checkFormDropdownChanges) {
+                window.checkFormDropdownChanges();
+            }
         }
         
         function removeOthersIndexingRow(btn) {
             btn.closest('div').remove();
+            // Trigger change detection
+            if (window.checkFormDropdownChanges) {
+                window.checkFormDropdownChanges();
+            }
         }
         
         function removeAnnouncementRow(btn) {
@@ -1510,6 +1777,8 @@
                     statusElement.className = 'text-xs text-green-500';
                     // Clear password field
                     document.querySelector('input[name="deputy_director_password"]').value = '';
+                    // Update UI to show delete button
+                    updateDeputyAccountUI(true);
                 } else {
                     statusElement.textContent = data.message || 'Failed to create account';
                     statusElement.className = 'text-xs text-red-500';
@@ -1519,6 +1788,91 @@
                 statusElement.className = 'text-xs text-red-500';
             }
         }
+
+        // Update UI for deputy director account
+        function updateDeputyAccountUI(accountExists) {
+            const button = document.getElementById('deputy-account-button');
+            const passwordField = document.getElementById('deputy-password-field');
+            const emailInput = document.querySelector('input[name="deputy_director_email"]');
+            const statusElement = document.getElementById('deputy-account-status');
+            
+            if (accountExists) {
+                // Disable create button and show status
+                button.disabled = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+                if (passwordField) {
+                    passwordField.style.display = 'none';
+                    passwordField.classList.add('hidden');
+                }
+                if (emailInput) {
+                    emailInput.readOnly = true;
+                    emailInput.classList.remove('bg-white');
+                    emailInput.classList.add('bg-gray-100');
+                }
+                if (statusElement) {
+                    statusElement.innerHTML = '<span class="text-green-600">Account exists</span>';
+                }
+            } else {
+                // Enable create button
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (passwordField) {
+                    passwordField.style.display = 'block';
+                    passwordField.classList.remove('hidden');
+                }
+                if (emailInput) {
+                    emailInput.readOnly = false;
+                    emailInput.classList.remove('bg-gray-100');
+                    emailInput.classList.add('bg-white');
+                }
+                if (statusElement) {
+                    statusElement.innerHTML = '';
+                }
+            }
+        }
+
+        // Update UI for RDD director account
+        function updateRddAccountUI(accountExists) {
+            const button = document.getElementById('rdd-account-button');
+            const passwordField = document.getElementById('rdd-password-field');
+            const emailInput = document.querySelector('input[name="rdd_director_email"]');
+            const statusElement = document.getElementById('rdd-account-status');
+            
+            if (accountExists) {
+                // Disable create button and show status
+                button.disabled = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+                if (passwordField) {
+                    passwordField.style.display = 'none';
+                    passwordField.classList.add('hidden');
+                }
+                if (emailInput) {
+                    emailInput.readOnly = true;
+                    emailInput.classList.remove('bg-white');
+                    emailInput.classList.add('bg-gray-100');
+                }
+                if (statusElement) {
+                    statusElement.innerHTML = '<span class="text-green-600">Account exists</span>';
+                }
+            } else {
+                // Enable create button
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (passwordField) {
+                    passwordField.style.display = 'block';
+                    passwordField.classList.remove('hidden');
+                }
+                if (emailInput) {
+                    emailInput.readOnly = false;
+                    emailInput.classList.remove('bg-gray-100');
+                    emailInput.classList.add('bg-white');
+                }
+                if (statusElement) {
+                    statusElement.innerHTML = '';
+                }
+            }
+        }
+
 
         async function createRddDirectorAccount() {
             const email = document.querySelector('input[name="rdd_director_email"]').value;
@@ -1557,6 +1911,8 @@
                     statusElement.className = 'text-xs text-green-500';
                     // Clear password field
                     document.querySelector('input[name="rdd_director_password"]').value = '';
+                    // Update UI to show delete button
+                    updateRddAccountUI(true);
                 } else {
                     statusElement.textContent = data.message || 'Failed to create account';
                     statusElement.className = 'text-xs text-red-500';
@@ -1748,10 +2104,12 @@
                 window.Alpine.initTree(card);
             }
             
-            // Add event listeners to new inputs
-            const newInputs = card.querySelectorAll('input, select, textarea');
+            // Add event listeners to new inputs (excluding file inputs)
+            const newInputs = card.querySelectorAll('input:not([type="file"]), select, textarea');
             newInputs.forEach(input => {
-                input.addEventListener('input', checkResearcherChanges);
+                if (window.checkResearcherChanges) {
+                    input.addEventListener('input', window.checkResearcherChanges);
+                }
                 
                 // Update name header when name field changes
                 if (input.name && input.name.includes('[name]')) {
@@ -1782,12 +2140,6 @@
                     addResearcherRow();
                 }
                 
-                // Update original values to reflect the deletion
-                const researcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
-                if (window.originalValues && window.originalValues.researchers) {
-                    window.originalValues.researchers.researchers = Array.from(researcherInputs).map(input => input.value);
-                }
-                
                 // Trigger researcher change detection
                 if (window.checkResearcherChanges) {
                     window.checkResearcherChanges();
@@ -1796,16 +2148,30 @@
         }
 
         function checkResearcherChanges() {
-            const researcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
+            // Build researchers as nested array structure
+            const researcherInputs = document.querySelectorAll('input[name^="researchers"]:not([type="file"]), select[name^="researchers"], textarea[name^="researchers"]');
+            const currentResearchers = [];
             
-            const currentResearchers = researcherInputs.length > 0 
-                ? Array.from(researcherInputs).map(input => input.value)
-                : [];
+            researcherInputs.forEach(input => {
+                const name = input.name;
+                const match = name.match(/researchers\[(\d+)\]\[(.+)\]/);
+                if (match) {
+                    const index = parseInt(match[1]);
+                    const field = match[2];
+                    if (!currentResearchers[index]) {
+                        currentResearchers[index] = {};
+                    }
+                    currentResearchers[index][field] = input.value || '';
+                }
+            });
             
-            const hasChanges = JSON.stringify(currentResearchers) !== JSON.stringify(originalValues.researchers?.researchers || []);
+            const originalResearchers = window.originalValues?.researchers?.researchers || [];
+            const hasChanges = JSON.stringify(currentResearchers) !== JSON.stringify(originalResearchers);
             
             const saveBtn = document.querySelector('button[name="save_researchers"]');
-            updateSaveButton(saveBtn, hasChanges);
+            if (saveBtn) {
+                updateSaveButton(saveBtn, hasChanges);
+            }
         }
 
         // Image preview functionality

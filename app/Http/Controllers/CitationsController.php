@@ -1495,7 +1495,7 @@ class CitationsController extends Controller
             'citescore' => '',
             // Citation detail fields from form data
             'citedbibentry' => $data['citedbibentry'] ?? '',
-            'facultyname' => $data['faculty_name'] ?? '',
+            'facultyname' => !empty($data['faculty_name']) ? mb_strtoupper($data['faculty_name']) : '',
             'centermanager' => $data['center_manager'] ?? '',
             'dean' => $data['dean_name'] ?? '',
             'date' => $data['date'] ?? now()->format('Y-m-d'),

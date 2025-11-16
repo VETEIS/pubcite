@@ -146,6 +146,7 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
     Route::post('/settings/create-account', [\App\Http\Controllers\SettingsController::class, 'createAccount'])->name('admin.settings.create-account');
+    Route::delete('/settings/delete-account', [\App\Http\Controllers\SettingsController::class, 'deleteAccount'])->name('admin.settings.delete-account');
     
     // Announcements
     // Announcements management integrated with main settings

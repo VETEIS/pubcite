@@ -126,7 +126,7 @@
                     if (nameField && facultyNameField && facultyNameDisplay) {
                         const nameValue = nameField.value.trim();
                         facultyNameField.value = nameValue;
-                        facultyNameDisplay.textContent = nameValue || '';
+                        facultyNameDisplay.textContent = nameValue ? nameValue.toUpperCase() : '';
                     }
                     
                     // Also sync rec_faculty_name for recommendation letter
@@ -189,6 +189,27 @@
                             // Generate PDFs if hash changed (lazy generation)
                             this.generatePdfsIfNeeded();
                         }, 100);
+                    }
+                },
+                
+                // Sync college from incentive form to recommendation form
+                syncCollegeToRecommendation() {
+                    const collegeField = document.querySelector('select[name="college"]');
+                    const recCollegeField = document.querySelector('select[name="rec_collegeheader"]');
+                    
+                    if (collegeField && recCollegeField) {
+                        const selectedCollege = collegeField.value;
+                        // Sync if incentive college is selected
+                        // Only update if recommendation is empty or matches the current incentive value (was previously synced)
+                        if (selectedCollege) {
+                            const currentRecCollege = recCollegeField.value;
+                            // Sync if empty, or if it currently matches (meaning it was synced before)
+                            if (!currentRecCollege || currentRecCollege === '' || currentRecCollege === selectedCollege) {
+                                recCollegeField.value = selectedCollege;
+                                // Trigger change event to ensure auto-save picks it up
+                                recCollegeField.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
                     }
                 },
                 
@@ -624,7 +645,7 @@
                             facultyNameField.value = draftData.name;
                         }
                         if (facultyNameDisplay) {
-                            facultyNameDisplay.textContent = draftData.name;
+                            facultyNameDisplay.textContent = draftData.name ? draftData.name.toUpperCase() : '';
                         }
                         
                         const recFacultyNameField = document.getElementById('rec_faculty_name');
@@ -707,11 +728,11 @@
                     this.uploadedFiles[fieldName] = fileName;
                     // Trigger review tab update if on review tab
                     if (this.activeTab === 'review') {
-                setTimeout(() => {
+                        setTimeout(() => {
                             this.displayUploadedFiles();
-                }, 100);
-            }
-            },
+                        }, 100);
+                    }
+                },
                 
                 // Display uploaded files in review tab
                 displayUploadedFiles() {
@@ -1054,12 +1075,23 @@
                         nameField.addEventListener('change', () => this.syncFacultyName());
                     }
                     
+                    // Set up listener for college field changes (incentive form)
+                    const collegeField = document.querySelector('select[name="college"]');
+                    if (collegeField) {
+                        collegeField.addEventListener('change', () => {
+                            // Sync to recommendation form when college changes
+                            this.syncCollegeToRecommendation();
+                        });
+                    }
+                    
                     // Load draft data after a short delay to ensure DOM is ready
                     setTimeout(() => {
                         this.loadDraftData();
                         // Sync faculty_name after draft data is loaded
                         setTimeout(() => {
                             this.syncFacultyName();
+                            // Sync college after draft data is loaded
+                            this.syncCollegeToRecommendation();
                         }, 100);
                     }, 500);
                     
