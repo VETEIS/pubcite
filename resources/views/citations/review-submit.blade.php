@@ -60,7 +60,11 @@
     <!-- Generated Documents Section -->
     <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 p-6 shadow-sm">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Generated Documents</h3>
-        <p class="text-sm text-gray-600 mb-4">Your documents will be automatically generated after submission. You can preview them here:</p>
+        
+        <!-- Error 419 Notice -->
+        <div class="mb-4 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+            In case you get <strong>Error 419:</strong> That means your session has expired. Please refresh the page.
+        </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Incentive Application Preview -->
@@ -110,14 +114,10 @@
                 </div>
             </div>
             <div class="flex-1">
-                <h3 class="text-lg font-bold text-amber-900 mb-2">⚠️ Important: Sign Documents First</h3>
+                <h3 class="text-lg font-bold text-amber-900 mb-2">Important: Sign it First!</h3>
                 <p class="text-sm text-amber-800 mb-3">
-                    <strong>After submitting your request, you must:</strong>
+                    After submitting your request, you must: <strong>Sign your request in order to start the signing process</strong>
                 </p>
-                <ol class="list-decimal list-inside space-y-2 text-sm text-amber-800 mb-4">
-                    <li><strong>Sign</strong> the documents with your signature</li>
-                    <li><strong>Upload</strong> the signed documents to the system</li>
-                </ol>
                 <p class="text-sm text-amber-700 font-medium">
                     Your request will be set to "Pending User Signature" until you upload the signed documents.
                 </p>

@@ -69,7 +69,7 @@
                 </div>
                 <h3 class="text-sm font-medium text-gray-900 mb-3">Indexing Evidence</h3>
                 <div class="text-xs text-maroon-600 font-medium mb-1 truncate" x-text="displayName || 'Click to upload'"></div>
-                <p class="text-xs text-gray-400">Upload screenshot evidence (Images only, Max 10MB)</p>
+                <p class="text-xs text-gray-400">Screenshot of Evidence (Max 10MB)</p>
             </div>
             <input type="file" name="indexing_evidence" accept=".png,.jpg,.jpeg,.webp" class="hidden" x-ref="indexingEvidence" required
                    @change="handleFileSelection($event, $data)">

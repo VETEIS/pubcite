@@ -213,14 +213,8 @@
         
         <div class="space-y-4">
             <div class="bg-white/50 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
-                <h5 class="text-sm font-semibold text-blue-800 mb-3">Please prepare the following documents:</h5>
+                <h5 class="text-sm font-semibold text-blue-800 mb-3">Please prepare the following documents for uploading:</h5>
                 <ul class="text-sm text-blue-700 space-y-2">
-                    <li class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
-                        </svg>
-                        <span>Recommendation Letter (PDF)</span>
-                    </li>
                     <li class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
@@ -231,13 +225,13 @@
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
                         </svg>
-                        <span>Peer Reviewed Document (PDF)</span>
+                        <span>Terminal Report (PDF)</span>
                     </li>
                     <li class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
                         </svg>
-                        <span>Terminal Report (PDF)</span>
+                        <span>Indexing Evidence (PNG, JPG, JPEG, or WEBP)</span>
                     </li>
                 </ul>
                 <p class="text-xs text-blue-600 mt-3">Note: These files will be uploaded in the Upload Documents section.</p>
