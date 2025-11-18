@@ -10,106 +10,158 @@
 [![Laravel Jetstream](https://img.shields.io/badge/Laravel_Jetstream-5.3+-FF2D20.svg)](https://jetstream.laravel.com)
 [![Laravel Sanctum](https://img.shields.io/badge/Laravel_Sanctum-4.0+-FF2D20.svg)](https://laravel.com/docs/sanctum)
 [![Laravel Socialite](https://img.shields.io/badge/Laravel_Socialite-5.21+-FF2D20.svg)](https://laravel.com/docs/socialite)
-[![Chart.js](https://img.shields.io/badge/Chart.js-CDN-FF6384.svg)](https://chartjs.org)
 [![PhpWord](https://img.shields.io/badge/PhpWord-1.4+-00B4DB.svg)](https://github.com/PHPOffice/PHPWord)
-[![DomPDF](https://img.shields.io/badge/DomPDF-3.1+-FF6B6B.svg)](https://github.com/barryvdh/laravel-dompdf)
-[![FPDF](https://img.shields.io/badge/FPDF-1.8+-FF6B6B.svg)](https://github.com/Setasign/FPDF)
-[![FPDI](https://img.shields.io/badge/FPDI-2.6+-FF6B6B.svg)](https://github.com/Setasign/FPDI)
-[![Turbo](https://img.shields.io/badge/Hotwired_Turbo-8.0+-FF6B35.svg)](https://turbo.hotwired.dev)
-[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg)](https://docker.com)
+[![FPDF/FPDI](https://img.shields.io/badge/FPDF/FPDI-2.6+-FF6B6B.svg)](https://github.com/Setasign/FPDF)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement digital signature workflows. Features full mobile responsiveness, privacy compliance, and role-based access control.
+A comprehensive web application for the University of Southeastern Philippines (USeP) Publication Unit, designed to streamline publication and citation incentive applications, document management and tracking, and implement a multi-stage digital signature workflow. Features full mobile responsiveness, privacy compliance, and role-based access control.
+
+## Table of Contents
+
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Workflow System](#workflow-system)
+- [User Roles & Permissions](#user-roles--permissions)
+- [Document Types](#document-types)
+- [Deployment](#deployment)
+- [Development](#development)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Troubleshooting](#troubleshooting)
 
 ## Features
 
 ### Core Functionality
-- **Publication Incentive Applications** - Submit and manage publication incentive requests
-- **Citation Incentive Applications** - Handle citation-based incentive submissions
-- **Digital Document Management** - Secure file upload, storage, and retrieval
-- **Digital Signature System** - Upload, manage, and apply personal signatures to documents
-- **Real-time Dashboard** - Live updates and comprehensive analytics
-- **Multi-role Access Control** - Admin, User, and Signatory roles with appropriate permissions
+
+- **Publication Incentive Applications** - Submit and manage publication incentive requests with form data validation
+- **Citation Incentive Applications** - Handle citation-based incentive submissions with indexing evidence
+- **Draft Management** - Save and resume incomplete applications with session-based draft storage
+- **Document Generation** - Dynamic DOCX/PDF generation from templates using PhpWord and FPDF/FPDI
+- **Multi-Stage Signature Workflow** - 5-stage approval process with digital signatures
+- **Real-time Dashboard** - Live updates, progress tracking, and comprehensive analytics
+- **Activity Logging** - Detailed audit trails for all system actions
+- **Researcher Profiles** - Public researcher showcase on landing page with profile links
 
 ### Authentication & Security
-- **Google OAuth Integration** - Seamless login with USeP Google accounts (@usep.edu.ph)
-- **Two-Factor Authentication** - Enhanced security with 2FA support
-- **Role-based Access Control** - Granular permissions for different user types
-- **Privacy Compliance** - Mandatory data privacy agreement acceptance
-- **Mobile Security** - Admin accounts restricted to desktop access
+
+- **Google OAuth Integration** - Seamless login with USeP Google accounts (@usep.edu.ph domain)
+- **Traditional Login** - Email/password authentication for non-Google users
+- **Two-Factor Authentication** - Enhanced security with 2FA support via Laravel Fortify
+- **Privacy Compliance** - Mandatory data privacy agreement acceptance before system access
+- **Role-based Access Control** - Granular permissions for Admin, User, and Signatory roles
+- **Mobile Security** - Admin accounts restricted to desktop access only
 - **URL Injection Protection** - Server-side mobile device detection and route protection
-- **Secure File Storage** - Private S3 storage with encryption
-- **Rate Limiting** - Protection against abuse and spam
+- **CSRF Protection** - Token-based request validation
+- **Rate Limiting** - Protection against abuse and spam (throttling on routes)
+- **Secure File Storage** - Local storage with optional S3 configuration
+
+### Document Management
+
+- **Template-Based Generation** - DOCX templates with variable substitution
+- **PDF Conversion** - Automatic DOCX to PDF conversion using DocxToPdfConverter service
+- **Template Caching** - Optimized template loading with TemplateCacheService
+- **Document Preview** - Preview generated documents before submission
+- **File Upload Validation** - Secure file type and size validation
+- **Document Signing** - Apply digital signatures to PDF documents using FPDI
+- **Signature Overlay** - Position signatures on documents with coordinate-based placement
+- **Document Backup** - Automatic backup of original documents before signing
+
+### Signature System
+
+- **Personal Signature Upload** - Secure signature image management (PNG/JPG)
+- **Multiple Signatures** - Users can upload and manage multiple signature styles
+- **Signature Validation** - Automatic uppercase conversion for signatory names
+- **24-Hour Reversion Window** - Undo signatures within 24 hours of signing
+- **Signature Tracking** - Track which signatories have signed each request
+- **Workflow Integration** - Automatic workflow state progression on signature completion
+
+### Email Notifications
+
+- **Submission Notifications** - Email users and admins when requests are submitted
+- **Signatory Notifications** - Notify signatories when documents require their signature
+- **Status Change Notifications** - Alert users when request status changes
+- **Resubmission Notifications** - Notify when requests are resubmitted
+- **Nudge Notifications** - Remind signatories of pending signatures
+- **Queue-Based Sending** - Asynchronous email processing for better performance
 
 ### Admin Features
-- **Comprehensive Dashboard** - Real-time statistics and activity monitoring
-- **User Management** - Create, edit, and manage user accounts
-- **Request Management** - Review, approve, and track all applications
-- **System Settings** - Configure application parameters
-- **File Management** - Secure file downloads and management
-- **Activity Logging** - Detailed audit trails for all actions
 
-### Signature Management
-- **Personal Signature Upload** - Secure signature image management
-- **Document Signing** - Apply signatures to generated documents
-- **Signature Reversion** - Undo signatures within 24-hour window
-- **Privacy Protection** - Owner-only access to signature files
-- **Multiple Signature Support** - Manage multiple signature styles
+- **Comprehensive Dashboard** - Real-time statistics, charts, and activity monitoring
+- **User Management** - Create, edit, and manage user accounts with role assignment
+- **Request Management** - Review, download, and track all applications
+- **System Settings** - Configure application parameters, director emails, and announcements
+- **File Management** - Secure file downloads with access control
+- **Activity Logs** - View detailed audit trails of all system actions
+- **Landing Page Management** - Configure announcements and researcher profiles
+- **Request Debugging** - Debug file paths and request data
 
 ### Mobile Experience
-- **Fully Responsive Design** - Optimized for all device sizes
+
+- **Fully Responsive Design** - Optimized for all device sizes (mobile, tablet, desktop)
 - **Mobile-First Approach** - Progressive enhancement from mobile to desktop
-- **Orientation Lock** - Portrait-only mobile experience for optimal usability
-- **Mobile Dashboard** - Streamlined single-page mobile interface
-- **Touch-Friendly Interface** - Optimized for touch interactions
-- **Mobile Security** - Device-specific access controls and restrictions
+- **Touch-Friendly Interface** - Optimized buttons, dropdowns, and interactions
+- **Mobile Restrictions** - Publication and Citation forms restricted on mobile devices
+- **Admin Desktop-Only** - Admin accounts must use desktop devices for full functionality
 
 ## Technology Stack
 
 ### Backend
-- **Laravel 12.x** - PHP web framework
-- **PostgreSQL** - Primary database
-- **Laravel Jetstream** - User interface scaffolding with authentication
-- **Laravel Sanctum** - API authentication
-- **Laravel Socialite** - OAuth providers
-- **Spatie ResponseCache** - HTTP response caching
+
+- **Laravel 12.x** - Modern PHP web framework
+- **PostgreSQL 12+** - Primary relational database
+- **Laravel Jetstream 5.3** - Authentication scaffolding with Livewire
+- **Laravel Sanctum 4.0** - API token authentication
+- **Laravel Socialite 5.21** - OAuth provider integration
+- **Laravel Fortify** - Two-factor authentication
+- **Spatie ResponseCache 7.7** - HTTP response caching
 
 ### Frontend
-- **Tailwind CSS** - Utility-first CSS framework with responsive design
-- **Alpine.js** - Lightweight JavaScript framework
-- **Chart.js** - Data visualization (CDN)
-- **Livewire** - Full-stack framework for dynamic UIs
-- **Turbo** - Hotwired Turbo for SPA-like navigation
-- **Vite** - Modern build tool and asset bundler
-- **Mobile-First CSS** - Progressive enhancement for all devices
-- **Glassmorphism Design** - Modern UI with backdrop blur effects
 
-### Document Processing (wip)
-- **PhpWord** - Microsoft Word document generation
-- **DomPDF** - PDF generation and manipulation
-- **FPDF/FPDI** - Advanced PDF processing
-- **ZIP Manipulation** - Direct DOCX file processing
+- **Tailwind CSS 3.4** - Utility-first CSS framework
+- **Alpine.js 3.13** - Lightweight JavaScript framework for reactive components
+- **Livewire 3.0** - Full-stack framework for dynamic UIs without JavaScript
+- **Vite 6.2** - Modern build tool and asset bundler
+- **Hotwired Turbo 8.0** - SPA-like navigation without full page reloads
+- **Chart.js** - Data visualization (loaded via CDN)
 
-### Infrastructure (wip)
-- **Docker** - Containerization
-- **Local Storage** - File storage (configurable for S3)
-- **Render** - Cloud deployment platform
-- **Vite** - Asset bundling and development server
+### Document Processing
+
+- **PhpWord 1.4** - Microsoft Word document generation and template processing
+- **FPDF 1.8** - PDF generation library
+- **FPDI 2.6** - PDF manipulation and signature overlay
+- **DomPDF 3.1** - Alternative PDF generation (via Laravel package)
+- **ZIP Manipulation** - Direct DOCX file processing (DOCX is a ZIP archive)
+
+### Services & Architecture
+
+- **DocumentGenerationService** - Handles DOCX generation from templates
+- **DocumentSigningService** - Manages document signing workflow
+- **DocxToPdfConverter** - Converts DOCX files to PDF format
+- **TemplateCacheService** - Caches and optimizes template loading
+- **TemplatePreloader** - Preloads templates for faster generation
+- **RecaptchaService** - Google reCAPTCHA integration
 
 ## Installation
 
 ### Prerequisites
-- PHP 8.2 or higher
-- Composer
-- Node.js 20.x
-- PostgreSQL 12+
+
+- **PHP 8.2+** with extensions: `pdo_pgsql`, `zip`, `mbstring`, `xml`, `gd`
+- **Composer** 2.x
+- **Node.js** 20.x and npm
+- **PostgreSQL** 12+
+- **Git** (optional, for version control)
 
 ### Local Development Setup
 
-1. **Clone the repository**
+1. **Clone or copy the repository**
    ```bash
-   git clone https://github.com/VETEIS/pubcite.git
+   # If using Git
+   git clone <repository-url> pubcite
    cd pubcite
+   
+   # Or copy the project folder to your desired location
    ```
 
 2. **Install PHP dependencies**
@@ -128,22 +180,294 @@ A comprehensive web application for the University of Southeastern Philippines (
    php artisan key:generate
    ```
 
-5. **Database setup**
+5. **Configure database in `.env`**
+   ```env
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=pubcite
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
+
+6. **Create PostgreSQL database**
+   ```bash
+   createdb pubcite
+   # Or using psql:
+   psql postgres
+   CREATE DATABASE pubcite;
+   \q
+   ```
+
+7. **Run migrations**
    ```bash
    php artisan migrate
+   ```
+
+8. **(Optional) Seed database**
+   ```bash
    php artisan db:seed
    ```
 
-6. **Build assets**
+9. **Create storage link**
    ```bash
-   npm run build
+   php artisan storage:link
    ```
 
-7. **Start development server**
-   ```bash
-   php artisan serve
-   npm run dev
+10. **Set proper permissions**
+    ```bash
+    chmod -R 775 storage bootstrap/cache
+    ```
+
+11. **Build assets**
+    ```bash
+    npm run build
+    ```
+
+12. **Start development server**
+    ```bash
+    # Terminal 1 - Laravel server
+    php artisan serve
+    
+    # Terminal 2 - Vite dev server (for hot reloading)
+    npm run dev
+    
+    # Or use the combined command (runs all services)
+    composer run dev
+    ```
+
+13. **Access the application**
+    ```
+    http://localhost:8000
+    ```
+
+## Configuration
+
+### Environment Variables
+
+Key environment variables to configure:
+
+```env
+# Application
+APP_NAME="PubCite"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Database
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=pubcite
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+
+# reCAPTCHA (optional)
+RECAPTCHA_SITE_KEY=your-site-key
+RECAPTCHA_SECRET_KEY=your-secret-key
+
+# Mail Configuration
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your-username
+MAIL_PASSWORD=your-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@usep.edu.ph
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Session
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+
+# Queue (for email notifications)
+QUEUE_CONNECTION=database
+
+# File Storage
+FILESYSTEM_DISK=local
+
+# Cache
+CACHE_DRIVER=file
+```
+
+### Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials (Web application)
+5. Add authorized redirect URI: `http://localhost:8000/auth/google/callback` (for local) or `https://your-domain.com/auth/google/callback` (for production)
+6. Restrict to `@usep.edu.ph` domain in OAuth consent screen
+7. Copy Client ID and Secret to `.env`
+
+### File Storage Configuration
+
+**Local Storage (Default):**
+- Files are stored in `storage/app/private/` (private files) and `storage/app/public/` (public files)
+- Run `php artisan storage:link` to create symbolic link for public files
+- Access public files via `/storage/` URL
+
+**AWS S3 (Optional):**
+1. Install AWS SDK: `composer require league/flysystem-aws-s3-v3 "^3.0"`
+2. Update `config/filesystems.php` to add S3 disk configuration
+3. Set `FILESYSTEM_DISK=s3` in `.env`
+4. Configure AWS credentials in `.env`:
+   ```env
+   AWS_ACCESS_KEY_ID=your-access-key
+   AWS_SECRET_ACCESS_KEY=your-secret-key
+   AWS_DEFAULT_REGION=us-east-1
+   AWS_BUCKET=your-bucket-name
    ```
+
+### System Settings
+
+Configure system settings via Admin Panel → Settings:
+- **Director Emails** - Deputy Director and RDD Director email addresses
+- **Official Names** - Official names for directors
+- **Landing Page Announcements** - Manage announcements on the welcome page
+- **Researcher Profiles** - Configure researcher profiles displayed on landing page
+
+## Workflow System
+
+The application implements a **5-stage signature workflow** for request approval:
+
+### Workflow States
+
+1. **`pending_user_signature`** - Initial state, user must sign their own request
+2. **`pending_research_manager`** - Awaiting Research Center Manager signature
+3. **`pending_dean`** - Awaiting College Dean signature
+4. **`pending_deputy_director`** - Awaiting Deputy Director signature
+5. **`pending_director`** - Awaiting RDD Director signature
+6. **`completed`** - All signatures collected, request fully approved
+
+### Workflow Progression
+
+- Workflow state automatically progresses when the appropriate signatory signs the document
+- Each stage requires a specific signatory type to sign before moving to the next stage
+- Users can track progress via the dashboard showing signature progress (e.g., "2/5")
+- Signature status is tracked in the `request_signatures` table
+
+### Signatory Types
+
+- **`user`** - The request submitter (signs first)
+- **`center_manager`** - Research Center Manager
+- **`college_dean`** - College Dean
+- **`deputy_director`** - Deputy Director (configured via settings)
+- **`rdd_director`** - RDD Director (configured via settings)
+
+## User Roles & Permissions
+
+### Admin Role
+
+- **Full system access** (desktop only)
+- Create, edit, and delete users
+- Manage all requests
+- Configure system settings
+- View activity logs
+- Download files
+- Manage researcher profiles and announcements
+
+### User Role
+
+- Submit publication and citation requests
+- Upload and manage personal signatures
+- View own requests and track progress
+- Sign own requests (first stage)
+- Upload required documents
+- Save drafts and resume later
+
+### Signatory Role
+
+- View pending requests requiring their signature
+- Sign documents assigned to their signatory type
+- View signature history
+- Receive email notifications for pending signatures
+
+**Signatory Types:**
+- `faculty` - Faculty member (for future use)
+- `center_manager` - Research Center Manager
+- `college_dean` - College Dean
+- `deputy_director` - Deputy Director
+- `rdd_director` - RDD Director
+
+## Document Types
+
+### Publication Documents
+
+1. **Incentive Application Form** (`Incentive_Application_Form.docx`)
+   - Generated from publication request form data
+   - Includes researcher information, publication details, indexing evidence
+
+2. **Recommendation Letter** (`Recommendation_Letter_Form.docx`)
+   - Generated for publication recommendations
+   - Includes college header, faculty details, citation information
+
+### Citation Documents
+
+1. **Incentive Application Form** (`Cite_Incentive_Application.docx`)
+   - Generated from citation request form data
+   - Includes citation details, indexing evidence
+
+2. **Recommendation Letter** (`Cite_Recommendation_Letter.docx`)
+   - Generated for citation recommendations
+
+### Terminal Report
+
+- **Terminal Report Form** (`Terminal_Report_Form.docx`)
+  - Used for terminal reports (uploaded by users)
+
+## Deployment
+
+### Production Checklist
+
+1. **Update environment variables**
+   ```bash
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://your-domain.com
+   ```
+
+2. **Build production assets**
+   ```bash
+   npm run build
+   composer install --optimize-autoloader --no-dev
+   ```
+
+3. **Run migrations**
+   ```bash
+   php artisan migrate --force
+   ```
+
+4. **Cache configuration**
+   ```bash
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+
+5. **Set proper permissions**
+   ```bash
+   chmod -R 775 storage bootstrap/cache
+   chown -R www-data:www-data storage bootstrap/cache
+   ```
+
+6. **Configure queue worker** (for email notifications)
+   ```bash
+   php artisan queue:work --tries=3
+   ```
+
+### Render.com Deployment
+
+1. Connect your GitHub repository to Render
+2. Use the provided `render.yaml` configuration
+3. Set all environment variables in Render dashboard
+4. Configure PostgreSQL database
+5. Deploy automatically on push to main branch
 
 ### Docker Deployment
 
@@ -154,208 +478,236 @@ A comprehensive web application for the University of Southeastern Philippines (
 
 2. **Run the container**
    ```bash
-   docker run -p 10000:10000 pubcite
+   docker run -p 10000:10000 \
+     -e DB_HOST=your-db-host \
+     -e DB_DATABASE=pubcite \
+     -e DB_USERNAME=your-username \
+     -e DB_PASSWORD=your-password \
+     pubcite
    ```
-
-## Configuration
-
-### Environment Variables
-
-```env
-# Application
-APP_NAME="PubCite"
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://your-domain.com
-
-# Database
-DB_CONNECTION=pgsql
-DB_HOST=your-db-host
-DB_PORT=5432
-DB_DATABASE=pubcite
-DB_USERNAME=your-username
-DB_PASSWORD=your-password
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=https://your-domain.com/auth/google/callback
-
-# File Storage (Optional - defaults to local)
-FILESYSTEM_DISK=local
-# AWS_ACCESS_KEY_ID=your-access-key
-# AWS_SECRET_ACCESS_KEY=your-secret-key
-# AWS_DEFAULT_REGION=us-east-1
-# AWS_BUCKET=your-bucket-name
-
-# Signature Management
-MAX_SIGNATURE_BYTES=1000000
-SIGNATURE_MAX_DIMENSIONS=2000
-SIGNATURE_RETENTION_DAYS=90
-
-# Privacy & Security
-PRIVACY_AGREEMENT_REQUIRED=true
-ADMIN_MOBILE_RESTRICTED=true
-MOBILE_ORIENTATION_LOCK=true
-```
-
-### Google OAuth Setup
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `https://your-domain.com/auth/google/callback`
-6. Restrict to `@usep.edu.ph` domain
-
-### File Storage Configuration
-
-**Local Storage (Default):**
-- Files are stored in `storage/app/public/`
-- Run `php artisan storage:link` to create symbolic link
-- Access files via `/storage/` URL
-
-**AWS S3 (Optional):**
-1. Install AWS SDK: `composer require league/flysystem-aws-s3-v3`
-2. Create a private S3 bucket
-3. Enable server-side encryption (SSE-KMS recommended)
-4. Block public access
-5. Configure bucket policy to deny anonymous access
-6. Set up lifecycle policies for cost optimization
-
-### Mobile Configuration
-
-1. **Orientation Lock** - Mobile devices are restricted to portrait orientation
-2. **Admin Access** - Admin accounts must use desktop devices for full functionality
-3. **Mobile Routes** - Certain features (Publications, Citations) are restricted on mobile
-4. **Responsive Breakpoints** - Uses `sm:` (640px+) and `lg:` (1024px+) breakpoints
-5. **Touch Optimization** - All interactive elements optimized for touch input
-
-## Deployment
-
-### Render.com Deployment
-
-1. Connect your GitHub repository to Render
-2. Use the provided `render.yaml` configuration
-3. Set environment variables in Render dashboard
-4. Deploy automatically on push to main branch
-
-### Manual Deployment
-
-1. **Build production assets**
-   ```bash
-   npm run build
-   composer install --optimize-autoloader --no-dev
-   ```
-
-2. **Run migrations**
-   ```bash
-   php artisan migrate --force
-   ```
-
-3. **Cache configuration**
-   ```bash
-   php artisan config:cache
-   php artisan route:cache
-   php artisan view:cache
-   ```
-
-## Usage
-
-### For Users
-1. **Privacy Agreement** - Accept the data privacy agreement before accessing the system
-2. **Login** - Use your USeP Google account to access the system
-3. **Submit Applications** - Create publication or citation incentive requests
-4. **Upload Documents** - Attach required files and supporting documents
-5. **Track Status** - Monitor your application progress in the dashboard
-6. **Manage Signatures** - Upload and manage your digital signatures
-7. **Mobile Access** - Full functionality available on mobile devices (admin accounts require desktop)
-
-### For Signatories
-1. **Review Requests** - Access pending documents requiring signatures
-2. **Sign Documents** - Apply your digital signature to official documents
-3. **Revert Signatures** - Undo signatures within the 24-hour window if needed
-
-### For Administrators
-1. **Desktop Access Required** - Admin accounts must be accessed from desktop devices
-2. **Dashboard Overview** - Monitor system activity and statistics
-3. **User Management** - Create and manage user accounts
-4. **Request Processing** - Review, approve, or reject applications
-5. **System Configuration** - Adjust application settings and parameters
-6. **File Management** - Access and manage uploaded documents
-7. **Privacy Compliance** - Monitor and manage privacy agreement acceptance
 
 ## Development
 
 ### Running Tests
+
 ```bash
 php artisan test
 ```
 
 ### Code Style
+
 ```bash
 ./vendor/bin/pint
 ```
 
 ### Database Seeding
+
 ```bash
 php artisan db:seed
 ```
 
-### Debug Commands
+### Artisan Commands
+
+**Cleanup Commands:**
+```bash
+# Clean up temporary files
+php artisan cleanup:temp-files
+
+# Clean up orphaned directories
+php artisan cleanup:orphaned-directories
+
+# Clean up preview cache
+php artisan cleanup:preview-cache
+
+# Clean up stale lock files
+php artisan cleanup:stale-lock-files
+
+# Clean up legacy directories
+php artisan cleanup:legacy-directories
+```
+
+**Debug Commands:**
 ```bash
 # Debug user roles
 php artisan debug:user-roles
-
-# Clean up temporary files
-php artisan cleanup:temp-files
 ```
+
+**Migration Commands:**
+```bash
+# Migrate existing signatures
+php artisan migrate:existing-signatures
+
+# Update Google users auth provider
+php artisan update:google-users-auth-provider
+```
+
+### Development Workflow
+
+1. **Start all services**
+   ```bash
+   composer run dev
+   ```
+   This runs:
+   - Laravel server (port 8000)
+   - Queue worker
+   - Pail (log viewer)
+   - Vite dev server
+
+2. **Make changes** to code, views, or assets
+
+3. **Hot reloading** - Vite automatically reloads on asset changes
+
+4. **View logs** - Check Pail output or `storage/logs/laravel.log`
 
 ## Project Structure
 
 ```
 pubcite/
 ├── app/
-│   ├── Console/Commands/     # Artisan commands
-│   ├── Enums/               # Application enums
-│   ├── Http/Controllers/    # HTTP controllers
-│   ├── Mail/                # Email notifications
-│   ├── Models/              # Eloquent models
+│   ├── Actions/
+│   │   ├── Fortify/          # Fortify actions (user creation, password updates)
+│   │   └── Jetstream/        # Jetstream actions (user deletion)
+│   ├── Console/
+│   │   └── Commands/         # Artisan commands (cleanup, debug, migration)
+│   ├── Enums/
+│   │   └── SignatureStatus.php
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/        # Admin controllers
+│   │   │   ├── Auth/         # Authentication controllers
+│   │   │   └── Traits/       # Controller traits (DraftSessionManager)
+│   │   ├── Middleware/
+│   │   │   ├── AdminMiddleware.php
+│   │   │   ├── MobileRestriction.php
+│   │   │   ├── PrivacyAcceptanceMiddleware.php
+│   │   │   └── SecurityHeaders.php
+│   │   └── Requests/         # Form request validation
+│   ├── Jobs/                 # Queue jobs
+│   ├── Livewire/             # Livewire components
+│   ├── Mail/                 # Email notification classes
+│   ├── Models/                # Eloquent models
+│   ├── Policies/             # Authorization policies
+│   ├── Providers/            # Service providers
 │   ├── Services/            # Business logic services
-│   └── View/Components/     # Blade components
+│   ├── Traits/               # Reusable traits
+│   └── View/
+│       └── Components/       # Blade components
+├── bootstrap/
+│   ├── app.php              # Application bootstrap
+│   └── providers.php        # Service provider registration
+├── config/                   # Configuration files
 ├── database/
 │   ├── factories/           # Model factories
 │   ├── migrations/          # Database migrations
-│   └── seeders/             # Database seeders
+│   └── seeders/            # Database seeders
+├── public/                  # Public assets and index.php
 ├── resources/
-│   ├── css/                 # Stylesheets
-│   ├── js/                  # JavaScript files
-│   └── views/               # Blade templates
-├── routes/                  # Route definitions
-├── storage/                 # File storage
-└── tests/                   # Test suites
+│   ├── css/                # Stylesheets
+│   ├── js/                 # JavaScript files
+│   ├── markdown/           # Markdown files (policy, terms)
+│   ├── templates/          # DOCX templates
+│   └── views/              # Blade templates
+├── routes/
+│   ├── api.php             # API routes
+│   ├── console.php         # Console routes
+│   └── web.php             # Web routes
+├── storage/
+│   ├── app/
+│   │   ├── private/        # Private file storage
+│   │   ├── public/         # Public file storage
+│   │   └── templates/      # Template files
+│   └── logs/               # Application logs
+├── tests/                   # Test suites
+├── .env.example            # Environment template
+├── composer.json           # PHP dependencies
+├── package.json            # Node.js dependencies
+├── vite.config.js          # Vite configuration
+└── tailwind.config.js      # Tailwind CSS configuration
 ```
 
-## Recent Updates
+## API Endpoints
 
-### Mobile Responsiveness (Latest)
-- **Complete Mobile Optimization** - Full responsive design for all pages and components
-- **Mobile Dashboard** - Streamlined single-page mobile interface with hidden sidebar
-- **Orientation Lock** - Portrait-only mobile experience for optimal usability
-- **Touch-Friendly Interface** - Optimized buttons, dropdowns, and interactions
-- **Mobile Security** - Device-specific access controls and URL injection protection
+### Public Endpoints
 
-### Privacy & Security Enhancements
-- **Data Privacy Agreement** - Mandatory privacy acceptance before system access
-- **Session Synchronization** - Client-server state management for privacy compliance
-- **Admin Mobile Restrictions** - Admin accounts restricted to desktop for full functionality
-- **URL Injection Protection** - Server-side middleware preventing unauthorized mobile access
+- `GET /api/announcements` - Get landing page announcements
+- `GET /api/researchers` - Get active researcher profiles
 
-### UI/UX Improvements
-- **Glassmorphism Design** - Modern backdrop blur effects throughout the interface
-- **Progressive Enhancement** - Mobile-first approach with desktop enhancements
-- **Responsive Typography** - Optimized text sizing for all device types
-- **Mobile-First CSS** - Clean breakpoint strategy preserving desktop functionality
+### Authenticated Endpoints
+
+- `GET /api/drafts` - Get user's drafts
+- `GET /api/draft/{draft}` - Get specific draft
+- `DELETE /drafts/{draft}` - Delete a draft
+
+### Admin Endpoints
+
+- `GET /admin/dashboard/data` - Get dashboard statistics
+- `GET /admin/requests/{request}/data` - Get request data
+- `GET /admin/requests/{request}/download-zip` - Download request files as ZIP
+- `GET /admin/download/{type}/{filename}` - Download admin files
+
+## Troubleshooting
+
+### Common Issues
+
+**Error 419 (CSRF Token Mismatch)**
+- **Cause:** Session expired or CSRF token mismatch
+- **Solution:** Refresh the page to get a new CSRF token
+- **Prevention:** Notice displayed in document generation section
+
+**Database Connection Errors**
+- Check PostgreSQL is running: `brew services list` (macOS) or `sudo systemctl status postgresql` (Linux)
+- Verify database credentials in `.env`
+- Ensure database exists: `psql -l | grep pubcite`
+
+**Permission Errors**
+- Run: `chmod -R 775 storage bootstrap/cache`
+- Ensure web server user has write access
+
+**Template Not Found Errors**
+- Verify templates exist in `storage/app/templates/`
+- Check file permissions on template files
+- Run: `php artisan storage:link`
+
+**Email Not Sending**
+- Check queue worker is running: `php artisan queue:work`
+- Verify mail configuration in `.env`
+- Check `storage/logs/laravel.log` for email errors
+
+**Document Generation Fails**
+- Check PHP extensions: `php -m | grep zip`
+- Verify template files are valid DOCX files
+- Check storage permissions: `ls -la storage/app/templates/`
+
+**Mobile Restrictions Not Working**
+- Verify `MobileRestriction` middleware is applied to routes
+- Check User-Agent detection in middleware
+- Test with different mobile devices/browsers
+
+### Debugging
+
+**View Logs**
+```bash
+# Real-time log viewing
+php artisan pail
+
+# Or tail the log file
+tail -f storage/logs/laravel.log
+```
+
+**Clear Caches**
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+**Reset Application**
+```bash
+php artisan migrate:fresh --seed
+php artisan storage:link
+npm run build
+```
 
 ## Contributing
 
@@ -374,7 +726,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For support and questions:
 - Create an issue in the GitHub repository
 - Contact the development team
-- Check the documentation in the `/docs` folder
+- Check the documentation
 
 ## About USeP
 
