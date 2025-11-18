@@ -83,10 +83,6 @@ Route::middleware(['auth', 'admin', 'throttle:30,1'])->group(function () {
     Route::get('/admin/download/{type}/{filename}', [\App\Http\Controllers\AdminFileController::class, 'download'])->name('admin.download.file');
 });
     
-    // signature management
-    Route::middleware('auth')->group(function () {
-        Route::resource('signatures', \App\Http\Controllers\SignatureController::class)->except(['create']);
-    });
     
 
     

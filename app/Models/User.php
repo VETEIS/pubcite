@@ -67,10 +67,6 @@ class User extends Authenticatable
         return $this->hasMany(Request::class);
     }
 
-    public function signatures()
-    {
-        return $this->hasMany(Signature::class);
-    }
 
 
 

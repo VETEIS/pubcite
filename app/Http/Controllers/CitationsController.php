@@ -21,7 +21,6 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use App\Services\TemplatePreloader;
 // use App\Http\Controllers\Traits\DraftSessionManager; // Temporarily disabled for production fix
 use App\Mail\SubmissionNotification;
-use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 use App\Services\DocumentGenerationService;
 use App\Services\RecaptchaService;
@@ -110,9 +109,6 @@ class CitationsController extends Controller
         $request->save();
 
         if ($oldStatus !== $request->status) {
-            $adminComment = $httpRequest->input('admin_comment', null);
-            Mail::to($request->user->email)->send(new StatusChangeNotification($request, $request->user, $request->status, $adminComment));
-            
             // If status changed to 'endorsed', notify signatories
             if ($request->status === 'endorsed') {
                 $this->notifySignatories($request);

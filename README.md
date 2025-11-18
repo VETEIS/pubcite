@@ -38,7 +38,7 @@ A comprehensive web application for the University of Southeastern Philippines (
 - **Publication Incentive Applications** - Submit and manage publication incentive requests with form data validation
 - **Citation Incentive Applications** - Handle citation-based incentive submissions with indexing evidence
 - **Draft Management** - Save and resume incomplete applications with session-based draft storage
-- **Document Generation** - Dynamic DOCX/PDF generation from templates using PhpWord and FPDF/FPDI
+- **Document Generation** - Dynamic DOCX/PDF generation from templates using PhpWord
 - **Multi-Stage Signature Workflow** - 5-stage approval process with digital signatures
 - **Real-time Dashboard** - Live updates, progress tracking, and comprehensive analytics
 - **Activity Logging** - Detailed audit trails for all system actions
@@ -59,30 +59,23 @@ A comprehensive web application for the University of Southeastern Philippines (
 
 ### Document Management
 
-- **Template-Based Generation** - DOCX templates with variable substitution
-- **PDF Conversion** - Automatic DOCX to PDF conversion using DocxToPdfConverter service
+- **Template-Based Generation** - DOCX templates with variable substitution using PhpWord
+- **PDF Conversion** - Automatic DOCX to PDF conversion using LibreOffice (via DocxToPdfConverter service)
 - **Template Caching** - Optimized template loading with TemplateCacheService
 - **Document Preview** - Preview generated documents before submission
 - **File Upload Validation** - Secure file type and size validation
-- **Document Signing** - Apply digital signatures to PDF documents using FPDI
-- **Signature Overlay** - Position signatures on documents with coordinate-based placement
-- **Document Backup** - Automatic backup of original documents before signing
+- **Manual Document Signing** - Users upload signed PDF/DOCX documents (manual signing process)
 
 ### Signature System
 
-- **Personal Signature Upload** - Secure signature image management (PNG/JPG)
-- **Multiple Signatures** - Users can upload and manage multiple signature styles
-- **Signature Validation** - Automatic uppercase conversion for signatory names
-- **24-Hour Reversion Window** - Undo signatures within 24 hours of signing
 - **Signature Tracking** - Track which signatories have signed each request
-- **Workflow Integration** - Automatic workflow state progression on signature completion
+- **24-Hour Reversion Window** - Signatories can undo their signatures within 24 hours of signing
+- **Workflow Integration** - Automatic workflow state progression when signed documents are uploaded
+- **Signature Validation** - Automatic uppercase conversion for signatory names
 
 ### Email Notifications
 
-- **Submission Notifications** - Email users and admins when requests are submitted
 - **Signatory Notifications** - Notify signatories when documents require their signature
-- **Status Change Notifications** - Alert users when request status changes
-- **Resubmission Notifications** - Notify when requests are resubmitted
 - **Nudge Notifications** - Remind signatories of pending signatures
 - **Queue-Based Sending** - Asynchronous email processing for better performance
 
@@ -95,12 +88,11 @@ A comprehensive web application for the University of Southeastern Philippines (
 - **File Management** - Secure file downloads with access control
 - **Activity Logs** - View detailed audit trails of all system actions
 - **Landing Page Management** - Configure announcements and researcher profiles
-- **Request Debugging** - Debug file paths and request data
 
 ### Mobile Experience
 
 - **Fully Responsive Design** - Optimized for all device sizes (mobile, tablet, desktop)
-- **Mobile-First Approach** - Progressive enhancement from mobile to desktop
+- **Desktop-First Approach** - Built for desktop with responsive mobile support
 - **Touch-Friendly Interface** - Optimized buttons, dropdowns, and interactions
 - **Mobile Restrictions** - Publication and Citation forms restricted on mobile devices
 - **Admin Desktop-Only** - Admin accounts must use desktop devices for full functionality
@@ -129,16 +121,13 @@ A comprehensive web application for the University of Southeastern Philippines (
 ### Document Processing
 
 - **PhpWord 1.4** - Microsoft Word document generation and template processing
-- **FPDF 1.8** - PDF generation library
-- **FPDI 2.6** - PDF manipulation and signature overlay
-- **DomPDF 3.1** - Alternative PDF generation (via Laravel package)
-- **ZIP Manipulation** - Direct DOCX file processing (DOCX is a ZIP archive)
+- **LibreOffice** - DOCX to PDF conversion (required for PDF generation)
+- **DomPDF 3.1** - PDF generation library (installed but not actively used in current implementation)
 
 ### Services & Architecture
 
 - **DocumentGenerationService** - Handles DOCX generation from templates
-- **DocumentSigningService** - Manages document signing workflow
-- **DocxToPdfConverter** - Converts DOCX files to PDF format
+- **DocxToPdfConverter** - Converts DOCX files to PDF format using LibreOffice command-line tool
 - **TemplateCacheService** - Caches and optimizes template loading
 - **TemplatePreloader** - Preloads templates for faster generation
 - **RecaptchaService** - Google reCAPTCHA integration
@@ -151,6 +140,7 @@ A comprehensive web application for the University of Southeastern Philippines (
 - **Composer** 2.x
 - **Node.js** 20.x and npm
 - **PostgreSQL** 12+
+- **LibreOffice** - Required for DOCX to PDF conversion (install from [LibreOffice.org](https://www.libreoffice.org/))
 - **Git** (optional, for version control)
 
 ### Local Development Setup
@@ -338,19 +328,20 @@ The application implements a **5-stage signature workflow** for request approval
 
 ### Workflow States
 
-1. **`pending_user_signature`** - Initial state, user must sign their own request
-2. **`pending_research_manager`** - Awaiting Research Center Manager signature
-3. **`pending_dean`** - Awaiting College Dean signature
-4. **`pending_deputy_director`** - Awaiting Deputy Director signature
-5. **`pending_director`** - Awaiting RDD Director signature
+1. **`pending_user_signature`** - Initial state, user must upload signed documents for their own request
+2. **`pending_research_manager`** - Awaiting Research Center Manager to upload signed documents
+3. **`pending_dean`** - Awaiting College Dean to upload signed documents
+4. **`pending_deputy_director`** - Awaiting Deputy Director to upload signed documents
+5. **`pending_director`** - Awaiting RDD Director to upload signed documents
 6. **`completed`** - All signatures collected, request fully approved
 
 ### Workflow Progression
 
-- Workflow state automatically progresses when the appropriate signatory signs the document
-- Each stage requires a specific signatory type to sign before moving to the next stage
+- Workflow state automatically progresses when the appropriate signatory uploads signed documents (PDF/DOCX)
+- Each stage requires a specific signatory type to upload signed documents before moving to the next stage
 - Users can track progress via the dashboard showing signature progress (e.g., "2/5")
 - Signature status is tracked in the `request_signatures` table
+- **Manual Signing Process**: Signatories download documents, sign them manually (outside the system), then upload the signed versions
 
 ### Signatory Types
 

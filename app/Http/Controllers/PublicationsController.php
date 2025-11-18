@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use PhpOffice\PhpWord\TemplateProcessor;
 use App\Mail\SubmissionNotification;
-use App\Mail\StatusChangeNotification;
 use App\Services\DocxToPdfConverter;
 use App\Services\DocumentGenerationService;
 use App\Services\RecaptchaService;
