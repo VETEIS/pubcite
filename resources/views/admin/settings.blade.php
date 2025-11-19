@@ -335,13 +335,11 @@
                         
                         <!-- Form Dropdowns Management Section -->
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
-                            <form method="POST" action="{{ route('admin.settings.update') }}" id="form-dropdowns-form">
                                 @csrf
                                 @method('PUT')
                                 
                                 <!-- Header -->
                                 <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-gray-200">
-                                    <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
                                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,127 +348,172 @@
                                             </div>
                                             <div>
                                                 <h3 class="text-lg font-semibold text-gray-900">Form Dropdown Options</h3>
-                                                <p class="text-sm text-gray-600 mt-1">Manage academic ranks and colleges for incentive application forms</p>
+                                            <p class="text-sm text-gray-600 mt-1">Manage academic ranks and colleges for incentive application forms • Auto-saved</p>
                                             </div>
                                         </div>
-                                        <button type="submit" name="save_form_dropdowns" value="1"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed transition-all duration-200 font-medium text-sm"
-                                                disabled>
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Save Changes
-                                        </button>
+                                </div>
+                                
+                                <!-- Confirmation Modal -->
+                                <div id="deleteConfirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm" style="display: none;">
+                                    <div class="relative top-20 mx-auto p-5 w-full max-w-md" onclick="event.stopPropagation()">
+                                        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                                            <div class="p-6">
+                                                <div class="flex items-center gap-4 mb-4">
+                                                    <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <h3 class="text-lg font-semibold text-gray-900">Confirm Removal</h3>
+                                                        <p class="text-sm text-gray-600 mt-1" id="deleteConfirmMessage">Are you sure you want to remove this item?</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex gap-3 justify-end">
+                                                    <button type="button" onclick="window.closeDeleteModal && window.closeDeleteModal()" 
+                                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                        Cancel
+                                                    </button>
+                                                    <button type="button" id="confirmDeleteBtn" onclick="window.confirmDelete && window.confirmDelete()" 
+                                                            class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
                                 <!-- Content -->
-                                <div class="p-6 space-y-6">
+                                <div class="p-6">
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                     <!-- Academic Ranks -->
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <h4 class="text-md font-semibold text-gray-900">Academic Ranks</h4>
-                                            <button type="button" onclick="addRankRow()" 
-                                                    class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
-                                                    title="Add Academic Rank">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                            </button>
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="text-sm font-semibold text-gray-900">Academic Ranks</h4>
+                                                    <span id="ranksCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                        {{ count(array_filter(old('academic_ranks', $academic_ranks ?? []))) }}
+                                                    </span>
                                         </div>
-                                        <div id="academicRanksContainer" class="space-y-2">
+                                            </div>
+                                            <div id="academicRanksContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
                                             @php($ranks = old('academic_ranks', $academic_ranks ?? []))
-                                            @if(empty($ranks))
-                                                @php($ranks = [''])
-                                            @endif
+                                                @php($ranks = array_filter($ranks))
                                             @foreach($ranks as $idx => $rank)
-                                            <div class="flex items-center gap-2">
-                                                <input type="text" name="academic_ranks[]" value="{{ $rank }}" 
-                                                       placeholder="e.g., Assistant Professor" 
-                                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
-                                                @if($idx > 0 || count($ranks) > 1)
-                                                <button type="button" onclick="removeRankRow(this)" 
-                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                                                        title="Remove">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                @if(!empty(trim($rank)))
+                                                <div class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all">
+                                                    <input type="hidden" name="academic_ranks[]" value="{{ $rank }}">
+                                                    <span class="text-sm">{{ $rank }}</span>
+                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($rank) }}', 'Academic Ranks')" 
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
-                                                @endif
                                             </div>
+                                                @endif
                                             @endforeach
                                         </div>
-                                    </div>
-                                    
-                                    <!-- Colleges -->
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <h4 class="text-md font-semibold text-gray-900">Colleges</h4>
-                                            <button type="button" onclick="addCollegeRow()" 
-                                                    class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
-                                                    title="Add College">
+                                            <div class="flex gap-2">
+                                                <input type="text" id="rankInput" 
+                                                       placeholder="Add rank..." 
+                                                       class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
+                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addRankTag(); }">
+                                                <button type="button" onclick="addRankTag()" 
+                                                        class="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-1.5">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
+                                                    Add
                                             </button>
                                         </div>
-                                        <div id="collegesContainer" class="space-y-2">
+                                        </div>
+                                        
+                                        <!-- Colleges -->
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="text-sm font-semibold text-gray-900">Colleges</h4>
+                                                    <span id="collegesCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                        {{ count(array_filter(old('colleges', $colleges ?? []))) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div id="collegesContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
                                             @php($colleges = old('colleges', $colleges ?? []))
-                                            @if(empty($colleges))
-                                                @php($colleges = [''])
-                                            @endif
+                                                @php($colleges = array_filter($colleges))
                                             @foreach($colleges as $idx => $college)
-                                            <div class="flex items-center gap-2">
-                                                <input type="text" name="colleges[]" value="{{ $college }}" 
-                                                       placeholder="e.g., College of Engineering" 
-                                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
-                                                @if($idx > 0 || count($colleges) > 1)
-                                                <button type="button" onclick="removeCollegeRow(this)" 
-                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                                                        title="Remove">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                @if(!empty(trim($college)))
+                                                <div class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                                                    <input type="hidden" name="colleges[]" value="{{ $college }}">
+                                                    <span class="text-sm">{{ $college }}</span>
+                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($college) }}', 'Colleges')" 
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
-                                                @endif
                                             </div>
+                                                @endif
                                             @endforeach
                                         </div>
-                                    </div>
-                                    
-                                    <!-- Others Indexing Options -->
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <h4 class="text-md font-semibold text-gray-900">Others Indexing Options</h4>
-                                            <button type="button" onclick="addOthersIndexingRow()" 
-                                                    class="w-8 h-8 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center justify-center" 
-                                                    title="Add Others Indexing Option">
+                                            <div class="flex gap-2">
+                                                <input type="text" id="collegeInput" 
+                                                       placeholder="Add college..." 
+                                                       class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addCollegeTag(); }">
+                                                <button type="button" onclick="addCollegeTag()" 
+                                                        class="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-1.5">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
+                                                    Add
                                             </button>
                                         </div>
-                                        <div id="othersIndexingContainer" class="space-y-2">
+                                        </div>
+                                        
+                                        <!-- Others Indexing Options -->
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="text-sm font-semibold text-gray-900">Indexing Options</h4>
+                                                    <span id="othersCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                                                        {{ count(array_filter(old('others_indexing_options', $others_indexing_options ?? []))) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div id="othersIndexingContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
                                             @php($othersIndexing = old('others_indexing_options', $others_indexing_options ?? []))
-                                            @if(empty($othersIndexing))
-                                                @php($othersIndexing = [''])
-                                            @endif
+                                                @php($othersIndexing = array_filter($othersIndexing))
                                             @foreach($othersIndexing as $idx => $option)
-                                            <div class="flex items-center gap-2">
-                                                <input type="text" name="others_indexing_options[]" value="{{ $option }}" 
-                                                       placeholder="e.g., Google Scholar" 
-                                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
-                                                @if($idx > 0 || count($othersIndexing) > 1)
-                                                <button type="button" onclick="removeOthersIndexingRow(this)" 
-                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                                                        title="Remove">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                @if(!empty(trim($option)))
+                                                <div class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-pink-400 hover:bg-pink-50 transition-all">
+                                                    <input type="hidden" name="others_indexing_options[]" value="{{ $option }}">
+                                                    <span class="text-sm">{{ $option }}</span>
+                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($option) }}', 'Indexing Options')" 
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
-                                                @endif
                                             </div>
+                                                @endif
                                             @endforeach
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <input type="text" id="othersInput" 
+                                                       placeholder="Add option..." 
+                                                       class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 transition-all"
+                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addOthersIndexingTag(); }">
+                                                <button type="button" onclick="addOthersIndexingTag()" 
+                                                        class="px-3 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm font-medium flex items-center gap-1.5">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    Add
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -795,7 +838,7 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <!-- Row 2: Full Name | Profile Link -->
+                                                <!-- Row 2: Full Name | Email Address -->
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div>
                                                         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
@@ -805,9 +848,9 @@
                                                     </div>
                                                     
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Profile Link</label>
-                                                        <input type="url" name="researchers[{{ $idx }}][profile_link]" value="{{ $researcher['profile_link'] ?? '' }}" 
-                                                               placeholder="https://example.com/profile" 
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                                        <input type="email" name="researchers[{{ $idx }}][profile_link]" value="{{ $researcher['profile_link'] ?? '' }}" 
+                                                               placeholder="researcher@example.com" 
                                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
                                                     </div>
                                                 </div>
@@ -997,31 +1040,6 @@
                 updateSaveButton(saveBtn, hasChanges);
             }
             
-            // Check for changes in form dropdown section
-            function checkFormDropdownChanges() {
-                const rankInputs = document.querySelectorAll('input[name="academic_ranks[]"]');
-                const collegeInputs = document.querySelectorAll('input[name="colleges[]"]');
-                const othersInputs = document.querySelectorAll('input[name="others_indexing_options[]"]');
-                
-                const currentRanks = Array.from(rankInputs).map(input => input.value.trim());
-                const currentColleges = Array.from(collegeInputs).map(input => input.value.trim());
-                const currentOthers = Array.from(othersInputs).map(input => input.value.trim());
-                
-                const originalRanks = window.originalValues.formDropdowns?.academic_ranks || [];
-                const originalColleges = window.originalValues.formDropdowns?.colleges || [];
-                const originalOthers = window.originalValues.formDropdowns?.others_indexing_options || [];
-                
-                const hasRankChanges = JSON.stringify(currentRanks) !== JSON.stringify(originalRanks);
-                const hasCollegeChanges = JSON.stringify(currentColleges) !== JSON.stringify(originalColleges);
-                const hasOthersChanges = JSON.stringify(currentOthers) !== JSON.stringify(originalOthers);
-                
-                const hasChanges = hasRankChanges || hasCollegeChanges || hasOthersChanges;
-                
-                const saveBtn = document.querySelector('button[name="save_form_dropdowns"]');
-                if (saveBtn) {
-                    updateSaveButton(saveBtn, hasChanges);
-                }
-            }
             
             // Check for changes in calendar section
             // Note: Calendar marks share the same save button with announcements, so we just call checkAnnouncementsChanges
@@ -1229,25 +1247,12 @@
                     }
                 });
                 
-                rankInputs.forEach(input => {
-                    input.addEventListener('input', checkFormDropdownChanges);
-                });
-                
-                collegeInputs.forEach(input => {
-                    input.addEventListener('input', checkFormDropdownChanges);
-                });
-                
-                othersInputs.forEach(input => {
-                    input.addEventListener('input', checkFormDropdownChanges);
-                });
-                
                 // Make functions globally available
                 window.checkOfficialChanges = checkOfficialChanges;
                 window.checkFeaturesChanges = checkFeaturesChanges;
                 window.checkCalendarChanges = checkCalendarChanges;
                 window.checkAnnouncementsChanges = checkAnnouncementsChanges;
                 window.checkResearcherChanges = checkResearcherChanges;
-                window.checkFormDropdownChanges = checkFormDropdownChanges;
                 
                 // Check initial state
                 checkOfficialChanges();
@@ -1255,7 +1260,14 @@
                 checkCalendarChanges();
         checkAnnouncementsChanges();
         checkResearcherChanges();
-        checkFormDropdownChanges();
+        
+        // Initialize tag counts on page load
+        const ranksContainer = document.getElementById('academicRanksContainer');
+        const collegesContainer = document.getElementById('collegesContainer');
+        const othersContainer = document.getElementById('othersIndexingContainer');
+        if (ranksContainer) updateCount('ranksCount', ranksContainer);
+        if (collegesContainer) updateCount('collegesCount', collegesContainer);
+        if (othersContainer) updateCount('othersCount', othersContainer);
         
         // Initialize name header updates for existing researchers
         function initResearcherNameDisplays() {
@@ -1301,8 +1313,8 @@
                 }
                 
                 // Find the main settings form
-                const form = document.getElementById('settings-form');
-                if (!form) {
+                const settingsForm = document.getElementById('settings-form');
+                if (!settingsForm) {
                     console.error('[DEBUG] Main settings form not found!');
                     return;
                 }
@@ -1310,54 +1322,30 @@
                 console.log('[DEBUG] Found form, submitting...');
                 
                 // Create a hidden input to indicate which button was clicked
-                let submitterInput = form.querySelector('input[name="save_announcements"]');
+                let submitterInput = settingsForm.querySelector('input[name="save_announcements"]');
                 if (!submitterInput) {
                     submitterInput = document.createElement('input');
                     submitterInput.type = 'hidden';
                     submitterInput.name = 'save_announcements';
                     submitterInput.value = '1';
-                    form.appendChild(submitterInput);
+                    settingsForm.appendChild(submitterInput);
                 }
                 
                 // Submit the form
-                form.submit();
+                settingsForm.submit();
                 
             } else if (e.target.closest('button[name="save_researchers"]')) {
                 const btn = e.target.closest('button[name="save_researchers"]');
-                console.log('[DEBUG] save_researchers button clicked');
-                console.log('[DEBUG] Button disabled?', btn.disabled);
                 
-                // Prevent default button behavior
+                // If button is disabled, prevent submission
+                if (btn.disabled) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                // If button is disabled, don't submit
-                if (btn.disabled) {
-                    console.log('[DEBUG] Button is disabled, not submitting');
                     return;
                 }
                 
-                // Find the main settings form
-                const form = document.getElementById('settings-form');
-                if (!form) {
-                    console.error('[DEBUG] Main settings form not found!');
-                    return;
-                }
-                
-                console.log('[DEBUG] Found form, submitting...');
-                
-                // Create a hidden input to indicate which button was clicked
-                let submitterInput = form.querySelector('input[name="save_researchers"]');
-                if (!submitterInput) {
-                    submitterInput = document.createElement('input');
-                    submitterInput.type = 'hidden';
-                    submitterInput.name = 'save_researchers';
-                    submitterInput.value = '1';
-                    form.appendChild(submitterInput);
-                }
-                
-                // Submit the form
-                form.submit();
+                // Let the form submit naturally - the button's name/value will be included
+                // No need to intercept or manipulate - just let it work
             }
         }, true); // Use capture phase to catch before any preventDefault
         
@@ -1400,16 +1388,82 @@
                 // Let the form submit normally - don't prevent default
                 // The server will handle the submission and redirect back
             } else if (e.submitter && e.submitter.name === 'save_researchers') {
-                console.log('[DEBUG] Saving researchers');
+                console.log('[DEBUG] Saving researchers - Form submit event');
                 
-                // Collect form data for debugging
-                const formData = new FormData(e.target);
-                const researcherData = Array.from(formData.entries()).filter(([key]) => key.startsWith('researchers'));
-                console.log('[DEBUG] Researcher form data entries:', researcherData.length);
-                console.log('[DEBUG] Sample researcher data:', researcherData.slice(0, 10));
+                // PREVENT default submission to manually collect and submit all fields
+                e.preventDefault();
                 
-                // Let the form submit normally - don't prevent default
-                // The server will handle the submission and redirect back
+                // MANUALLY collect ALL researcher fields from the entire document
+                // This ensures we get dynamically added fields even if they're not in form serialization
+                const allResearcherInputs = document.querySelectorAll('input[name^="researchers"], select[name^="researchers"], textarea[name^="researchers"]');
+                console.log('[DEBUG] Total researcher inputs found in document:', allResearcherInputs.length);
+                
+                // Create new FormData with all form fields
+                const form = e.target;
+                const newFormData = new FormData(form);
+                
+                // CRITICAL: Add the save_researchers flag so server knows which handler to use
+                newFormData.append('save_researchers', '1');
+                
+                // Add all researcher fields manually to ensure they're included
+                allResearcherInputs.forEach(input => {
+                    const match = input.name.match(/researchers\[(\d+)\]\[(.+)\]/);
+                    if (match) {
+                        if (input.type === 'file') {
+                            // File inputs - add file if selected
+                            if (input.files && input.files.length > 0) {
+                                newFormData.append(input.name, input.files[0]);
+                            }
+                        } else if (input.type === 'checkbox' || input.type === 'radio') {
+                            if (input.checked) {
+                                newFormData.append(input.name, input.value);
+                            }
+                        } else {
+                            // Text, select, textarea - add value
+                            newFormData.append(input.name, input.value || '');
+                        }
+                    }
+                });
+                
+                // Log what we're sending
+                const researcherKeys = Array.from(newFormData.keys()).filter(key => key.startsWith('researchers'));
+                console.log('[DEBUG] Researcher keys in FormData:', researcherKeys.length);
+                console.log('[DEBUG] Researcher keys:', researcherKeys);
+                
+                // Group by index to verify
+                const researchersByIndex = {};
+                researcherKeys.forEach(key => {
+                    const match = key.match(/researchers\[(\d+)\]\[(.+)\]/);
+                    if (match) {
+                        const idx = match[1];
+                        if (!researchersByIndex[idx]) {
+                            researchersByIndex[idx] = [];
+                        }
+                        researchersByIndex[idx].push(match[2]);
+                    }
+                });
+                console.log('[DEBUG] Researchers by index:', researchersByIndex);
+                console.log('[DEBUG] Number of researchers:', Object.keys(researchersByIndex).length);
+                
+                // Submit the form with the manually constructed FormData
+                fetch(form.action, {
+                    method: form.method,
+                    body: newFormData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    redirect: 'follow' // Follow redirects automatically
+                }).then(response => {
+                    // Laravel redirects back with flash message, fetch will follow it
+                    // Just reload to show the updated page with notification
+                    // The session flash message will be in the hidden div and 
+                    // processSessionNotifications() will automatically show it
+                    window.location.reload();
+                }).catch(error => {
+                    console.error('[DEBUG] Form submission error:', error);
+                    // Fallback to normal form submission
+                    form.submit();
+                });
             } else if (e.submitter) {
                 console.log('[DEBUG] Other save button clicked:', e.submitter.name);
             } else {
@@ -1612,113 +1666,333 @@
             }
         }
 
-        function addRankRow() {
+        // Auto-save state
+        let pendingDelete = null;
+        let isSaving = false;
+        
+        // Auto-save function for form dropdowns
+        async function autoSaveFormDropdowns() {
+            if (isSaving) return;
+            isSaving = true;
+            
+            const form = document.getElementById('settings-form') || document.querySelector('form[method="POST"]');
+            if (!form) {
+                isSaving = false;
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('save_form_dropdowns', '1');
+            formData.append('_token', document.querySelector('input[name="_token"]').value);
+            formData.append('_method', 'PUT');
+            
+            // Collect all dropdown values
+            const ranks = Array.from(document.querySelectorAll('#academicRanksContainer input[type="hidden"]')).map(inp => inp.value.trim()).filter(v => v);
+            const colleges = Array.from(document.querySelectorAll('#collegesContainer input[type="hidden"]')).map(inp => inp.value.trim()).filter(v => v);
+            const others = Array.from(document.querySelectorAll('#othersIndexingContainer input[type="hidden"]')).map(inp => inp.value.trim()).filter(v => v);
+            
+            // Clear and add fresh data
+            formData.delete('academic_ranks[]');
+            formData.delete('colleges[]');
+            formData.delete('others_indexing_options[]');
+            
+            ranks.forEach(rank => formData.append('academic_ranks[]', rank));
+            colleges.forEach(college => formData.append('colleges[]', college));
+            others.forEach(option => formData.append('others_indexing_options[]', option));
+            
+            try {
+                const actionUrl = form.action || '{{ route("admin.settings.update") }}';
+                const response = await fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        if (data.success) {
+                            showAutoSaveNotification('Changes saved successfully');
+                        } else {
+                            showAutoSaveNotification('Failed to save changes', 'error');
+                        }
+                    } else {
+                        // Handle redirect response
+                        showAutoSaveNotification('Changes saved successfully');
+                    }
+                } else {
+                    showAutoSaveNotification('Failed to save changes', 'error');
+                }
+            } catch (error) {
+                console.error('Auto-save error:', error);
+                showAutoSaveNotification('Failed to save changes', 'error');
+            } finally {
+                isSaving = false;
+            }
+        }
+        
+        // Show auto-save notification
+        function showAutoSaveNotification(message, type = 'success') {
+            // Remove existing notification if any
+            const existing = document.getElementById('autoSaveNotification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.id = 'autoSaveNotification';
+            notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+        
+        // Delete confirmation modal functions
+        function showDeleteModal(btn, itemName, category) {
+            if (!btn || !itemName || !category) {
+                console.error('showDeleteModal: Missing required parameters', { btn, itemName, category });
+                return;
+            }
+            
+            try {
+                pendingDelete = { btn, itemName, category };
+                const modal = document.getElementById('deleteConfirmModal');
+                const message = document.getElementById('deleteConfirmMessage');
+                
+                if (!modal) {
+                    console.error('Delete confirmation modal not found');
+                    return;
+                }
+                
+                if (!message) {
+                    console.error('Delete confirmation message element not found');
+                    return;
+                }
+                
+                message.textContent = `Are you sure you want to remove "${itemName}" from ${category}?`;
+                modal.classList.remove('hidden');
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            } catch (error) {
+                console.error('Error showing delete modal:', error);
+            }
+        }
+        
+        function closeDeleteModal() {
+            try {
+                const modal = document.getElementById('deleteConfirmModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                }
+                document.body.style.overflow = '';
+                pendingDelete = null;
+            } catch (error) {
+                console.error('Error closing delete modal:', error);
+            }
+        }
+        
+        function confirmDelete() {
+            if (!pendingDelete) {
+                console.warn('No pending delete operation');
+                return;
+            }
+            
+            try {
+                const { btn, category } = pendingDelete;
+                if (!btn || !category) {
+                    console.error('Invalid pending delete data');
+                    closeDeleteModal();
+                    return;
+                }
+                
+                let container;
+                let countId;
+                
+                if (category === 'Academic Ranks') {
+                    container = document.getElementById('academicRanksContainer');
+                    countId = 'ranksCount';
+                } else if (category === 'Colleges') {
+                    container = document.getElementById('collegesContainer');
+                    countId = 'collegesCount';
+                } else if (category === 'Indexing Options') {
+                    container = document.getElementById('othersIndexingContainer');
+                    countId = 'othersCount';
+                } else {
+                    console.error('Unknown category:', category);
+                    closeDeleteModal();
+                    return;
+                }
+                
+                if (!container) {
+                    console.error('Container not found for category:', category);
+                    closeDeleteModal();
+                    return;
+                }
+                
+                // Find and remove the tag element
+                const tagElement = btn.closest('div.group');
+                if (tagElement) {
+                    tagElement.remove();
+                    updateCount(countId, container);
+                } else {
+                    console.error('Tag element not found');
+                }
+                
+                closeDeleteModal();
+                autoSaveFormDropdowns();
+            } catch (error) {
+                console.error('Error confirming delete:', error);
+                closeDeleteModal();
+            }
+        }
+        
+        // Modern tag-based functions for Form Dropdowns
+        function addRankTag() {
+            const input = document.getElementById('rankInput');
+            const value = input.value.trim();
+            if (!value) return;
+            
             const container = document.getElementById('academicRanksContainer');
-            const newRow = document.createElement('div');
-            newRow.className = 'flex items-center gap-2';
-            newRow.innerHTML = `
-                <input type="text" name="academic_ranks[]" value="" 
-                       placeholder="e.g., Assistant Professor" 
-                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
-                <button type="button" onclick="removeRankRow(this)" 
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                        title="Remove">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(inp => inp.value.trim());
+            if (existingValues.includes(value)) {
+                input.value = '';
+                return;
+            }
+            
+            const tag = document.createElement('div');
+            tag.className = 'group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all';
+            tag.innerHTML = `
+                <input type="hidden" name="academic_ranks[]" value="${escapeHtml(value)}">
+                <span class="text-sm">${escapeHtml(value)}</span>
+                <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '${escapeHtml(value)}', 'Academic Ranks')" 
+                        class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             `;
-            container.appendChild(newRow);
-            // Add event listener to new input
-            const newInput = newRow.querySelector('input[name="academic_ranks[]"]');
-            if (newInput && window.checkFormDropdownChanges) {
-                newInput.addEventListener('input', window.checkFormDropdownChanges);
-            }
-            // Trigger change detection
-            if (window.checkFormDropdownChanges) {
-                window.checkFormDropdownChanges();
-            }
+            container.appendChild(tag);
+            input.value = '';
+            updateCount('ranksCount', container);
+            autoSaveFormDropdowns();
         }
         
-        function removeRankRow(btn) {
-            btn.closest('div').remove();
-            // Trigger change detection
-            if (window.checkFormDropdownChanges) {
-                window.checkFormDropdownChanges();
-            }
-        }
-        
-        function addCollegeRow() {
+        function addCollegeTag() {
+            const input = document.getElementById('collegeInput');
+            const value = input.value.trim();
+            if (!value) return;
+            
             const container = document.getElementById('collegesContainer');
-            const newRow = document.createElement('div');
-            newRow.className = 'flex items-center gap-2';
-            newRow.innerHTML = `
-                <input type="text" name="colleges[]" value="" 
-                       placeholder="e.g., College of Engineering" 
-                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
-                <button type="button" onclick="removeCollegeRow(this)" 
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                        title="Remove">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(inp => inp.value.trim());
+            if (existingValues.includes(value)) {
+                input.value = '';
+                return;
+            }
+            
+            const tag = document.createElement('div');
+            tag.className = 'group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all';
+            tag.innerHTML = `
+                <input type="hidden" name="colleges[]" value="${escapeHtml(value)}">
+                <span class="text-sm">${escapeHtml(value)}</span>
+                <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '${escapeHtml(value)}', 'Colleges')" 
+                        class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             `;
-            container.appendChild(newRow);
-            // Add event listener to new input
-            const newInput = newRow.querySelector('input[name="colleges[]"]');
-            if (newInput && window.checkFormDropdownChanges) {
-                newInput.addEventListener('input', window.checkFormDropdownChanges);
-            }
-            // Trigger change detection
-            if (window.checkFormDropdownChanges) {
-                window.checkFormDropdownChanges();
-            }
+            container.appendChild(tag);
+            input.value = '';
+            updateCount('collegesCount', container);
+            autoSaveFormDropdowns();
         }
         
-        function removeCollegeRow(btn) {
-            btn.closest('div').remove();
-            // Trigger change detection
-            if (window.checkFormDropdownChanges) {
-                window.checkFormDropdownChanges();
-            }
-        }
-        
-        function addOthersIndexingRow() {
+        function addOthersIndexingTag() {
+            const input = document.getElementById('othersInput');
+            const value = input.value.trim();
+            if (!value) return;
+            
             const container = document.getElementById('othersIndexingContainer');
-            const newRow = document.createElement('div');
-            newRow.className = 'flex items-center gap-2';
-            newRow.innerHTML = `
-                <input type="text" name="others_indexing_options[]" value="" 
-                       placeholder="e.g., Google Scholar" 
-                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
-                <button type="button" onclick="removeOthersIndexingRow(this)" 
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" 
-                        title="Remove">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(inp => inp.value.trim());
+            if (existingValues.includes(value)) {
+                input.value = '';
+                return;
+            }
+            
+            const tag = document.createElement('div');
+            tag.className = 'group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-pink-400 hover:bg-pink-50 transition-all';
+            tag.innerHTML = `
+                <input type="hidden" name="others_indexing_options[]" value="${escapeHtml(value)}">
+                <span class="text-sm">${escapeHtml(value)}</span>
+                <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '${escapeHtml(value)}', 'Indexing Options')" 
+                        class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             `;
-            container.appendChild(newRow);
-            // Add event listener to new input
-            const newInput = newRow.querySelector('input[name="others_indexing_options[]"]');
-            if (newInput && window.checkFormDropdownChanges) {
-                newInput.addEventListener('input', window.checkFormDropdownChanges);
-            }
-            // Trigger change detection
-            if (window.checkFormDropdownChanges) {
-                window.checkFormDropdownChanges();
+            container.appendChild(tag);
+            input.value = '';
+            updateCount('othersCount', container);
+            autoSaveFormDropdowns();
+        }
+        
+        function updateCount(countId, container) {
+            const count = container.querySelectorAll('input[type="hidden"]').length;
+            const countElement = document.getElementById(countId);
+            if (countElement) {
+                countElement.textContent = count;
             }
         }
         
-        function removeOthersIndexingRow(btn) {
-            btn.closest('div').remove();
-            // Trigger change detection
-            if (window.checkFormDropdownChanges) {
-                window.checkFormDropdownChanges();
-            }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
+        
+        // Make functions globally available immediately
+        window.addRankTag = addRankTag;
+        window.addCollegeTag = addCollegeTag;
+        window.addOthersIndexingTag = addOthersIndexingTag;
+        window.showDeleteModal = showDeleteModal;
+        window.closeDeleteModal = closeDeleteModal;
+        window.confirmDelete = confirmDelete;
+        window.updateCount = updateCount;
+        window.autoSaveFormDropdowns = autoSaveFormDropdowns;
+        
+        // Initialize modal event listeners after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close modal when clicking outside (on backdrop)
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    // Only close if clicking directly on the backdrop (not on modal content)
+                    if (e.target === modal) {
+                        closeDeleteModal();
+                    }
+                });
+            }
+            
+            // Close modal on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    const modal = document.getElementById('deleteConfirmModal');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        closeDeleteModal();
+                    }
+                }
+            });
+        });
         
         function removeAnnouncementRow(btn) {
             const row = btn.closest('tr');
@@ -1923,28 +2197,43 @@
             }
         }
 
-        // Simple researchers management
-        function addResearcherRow() {
+        // Simple researchers management - Refactored approach
+        // Define function in global scope so it's accessible from onclick handlers
+        window.addResearcherRow = function addResearcherRow() {
             const container = document.getElementById('researchersRepeater');
-            if (!container) return;
+            if (!container) {
+                console.error('[DEBUG] researchersRepeater container not found!');
+                return;
+            }
             
-            const index = container.querySelectorAll('.researcher-card').length;
+            // Calculate next index based on existing cards
+            const existingCards = container.querySelectorAll('.researcher-card');
+            const index = existingCards.length;
+            
+            console.log('[DEBUG] Adding researcher at index', index);
+            
+            // Create card element
             const card = document.createElement('div');
             card.className = 'researcher-card bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200';
-            card.setAttribute('x-data', '{ isExpanded: true }');
+            card.setAttribute('data-researcher-index', index);
+            
+            // Use a simpler approach without Alpine.js for dynamic rows
+            // We'll use plain JavaScript for expand/collapse
+            let isExpanded = true;
+            
             card.innerHTML = `
                 <div class="p-6">
                     <div class="flex items-start justify-between">
-                        <button type="button" @click="isExpanded = !isExpanded" class="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
+                        <button type="button" class="toggle-researcher-btn flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity" data-index="${index}">
                             <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-lg font-semibold text-gray-900 researcher-name-header">New Researcher</h4>
+                                <h4 class="text-lg font-semibold text-gray-900 researcher-name-header" data-index="${index}">New Researcher</h4>
                             </div>
-                            <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 toggle-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
@@ -1958,14 +2247,8 @@
                     </div>
                 </div>
                 
-                <div x-show="isExpanded" 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 -mt-4"
-                     x-transition:enter-end="opacity-100 mt-0"
-                     x-transition:leave="transition ease-in duration-150"
-                     x-transition:leave-start="opacity-100 mt-0"
-                     x-transition:leave-end="opacity-0 -mt-4"
-                     class="px-6 pt-6 pb-6 space-y-6 border-t border-gray-200">
+                <div class="researcher-fields px-6 pt-6 pb-6 space-y-6 border-t border-gray-200" 
+                     style="display: block;">
                      <!-- Row 1: Profile Picture | Biography -->
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                          <div>
@@ -1999,7 +2282,7 @@
                          </div>
                      </div>
                      
-                     <!-- Row 2: Full Name | Profile Link -->
+                     <!-- Row 2: Full Name | Email Address -->
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                          <div>
                              <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
@@ -2009,9 +2292,9 @@
                          </div>
                          
                          <div>
-                             <label class="block text-sm font-medium text-gray-700 mb-2">Profile Link</label>
-                             <input type="url" name="researchers[${index}][profile_link]" 
-                                    placeholder="https://example.com/profile" 
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                             <input type="email" name="researchers[${index}][profile_link]" 
+                                    placeholder="researcher@example.com" 
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all">
                          </div>
                      </div>
@@ -2097,11 +2380,27 @@
                  </div>
             `;
             
+            // Append to container
             container.appendChild(card);
+            console.log('[DEBUG] ✓ Card added to container at index', index);
             
-            // Initialize Alpine.js for the new card
-            if (window.Alpine) {
-                window.Alpine.initTree(card);
+            // Note: Even if we can't detect the form programmatically, the browser will
+            // serialize all form fields with name attributes when the form is submitted.
+            // As long as the container is in the DOM where it should be, it will work.
+            
+            // Set up toggle functionality
+            const toggleBtn = card.querySelector('.toggle-researcher-btn');
+            const fieldsDiv = card.querySelector('.researcher-fields');
+            const arrow = card.querySelector('.toggle-arrow');
+            
+            if (toggleBtn && fieldsDiv) {
+                toggleBtn.addEventListener('click', function() {
+                    const isCurrentlyExpanded = fieldsDiv.style.display !== 'none';
+                    fieldsDiv.style.display = isCurrentlyExpanded ? 'none' : 'block';
+                    if (arrow) {
+                        arrow.style.transform = isCurrentlyExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                });
             }
             
             // Add event listeners to new inputs (excluding file inputs)
@@ -2128,7 +2427,7 @@
             }
         }
 
-        function removeResearcherRow(btn) {
+        window.removeResearcherRow = function removeResearcherRow(btn) {
             const card = btn.closest('.researcher-card');
             const container = document.getElementById('researchersRepeater');
             if (card && container) {
@@ -2147,7 +2446,7 @@
             }
         }
 
-        function checkResearcherChanges() {
+        window.checkResearcherChanges = function checkResearcherChanges() {
             // Build researchers as nested array structure
             const researcherInputs = document.querySelectorAll('input[name^="researchers"]:not([type="file"]), select[name^="researchers"], textarea[name^="researchers"]');
             const currentResearchers = [];
@@ -2175,7 +2474,7 @@
         }
 
         // Image preview functionality
-        function previewImage(input, index) {
+        window.previewImage = function previewImage(input, index) {
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -2193,11 +2492,7 @@
             }
         }
 
-        // Make functions globally available
-        window.addResearcherRow = addResearcherRow;
-        window.removeResearcherRow = removeResearcherRow;
-        window.checkResearcherChanges = checkResearcherChanges;
-        window.previewImage = previewImage;
+        // Functions are already assigned to window above
 
     </script>
 </x-app-layout> 

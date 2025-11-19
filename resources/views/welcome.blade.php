@@ -224,6 +224,25 @@
         
         .researcher-card {
             margin: 0.5rem;
+            /* Ensure consistent card sizing */
+            width: 16rem; /* 256px - matches w-64 */
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Ensure image container has fixed height */
+        .researcher-card > div:first-child {
+            height: 192px; /* h-48 = 12rem = 192px */
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        
+        .researcher-card > div:first-child img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
         
 
@@ -2006,9 +2025,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <!-- Buttons -->
                 <div class="flex flex-col gap-3">
+                    <!-- Email Button - Maroon (#800020) -->
+                    <a id="modal-email-btn" href="#" 
+                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       style="background: linear-gradient(135deg, #800020 0%, #600018 100%);"
+                       onmouseover="this.style.background='linear-gradient(135deg, #A00028 0%, #800020 100%)'"
+                       onmouseout="this.style.background='linear-gradient(135deg, #800020 0%, #600018 100%)'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Email
+                    </a>
+                    
                     <!-- SCOPUS Button - Orange (#E9710C) -->
                     <a id="modal-scopus-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
                        style="background: linear-gradient(135deg, #E9710C 0%, #D65A00 100%);"
                        onmouseover="this.style.background='linear-gradient(135deg, #F08020 0%, #E9710C 100%)'"
                        onmouseout="this.style.background='linear-gradient(135deg, #E9710C 0%, #D65A00 100%)'">
@@ -2020,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <!-- ORCID Button - Lime Green (#A6CE39) -->
                     <a id="modal-orcid-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
                        style="background: linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%);"
                        onmouseover="this.style.background='linear-gradient(135deg, #B8D94A 0%, #A6CE39 100%)'"
                        onmouseout="this.style.background='linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%)'">
@@ -2032,7 +2063,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <!-- WOS Button - Blue (#0066CC) -->
                     <a id="modal-wos-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
                        style="background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);"
                        onmouseover="this.style.background='linear-gradient(135deg, #1A7AE6 0%, #0066CC 100%)'"
                        onmouseout="this.style.background='linear-gradient(135deg, #0066CC 0%, #0052A3 100%)'">
@@ -2044,7 +2075,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <!-- Google Scholar Button - Google Blue (#4285F4) -->
                     <a id="modal-google-scholar-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
+                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
                        style="background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);"
                        onmouseover="this.style.background='linear-gradient(135deg, #5A95F5 0%, #4285F4 100%)'"
                        onmouseout="this.style.background='linear-gradient(135deg, #4285F4 0%, #3367D6 100%)'">

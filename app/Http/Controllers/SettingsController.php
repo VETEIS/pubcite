@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 class SettingsController extends Controller
 {
@@ -88,10 +90,24 @@ class SettingsController extends Controller
             return $this->updateAnnouncements($request);
         } elseif ($request->has('save_researchers')) {
             Log::info('[DEBUG] Routing to updateResearchers');
+            $rawResearchers = $request->input('researchers', []);
             Log::info('[DEBUG] Researchers data received:', [
-                'researchers_count' => count($request->input('researchers', [])),
-                'researchers' => $request->input('researchers'),
+                'researchers_count' => count($rawResearchers),
+                'researchers' => $rawResearchers,
+                'all_researcher_keys' => array_keys($rawResearchers),
+                'request_all_keys' => array_keys($request->all()),
             ]);
+            // Log each researcher individually
+            foreach ($rawResearchers as $idx => $researcher) {
+                Log::info("[DEBUG] Researcher at index {$idx}:", [
+                    'index' => $idx,
+                    'has_name' => !empty($researcher['name'] ?? ''),
+                    'has_title' => !empty($researcher['title'] ?? ''),
+                    'has_bio' => !empty($researcher['bio'] ?? ''),
+                    'has_research_areas' => !empty($researcher['research_areas'] ?? ''),
+                    'data' => $researcher,
+                ]);
+            }
             return $this->updateResearchers($request);
         } elseif ($request->has('save_publication_counts')) {
             Log::info('[DEBUG] Routing to updatePublicationCounts');
@@ -393,7 +409,7 @@ class SettingsController extends Controller
             'researchers.*.bio' => 'nullable|string|max:1000',
             'researchers.*.status_badge' => 'nullable|string|max:50',
             'researchers.*.background_color' => 'nullable|string|max:50',
-            'researchers.*.profile_link' => 'nullable|string|max:500',
+            'researchers.*.profile_link' => 'nullable|email|max:255',
             'researchers.*.scopus_link' => 'nullable|string|max:500',
             'researchers.*.orcid_link' => 'nullable|string|max:500',
             'researchers.*.wos_link' => 'nullable|string|max:500',
@@ -405,9 +421,18 @@ class SettingsController extends Controller
         Log::info('[DEBUG] Existing researchers count:', ['count' => $existingResearchers->count()]);
 
         $payloads = [];
-        Log::info('[DEBUG] Processing researchers from validated data', ['count' => count($validated['researchers'] ?? [])]);
-        foreach ($validated['researchers'] ?? [] as $index => $row) {
-            Log::info("[DEBUG] Processing researcher index {$index}", ['data' => $row]);
+        $validatedResearchers = $validated['researchers'] ?? [];
+        Log::info('[DEBUG] Processing researchers from validated data', [
+            'count' => count($validatedResearchers),
+            'indices' => array_keys($validatedResearchers),
+        ]);
+        foreach ($validatedResearchers as $index => $row) {
+            Log::info("[DEBUG] Processing researcher index {$index}", [
+                'index' => $index,
+                'raw_data' => $row,
+                'name' => $row['name'] ?? 'MISSING',
+                'title' => $row['title'] ?? 'MISSING',
+            ]);
             $name = trim($row['name'] ?? '');
             $title = trim($row['title'] ?? '');
             $bio = trim($row['bio'] ?? '');
@@ -427,7 +452,7 @@ class SettingsController extends Controller
             $photoPath = null;
             if ($request->hasFile("researchers.{$index}.photo")) {
                 $photo = $request->file("researchers.{$index}.photo");
-                $photoPath = $photo->store('researcher-photos', 'public');
+                $photoPath = $this->storePhotoAsWebp($photo);
             } elseif (($existingResearchers[$index] ?? null) && $existingResearchers[$index]->photo_path) {
                 $photoPath = $existingResearchers[$index]->photo_path;
             }
@@ -463,8 +488,102 @@ class SettingsController extends Controller
             Log::info('[DEBUG] All researchers created');
         });
 
+        // Clear response cache so the admin page and public endpoints reflect fresh data
+        try {
+            ResponseCache::clear();
+            Log::info('[DEBUG] Response cache cleared after updating researchers');
+        } catch (\Throwable $e) {
+            Log::warning('[DEBUG] Failed to clear response cache', ['error' => $e->getMessage()]);
+        }
+
         Log::info('[DEBUG] updateResearchers completed successfully');
         return back()->with('success', 'Researchers updated successfully.');
+    }
+
+    /**
+     * Store uploaded photo as WebP on the public disk.
+     * Falls back to the original file if WebP conversion is unavailable.
+     */
+    private function storePhotoAsWebp(UploadedFile $photo): ?string
+    {
+        try {
+            // Prefer converting to WebP using GD if available
+            if (function_exists('imagewebp')) {
+                $mime = (string) $photo->getMimeType();
+                $source = null;
+                $path = $photo->getRealPath();
+                if (!$path) {
+                    return $photo->store('researcher-photos', 'public');
+                }
+                if ($mime === 'image/jpeg' || $mime === 'image/jpg') {
+                    if (!function_exists('imagecreatefromjpeg')) {
+                        return $photo->store('researcher-photos', 'public');
+                    }
+                    $source = @imagecreatefromjpeg($path);
+                } elseif ($mime === 'image/png') {
+                    if (!function_exists('imagecreatefrompng')) {
+                        return $photo->store('researcher-photos', 'public');
+                    }
+                    $source = @imagecreatefrompng($path);
+                    if ($source) {
+                        imagepalettetotruecolor($source);
+                        imagealphablending($source, true);
+                        imagesavealpha($source, true);
+                    }
+                } elseif ($mime === 'image/gif') {
+                    if (!function_exists('imagecreatefromgif')) {
+                        return $photo->store('researcher-photos', 'public');
+                    }
+                    $source = @imagecreatefromgif($path);
+                } else {
+                    if (!function_exists('imagecreatefromstring')) {
+                        return $photo->store('researcher-photos', 'public');
+                    }
+                    $bytes = @file_get_contents($path);
+                    if ($bytes === false) {
+                        return $photo->store('researcher-photos', 'public');
+                    }
+                    $source = @imagecreatefromstring($bytes);
+                }
+
+                if (!$source) {
+                    return $photo->store('researcher-photos', 'public');
+                }
+
+                // Render to WebP in-memory so we can use Storage facade
+                ob_start();
+                // Quality 85 is a good balance
+                @imagewebp($source, null, 85);
+                imagedestroy($source);
+                $webpData = ob_get_clean();
+                if (!$webpData) {
+                    return $photo->store('researcher-photos', 'public');
+                }
+
+                $filename = 'researcher-photos/' . bin2hex(random_bytes(16)) . '.webp';
+                Storage::disk('public')->put($filename, $webpData, 'public');
+                Log::info('[DEBUG] Photo converted to WebP', [
+                    'original_mime' => $mime,
+                    'webp_path' => $filename,
+                    'webp_size' => strlen($webpData),
+                ]);
+                return $filename;
+            }
+
+            // Fallback: store the original file
+            Log::info('[DEBUG] WebP conversion not available, storing original file', [
+                'mime' => $photo->getMimeType(),
+                'has_imagewebp' => function_exists('imagewebp'),
+            ]);
+            return $photo->store('researcher-photos', 'public');
+        } catch (\Throwable $e) {
+            Log::warning('[DEBUG] WebP conversion failed, storing original', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return $photo->store('researcher-photos', 'public');
+        }
     }
 
     private function updateFormDropdowns(Request $request)
@@ -512,6 +631,11 @@ class SettingsController extends Controller
         Setting::set('academic_ranks', json_encode($academicRanks));
         Setting::set('colleges', json_encode($colleges));
         Setting::set('others_indexing_options', json_encode($othersIndexingOptions));
+
+        // Return JSON for AJAX requests, otherwise redirect back
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Form dropdown options updated successfully.']);
+        }
 
         return back()->with('success', 'Form dropdown options updated successfully.');
     }

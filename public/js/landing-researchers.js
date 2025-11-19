@@ -109,6 +109,7 @@ class LandingResearchers {
     
     createResearcherCard(researcher, index) {
         const card = document.createElement('div');
+        // Fixed width (w-64 = 256px) - height is controlled by CSS min-height
         card.className = 'flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card';
         card.setAttribute('data-name', researcher.name || '');
         card.setAttribute('data-tags', (researcher.research_areas || []).join(' '));
@@ -121,11 +122,12 @@ class LandingResearchers {
         const researchAreasHtml = this.createResearchAreasHtml(researcher.research_areas || []);
         
         // Create top area (full-width image or fallback background with icon)
+        // Fixed height container (192px) to ensure consistent card sizing
         const topAreaHtml = researcher.photo_path
-            ? `<div class="h-48 w-full overflow-hidden">
-                    <img src="/storage/${researcher.photo_path}" alt="${this.escapeHtml(researcher.name || '')}" class="w-full h-full object-cover">
+            ? `<div class="h-48 w-full overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img src="/storage/${researcher.photo_path}" alt="${this.escapeHtml(researcher.name || '')}" class="w-full h-full object-cover object-center">
                </div>`
-            : `<div class="h-48 ${bgClasses.background} w-full flex items-center justify-center">
+            : `<div class="h-48 ${bgClasses.background} w-full flex items-center justify-center flex-shrink-0">
                     <svg class="w-16 h-16 ${bgClasses.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
@@ -259,6 +261,7 @@ window.openResearcherModal = function(button) {
     const modal = document.getElementById('researcherProfileModal');
     const modalPhoto = document.getElementById('modal-researcher-photo');
     const modalName = document.getElementById('modal-researcher-name');
+    const emailBtn = document.getElementById('modal-email-btn');
     const scopusBtn = document.getElementById('modal-scopus-btn');
     const orcidBtn = document.getElementById('modal-orcid-btn');
     const wosBtn = document.getElementById('modal-wos-btn');
@@ -280,33 +283,56 @@ window.openResearcherModal = function(button) {
     // Set name
     modalName.textContent = researcherData.name || '';
     
-    // Set button links (hide if no link)
-    if (researcherData.scopus_link) {
-        scopusBtn.href = researcherData.scopus_link;
+    // Set button links (hide if no link or empty string)
+    // Helper function to check if a link is valid (not null, undefined, or empty string)
+    const hasValidLink = (link) => {
+        return link && typeof link === 'string' && link.trim().length > 0;
+    };
+    
+    // Helper function to check if an email is valid
+    const isValidEmail = (email) => {
+        if (!email || typeof email !== 'string') return false;
+        const trimmed = email.trim();
+        if (trimmed.length === 0) return false;
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(trimmed);
+    };
+    
+    // Set email button (first button, uses profile_link field which now stores email)
+    if (isValidEmail(researcherData.profile_link)) {
+        emailBtn.href = `mailto:${researcherData.profile_link.trim()}`;
+        emailBtn.classList.remove('hidden');
+    } else {
+        emailBtn.classList.add('hidden');
+    }
+    
+    if (hasValidLink(researcherData.scopus_link)) {
+        scopusBtn.href = researcherData.scopus_link.trim();
         scopusBtn.target = '_blank';
         scopusBtn.classList.remove('hidden');
     } else {
         scopusBtn.classList.add('hidden');
     }
     
-    if (researcherData.orcid_link) {
-        orcidBtn.href = researcherData.orcid_link;
+    if (hasValidLink(researcherData.orcid_link)) {
+        orcidBtn.href = researcherData.orcid_link.trim();
         orcidBtn.target = '_blank';
         orcidBtn.classList.remove('hidden');
     } else {
         orcidBtn.classList.add('hidden');
     }
     
-    if (researcherData.wos_link) {
-        wosBtn.href = researcherData.wos_link;
+    if (hasValidLink(researcherData.wos_link)) {
+        wosBtn.href = researcherData.wos_link.trim();
         wosBtn.target = '_blank';
         wosBtn.classList.remove('hidden');
     } else {
         wosBtn.classList.add('hidden');
     }
     
-    if (researcherData.google_scholar_link) {
-        googleScholarBtn.href = researcherData.google_scholar_link;
+    if (hasValidLink(researcherData.google_scholar_link)) {
+        googleScholarBtn.href = researcherData.google_scholar_link.trim();
         googleScholarBtn.target = '_blank';
         googleScholarBtn.classList.remove('hidden');
     } else {
