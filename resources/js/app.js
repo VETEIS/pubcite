@@ -2,7 +2,23 @@ import './bootstrap';
 import '@hotwired/turbo';
 
 import Alpine from 'alpinejs';
+import focus from '@alpinejs/focus';
+
+// Register Alpine plugins before Livewire initializes
+Alpine.plugin(focus);
 window.Alpine = Alpine;
+
+// Configure Turbo to ignore Livewire requests
+document.addEventListener('turbo:before-fetch-request', (event) => {
+    // Exclude Livewire requests from Turbo
+    if (event.detail.fetchOptions && event.detail.fetchOptions.headers) {
+        const headers = event.detail.fetchOptions.headers;
+        if (headers['X-Livewire'] || headers['x-livewire']) {
+            event.preventDefault();
+            return false;
+        }
+    }
+});
 
 // Turbo error handling for network issues
 document.addEventListener('turbo:before-fetch-request', (event) => {
@@ -147,7 +163,30 @@ Alpine.store('adminModal', {
 });
 
 // Let Livewire handle Alpine initialization
-// Alpine.start() is called by Livewire automatically
+// Alpine.start() is called by Livewire automatically on DOMContentLoaded
+// Do NOT call Alpine.start() manually here to avoid conflicts
 
-// Start Alpine.js
-Alpine.start();
+// Ensure Focus plugin is registered with Livewire's Alpine instance
+// Livewire may use its own Alpine instance, so we register the plugin here too
+document.addEventListener('livewire:init', () => {
+    console.log('Livewire initialized');
+    if (window.Alpine && typeof window.Alpine.plugin === 'function') {
+        // Register Focus plugin with Livewire's Alpine instance
+        window.Alpine.plugin(focus);
+    }
+});
+
+// Track Livewire component initialization
+document.addEventListener('livewire:initialized', () => {
+    console.log('Livewire components initialized');
+});
+
+// Track component updates
+document.addEventListener('livewire:update', () => {
+    console.log('Livewire component updated');
+});
+
+// Track component errors
+document.addEventListener('livewire:error', (event) => {
+    console.error('Livewire error:', event.detail);
+});

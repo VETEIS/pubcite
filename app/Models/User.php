@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
@@ -92,11 +93,16 @@ class User extends Authenticatable
                 }
                 return $this->profile_photo_path;
             }
+            
+            // It's a local file path - generate the correct storage URL
+            // Jetstream stores photos in the 'public' disk by default
+            $disk = config('jetstream.profile_photo_disk', 'public');
+            // Use asset() helper for better compatibility with CSP and relative URLs
+            // Storage::url() returns absolute URLs which might have CSP issues
+            return asset('storage/' . $this->profile_photo_path);
         }
         
-        // Use default Jetstream behavior for local files
-        return $this->hasProfilePhoto()
-            ? $this->profilePhotoUrl
-            : $this->defaultProfilePhotoUrl();
+        // Return null if no photo is set - views will handle the fallback (show initial letter)
+        return null;
     }
 }

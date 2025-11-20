@@ -13,10 +13,18 @@
             <div id="error-notification" class="hidden">{{ session('error') }}</div>
         @endif
 
-        @include('admin.partials.sidebar')
+        <!-- Sidebar - Hidden on mobile, visible on desktop -->
+        <div class="hidden lg:block">
+            @include('admin.partials.sidebar')
+        </div>
 
         <!-- Main Content -->
-        <div class="flex-1 ml-60 h-screen overflow-y-auto force-scrollbar">
+        <div class="flex-1 lg:ml-4 h-screen overflow-y-auto force-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>
+                .flex-1::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
             <!-- Content Area -->
             <main class="p-4 rounded-bl-lg h-full flex flex-col main-content">
                 <!-- Dashboard Header with Modern Compact Filters -->

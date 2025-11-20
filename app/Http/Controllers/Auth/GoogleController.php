@@ -95,10 +95,11 @@ class GoogleController extends Controller
             Log::info('Privacy acceptance recorded for Google user');
         }
 
-        if ($googleUser->getAvatar()) {
+        // Only set Google profile picture if user doesn't already have a custom one
+        if ($googleUser->getAvatar() && !$user->profile_photo_path) {
             $avatarUrl = $googleUser->getAvatar();
             // SECURITY FIX: Don't log email addresses or URLs for security
-            Log::info('Google profile picture found');
+            Log::info('Google profile picture found, setting as default');
             
             // Ensure HTTPS for Google profile pictures
             if (str_contains($avatarUrl, 'googleusercontent.com')) {
@@ -112,15 +113,16 @@ class GoogleController extends Controller
             $user->profile_photo_path = $avatarUrl;
             $user->save();
             
-            Log::info('Profile picture updated successfully', [
+            Log::info('Profile picture set from Google', [
                 'user_id' => $user->id,
-                'new_photo' => $user->profile_photo_path,
-                'processed_url' => $avatarUrl
+            ]);
+        } elseif ($user->profile_photo_path) {
+            Log::info('User already has custom profile picture, keeping existing photo', [
+                'user_id' => $user->id,
             ]);
         } else {
             Log::info('No Google profile picture available', [
                 'user_email' => $googleUser->getEmail(),
-                'google_user_data' => $googleUser->user
             ]);
         }
 

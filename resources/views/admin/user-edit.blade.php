@@ -13,54 +13,62 @@
             <div id="error-notification" class="hidden">{{ session('error') }}</div>
         @endif
 
-        @include('admin.partials.sidebar')
-        
+        <!-- Sidebar - Hidden on mobile, visible on desktop -->
+        <div class="hidden lg:block">
+            @include('admin.partials.sidebar')
+        </div>
+
         <!-- Main Content -->
-        <div class="flex-1 ml-60 h-screen overflow-y-auto force-scrollbar">
+        <div class="flex-1 lg:ml-4 h-screen overflow-y-auto force-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>
+                .flex-1::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
             <!-- Content Area -->
             <main class="p-4 rounded-bl-lg h-full flex flex-col main-content">
-                <!-- Dashboard Header with Modern Compact Filters -->
-                <div class="relative flex items-center justify-between mb-4 flex-shrink-0">
-                    <!-- Page Title -->
-                    <div class="flex items-center gap-4">
-                        <!-- User Management Title -->
-                        <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
-                            <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" />
-                        </svg>
-                            <span>Edit User</span>
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <!-- Dashboard Header with Modern Compact Filters -->
+                    <div class="relative flex items-center justify-between flex-shrink-0">
+                        <!-- Page Title -->
+                        <div class="flex items-center gap-4">
+                            <!-- User Management Title -->
+                            <div class="flex items-center gap-2 text-md font-semibold text-gray-600 bg-gray-50 px-3 py-2.5 rounded-lg h-10">
+                                <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6v-6H3v6z" />
+                            </svg>
+                                <span>Edit User</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Enhanced Search and User Controls -->
+                        <div class="flex items-center gap-4">
+                            <!-- Add User Button (Back to List) -->
+                            <a href="{{ route('admin.users.index') }}" 
+                               class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 hover:shadow-md transition-all duration-200 h-8">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Back to Users
+                            </a>
+                            
+                            <!-- Subtle Separator -->
+                            <div class="w-px h-8 bg-gray-200"></div>
+                            
+                            <!-- User Profile Button -->
+                            <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
+                                @if(Auth::user()->profile_photo_path)
+                                    <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
+                                @else
+                                    <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
+                                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                                    </div>
+                                @endif
+                            </a>
                         </div>
                     </div>
-                    
-                    <!-- Enhanced Search and User Controls -->
-                    <div class="flex items-center gap-4">
-                        <!-- Add User Button (Back to List) -->
-                        <a href="{{ route('admin.users.index') }}" 
-                           class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 hover:shadow-md transition-all duration-200 h-8">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Users
-                        </a>
-                        
-                        <!-- Subtle Separator -->
-                        <div class="w-px h-8 bg-gray-200"></div>
-                        
-                        <!-- User Profile Button -->
-                        <a href="{{ route('profile.show') }}" class="flex items-center gap-2 hover:bg-gray-100 rounded-xl p-2 transition-all duration-300">
-                            @if(Auth::user()->profile_photo_path)
-                                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200">
-                            @else
-                                <div class="w-10 h-10 rounded-full bg-maroon-600 flex items-center justify-center text-white font-bold shadow-sm">
-                                    {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                                </div>
-                            @endif
-                        </a>
-                    </div>
-                </div>
 
-                <!-- Form Card -->
-                <div class="max-w-2xl mx-auto">
+                    <!-- Form Card -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             @if($errors->any())
                             <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -172,7 +180,7 @@
                     </button>
                 </div>
             </form>
-        </div>
+                    </div>
                 </div>
             </main>
     </div>

@@ -1,15 +1,8 @@
 <form wire:submit.prevent="updateProfileInformation" class="space-y-6">
-    <!-- Username -->
-    <div class="space-y-2">
-        <x-label for="username" value="{{ __('Username') }}" class="text-sm font-medium text-gray-700" />
-        <x-input id="username" type="text" class="mt-1 block w-full" wire:model="state.username" required autocomplete="username" placeholder="Enter your username" value="{{ Auth::user()->username ?? '' }}" />
-        <x-input-error for="username" class="mt-2" />
-    </div>
-
     <!-- Name -->
     <div class="space-y-2">
         <x-label for="name" value="{{ __('Full Name') }}" class="text-sm font-medium text-gray-700" />
-        <x-input id="name" type="text" class="mt-1 block w-full" wire:model="state.name" required autocomplete="name" placeholder="Enter your full name" value="{{ Auth::user()->name }}" />
+        <x-input id="name" type="text" class="mt-1 block w-full" wire:model="state.name" required autocomplete="name" placeholder="Enter your full name" />
         <x-input-error for="name" class="mt-2" />
     </div>
 
@@ -20,6 +13,8 @@
             {{ Auth::user()->email }}
         </div>
         <p class="text-xs text-gray-500 mt-1">Email address cannot be changed for security reasons.</p>
+        <!-- Hidden email input for Livewire state - required for form submission -->
+        <input type="hidden" wire:model="state.email" />
 
         @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::emailVerification()) && ! $this->user->hasVerifiedEmail())
             <div class="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -50,16 +45,7 @@
     </div>
 
     <!-- Form Actions -->
-    <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-        <x-action-message class="text-sm text-green-600 font-medium" on="saved">
-            <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                {{ __('Profile information saved successfully.') }}
-            </div>
-        </x-action-message>
-
+    <div class="flex items-center justify-end pt-6 border-t border-gray-200">
         <x-button wire:loading.attr="disabled" class="bg-maroon-600 hover:bg-maroon-700 focus:ring-maroon-500">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -67,4 +53,25 @@
             {{ __('Save Changes') }}
         </x-button>
     </div>
+
+    <script>
+        // Listen for Livewire 'saved' event from the profile update form
+        // Use Livewire hook to ensure it's set up after Livewire is ready
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('saved', () => {
+                if (window.notificationManager) {
+                    window.notificationManager.success('Profile information saved successfully.');
+                }
+            });
+        });
+        
+        // Fallback for when Livewire is already initialized
+        if (window.Livewire) {
+            Livewire.on('saved', () => {
+                if (window.notificationManager) {
+                    window.notificationManager.success('Profile information saved successfully.');
+                }
+            });
+        }
+    </script>
 </form>

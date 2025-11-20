@@ -14,10 +14,7 @@
     </div>
 
     <div class="flex items-center justify-end pt-4 border-t border-gray-200">
-        <x-danger-button wire:click="confirmUserDeletion" 
-                         wire:loading.attr="disabled" 
-                         onclick="console.log('Delete account button clicked'); console.log('Livewire available:', typeof window.Livewire !== 'undefined');"
-                         class="bg-red-600 hover:bg-red-700 focus:ring-red-500">
+        <x-danger-button wire:click="confirmUserDeletion" wire:loading.attr="disabled" class="bg-red-600 hover:bg-red-700 focus:ring-red-500">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
             </svg>
@@ -26,8 +23,7 @@
     </div>
 
     <!-- Delete User Confirmation Modal -->
-    <div x-data x-effect="console.log('Delete modal state changed:', $wire.confirmingUserDeletion)" style="display: none;"></div>
-    <x-dialog-modal wire:model.live="confirmingUserDeletion" x-init="console.log('Delete modal initialized, confirmingUserDeletion:', $wire.confirmingUserDeletion)">
+    <x-dialog-modal wire:model.live="confirmingUserDeletion">
         <x-slot name="title">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -73,10 +69,7 @@
                     {{ __('Cancel') }}
                 </x-secondary-button>
 
-                <x-danger-button class="bg-red-600 hover:bg-red-700 focus:ring-red-500" 
-                                  wire:click="deleteUser" 
-                                  wire:loading.attr="disabled"
-                                  onclick="console.log('Delete user button clicked in modal');">
+                <x-danger-button class="bg-red-600 hover:bg-red-700 focus:ring-red-500" wire:click="deleteUser" wire:loading.attr="disabled">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>

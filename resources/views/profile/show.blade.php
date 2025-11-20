@@ -10,7 +10,7 @@
                 this.errorMessage = null;
             }, 3000);
         }
-    }" class="h-screen bg-gray-50 flex overflow-hidden" style="scrollbar-gutter: stable;">
+    }" class="h-screen bg-gray-50 flex overflow-hidden" style="scrollbar-gutter: stable;" data-turbo="false">
         
         <!-- Hidden notification divs for global notification system -->
         @if(session('success'))
@@ -144,56 +144,6 @@
                             </div>
                             <div class="p-8 space-y-8">
                                 
-                                <!-- Password Update -->
-                                <div class="border-b border-gray-200 pb-8">
-                                    @php
-                                        $isGoogleUser = Auth::user()->auth_provider === 'google';
-                                    @endphp
-                                    @if($isGoogleUser)
-                                        <!-- Disabled Password Update Card for Google Users -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                                            <div class="flex items-start gap-4">
-                                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h4 class="text-lg font-medium text-gray-900 mb-2">Password Management</h4>
-                                                    <p class="text-gray-600 mb-4">Password management is handled by Google for your account.</p>
-                                                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                        </svg>
-                                                        Password changes must be made through your Google account
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <div>
-                                            <h4 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                                                </svg>
-                                                Update Password
-                                            </h4>
-                                            @livewire('profile.update-password-form')
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Two-Factor Authentication -->
-                                <div class="border-b border-gray-200 pb-8">
-                                    <h4 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                        </svg>
-                                        Two-Factor Authentication
-                                    </h4>
-                                    @livewire('profile.two-factor-authentication-form')
-                                </div>
-
                                 <!-- Browser Sessions -->
                                 <div>
                                     <h4 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
@@ -235,31 +185,150 @@
 
     <script>
         function handleProfilePhotoChange(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    // Update the profile photo display
-                    const profilePhoto = document.querySelector('.group img, .group div');
-                    if (profilePhoto.tagName === 'IMG') {
-                        profilePhoto.src = e.target.result;
-                    } else {
-                        // Replace the div with an img
-                        const newImg = document.createElement('img');
-                        newImg.src = e.target.result;
-                        newImg.alt = '{{ Auth::user()->name }}';
-                        newImg.className = 'w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg';
-                        profilePhoto.parentNode.replaceChild(newImg, profilePhoto);
-                    }
-                    
-                    // Here you would typically upload the file to the server
-                    // For now, we'll just show a success message
-                    alert('Profile photo updated successfully!');
-                };
-                
-                reader.readAsDataURL(file);
+            if (!input.files || !input.files[0]) {
+                return;
             }
+            
+            const file = input.files[0];
+            
+            // Validate file type
+            if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+                if (window.notificationManager) {
+                    window.notificationManager.error('Please select a valid image file (JPG, PNG)');
+                }
+                input.value = '';
+                return;
+            }
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                if (window.notificationManager) {
+                    window.notificationManager.error('Image size must be less than 10MB');
+                }
+                input.value = '';
+                return;
+            }
+            
+            // Show preview immediately
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Find the specific profile photo container by finding the input's parent group
+                const profileContainer = input.closest('.group');
+                if (!profileContainer) {
+                    console.error('Profile photo container not found');
+                    return;
+                }
+                
+                // Find the img or div within this specific container
+                const profilePhoto = profileContainer.querySelector('img, div.w-28');
+                if (!profilePhoto) {
+                    console.error('Profile photo element not found');
+                    return;
+                }
+                
+                if (profilePhoto.tagName === 'IMG') {
+                    profilePhoto.src = e.target.result;
+                } else {
+                    // Replace the div with an img
+                    const newImg = document.createElement('img');
+                    newImg.src = e.target.result;
+                    newImg.alt = '{{ Auth::user()->name }}';
+                    newImg.className = 'w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg';
+                    profilePhoto.parentNode.replaceChild(newImg, profilePhoto);
+                }
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload the photo to the server
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('name', '{{ Auth::user()->name }}');
+            formData.append('email', '{{ Auth::user()->email }}');
+            formData.append('_method', 'PUT');
+            
+            // Show loading state
+            if (window.Alpine && window.Alpine.store) {
+                const store = window.Alpine.store('app');
+                if (store) store.loading = true;
+            }
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
+                || document.querySelector('input[name="_token"]')?.value 
+                || '';
+            
+            if (!csrfToken) {
+                console.error('CSRF token not found');
+                if (window.notificationManager) {
+                    window.notificationManager.error('Security token missing. Please refresh the page and try again.');
+                }
+                return;
+            }
+            
+            fetch('/user/profile-information', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(async response => {
+                const contentType = response.headers.get('content-type');
+                const isJson = contentType && contentType.includes('application/json');
+                
+                if (response.ok) {
+                    // Success - reload the page to get the updated photo URL
+                    if (window.notificationManager) {
+                        window.notificationManager.success('Profile photo updated successfully!');
+                    }
+                    // Reload after a short delay to show the notification
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                    return;
+                }
+                
+                // Handle error response
+                let errorMessage = 'Failed to update profile photo. Please try again.';
+                if (isJson) {
+                    try {
+                        const data = await response.json();
+                        errorMessage = data.message || data.errors?.photo?.[0] || errorMessage;
+                    } catch (e) {
+                        // Use default error message
+                    }
+                } else {
+                    // Try to get error from response text
+                    try {
+                        const text = await response.text();
+                        if (text.includes('validation')) {
+                            errorMessage = 'Invalid image file. Please select a JPG or PNG image under 10MB.';
+                        }
+                    } catch (e) {
+                        // Use default error message
+                    }
+                }
+                
+                throw new Error(errorMessage);
+            })
+            .catch(error => {
+                console.error('Error updating profile photo:', error);
+                if (window.notificationManager) {
+                    window.notificationManager.error(error.message || 'Failed to update profile photo. Please try again.');
+                }
+                // Reset the input
+                input.value = '';
+            })
+            .finally(() => {
+                // Hide loading state
+                if (window.Alpine && window.Alpine.store) {
+                    const store = window.Alpine.store('app');
+                    if (store) store.loading = false;
+                }
+            });
         }
     </script>
 </x-app-layout>

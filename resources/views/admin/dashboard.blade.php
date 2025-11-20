@@ -226,10 +226,18 @@
         </div>
         <!-- Loading overlay - Now handled by simple loading system -->
 
-        @include('admin.partials.sidebar')
+        <!-- Sidebar - Hidden on mobile, visible on desktop -->
+        <div class="hidden lg:block">
+            @include('admin.partials.sidebar')
+        </div>
 
         <!-- Main Content -->
-        <div class="flex-1 ml-60 overflow-y-auto">
+        <div class="flex-1 lg:ml-4 h-screen overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>
+                .flex-1::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
             <!-- Content Area -->
             <main class="p-4 rounded-bl-lg flex flex-col main-content fouc-prevent min-h-full" id="mainContent">
                 <!-- Dashboard Header with Modern Compact Filters -->

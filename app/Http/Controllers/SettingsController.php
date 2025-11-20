@@ -90,13 +90,33 @@ class SettingsController extends Controller
             return $this->updateAnnouncements($request);
         } elseif ($request->has('save_researchers')) {
             Log::info('[DEBUG] Routing to updateResearchers');
+            
+            // Debug: Check all request data to see what's actually being sent
+            $allRequestData = $request->all();
+            Log::info('[DEBUG] All request data keys:', array_keys($allRequestData));
+            
+            // Check for researchers data in various formats
             $rawResearchers = $request->input('researchers', []);
+            
+            // Also check if researchers data is coming in a different format
+            // Sometimes Laravel doesn't parse empty arrays correctly
+            $researcherKeys = array_filter(array_keys($allRequestData), function($key) {
+                return strpos($key, 'researchers') === 0;
+            });
+            
             Log::info('[DEBUG] Researchers data received:', [
                 'researchers_count' => count($rawResearchers),
                 'researchers' => $rawResearchers,
                 'all_researcher_keys' => array_keys($rawResearchers),
                 'request_all_keys' => array_keys($request->all()),
+                'researcher_keys_in_request' => $researcherKeys,
             ]);
+            
+            // If researchers array is empty but we have researcher keys, try to rebuild it
+            if (empty($rawResearchers) && !empty($researcherKeys)) {
+                Log::warning('[DEBUG] Researchers array is empty but researcher keys found in request!');
+                Log::warning('[DEBUG] This suggests a form serialization issue.');
+            }
             // Log each researcher individually
             foreach ($rawResearchers as $idx => $researcher) {
                 Log::info("[DEBUG] Researcher at index {$idx}:", [
@@ -401,7 +421,8 @@ class SettingsController extends Controller
             'researchers_count' => count($request->input('researchers', [])),
         ]);
         
-        $validated = $request->validate([
+        // Custom validation for researchers with conditional photo validation
+        $rules = [
             'researchers' => 'nullable|array',
             'researchers.*.name' => 'nullable|string|max:255',
             'researchers.*.title' => 'nullable|string|max:255',
@@ -409,22 +430,201 @@ class SettingsController extends Controller
             'researchers.*.bio' => 'nullable|string|max:1000',
             'researchers.*.status_badge' => 'nullable|string|max:50',
             'researchers.*.background_color' => 'nullable|string|max:50',
-            'researchers.*.profile_link' => 'nullable|email|max:255',
+            'researchers.*.profile_link' => 'nullable|string|max:255',
             'researchers.*.scopus_link' => 'nullable|string|max:500',
             'researchers.*.orcid_link' => 'nullable|string|max:500',
             'researchers.*.wos_link' => 'nullable|string|max:500',
             'researchers.*.google_scholar_link' => 'nullable|string|max:500',
-            'researchers.*.photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+            'researchers.*.photo_path' => 'nullable|string|max:500',
+        ];
+        
+        // Add photo validation only for indices that have files
+        // Increased limit to 10MB (10240 KB) to accommodate larger photos
+        if ($request->has('researchers') && is_array($request->input('researchers'))) {
+            foreach ($request->input('researchers') as $index => $researcher) {
+                if ($request->hasFile("researchers.{$index}.photo")) {
+                    $rules["researchers.{$index}.photo"] = 'image|mimes:jpeg,png,jpg,gif,webp|max:10240';
+                }
+            }
+        }
+        
+        $validated = $request->validate($rules);
+        
+        // If researchers array is still empty after validation, try to extract from raw request
+        // This handles cases where Laravel might not parse empty array fields correctly
+        if (empty($validated['researchers']) || !is_array($validated['researchers'])) {
+            Log::warning('[DEBUG] Researchers array is empty after validation, attempting to extract from raw request');
+            $allData = $request->all();
+            $extractedResearchers = [];
+            
+            // Look for researcher fields in the request
+            foreach ($allData as $key => $value) {
+                if (preg_match('/^researchers\[(\d+)\]\[(.+)\]$/', $key, $matches)) {
+                    $index = (int)$matches[1];
+                    $field = $matches[2];
+                    if (!isset($extractedResearchers[$index])) {
+                        $extractedResearchers[$index] = [];
+                    }
+                    $extractedResearchers[$index][$field] = $value;
+                }
+            }
+            
+            if (!empty($extractedResearchers)) {
+                Log::info('[DEBUG] Extracted researchers from raw request:', [
+                    'count' => count($extractedResearchers),
+                    'indices' => array_keys($extractedResearchers),
+                ]);
+                $validated['researchers'] = $extractedResearchers;
+            }
+        }
 
         $existingResearchers = ResearcherProfile::ordered()->get()->values();
         Log::info('[DEBUG] Existing researchers count:', ['count' => $existingResearchers->count()]);
+        
+        // Debug: Log all uploaded files to see their structure
+        $allFiles = $request->allFiles();
+        
+        // Helper function to safely extract file names from nested structures
+        $extractFileName = function($item) use (&$extractFileName) {
+            if ($item instanceof \Illuminate\Http\UploadedFile) {
+                return $item->getClientOriginalName();
+            } elseif (is_array($item)) {
+                return array_map($extractFileName, $item);
+            }
+            return null;
+        };
+        
+        Log::info('[DEBUG] All uploaded files:', [
+            'file_keys' => array_keys($allFiles),
+            'files_structure' => array_map($extractFileName, $allFiles),
+        ]);
+        
+        // Build a map of file indices to file objects for easier lookup
+        $fileMap = [];
+        
+        // First, try to extract files directly from $allFiles
+        Log::info('[DEBUG] Building file map from allFiles', [
+            'has_researchers_key' => isset($allFiles['researchers']),
+            'researchers_type' => isset($allFiles['researchers']) ? gettype($allFiles['researchers']) : 'N/A',
+            'researchers_is_array' => isset($allFiles['researchers']) && is_array($allFiles['researchers']),
+        ]);
+        
+        if (isset($allFiles['researchers']) && is_array($allFiles['researchers'])) {
+            Log::info('[DEBUG] Researchers files structure', [
+                'indices' => array_keys($allFiles['researchers']),
+                'count' => count($allFiles['researchers']),
+            ]);
+            
+            foreach ($allFiles['researchers'] as $fileIndex => $fileData) {
+                Log::info("[DEBUG] Processing file data at index {$fileIndex}", [
+                    'file_data_type' => gettype($fileData),
+                    'file_data_is_array' => is_array($fileData),
+                    'has_photo_key' => is_array($fileData) && isset($fileData['photo']),
+                ]);
+                
+                if (is_array($fileData) && isset($fileData['photo'])) {
+                    $photo = $fileData['photo'];
+                    Log::info("[DEBUG] Photo object details at index {$fileIndex}", [
+                        'photo_type' => gettype($photo),
+                        'photo_class' => is_object($photo) ? get_class($photo) : 'N/A',
+                        'is_uploaded_file' => $photo instanceof \Illuminate\Http\UploadedFile,
+                    ]);
+                    
+                    // The photo should be an UploadedFile instance
+                    if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                        // If file is valid, just add it - no extra checks needed
+                        if ($photo->isValid()) {
+                            $fileMap[$fileIndex] = $photo;
+                            Log::info("[DEBUG] ✓ Found valid photo file at index {$fileIndex} from allFiles", [
+                                'file_name' => $photo->getClientOriginalName(),
+                                'file_size' => $photo->getSize(),
+                                'is_valid' => true,
+                            ]);
+                        } else {
+                            // File is invalid - log it but don't try to process it
+                            // (Original behavior: just skip invalid files)
+                            Log::info("[DEBUG] Photo at index {$fileIndex} is invalid, skipping", [
+                                'error' => $photo->getError(),
+                                'error_message' => $photo->getErrorMessage(),
+                                'file_name' => $photo->getClientOriginalName(),
+                            ]);
+                        }
+                    } else {
+                        Log::warning("[DEBUG] Photo at index {$fileIndex} is not an UploadedFile instance", [
+                            'type' => gettype($photo),
+                            'class' => is_object($photo) ? get_class($photo) : 'N/A',
+                        ]);
+                    }
+                }
+            }
+        }
+        
+        // Also try using $request->file() as a fallback for any indices we might have missed
+        $researcherIndices = [];
+        if (isset($validated['researchers']) && is_array($validated['researchers'])) {
+            $researcherIndices = array_keys($validated['researchers']);
+        } elseif (isset($allFiles['researchers']) && is_array($allFiles['researchers'])) {
+            $researcherIndices = array_keys($allFiles['researchers']);
+        }
+        
+        Log::info('[DEBUG] Trying to find files using request->file() for indices', [
+            'indices' => $researcherIndices,
+            'file_map_before' => array_keys($fileMap),
+        ]);
+        
+        // For each researcher index, try to get the file using $request->file() if not already in map
+        foreach ($researcherIndices as $index) {
+            if (isset($fileMap[$index])) {
+                Log::info("[DEBUG] File already in map at index {$index}, skipping");
+                continue; // Already found
+            }
+            
+            // Try multiple key formats
+            $keyFormats = [
+                "researchers.{$index}.photo",      // Dot notation
+                "researchers[{$index}][photo]",   // Array notation
+            ];
+            
+            foreach ($keyFormats as $photoFileKey) {
+                Log::info("[DEBUG] Trying key format: {$photoFileKey}", [
+                    'has_file' => $request->hasFile($photoFileKey),
+                ]);
+                
+                if ($request->hasFile($photoFileKey)) {
+                    $photo = $request->file($photoFileKey);
+                    Log::info("[DEBUG] Got file from request->file()", [
+                        'key' => $photoFileKey,
+                        'is_uploaded_file' => $photo instanceof \Illuminate\Http\UploadedFile,
+                        'is_valid' => $photo instanceof \Illuminate\Http\UploadedFile ? $photo->isValid() : false,
+                    ]);
+                    
+                    if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                        // Simple: if file is valid, use it. If not, skip it.
+                        if ($photo->isValid()) {
+                            $fileMap[$index] = $photo;
+                            Log::info("[DEBUG] ✓ Found photo file at index {$index} using key: {$photoFileKey}", [
+                                'file_name' => $photo->getClientOriginalName(),
+                                'file_size' => $photo->getSize(),
+                                'is_valid' => $photo->isValid(),
+                            ]);
+                            break 2; // Break out of both loops
+                        }
+                    }
+                }
+            }
+        }
+        
+        Log::info('[DEBUG] File map built', [
+            'file_map_count' => count($fileMap),
+            'file_map_indices' => array_keys($fileMap),
+        ]);
 
         $payloads = [];
         $validatedResearchers = $validated['researchers'] ?? [];
         Log::info('[DEBUG] Processing researchers from validated data', [
             'count' => count($validatedResearchers),
             'indices' => array_keys($validatedResearchers),
+            'file_map_indices' => array_keys($fileMap),
         ]);
         foreach ($validatedResearchers as $index => $row) {
             Log::info("[DEBUG] Processing researcher index {$index}", [
@@ -450,11 +650,94 @@ class SettingsController extends Controller
             }
 
             $photoPath = null;
-            if ($request->hasFile("researchers.{$index}.photo")) {
-                $photo = $request->file("researchers.{$index}.photo");
-                $photoPath = $this->storePhotoAsWebp($photo);
-            } elseif (($existingResearchers[$index] ?? null) && $existingResearchers[$index]->photo_path) {
-                $photoPath = $existingResearchers[$index]->photo_path;
+            
+            // First, check if we have a file in our file map for this index
+            if (isset($fileMap[$index])) {
+                $photo = $fileMap[$index];
+                // File is already validated when added to map, so we can use it directly
+                if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                    Log::info("[DEBUG] Photo file found in file map", [
+                        'index' => $index,
+                        'file_name' => $photo->getClientOriginalName(),
+                        'file_size' => $photo->getSize(),
+                        'is_valid' => $photo->isValid(),
+                        'error_code' => $photo->getError(),
+                    ]);
+                    $photoPath = $this->storePhotoAsWebp($photo);
+                    if ($photoPath) {
+                        Log::info("[DEBUG] Photo stored successfully", ['photo_path' => $photoPath]);
+                    } else {
+                        Log::warning("[DEBUG] Photo storage failed for index {$index}");
+                    }
+                } else {
+                    Log::warning("[DEBUG] Photo file in map is not an UploadedFile at index {$index}", [
+                        'type' => gettype($photo),
+                    ]);
+                    unset($fileMap[$index]);
+                }
+            }
+            
+            // If we don't have a photo path yet, try direct file access methods
+            if (!$photoPath) {
+                $photoFileKey = "researchers.{$index}.photo";
+                $photoFileKeyAlt = "researchers[{$index}][photo]";
+                
+                if ($request->hasFile($photoFileKey)) {
+                    $photo = $request->file($photoFileKey);
+                    if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                        $errorCode = $photo->getError();
+                        $hasValidPath = $photo->getRealPath() && file_exists($photo->getRealPath());
+                        // Allow processing if valid or if it's just a size limit issue (error code 1)
+                        if ($photo->isValid() || ($errorCode === 1 && $hasValidPath)) {
+                            Log::info("[DEBUG] Photo file found using dot notation", [
+                                'index' => $index,
+                                'file_name' => $photo->getClientOriginalName(),
+                                'is_valid' => $photo->isValid(),
+                            ]);
+                            $photoPath = $this->storePhotoAsWebp($photo);
+                        }
+                    }
+                } elseif ($request->hasFile($photoFileKeyAlt)) {
+                    $photo = $request->file($photoFileKeyAlt);
+                    if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                        $errorCode = $photo->getError();
+                        $hasValidPath = $photo->getRealPath() && file_exists($photo->getRealPath());
+                        // Allow processing if valid or if it's just a size limit issue (error code 1)
+                        if ($photo->isValid() || ($errorCode === 1 && $hasValidPath)) {
+                            Log::info("[DEBUG] Photo file found using array notation", [
+                                'index' => $index,
+                                'file_name' => $photo->getClientOriginalName(),
+                                'is_valid' => $photo->isValid(),
+                            ]);
+                            $photoPath = $this->storePhotoAsWebp($photo);
+                        }
+                    }
+                } elseif ($request->has("researchers.{$index}.photo_path") && !empty($request->input("researchers.{$index}.photo_path"))) {
+                    // Photo path preserved from hidden input
+                    $photoPath = $request->input("researchers.{$index}.photo_path");
+                    Log::info("[DEBUG] Using preserved photo_path", ['photo_path' => $photoPath]);
+                } else {
+                    // Try to find photo by matching name/title with existing researchers
+                    // Since we delete all and recreate, we can't match by index, so we match by content
+                    $matchingExisting = $existingResearchers->first(function ($existing) use ($name, $title) {
+                        return $existing->name === $name && $existing->title === $title;
+                    });
+                    
+                    if ($matchingExisting && $matchingExisting->photo_path) {
+                        $photoPath = $matchingExisting->photo_path;
+                        Log::info("[DEBUG] Using existing photo_path from matching researcher", [
+                            'photo_path' => $photoPath,
+                            'matched_name' => $name,
+                            'matched_title' => $title,
+                        ]);
+                    } else {
+                        Log::info("[DEBUG] No photo found for researcher", [
+                            'index' => $index,
+                            'name' => $name,
+                            'title' => $title,
+                        ]);
+                    }
+                }
             }
 
             $payloads[] = [
@@ -501,28 +784,124 @@ class SettingsController extends Controller
     }
 
     /**
+     * Safely store an uploaded file, handling cases where MIME type detection fails.
+     */
+    private function safeStoreFile(UploadedFile $photo, string $directory = 'researcher-photos'): ?string
+    {
+        try {
+            return $photo->store($directory, 'public');
+        } catch (\Throwable $storeError) {
+            // If store() fails due to MIME type issues, try manual storage
+            Log::warning('[DEBUG] store() failed, attempting manual file storage', [
+                'error' => $storeError->getMessage(),
+                'directory' => $directory,
+            ]);
+            
+                $path = $photo->getRealPath() ?: $photo->getPathname();
+                // Make sure it's a file, not a directory
+                if ($path && file_exists($path) && is_file($path) && is_readable($path)) {
+                    $extension = $photo->getClientOriginalExtension() ?: 'jpg';
+                    $filename = $directory . '/' . bin2hex(random_bytes(16)) . '.' . $extension;
+                    $fileContents = file_get_contents($path);
+                    if ($fileContents !== false) {
+                        Storage::disk('public')->put($filename, $fileContents, 'public');
+                        return $filename;
+                    }
+                } else {
+                    Log::warning('[DEBUG] Cannot read file for manual storage', [
+                        'path' => $path,
+                        'exists' => $path ? file_exists($path) : false,
+                        'is_file' => $path ? is_file($path) : false,
+                        'is_readable' => $path ? is_readable($path) : false,
+                        'error' => $photo->getError(),
+                        'error_message' => $photo->getErrorMessage(),
+                    ]);
+                }
+                return null;
+        }
+    }
+
+    /**
      * Store uploaded photo as WebP on the public disk.
      * Falls back to the original file if WebP conversion is unavailable.
      */
     private function storePhotoAsWebp(UploadedFile $photo): ?string
     {
         try {
+            // Check if file is valid or if it's just a size issue that we can still process
+            $isValid = $photo->isValid();
+            $errorCode = $photo->getError();
+            $hasValidPath = $photo->getRealPath() && file_exists($photo->getRealPath()) && is_readable($photo->getRealPath());
+            
+            // Allow processing if file is valid OR if it's just a size limit issue but file exists (error code 1)
+            if (!$isValid && !($errorCode === 1 && $hasValidPath)) {
+                Log::warning('[DEBUG] Uploaded file cannot be processed', [
+                    'error' => $errorCode,
+                    'error_message' => $photo->getErrorMessage(),
+                    'has_valid_path' => $hasValidPath,
+                ]);
+                return null;
+            }
+            
+            if (!$isValid) {
+                Log::info('[DEBUG] Processing file that exceeds PHP upload limit', [
+                    'file_name' => $photo->getClientOriginalName(),
+                    'file_size' => $photo->getSize(),
+                ]);
+            }
+            
             // Prefer converting to WebP using GD if available
             if (function_exists('imagewebp')) {
-                $mime = (string) $photo->getMimeType();
-                $source = null;
                 $path = $photo->getRealPath();
-                if (!$path) {
-                    return $photo->store('researcher-photos', 'public');
+                
+                // Check if path is valid and file exists
+                if (!$path || !file_exists($path) || !is_readable($path)) {
+                    Log::warning('[DEBUG] File path is invalid or not readable, attempting manual storage', [
+                        'path' => $path,
+                        'exists' => $path ? file_exists($path) : false,
+                        'readable' => $path ? is_readable($path) : false,
+                        'temp_name' => $photo->getPathname(),
+                    ]);
+                    
+                    // Try to get file from temporary location
+                    $tempPath = $photo->getPathname();
+                    if ($tempPath && file_exists($tempPath) && is_readable($tempPath)) {
+                        $path = $tempPath;
+                    } else {
+                    // Last resort: try to store directly using safe method
+                    return $this->safeStoreFile($photo);
+                    }
                 }
+                
+                // Try to get MIME type, fallback to extension-based detection
+                try {
+                    $mime = (string) $photo->getMimeType();
+                } catch (\Throwable $e) {
+                    // If MIME type detection fails, try to determine from file extension
+                    $extension = strtolower($photo->getClientOriginalExtension());
+                    $mimeMap = [
+                        'jpg' => 'image/jpeg',
+                        'jpeg' => 'image/jpeg',
+                        'png' => 'image/png',
+                        'gif' => 'image/gif',
+                        'webp' => 'image/webp',
+                    ];
+                    $mime = $mimeMap[$extension] ?? 'image/jpeg';
+                    Log::info('[DEBUG] MIME type detection failed, using extension-based detection', [
+                        'extension' => $extension,
+                        'detected_mime' => $mime,
+                    ]);
+                }
+                
+                $source = null;
                 if ($mime === 'image/jpeg' || $mime === 'image/jpg') {
                     if (!function_exists('imagecreatefromjpeg')) {
-                        return $photo->store('researcher-photos', 'public');
+                        return $this->safeStoreFile($photo);
                     }
                     $source = @imagecreatefromjpeg($path);
                 } elseif ($mime === 'image/png') {
                     if (!function_exists('imagecreatefrompng')) {
-                        return $photo->store('researcher-photos', 'public');
+                        return $this->safeStoreFile($photo);
                     }
                     $source = @imagecreatefrompng($path);
                     if ($source) {
@@ -532,22 +911,22 @@ class SettingsController extends Controller
                     }
                 } elseif ($mime === 'image/gif') {
                     if (!function_exists('imagecreatefromgif')) {
-                        return $photo->store('researcher-photos', 'public');
+                        return $this->safeStoreFile($photo);
                     }
                     $source = @imagecreatefromgif($path);
                 } else {
                     if (!function_exists('imagecreatefromstring')) {
-                        return $photo->store('researcher-photos', 'public');
+                        return $this->safeStoreFile($photo);
                     }
                     $bytes = @file_get_contents($path);
                     if ($bytes === false) {
-                        return $photo->store('researcher-photos', 'public');
+                        return $this->safeStoreFile($photo);
                     }
                     $source = @imagecreatefromstring($bytes);
                 }
 
                 if (!$source) {
-                    return $photo->store('researcher-photos', 'public');
+                    return $this->safeStoreFile($photo);
                 }
 
                 // Render to WebP in-memory so we can use Storage facade
@@ -557,7 +936,7 @@ class SettingsController extends Controller
                 imagedestroy($source);
                 $webpData = ob_get_clean();
                 if (!$webpData) {
-                    return $photo->store('researcher-photos', 'public');
+                    return $this->safeStoreFile($photo);
                 }
 
                 $filename = 'researcher-photos/' . bin2hex(random_bytes(16)) . '.webp';
@@ -572,17 +951,39 @@ class SettingsController extends Controller
 
             // Fallback: store the original file
             Log::info('[DEBUG] WebP conversion not available, storing original file', [
-                'mime' => $photo->getMimeType(),
                 'has_imagewebp' => function_exists('imagewebp'),
             ]);
-            return $photo->store('researcher-photos', 'public');
+            
+            // Use safe storage method
+            return $this->safeStoreFile($photo);
         } catch (\Throwable $e) {
-            Log::warning('[DEBUG] WebP conversion failed, storing original', [
+            Log::warning('[DEBUG] WebP conversion failed, attempting to store original', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
-            return $photo->store('researcher-photos', 'public');
+            
+            // Try to store, but handle MIME type errors gracefully
+            try {
+                return $photo->store('researcher-photos', 'public');
+            } catch (\Throwable $storeError) {
+                // If store() fails due to MIME type issues, try manual storage
+                Log::warning('[DEBUG] store() failed in catch block, attempting manual file storage', [
+                    'error' => $storeError->getMessage(),
+                ]);
+                
+                $path = $photo->getRealPath() ?: $photo->getPathname();
+                if ($path && file_exists($path) && is_readable($path)) {
+                    $extension = $photo->getClientOriginalExtension() ?: 'jpg';
+                    $filename = 'researcher-photos/' . bin2hex(random_bytes(16)) . '.' . $extension;
+                    $fileContents = file_get_contents($path);
+                    if ($fileContents !== false) {
+                        Storage::disk('public')->put($filename, $fileContents, 'public');
+                        return $filename;
+                    }
+                }
+                return null;
+            }
         }
     }
 

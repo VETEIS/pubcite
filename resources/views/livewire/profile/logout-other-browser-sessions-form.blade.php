@@ -54,10 +54,7 @@
     @endif
 
     <div class="flex items-center justify-end pt-4 border-t border-gray-200">
-        <x-button wire:click="confirmLogout" 
-                  wire:loading.attr="disabled" 
-                  onclick="console.log('Logout button clicked'); console.log('Livewire available:', typeof window.Livewire !== 'undefined');"
-                  class="bg-red-600 hover:bg-red-700 focus:ring-red-500">
+        <x-button wire:click="confirmLogout" wire:loading.attr="disabled" class="bg-red-600 hover:bg-red-700 focus:ring-red-500">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
             </svg>
@@ -86,8 +83,7 @@
     </script>
 
     <!-- Log Out Other Devices Confirmation Modal -->
-    <div x-data x-effect="console.log('Modal state changed:', $wire.confirmingLogout)" style="display: none;"></div>
-    <x-dialog-modal wire:model.live="confirmingLogout" x-init="console.log('Modal initialized, confirmingLogout:', $wire.confirmingLogout)">
+    <x-dialog-modal wire:model.live="confirmingLogout">
         <x-slot name="title">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -132,8 +128,7 @@
 
                 <x-button class="bg-red-600 hover:bg-red-700 focus:ring-red-500"
                             wire:click="logoutOtherBrowserSessions"
-                            wire:loading.attr="disabled"
-                            onclick="console.log('Logout other sessions button clicked in modal');">
+                            wire:loading.attr="disabled">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
                     </svg>

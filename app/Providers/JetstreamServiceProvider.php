@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use App\Actions\Jetstream\DeleteUser;
+use App\Livewire\Profile\DeleteUserForm;
+use App\Livewire\Profile\LogoutOtherBrowserSessionsForm;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Jetstream\Jetstream;
+use Livewire\Livewire;
 
 class JetstreamServiceProvider extends ServiceProvider
 {
@@ -25,6 +29,12 @@ class JetstreamServiceProvider extends ServiceProvider
         $this->configurePermissions();
 
         Jetstream::deleteUsersUsing(DeleteUser::class);
+
+        // Register custom Livewire components with logging
+        Log::info('JetstreamServiceProvider: Registering custom Livewire components');
+        Livewire::component('profile.logout-other-browser-sessions-form', LogoutOtherBrowserSessionsForm::class);
+        Livewire::component('profile.delete-user-form', DeleteUserForm::class);
+        Log::info('JetstreamServiceProvider: Custom Livewire components registered');
 
         Vite::prefetch(concurrency: 3);
     }

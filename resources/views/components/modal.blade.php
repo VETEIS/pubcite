@@ -12,14 +12,30 @@ $maxWidth = [
 ][$maxWidth ?? '2xl'];
 @endphp
 
+@php
+$wireModel = $attributes->wire('model')->value();
+@endphp
 <div
-    x-data="{ show: @entangle($attributes->wire('model')) }"
+    x-data="{
+        show: @entangle($attributes->wire('model')).live,
+        init() {
+            console.log('Modal init, wireModel: {{ $wireModel }}, initial show:', this.show);
+            this.$watch('show', (value) => {
+                console.log('Modal show changed to:', value, '$wire.{{ $wireModel }}:', $wire.get('{{ $wireModel }}'));
+            });
+            // Also watch the Livewire property directly
+            $wire.watch('{{ $wireModel }}', (value) => {
+                console.log('$wire.{{ $wireModel }} changed to:', value, 'this.show:', this.show);
+                this.show = value;
+            });
+        }
+    }"
     x-on:close.stop="show = false"
     x-on:keydown.escape.window="show = false"
     x-show="show"
     id="{{ $id }}"
     class="jetstream-modal fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
-    style="display: none;"
+    x-cloak
 >
     <div x-show="show" class="fixed inset-0 transform transition-all" x-on:click="show = false" x-transition:enter="ease-out duration-300"
                     x-transition:enter-start="opacity-0"
