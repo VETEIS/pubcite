@@ -136,12 +136,86 @@ A comprehensive web application for the University of Southeastern Philippines (
 
 ### Prerequisites
 
+Before setting up the project, ensure you have the following installed:
+
 - **PHP 8.2+** with extensions: `pdo_pgsql`, `zip`, `mbstring`, `xml`, `gd`
 - **Composer** 2.x
 - **Node.js** 20.x and npm
 - **PostgreSQL** 12+
 - **LibreOffice** - Required for DOCX to PDF conversion (install from [LibreOffice.org](https://www.libreoffice.org/))
 - **Git** (optional, for version control)
+
+#### Installing Prerequisites
+
+**macOS:**
+
+1. **Install Homebrew** (if not already installed)
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+
+2. **Install PHP 8.2+ and required extensions**
+   ```bash
+   brew install php@8.2
+   brew link php@8.2
+   brew install pkg-config
+   pecl install zip
+   ```
+
+3. **Install PostgreSQL**
+   ```bash
+   brew install postgresql@14
+   brew services start postgresql@14
+   ```
+
+4. **Install Node.js 20.x**
+   ```bash
+   brew install node@20
+   brew link node@20
+   ```
+
+5. **Install Composer**
+   ```bash
+   brew install composer
+   ```
+
+6. **Install LibreOffice**
+   ```bash
+   brew install --cask libreoffice
+   ```
+
+**Windows:**
+
+1. **Install PHP 8.2+**
+   - Download from [php.net](https://windows.php.net/download/)
+   - Extract to `C:\php`
+   - Add `C:\php` to your system PATH
+   - Enable extensions in `php.ini`: `pdo_pgsql`, `zip`, `mbstring`, `xml`, `gd`
+
+2. **Install Composer**
+   - Download from [getcomposer.org](https://getcomposer.org/download/)
+   - Run the installer and follow the setup wizard
+
+3. **Install PostgreSQL**
+   - Download from [postgresql.org](https://www.postgresql.org/download/windows/)
+   - Run the installer and remember the password you set for the `postgres` user
+
+4. **Install Node.js 20.x**
+   - Download from [nodejs.org](https://nodejs.org/)
+   - Run the installer (includes npm)
+
+5. **Install LibreOffice**
+   - Download from [libreoffice.org](https://www.libreoffice.org/download/download/)
+   - Run the installer
+
+**Verify installations:**
+```bash
+php -v          # Should show PHP 8.2+
+composer -V     # Should show Composer version
+node -v         # Should show Node.js 20.x
+npm -v          # Should show npm version
+psql --version  # Should show PostgreSQL version
+```
 
 ### Local Development Setup
 
@@ -176,17 +250,24 @@ A comprehensive web application for the University of Southeastern Philippines (
    DB_HOST=127.0.0.1
    DB_PORT=5432
    DB_DATABASE=pubcite
-   DB_USERNAME=your_username
-   DB_PASSWORD=your_password
+   DB_USERNAME=your_username    # On macOS: usually your Mac username (no password)
+                                # On Windows: usually 'postgres' (with password you set)
+   DB_PASSWORD=your_password    # On macOS: leave empty for local PostgreSQL
+                                # On Windows: password you set during PostgreSQL installation
    ```
 
 6. **Create PostgreSQL database**
    ```bash
+   # macOS/Linux
    createdb pubcite
-   # Or using psql:
+   
+   # Or using psql (both platforms):
    psql postgres
    CREATE DATABASE pubcite;
    \q
+   
+   # Windows (if createdb doesn't work):
+   # Open pgAdmin or use psql from PostgreSQL bin directory
    ```
 
 7. **Run migrations**
@@ -206,7 +287,12 @@ A comprehensive web application for the University of Southeastern Philippines (
 
 10. **Set proper permissions**
     ```bash
+    # macOS/Linux
     chmod -R 775 storage bootstrap/cache
+    
+    # Windows (run in PowerShell as Administrator if needed)
+    icacls storage /grant Users:F /T
+    icacls bootstrap\cache /grant Users:F /T
     ```
 
 11. **Build assets**
@@ -216,14 +302,16 @@ A comprehensive web application for the University of Southeastern Philippines (
 
 12. **Start development server**
     ```bash
+    # Option A: Run separately (recommended for first time)
     # Terminal 1 - Laravel server
     php artisan serve
     
     # Terminal 2 - Vite dev server (for hot reloading)
     npm run dev
     
-    # Or use the combined command (runs all services)
+    # Option B: Run all together (using composer script)
     composer run dev
+    # This runs server, queue, logs, and vite all together
     ```
 
 13. **Access the application**
@@ -646,12 +734,16 @@ pubcite/
 - **Prevention:** Notice displayed in document generation section
 
 **Database Connection Errors**
-- Check PostgreSQL is running: `brew services list` (macOS) or `sudo systemctl status postgresql` (Linux)
+- **macOS:** Check PostgreSQL is running: `brew services list` or `brew services start postgresql@14`
+- **Windows:** Check PostgreSQL service in Services (services.msc) or start it via pgAdmin
 - Verify database credentials in `.env`
-- Ensure database exists: `psql -l | grep pubcite`
+- Ensure database exists: `psql -l | grep pubcite` (macOS/Linux) or check in pgAdmin (Windows)
+- **macOS:** PostgreSQL default user is usually your Mac username with no password
+- **Windows:** PostgreSQL default user is usually `postgres` with the password you set during installation
 
 **Permission Errors**
-- Run: `chmod -R 775 storage bootstrap/cache`
+- **macOS/Linux:** Run: `chmod -R 775 storage bootstrap/cache`
+- **Windows:** Run in PowerShell: `icacls storage /grant Users:F /T` and `icacls bootstrap\cache /grant Users:F /T`
 - Ensure web server user has write access
 
 **Template Not Found Errors**
@@ -665,9 +757,10 @@ pubcite/
 - Check `storage/logs/laravel.log` for email errors
 
 **Document Generation Fails**
-- Check PHP extensions: `php -m | grep zip`
+- Check PHP extensions: `php -m | grep zip` (macOS/Linux) or `php -m | findstr zip` (Windows)
 - Verify template files are valid DOCX files
-- Check storage permissions: `ls -la storage/app/templates/`
+- Check storage permissions: `ls -la storage/app/templates/` (macOS/Linux) or check in File Explorer (Windows)
+- Ensure LibreOffice is installed and accessible from command line
 
 **Mobile Restrictions Not Working**
 - Verify `MobileRestriction` middleware is applied to routes
@@ -682,7 +775,11 @@ pubcite/
 php artisan pail
 
 # Or tail the log file
+# macOS/Linux:
 tail -f storage/logs/laravel.log
+
+# Windows (PowerShell):
+Get-Content storage\logs\laravel.log -Wait -Tail 50
 ```
 
 **Clear Caches**
@@ -699,6 +796,45 @@ php artisan migrate:fresh --seed
 php artisan storage:link
 npm run build
 ```
+
+**Additional Troubleshooting**
+
+**If you get "Class not found" errors:**
+```bash
+composer dump-autoload
+```
+
+**If you get "PDO extension not found" (macOS):**
+```bash
+# Check which PHP you're using
+which php
+
+# Make sure you're using Homebrew PHP
+brew link --overwrite php@8.2
+```
+
+**If npm install fails:**
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules and reinstall
+rm -rf node_modules package-lock.json  # macOS/Linux
+# or on Windows: rmdir /s node_modules & del package-lock.json
+npm install
+```
+
+**If composer install fails:**
+```bash
+# Clear composer cache
+composer clear-cache
+
+# Reinstall
+composer install --no-cache
+```
+
+**Port conflicts:**
+- If port 8000 is busy, use: `php artisan serve --port=8001`
 
 ## Contributing
 
