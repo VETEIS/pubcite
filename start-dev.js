@@ -18,7 +18,7 @@ function getLocalIP() {
 const currentIP = getLocalIP();
 console.log(`🚀 Starting Vite development server...`);
 console.log(`📱 Your local IP is: ${currentIP}`);
-console.log(`🌐 Access your app at: http://${currentIP}:8888`);
+console.log(`🌐 Access your app at: http://${currentIP}:8000`);
 console.log(`⚡ Vite dev server at: http://${currentIP}:5173`);
 console.log(`\nPress Ctrl+C to stop the server\n`);
 

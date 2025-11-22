@@ -158,8 +158,8 @@ Before setting up the project, ensure you have the following installed:
    ```bash
    brew install php@8.2
    brew link php@8.2
+   brew services start php@8.2
    brew install pkg-config
-   pecl install zip
    ```
 
 3. **Install PostgreSQL**
@@ -323,55 +323,86 @@ psql --version  # Should show PostgreSQL version
 
 ### Environment Variables
 
-Key environment variables to configure:
-
 ```env
-# Application
-APP_NAME="PubCite"
+APP_NAME=Laravel
 APP_ENV=local
+APP_KEY=base64: <SET THIS>
 APP_DEBUG=true
 APP_URL=http://localhost:8000
 
-# Database
-DB_CONNECTION=pgsql
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
+
+APP_MAINTENANCE_DRIVER=file
+# APP_MAINTENANCE_STORE=database
+
+PHP_CLI_SERVER_WORKERS=4
+
+BCRYPT_ROUNDS=12
+
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION= <SET THIS>
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=pubcite
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+DB_DATABASE= <SET THIS>
+DB_USERNAME= <SET THIS>
+DB_PASSWORD= <SET THIS>
+DB_SSLMODE=preferred
 
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CLIENT_ID= <SET THIS>
+GOOGLE_CLIENT_SECRET= <SET THIS>
 GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+GOOGLE_SSL_VERIFY=false
 
-# reCAPTCHA (optional)
-RECAPTCHA_SITE_KEY=your-site-key
-RECAPTCHA_SECRET_KEY=your-secret-key
+RECAPTCHA_SITE_KEY= <SET THIS>
+RECAPTCHA_SECRET_KEY= <SET THIS>
+RECAPTCHA_ENABLED=true
+RECAPTCHA_SKIP_IN_LOCAL=false
 
-# Mail Configuration
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=your-username
-MAIL_PASSWORD=your-password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@usep.edu.ph
-MAIL_FROM_NAME="${APP_NAME}"
-
-# Session
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
 
-# Queue (for email notifications)
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=local
 QUEUE_CONNECTION=database
 
-# File Storage
-FILESYSTEM_DISK=local
+CACHE_DRIVER=database
+# CACHE_PREFIX=
 
-# Cache
-CACHE_DRIVER=file
-```
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_SCHEME=null
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=pubcite.usep@gmail.com
+MAIL_PASSWORD=wlvzpyhgpdegepgj
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="pubcite.usep@gmail.com"
+MAIL_FROM_NAME="USEP Publications Unit - PubCite"
+MAIL_VERIFY_PEER=false
+QUEUE_CONNECTION=database
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+VITE_APP_NAME="${APP_NAME}"
 
 ### Google OAuth Setup
 

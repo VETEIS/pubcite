@@ -388,14 +388,14 @@
                                 </div>
                                 
                                 <!-- Content -->
-                                <div class="p-6">
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div class="p-3 sm:p-4 md:p-6">
+                                    <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                                     <!-- Academic Ranks -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <div class="flex items-center gap-2">
-                                                    <h4 class="text-sm font-semibold text-gray-900">Academic Ranks</h4>
-                                                    <span id="ranksCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
+                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Academic Ranks</h4>
+                                                    <span id="ranksCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
                                                         {{ count(array_filter(old('academic_ranks', $academic_ranks ?? []))) }}
                                                     </span>
                                         </div>
@@ -405,12 +405,12 @@
                                                 @php($ranks = array_filter($ranks))
                                             @foreach($ranks as $idx => $rank)
                                                 @if(!empty(trim($rank)))
-                                                <div class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all">
+                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all max-w-full">
                                                     <input type="hidden" name="academic_ranks[]" value="{{ $rank }}">
-                                                    <span class="text-sm">{{ $rank }}</span>
+                                                    <span class="text-xs sm:text-sm truncate">{{ $rank }}</span>
                                                     <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($rank) }}', 'Academic Ranks')" 
-                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
@@ -418,27 +418,28 @@
                                                 @endif
                                             @endforeach
                                         </div>
-                                            <div class="flex gap-2">
+                                            <div class="flex flex-col sm:flex-row gap-2">
                                                 <input type="text" id="rankInput" 
                                                        placeholder="Add rank..." 
-                                                       class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
+                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all w-full"
                                                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); addRankTag(); }">
                                                 <button type="button" onclick="addRankTag()" 
-                                                        class="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        class="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
-                                                    Add
+                                                    <span class="hidden sm:inline">Add</span>
+                                                    <span class="sm:hidden">Add Rank</span>
                                             </button>
                                         </div>
                                         </div>
                                         
                                         <!-- Colleges -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <div class="flex items-center gap-2">
-                                                    <h4 class="text-sm font-semibold text-gray-900">Colleges</h4>
-                                                    <span id="collegesCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
+                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Colleges</h4>
+                                                    <span id="collegesCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
                                                         {{ count(array_filter(old('colleges', $colleges ?? []))) }}
                                                     </span>
                                                 </div>
@@ -448,12 +449,12 @@
                                                 @php($colleges = array_filter($colleges))
                                             @foreach($colleges as $idx => $college)
                                                 @if(!empty(trim($college)))
-                                                <div class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all max-w-full">
                                                     <input type="hidden" name="colleges[]" value="{{ $college }}">
-                                                    <span class="text-sm">{{ $college }}</span>
+                                                    <span class="text-xs sm:text-sm truncate">{{ $college }}</span>
                                                     <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($college) }}', 'Colleges')" 
-                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
@@ -461,27 +462,28 @@
                                                 @endif
                                             @endforeach
                                         </div>
-                                            <div class="flex gap-2">
+                                            <div class="flex flex-col sm:flex-row gap-2">
                                                 <input type="text" id="collegeInput" 
                                                        placeholder="Add college..." 
-                                                       class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all w-full"
                                                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); addCollegeTag(); }">
                                                 <button type="button" onclick="addCollegeTag()" 
-                                                        class="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        class="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
-                                                    Add
+                                                    <span class="hidden sm:inline">Add</span>
+                                                    <span class="sm:hidden">Add College</span>
                                             </button>
                                         </div>
                                         </div>
                                         
                                         <!-- Others Indexing Options -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <div class="flex items-center gap-2">
-                                                    <h4 class="text-sm font-semibold text-gray-900">Indexing Options</h4>
-                                                    <span id="othersCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
+                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Indexing Options</h4>
+                                                    <span id="othersCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 whitespace-nowrap">
                                                         {{ count(array_filter(old('others_indexing_options', $others_indexing_options ?? []))) }}
                                                     </span>
                                                 </div>
@@ -491,12 +493,12 @@
                                                 @php($othersIndexing = array_filter($othersIndexing))
                                             @foreach($othersIndexing as $idx => $option)
                                                 @if(!empty(trim($option)))
-                                                <div class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-pink-400 hover:bg-pink-50 transition-all">
+                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-pink-400 hover:bg-pink-50 transition-all max-w-full">
                                                     <input type="hidden" name="others_indexing_options[]" value="{{ $option }}">
-                                                    <span class="text-sm">{{ $option }}</span>
+                                                    <span class="text-xs sm:text-sm truncate">{{ $option }}</span>
                                                     <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($option) }}', 'Indexing Options')" 
-                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
@@ -504,17 +506,18 @@
                                                 @endif
                                             @endforeach
                                             </div>
-                                            <div class="flex gap-2">
+                                            <div class="flex flex-col sm:flex-row gap-2">
                                                 <input type="text" id="othersInput" 
                                                        placeholder="Add option..." 
-                                                       class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 transition-all"
+                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 transition-all w-full"
                                                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); addOthersIndexingTag(); }">
                                                 <button type="button" onclick="addOthersIndexingTag()" 
-                                                        class="px-3 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm font-medium flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        class="px-3 sm:px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
+                                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                     </svg>
-                                                    Add
+                                                    <span class="hidden sm:inline">Add</span>
+                                                    <span class="sm:hidden">Add Option</span>
                                                 </button>
                                             </div>
                                         </div>
