@@ -89,10 +89,11 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
-# Regenerate optimized autoload file
-# Skip post-autoload-dump script as it runs artisan which requires full Laravel bootstrap
-# The package:discover command will run automatically on first app start
-RUN composer dump-autoload --optimize --no-interaction --classmap-authoritative --no-scripts
+# Regenerate optimized autoload file and verify it works
+# We need to ensure autoloader is complete before running any artisan commands
+RUN composer dump-autoload --optimize --no-interaction --classmap-authoritative --no-scripts && \
+    php -r "require 'vendor/autoload.php'; echo 'Autoloader verified: ' . class_exists('Illuminate\Foundation\Application') ? 'OK' : 'FAILED';" && \
+    echo "✓ Autoloader generated and verified"
 
 # Build assets with verbose output
 RUN echo "Building Vite assets..." && npm run build

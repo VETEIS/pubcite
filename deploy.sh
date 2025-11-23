@@ -35,8 +35,23 @@ echo "  DB_USERNAME: ${DB_USERNAME:-not set}"
 max_attempts=30
 attempt=1
 
+# First, verify Laravel can bootstrap before testing database
+echo "Verifying Laravel can bootstrap..."
+if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
+    echo "⚠️  Laravel cannot bootstrap - regenerating autoloader..."
+    composer dump-autoload --optimize --no-interaction --no-scripts
+    if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
+        echo "❌ Laravel still cannot bootstrap after regenerating autoloader"
+        echo "   This is a critical error - check vendor directory and Laravel installation"
+        exit 1
+    fi
+    echo "✅ Laravel bootstrap verified after autoloader regeneration"
+else
+    echo "✅ Laravel bootstrap verified"
+fi
+
 while [ $attempt -le $max_attempts ]; do
-    # Use artisan db:show or a simple connection test
+    # Now test database connection using artisan
     if php artisan db:show > /dev/null 2>&1; then
         echo "✅ Database connection established"
         break
@@ -88,12 +103,25 @@ if [ $attempt -gt $max_attempts ]; then
     # Don't exit - allow the app to start and handle DB connection errors gracefully
 fi
 
-# Clear all caches first
+# Verify Laravel can bootstrap before running artisan commands
+echo "Verifying Laravel bootstrap..."
+if php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; echo 'OK';" 2>/dev/null; then
+    echo "✅ Laravel bootstrap verified"
+else
+    echo "⚠️  Laravel bootstrap check failed - regenerating autoloader..."
+    composer dump-autoload --optimize --no-interaction --no-scripts
+    if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; echo 'OK';" 2>/dev/null; then
+        echo "❌ Laravel still cannot bootstrap - check vendor directory and autoloader"
+        exit 1
+    fi
+fi
+
+# Clear all caches first (only if Laravel can bootstrap)
 echo "Clearing application caches..."
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
+php artisan cache:clear 2>&1 || echo "⚠️  cache:clear failed (non-critical)"
+php artisan config:clear 2>&1 || echo "⚠️  config:clear failed (non-critical)"
+php artisan route:clear 2>&1 || echo "⚠️  route:clear failed (non-critical)"
+php artisan view:clear 2>&1 || echo "⚠️  view:clear failed (non-critical)"
 
 # Run database migrations (only if database is available)
 echo "Running database migrations..."
