@@ -89,10 +89,10 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
-# Generate autoload files first, then run composer scripts
-# The post-autoload-dump script runs artisan, which needs vendor/autoload.php
-RUN composer dump-autoload --optimize --no-interaction && \
-    composer run-script post-autoload-dump
+# Regenerate optimized autoload file
+# Skip post-autoload-dump script as it runs artisan which requires full Laravel bootstrap
+# The package:discover command will run automatically on first app start
+RUN composer dump-autoload --optimize --no-interaction --classmap-authoritative
 
 # Build assets with verbose output
 RUN echo "Building Vite assets..." && npm run build
