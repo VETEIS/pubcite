@@ -13,11 +13,27 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Preload hero art for faster paint - desktop only -->
-        <link rel="preload" as="image" href="/images/art.webp" media="(min-width: 641px)" fetchpriority="high">
-        
-        <!-- Preload mobile hero logo to prevent layout shifts - mobile only -->
-        <link rel="preload" as="image" href="/images/publication_logo.webp" media="(max-width: 640px)" fetchpriority="high">
+        <!-- Conditionally preload images based on screen size using JavaScript -->
+        <script>
+            (function() {
+                // Preload images based on viewport size
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'image';
+                
+                if (window.matchMedia('(min-width: 641px)').matches) {
+                    // Desktop: preload hero art
+                    link.href = '/images/art.webp';
+                    link.type = 'image/webp';
+                } else {
+                    // Mobile: preload logo
+                    link.href = '/images/publication_logo.webp';
+                    link.type = 'image/webp';
+                }
+                
+                document.head.appendChild(link);
+            })();
+        </script>
 
         <!-- Scripts -->
             @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -35,8 +35,10 @@ export default defineConfig({
         cors: {
             origin: [
                 'http://localhost:8000',
+                'http://127.0.0.1:8000',
                 `http://${localIP}:8000`,
                 `http://${localIP}:5173`,
+                'http://127.0.0.1:5173',
             ],
             credentials: true,
         },

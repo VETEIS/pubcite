@@ -4,14 +4,28 @@ use Illuminate\Support\Str;
 
 // Helper to get MySQL SSL CA constant (PHP 8.5+ compatible)
 // PHP 8.5+ uses Pdo\Mysql::ATTR_SSL_CA, older versions use PDO::MYSQL_ATTR_SSL_CA
-$mysqlSslCaConstant = PDO::MYSQL_ATTR_SSL_CA;
+$mysqlSslCaConstant = null;
 if (PHP_VERSION_ID >= 80500) {
-    // PHP 8.5+ - try to use the new constant
-    // Use constant() to safely get the constant value without direct class reference
-    $newConstant = @constant('Pdo\Mysql::ATTR_SSL_CA');
-    if ($newConstant !== null) {
-        $mysqlSslCaConstant = $newConstant;
+    // PHP 8.5+ - use the new constant
+    // Try to use the new constant first to avoid deprecation warning
+    if (class_exists('Pdo\Mysql')) {
+        try {
+            $mysqlSslCaConstant = \Pdo\Mysql::ATTR_SSL_CA;
+        } catch (\Throwable $e) {
+            // Fallback if new constant fails
+            $mysqlSslCaConstant = null;
+        }
     }
+    // If new constant not available, we need to use old one but suppress warning
+    // Use error_reporting to temporarily suppress deprecation warnings
+    if ($mysqlSslCaConstant === null) {
+        $oldErrorReporting = error_reporting(E_ALL & ~E_DEPRECATED);
+        $mysqlSslCaConstant = PDO::MYSQL_ATTR_SSL_CA;
+        error_reporting($oldErrorReporting);
+    }
+} else {
+    // PHP < 8.5 - use the old constant (no deprecation warning on older versions)
+    $mysqlSslCaConstant = PDO::MYSQL_ATTR_SSL_CA;
 }
 
 return [

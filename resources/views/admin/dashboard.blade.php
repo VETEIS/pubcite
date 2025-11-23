@@ -1546,7 +1546,7 @@ function updateStatsWithData(stats) {
                             <span class="inline-block w-2 h-2 rounded-full bg-gray-400 mr-2"></span>
                             <span class="text-sm font-medium">No Data Available</span>
                         </div>
-                        <p class="text-xs text-gray-400">No requests found for the selected period</p>
+                        <p class="text-xs text-gray-400">No data available</p>
                     </div>
                 `;
                 return;
