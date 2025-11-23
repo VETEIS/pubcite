@@ -21,13 +21,23 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify XML extensions required by PhpSpreadsheet
-# In PHP 8.2-cli, dom, xmlreader, and xmlwriter are typically already enabled
-# If they're missing, composer install will fail with a clear error message
-RUN echo "Checking for required PHP extensions..."; \
-    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" && \
-    echo "✓ XML extensions are available" || \
-    (echo "⚠ Warning: Some XML extensions may be missing. Composer will verify during install." && php -m)
+# Verify and enable XML extensions required by PhpSpreadsheet
+# In PHP 8.2-cli, these extensions are usually already compiled but may need to be enabled
+# dom, xml, libxml are typically always enabled
+# xmlreader and xmlwriter may need to be enabled
+RUN set -e; \
+    echo "Checking XML extensions..."; \
+    php -m | grep -E "^(dom|xml|libxml)$" && echo "✓ Core XML extensions found" || echo "⚠ Core XML extensions missing"; \
+    if ! php -m | grep -q "^xmlreader$"; then \
+        echo "Attempting to enable xmlreader..."; \
+        docker-php-ext-enable xmlreader 2>&1 || echo "xmlreader not available as extension"; \
+    fi; \
+    if ! php -m | grep -q "^xmlwriter$"; then \
+        echo "Attempting to enable xmlwriter..."; \
+        docker-php-ext-enable xmlwriter 2>&1 || echo "xmlwriter not available as extension"; \
+    fi; \
+    echo "Final extension check:"; \
+    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" || (echo "⚠ Some XML extensions may be missing" && php -m)
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
@@ -61,7 +71,14 @@ COPY composer.json composer.lock ./
 
 # Install PHP dependencies without running scripts
 # Increase memory limit for composer install
-RUN COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+# Show verbose output to debug any extension issues
+RUN echo "PHP version: $(php -v | head -1)" && \
+    echo "Available extensions:" && php -m && \
+    echo "Checking required extensions for PhpSpreadsheet..." && \
+    (php -m | grep -q "dom" && echo "✓ dom found" || echo "✗ dom missing") && \
+    (php -m | grep -q "xmlreader" && echo "✓ xmlreader found" || echo "✗ xmlreader missing") && \
+    (php -m | grep -q "xmlwriter" && echo "✓ xmlwriter found" || echo "✗ xmlwriter missing") && \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 | tail -50
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
