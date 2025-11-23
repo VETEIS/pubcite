@@ -1,5 +1,6 @@
 # Use the official PHP image with required extensions
-FROM php:8.2-cli
+# Upgraded to PHP 8.3 to support phpspreadsheet 5.2.0 which requires zipstream-php 3.2.0 (PHP 8.3+)
+FROM php:8.3-cli
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
@@ -78,9 +79,14 @@ RUN echo "PHP version: $(php -v | head -1)" && \
     (php -m | grep -q "dom" && echo "✓ dom found" || echo "✗ dom missing") && \
     (php -m | grep -q "xmlreader" && echo "✓ xmlreader found" || echo "✗ xmlreader missing") && \
     (php -m | grep -q "xmlwriter" && echo "✓ xmlwriter found" || echo "✗ xmlwriter missing") && \
-    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 | tail -50 && \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 | tail -50 || (echo "❌ Composer install failed - checking error..." && exit 1) && \
     echo "Verifying autoloader after composer install..." && \
-    php -r "require 'vendor/autoload.php'; echo (class_exists('Illuminate\Foundation\Application') ? '✓ Autoloader OK' : '✗ Autoloader FAILED') . PHP_EOL;"
+    if [ -f "vendor/autoload.php" ]; then \
+        php -r "require 'vendor/autoload.php'; echo (class_exists('Illuminate\Foundation\Application') ? '✓ Autoloader OK' : '✗ Autoloader FAILED') . PHP_EOL;"; \
+    else \
+        echo "❌ vendor/autoload.php not found - composer install failed"; \
+        exit 1; \
+    fi
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
