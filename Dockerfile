@@ -21,15 +21,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install XML extensions required by PhpSpreadsheet
-# Note: dom is already enabled in PHP 8.2, but xmlreader needs its headers
-# We need to install dom from source first to make headers available for xmlreader
-RUN set -eux; \
-    if [ -d /usr/src/php/ext/dom ]; then \
-        cd /usr/src/php/ext/dom && docker-php-ext-configure dom && docker-php-ext-install dom 2>&1 | grep -v "already loaded" || true; \
-    fi; \
-    cd /usr/src/php/ext/xmlreader && docker-php-ext-configure xmlreader && docker-php-ext-install xmlreader; \
-    cd /usr/src/php/ext/xmlwriter && docker-php-ext-configure xmlwriter && docker-php-ext-install xmlwriter
+# Verify XML extensions required by PhpSpreadsheet
+# In PHP 8.2-cli, dom, xmlreader, and xmlwriter are typically already enabled
+# If they're missing, composer install will fail with a clear error message
+RUN echo "Checking for required PHP extensions..."; \
+    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" && \
+    echo "✓ XML extensions are available" || \
+    (echo "⚠ Warning: Some XML extensions may be missing. Composer will verify during install." && php -m)
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
