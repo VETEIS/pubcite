@@ -17,10 +17,19 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure zip \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip dom \
-    && docker-php-ext-install xmlreader xmlwriter \
+    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install XML extensions required by PhpSpreadsheet
+# Note: dom is already enabled in PHP 8.2, but xmlreader needs its headers
+# We need to install dom from source first to make headers available for xmlreader
+RUN set -eux; \
+    if [ -d /usr/src/php/ext/dom ]; then \
+        cd /usr/src/php/ext/dom && docker-php-ext-configure dom && docker-php-ext-install dom 2>&1 | grep -v "already loaded" || true; \
+    fi; \
+    cd /usr/src/php/ext/xmlreader && docker-php-ext-configure xmlreader && docker-php-ext-install xmlreader; \
+    cd /usr/src/php/ext/xmlwriter && docker-php-ext-configure xmlwriter && docker-php-ext-install xmlwriter
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
