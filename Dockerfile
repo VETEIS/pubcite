@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure zip \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip xmlreader xmlwriter \
+    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip dom \
+    && docker-php-ext-install xmlreader xmlwriter \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
