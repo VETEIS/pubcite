@@ -92,7 +92,7 @@ COPY . .
 # Regenerate optimized autoload file
 # Skip post-autoload-dump script as it runs artisan which requires full Laravel bootstrap
 # The package:discover command will run automatically on first app start
-RUN composer dump-autoload --optimize --no-interaction --classmap-authoritative
+RUN composer dump-autoload --optimize --no-interaction --classmap-authoritative --no-scripts
 
 # Build assets with verbose output
 RUN echo "Building Vite assets..." && npm run build
