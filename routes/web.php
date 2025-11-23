@@ -134,6 +134,7 @@ Route::middleware(['auth', 'mobile.restrict', 'throttle:600,1'])->prefix('admin'
     Route::get('/requests/{request}/download-zip', [\App\Http\Controllers\AdminRequestController::class, 'downloadZip'])->name('admin.requests.download-zip');
     // endpointss
     Route::get('/dashboard/data', [\App\Http\Controllers\DashboardController::class, 'getData'])->name('admin.dashboard.data');
+    Route::get('/activity-logs/export', [\App\Http\Controllers\DashboardController::class, 'exportActivityLogs'])->name('admin.activity-logs.export');
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');

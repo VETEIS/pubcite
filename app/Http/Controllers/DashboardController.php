@@ -9,6 +9,11 @@ use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NudgeNotification;
 use App\Models\User;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class DashboardController extends Controller
 {
@@ -806,4 +811,220 @@ class DashboardController extends Controller
     }
 
     // streamUpdates removed: admin dashboard no longer uses real-time SSE
+
+    public function exportActivityLogs()
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'admin') {
+            abort(403, 'Unauthorized');
+        }
+
+        try {
+            // Get all activity logs (not just the 10 shown on dashboard)
+            $activityLogs = ActivityLog::with('user', 'userRequest')
+                ->whereNotIn('action', ['created']) // Exclude submission requests
+                ->orderByDesc('created_at')
+                ->get();
+
+            // Create new Spreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Activity Logs');
+
+            // Set headers
+            $headers = [
+                'A1' => 'Date & Time',
+                'B1' => 'Action',
+                'C1' => 'Description',
+                'D1' => 'User',
+                'E1' => 'Request Code',
+                'F1' => 'Details',
+            ];
+
+            foreach ($headers as $cell => $value) {
+                $sheet->setCellValue($cell, $value);
+            }
+
+            // Style headers
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '8B1538'], // Maroon color
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                    ],
+                ],
+            ];
+            $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+            $sheet->getRowDimension(1)->setRowHeight(25);
+
+            // Set column widths
+            $sheet->getColumnDimension('A')->setWidth(20);
+            $sheet->getColumnDimension('B')->setWidth(25);
+            $sheet->getColumnDimension('C')->setWidth(50);
+            $sheet->getColumnDimension('D')->setWidth(25);
+            $sheet->getColumnDimension('E')->setWidth(20);
+            $sheet->getColumnDimension('F')->setWidth(40);
+
+            // Add data rows
+            $row = 2;
+            foreach ($activityLogs as $log) {
+                // Format description based on action type
+                $description = $this->formatActivityDescription($log);
+                
+                // Get user name
+                $userName = $log->user ? $log->user->name : 'System';
+                if ($log->user && $log->user->role === 'admin') {
+                    $userName .= ' (Admin)';
+                }
+
+                // Get request code
+                $requestCode = $log->userRequest ? $log->userRequest->request_code : ($log->details['request_code'] ?? 'N/A');
+
+                // Format details as JSON string
+                $details = json_encode($log->details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+                // Format date
+                $dateTime = $log->created_at->setTimezone('Asia/Manila')->format('Y-m-d H:i:s');
+
+                // Format action label
+                $actionLabel = ucfirst(str_replace('_', ' ', $log->action));
+
+                $sheet->setCellValue('A' . $row, $dateTime);
+                $sheet->setCellValue('B' . $row, $actionLabel);
+                $sheet->setCellValue('C' . $row, $description);
+                $sheet->setCellValue('D' . $row, $userName);
+                $sheet->setCellValue('E' . $row, $requestCode);
+                $sheet->setCellValue('F' . $row, $details);
+
+                // Style data rows
+                $dataStyle = [
+                    'alignment' => [
+                        'vertical' => Alignment::VERTICAL_TOP,
+                        'wrapText' => true,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'E5E7EB'],
+                        ],
+                    ],
+                ];
+                $sheet->getStyle('A' . $row . ':F' . $row)->applyFromArray($dataStyle);
+                $sheet->getRowDimension($row)->setRowHeight(-1); // Auto height
+
+                $row++;
+            }
+
+            // Freeze first row
+            $sheet->freezePane('A2');
+
+            // Create writer and save to temporary file
+            $writer = new Xlsx($spreadsheet);
+            $fileName = 'activity_logs_' . now()->format('Y-m-d_His') . '.xlsx';
+            $tempFile = tempnam(sys_get_temp_dir(), 'activity_logs_');
+            $writer->save($tempFile);
+
+            // Return download response
+            return response()->download($tempFile, $fileName, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to export activity logs: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Failed to export activity logs: ' . $e->getMessage());
+        }
+    }
+
+    private function formatActivityDescription($log): string
+    {
+        $details = $log->details ?? [];
+        $action = $log->action;
+
+        switch ($action) {
+            case 'signed':
+                $roleLabel = $details['signatory_role_label'] ?? ucfirst(str_replace('_', ' ', $details['signatory_role'] ?? ''));
+                $requestCode = $details['request_code'] ?? '';
+                $signatoryName = $details['signatory_name'] ?? '';
+                return "Request {$requestCode} signed by {$signatoryName} ({$roleLabel})";
+
+            case 'workflow_completed':
+                $requestCode = $details['request_code'] ?? '';
+                $finalSignatory = $details['final_signatory_name'] ?? '';
+                return "Request {$requestCode} workflow completed by {$finalSignatory}";
+
+            case 'deleted':
+                $requestCode = $details['request_code'] ?? '';
+                return "Request {$requestCode} deleted";
+
+            case 'file_downloaded':
+                $requestCode = $details['request_code'] ?? '';
+                $filename = $details['filename'] ?? '';
+                return "Downloaded {$filename} from request {$requestCode}";
+
+            case 'user_created':
+                $userName = $details['created_user_name'] ?? '';
+                $userRole = $details['created_user_role'] ?? '';
+                return "Created user {$userName} ({$userRole})";
+
+            case 'user_updated':
+                $userName = $details['updated_user_name'] ?? '';
+                $changes = $details['changes'] ?? [];
+                $changeList = [];
+                if (isset($changes['name'])) $changeList[] = 'name';
+                if (isset($changes['email'])) $changeList[] = 'email';
+                if (isset($changes['role'])) $changeList[] = 'role';
+                if (isset($changes['password'])) $changeList[] = 'password';
+                $changeText = !empty($changeList) ? ' (' . implode(', ', $changeList) . ')' : '';
+                return "Updated user {$userName}{$changeText}";
+
+            case 'user_deleted':
+                $userName = $details['deleted_user_name'] ?? '';
+                $userRole = $details['deleted_user_role'] ?? '';
+                return "Deleted user {$userName} ({$userRole})";
+
+            case 'settings_updated':
+                $category = $details['category'] ?? 'settings';
+                $categoryLabels = [
+                    'form_dropdowns' => 'Form Dropdowns',
+                    'publication_counts' => 'Publication Counts',
+                    'official_info' => 'Official Information',
+                    'application_controls' => 'Application Controls',
+                    'calendar' => 'Calendar',
+                ];
+                $categoryLabel = $categoryLabels[$category] ?? ucfirst(str_replace('_', ' ', $category));
+                return "Updated {$categoryLabel} settings";
+
+            case 'signatory_account_created':
+                $accountType = $details['account_type_label'] ?? ucfirst(str_replace('_', ' ', $details['account_type'] ?? ''));
+                $userName = $details['user_name'] ?? '';
+                return "Created {$accountType} account for {$userName}";
+
+            case 'signatory_account_deleted':
+                $accountType = $details['account_type_label'] ?? ucfirst(str_replace('_', ' ', $details['account_type'] ?? ''));
+                $userName = $details['deleted_user_name'] ?? '';
+                return "Deleted {$accountType} account for {$userName}";
+
+            case 'nudged':
+                $requestCode = $details['request_code'] ?? '';
+                return "Nudge for request {$requestCode}";
+
+            default:
+                return ucfirst(str_replace('_', ' ', $action));
+        }
+    }
 } 

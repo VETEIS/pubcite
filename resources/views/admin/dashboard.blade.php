@@ -370,13 +370,21 @@
                                  class="absolute right-0 top-12 w-[650px] bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[600px] overflow-hidden flex flex-col">
                                 
                                 <!-- Header -->
-                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0 flex items-center justify-between">
                                     <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
                                         <svg class="w-4 h-4 text-maroon-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
                                         Activity Log
                                     </h3>
+                                    @if(!$activityLogs->isEmpty())
+                                    <a href="{{ route('admin.activity-logs.export') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-maroon-700 bg-maroon-50 hover:bg-maroon-100 rounded-lg transition-colors duration-200" title="Download as Excel">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
+                                        Export Excel
+                                    </a>
+                                    @endif
                                 </div>
                                 
                                 <!-- Activity Logs List -->
@@ -392,59 +400,133 @@
                                                     @php
                                                         $icon = match($log->action) {
                                                             'created' => 'plus-circle',
-                                                            'status_changed' => 'refresh-cw',
+                                                            'signed' => 'pen-tool',
+                                                            'workflow_completed' => 'check-circle',
                                                             'deleted' => 'trash-2',
+                                                            'file_downloaded' => 'download',
+                                                            'user_created' => 'user-plus',
+                                                            'user_updated' => 'user-edit',
+                                                            'user_deleted' => 'user-minus',
+                                                            'settings_updated' => 'settings',
+                                                            'signatory_account_created' => 'user-check',
+                                                            'signatory_account_deleted' => 'user-x',
+                                                            'nudged' => 'bell',
                                                             default => 'activity',
                                                         };
                                                         $iconColor = match($log->action) {
                                                             'created' => 'text-green-500',
-                                                            'status_changed' => 'text-blue-500',
+                                                            'signed' => 'text-blue-500',
+                                                            'workflow_completed' => 'text-green-600',
                                                             'deleted' => 'text-red-500',
+                                                            'file_downloaded' => 'text-purple-500',
+                                                            'user_created' => 'text-green-500',
+                                                            'user_updated' => 'text-blue-500',
+                                                            'user_deleted' => 'text-red-500',
+                                                            'settings_updated' => 'text-orange-500',
+                                                            'signatory_account_created' => 'text-green-500',
+                                                            'signatory_account_deleted' => 'text-red-500',
+                                                            'nudged' => 'text-yellow-500',
                                                             default => 'text-maroon-400',
                                                         };
                                                         $desc = '';
                                                         if ($log->action === 'created') {
                                                             $desc = 'Request&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>&nbsp;submitted';
-                                                        } elseif ($log->action === 'status_changed') {
-                                                            $oldStatus = e($log->details['old_status'] ?? '');
-                                                            $newStatus = e($log->details['new_status'] ?? '');
+                                                        } elseif ($log->action === 'signed') {
+                                                            $roleLabel = e($log->details['signatory_role_label'] ?? ucfirst(str_replace('_', ' ', $log->details['signatory_role'] ?? '')));
                                                             $requestCode = e($log->details['request_code'] ?? '');
-                                                            
-                                                            // Color mapping for status
-                                                            $oldColor = match($oldStatus) {
-                                                                'pending' => 'text-yellow-600',
-                                                                'endorsed' => 'text-green-600',
-                                                                'rejected' => 'text-red-600',
-                                                                default => 'text-gray-600'
-                                                            };
-                                                            $newColor = match($newStatus) {
-                                                                'pending' => 'text-yellow-600',
-                                                                'endorsed' => 'text-green-600',
-                                                                'rejected' => 'text-red-600',
-                                                                default => 'text-gray-600'
-                                                            };
-                                                            
-                                                            $desc = '<b>' . $requestCode . '</b>:&nbsp;<span class="' . $oldColor . ' font-semibold">' . ucfirst($oldStatus) . '</span>&nbsp;<span class="text-gray-400 mx-1">→</span>&nbsp;<span class="' . $newColor . ' font-semibold">' . ucfirst($newStatus) . '</span>';
+                                                            $signatoryName = e($log->details['signatory_name'] ?? '');
+                                                            $desc = '<b>' . $requestCode . '</b>&nbsp;signed&nbsp;by&nbsp;<b>' . $signatoryName . '</b>&nbsp;(' . $roleLabel . ')';
+                                                        } elseif ($log->action === 'workflow_completed') {
+                                                            $requestCode = e($log->details['request_code'] ?? '');
+                                                            $finalSignatory = e($log->details['final_signatory_name'] ?? '');
+                                                            $desc = '<b>' . $requestCode . '</b>&nbsp;workflow&nbsp;completed&nbsp;by&nbsp;<b>' . $finalSignatory . '</b>';
                                                         } elseif ($log->action === 'deleted') {
                                                             $desc = 'Request&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>&nbsp;deleted';
+                                                        } elseif ($log->action === 'file_downloaded') {
+                                                            $requestCode = e($log->details['request_code'] ?? '');
+                                                            $filename = e($log->details['filename'] ?? '');
+                                                            $desc = 'Downloaded&nbsp;<b>' . $filename . '</b>&nbsp;from&nbsp;<b>' . $requestCode . '</b>';
+                                                        } elseif ($log->action === 'user_created') {
+                                                            $userName = e($log->details['created_user_name'] ?? '');
+                                                            $userRole = e($log->details['created_user_role'] ?? '');
+                                                            $desc = 'Created&nbsp;user&nbsp;<b>' . $userName . '</b>&nbsp;(' . ucfirst($userRole) . ')';
+                                                        } elseif ($log->action === 'user_updated') {
+                                                            $userName = e($log->details['updated_user_name'] ?? '');
+                                                            $changes = $log->details['changes'] ?? [];
+                                                            $changeList = [];
+                                                            if (isset($changes['name'])) {
+                                                                $changeList[] = 'name';
+                                                            }
+                                                            if (isset($changes['email'])) {
+                                                                $changeList[] = 'email';
+                                                            }
+                                                            if (isset($changes['role'])) {
+                                                                $changeList[] = 'role';
+                                                            }
+                                                            if (isset($changes['password'])) {
+                                                                $changeList[] = 'password';
+                                                            }
+                                                            $changeText = !empty($changeList) ? '&nbsp;(' . implode(', ', $changeList) . ')' : '';
+                                                            $desc = 'Updated&nbsp;user&nbsp;<b>' . $userName . '</b>' . $changeText;
+                                                        } elseif ($log->action === 'user_deleted') {
+                                                            $userName = e($log->details['deleted_user_name'] ?? '');
+                                                            $userRole = e($log->details['deleted_user_role'] ?? '');
+                                                            $desc = 'Deleted&nbsp;user&nbsp;<b>' . $userName . '</b>&nbsp;(' . ucfirst($userRole) . ')';
+                                                        } elseif ($log->action === 'settings_updated') {
+                                                            $category = e($log->details['category'] ?? 'settings');
+                                                            $categoryLabels = [
+                                                                'form_dropdowns' => 'Form Dropdowns',
+                                                                'publication_counts' => 'Publication Counts',
+                                                                'official_info' => 'Official Information',
+                                                                'application_controls' => 'Application Controls',
+                                                                'calendar' => 'Calendar',
+                                                            ];
+                                                            $categoryLabel = $categoryLabels[$category] ?? ucfirst(str_replace('_', ' ', $category));
+                                                            $desc = 'Updated&nbsp;<b>' . $categoryLabel . '</b>&nbsp;settings';
+                                                        } elseif ($log->action === 'signatory_account_created') {
+                                                            $accountType = e($log->details['account_type_label'] ?? ucfirst(str_replace('_', ' ', $log->details['account_type'] ?? '')));
+                                                            $userName = e($log->details['user_name'] ?? '');
+                                                            $desc = 'Created&nbsp;<b>' . $accountType . '</b>&nbsp;account&nbsp;for&nbsp;<b>' . $userName . '</b>';
+                                                        } elseif ($log->action === 'signatory_account_deleted') {
+                                                            $accountType = e($log->details['account_type_label'] ?? ucfirst(str_replace('_', ' ', $log->details['account_type'] ?? '')));
+                                                            $userName = e($log->details['deleted_user_name'] ?? '');
+                                                            $desc = 'Deleted&nbsp;<b>' . $accountType . '</b>&nbsp;account&nbsp;for&nbsp;<b>' . $userName . '</b>';
                                                         } elseif ($log->action === 'nudged') {
                                                             $desc = 'Nudge&nbsp;for&nbsp;<b>' . e($log->details['request_code'] ?? '') . '</b>';
                                                         } else {
-                                                            $desc = ucfirst($log->action);
+                                                            $desc = ucfirst(str_replace('_', ' ', $log->action));
                                                         }
                                                     @endphp
                                                     <span class="flex items-center justify-center w-7 h-7 rounded-full 
-    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication') bg-maroon-800 @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation') bg-maroon-800 @elseif($icon === 'plus-circle') bg-green-500 @elseif($icon === 'refresh-cw') bg-blue-500 @elseif($icon === 'trash-2') bg-red-500 @else bg-maroon-400 @endif border">
+    @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication') bg-maroon-800 @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation') bg-maroon-800 @elseif($icon === 'plus-circle') bg-green-500 @elseif($icon === 'pen-tool') bg-blue-500 @elseif($icon === 'check-circle') bg-green-600 @elseif($icon === 'trash-2') bg-red-500 @elseif($icon === 'download') bg-purple-500 @elseif($icon === 'user-plus') bg-green-500 @elseif($icon === 'user-edit') bg-blue-500 @elseif($icon === 'user-minus') bg-red-500 @elseif($icon === 'settings') bg-orange-500 @elseif($icon === 'user-check') bg-green-500 @elseif($icon === 'user-x') bg-red-500 @elseif($icon === 'bell') bg-yellow-500 @else bg-maroon-400 @endif border">
     @if($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Publication')
         <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0H3m9 0h9" /></svg>
     @elseif($icon === 'plus-circle' && ($log->details['type'] ?? null) === 'Citation')
         <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 3v4M7 3v4" /></svg>
     @elseif($icon === 'plus-circle')
         <svg class="w-5 h-5" fill="white" stroke="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    @elseif($icon === 'refresh-cw')
-        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 5.36A9 9 0 0020.49 15"/></svg>
+    @elseif($icon === 'pen-tool')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    @elseif($icon === 'check-circle')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     @elseif($icon === 'trash-2')
-        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+    @elseif($icon === 'download')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+    @elseif($icon === 'user-plus')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+    @elseif($icon === 'user-edit')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    @elseif($icon === 'user-minus')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/></svg>
+    @elseif($icon === 'settings')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    @elseif($icon === 'user-check')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    @elseif($icon === 'user-x')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6z"/></svg>
+    @elseif($icon === 'bell')
+        <svg class="w-5 h-5" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
     @else
         <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     @endif
@@ -687,19 +769,19 @@
                                     <p class="text-xs text-gray-600 font-medium">Loading...</p>
                                 </div>
                             </div>
-                            <div class="flex-1 flex items-center justify-center min-h-0">
+                            <div class="flex-1 flex items-center justify-center min-h-0 relative">
                                 <canvas id="collegeChart" class="w-full h-full max-h-[220px] transition-opacity duration-500 opacity-0"></canvas>
-                            </div>
-                            <!-- Empty State (shown when no data) -->
-                            <div id="collegeChartEmpty" class="hidden flex-1 flex items-center justify-center">
-                                <div class="text-center py-6">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                                        </svg>
+                                <!-- Empty State (shown when no data) -->
+                                <div id="collegeChartEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center py-6">
+                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-gray-600">No college data available</p>
+                                        <p class="text-xs text-gray-400 mt-1">Requests will appear here once submitted</p>
                                     </div>
-                                    <p class="text-sm font-medium text-gray-600">No college data available</p>
-                                    <p class="text-xs text-gray-400 mt-1">Requests will appear here once submitted</p>
                                 </div>
                             </div>
                             </div>
@@ -707,12 +789,12 @@
                                 </div>
 
                 <!-- Requests Table Container -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-full">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <!-- Table (Combined Header and Body) -->
-                    <div class="flex-1">
+                    <div class="flex-1 flex flex-col">
                         @if($filteredRequests->isEmpty())
                             <!-- Empty State (Centered) -->
-                            <div class="min-h-[400px] flex items-center justify-center">
+                            <div class="flex-1 flex items-center justify-center">
                                 <div class="flex flex-col items-center justify-center gap-3 text-center">
                                     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -1542,10 +1624,6 @@ function updateStatsWithData(stats) {
             if (total === 0) {
                 legendElement.innerHTML = `
                     <div class="text-center py-4 text-gray-500">
-                        <div class="flex items-center justify-center mb-2">
-                            <span class="inline-block w-2 h-2 rounded-full bg-gray-400 mr-2"></span>
-                            <span class="text-sm font-medium">No Data Available</span>
-                        </div>
                         <p class="text-xs text-gray-400">No data available</p>
                     </div>
                 `;

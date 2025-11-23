@@ -652,6 +652,40 @@ class SigningController extends Controller
                     'original_document_path' => null,
                 ]);
                 
+                // Log signature activity
+                try {
+                    $roleLabels = [
+                        'user' => 'Applicant',
+                        'center_manager' => 'Research Center Manager',
+                        'college_dean' => 'College Dean',
+                        'deputy_director' => 'Deputy Director',
+                        'rdd_director' => 'RDD Director',
+                    ];
+                    $roleLabel = $roleLabels[$signatoryRole] ?? ucfirst(str_replace('_', ' ', $signatoryRole));
+                    
+                    \App\Models\ActivityLog::create([
+                        'user_id' => $user->id,
+                        'request_id' => $userRequest->id,
+                        'action' => 'signed',
+                        'details' => [
+                            'request_code' => $userRequest->request_code,
+                            'type' => $userRequest->type,
+                            'signatory_role' => $signatoryRole,
+                            'signatory_role_label' => $roleLabel,
+                            'signatory_name' => $signatoryName,
+                            'workflow_state' => $newWorkflowState,
+                            'previous_workflow_state' => $userRequest->getOriginal('workflow_state'),
+                        ],
+                        'created_at' => now(),
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create activity log for signature: ' . $e->getMessage(), [
+                        'request_id' => $userRequest->id,
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
                 DB::commit();
             } catch (\Illuminate\Database\QueryException $dbException) {
                 DB::rollBack();
@@ -675,9 +709,32 @@ class SigningController extends Controller
                 throw $dbException;
             }
             
-            // If workflow is completed (Director signed), notify admins
+            // If workflow is completed (Director signed), notify admins and log completion
             if ($newWorkflowState === 'completed') {
                 $this->notifyAdminsOfCompletedWorkflow($userRequest);
+                
+                // Log workflow completion
+                try {
+                    \App\Models\ActivityLog::create([
+                        'user_id' => $user->id,
+                        'request_id' => $userRequest->id,
+                        'action' => 'workflow_completed',
+                        'details' => [
+                            'request_code' => $userRequest->request_code,
+                            'type' => $userRequest->type,
+                            'final_signatory_role' => $signatoryRole,
+                            'final_signatory_name' => $signatoryName,
+                            'completed_at' => now()->toDateTimeString(),
+                        ],
+                        'created_at' => now(),
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create activity log for workflow completion: ' . $e->getMessage(), [
+                        'request_id' => $userRequest->id,
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             } else {
                 // Notify the next signatory in the workflow
                 $this->notifyNextSignatory($userRequest, $newWorkflowState);

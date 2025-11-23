@@ -71,6 +71,29 @@ class AdminFileController extends Controller
                 'ip_address' => $request->ip()
             ]);
 
+            // Log activity
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => Auth::id(),
+                    'request_id' => $requestId,
+                    'action' => 'file_downloaded',
+                    'details' => [
+                        'request_code' => $requestModel->request_code,
+                        'type' => $requestModel->type,
+                        'file_type' => $type,
+                        'filename' => $actualFilename,
+                        'ip_address' => $request->ip(),
+                    ],
+                    'created_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for file download: ' . $e->getMessage(), [
+                    'request_id' => $requestId,
+                    'admin_id' => Auth::id(),
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return response()->download($fullPath, $actualFilename, [
                 'Content-Type' => $this->getContentType($actualFilename),
                 'Content-Disposition' => 'attachment; filename="' . $actualFilename . '"',

@@ -155,6 +155,8 @@ class SettingsController extends Controller
         Setting::set('aci_publications_count', (string)$validated['aci_publications_count']);
         Setting::set('peer_publications_count', (string)$validated['peer_publications_count']);
 
+        $this->logSettingsUpdate('publication_counts', $validated);
+
         return back()->with('success', 'Publication counters updated.');
     }
     
@@ -172,6 +174,8 @@ class SettingsController extends Controller
         Setting::set('official_rdd_director_name', $validated['official_rdd_director_name']);
         Setting::set('official_rdd_director_title', $validated['official_rdd_director_title']);
         
+        $this->logSettingsUpdate('official_info', $validated);
+        
         return back()->with('success', 'Official information updated.');
     }
     
@@ -182,6 +186,8 @@ class SettingsController extends Controller
         ]);
         
         Setting::set('citations_request_enabled', $validated['citations_request_enabled']);
+        
+        $this->logSettingsUpdate('application_controls', $validated);
         
         return back()->with('success', 'Application controls updated.');
     }
@@ -209,6 +215,8 @@ class SettingsController extends Controller
             }
         }
         Setting::set('calendar_marks', json_encode($marks));
+        
+        $this->logSettingsUpdate('calendar', ['marks_count' => count($marks)]);
         
         return back()->with('success', 'Calendar settings updated.');
     }
@@ -350,6 +358,25 @@ class SettingsController extends Controller
             $emailKey = $request->role . '_email';
             Setting::set($emailKey, $request->email);
 
+            // Log activity
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => Auth::id(),
+                    'request_id' => null,
+                    'action' => 'signatory_account_created',
+                    'details' => [
+                        'account_type' => $request->role,
+                        'account_type_label' => $request->role === 'deputy_director' ? 'Deputy Director' : 'RDD Director',
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                    ],
+                    'created_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for signatory account creation: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Account created successfully!',
@@ -394,12 +421,36 @@ class SettingsController extends Controller
                 ], 404);
             }
 
+            // Store user info before deletion for activity log
+            $deletedUserId = $user->id;
+            $deletedUserName = $user->name;
+            $deletedUserEmail = $user->email;
+
             // Delete the user account
             $user->delete();
 
             // Clear email from settings
             $emailKey = $request->role . '_email';
             Setting::set($emailKey, '');
+
+            // Log activity
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => Auth::id(),
+                    'request_id' => null,
+                    'action' => 'signatory_account_deleted',
+                    'details' => [
+                        'account_type' => $request->role,
+                        'account_type_label' => $request->role === 'deputy_director' ? 'Deputy Director' : 'RDD Director',
+                        'deleted_user_id' => $deletedUserId,
+                        'deleted_user_name' => $deletedUserName,
+                        'deleted_user_email' => $deletedUserEmail,
+                    ],
+                    'created_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create activity log for signatory account deletion: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
@@ -1033,6 +1084,12 @@ class SettingsController extends Controller
         Setting::set('colleges', json_encode($colleges));
         Setting::set('others_indexing_options', json_encode($othersIndexingOptions));
 
+        $this->logSettingsUpdate('form_dropdowns', [
+            'academic_ranks_count' => count($academicRanks),
+            'colleges_count' => count($colleges),
+            'others_indexing_options_count' => count($othersIndexingOptions),
+        ]);
+
         // Return JSON for AJAX requests, otherwise redirect back
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Form dropdown options updated successfully.']);
@@ -1046,6 +1103,23 @@ class SettingsController extends Controller
         $user = Auth::user();
         if (!$user || $user->role !== 'admin') {
             abort(403);
+        }
+    }
+
+    private function logSettingsUpdate(string $category, array $details): void
+    {
+        try {
+            \App\Models\ActivityLog::create([
+                'user_id' => Auth::id(),
+                'request_id' => null,
+                'action' => 'settings_updated',
+                'details' => array_merge([
+                    'category' => $category,
+                ], $details),
+                'created_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create activity log for settings update: ' . $e->getMessage());
         }
     }
 } 

@@ -79,6 +79,25 @@ class AdminUserController extends Controller
             Cache::forget("signatories_college_dean_");
         }
         
+        // Log activity
+        try {
+            \App\Models\ActivityLog::create([
+                'user_id' => Auth::id(),
+                'request_id' => null,
+                'action' => 'user_created',
+                'details' => [
+                    'created_user_id' => $user->id,
+                    'created_user_name' => $user->name,
+                    'created_user_email' => $user->email,
+                    'created_user_role' => $user->role,
+                    'signatory_type' => $user->signatory_type,
+                ],
+                'created_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create activity log for user creation: ' . $e->getMessage());
+        }
+        
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
@@ -112,11 +131,36 @@ class AdminUserController extends Controller
         }
         
         $validated = $request->validate($validationRules);
+        
+        // Track changes for activity log
+        $changes = [];
+        $originalRole = $user->getOriginal('role');
+        $originalName = $user->getOriginal('name');
+        $originalEmail = $user->getOriginal('email');
+        $originalSignatoryType = $user->getOriginal('signatory_type');
+        
         // Set role first so the mutator can check it
         $user->role = $validated['role'];
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->signatory_type = $validated['role'] === 'signatory' ? ($validated['signatory_type'] ?? null) : null;
+        
+        // Track what changed
+        if ($originalRole !== $user->role) {
+            $changes['role'] = ['from' => $originalRole, 'to' => $user->role];
+        }
+        if ($originalName !== $user->name) {
+            $changes['name'] = ['from' => $originalName, 'to' => $user->name];
+        }
+        if ($originalEmail !== $user->email) {
+            $changes['email'] = ['from' => $originalEmail, 'to' => $user->email];
+        }
+        if ($originalSignatoryType !== $user->signatory_type) {
+            $changes['signatory_type'] = ['from' => $originalSignatoryType, 'to' => $user->signatory_type];
+        }
+        if ($request->filled('password')) {
+            $changes['password'] = ['changed' => true];
+        }
         
         // Only update password for non-Google users
         if ($user->auth_provider !== 'google' && !empty($validated['password'])) {
@@ -125,11 +169,29 @@ class AdminUserController extends Controller
         $user->save();
         
         // Clear signatory cache when role changes to/from signatory
-        if ($user->role === 'signatory' || $user->getOriginal('role') === 'signatory') {
+        if ($user->role === 'signatory' || $originalRole === 'signatory') {
             Cache::forget("signatories_faculty_");
             Cache::forget("signatories_dean_");
             Cache::forget("signatories_center_manager_");
             Cache::forget("signatories_college_dean_");
+        }
+        
+        // Log activity
+        try {
+            \App\Models\ActivityLog::create([
+                'user_id' => Auth::id(),
+                'request_id' => null,
+                'action' => 'user_updated',
+                'details' => [
+                    'updated_user_id' => $user->id,
+                    'updated_user_name' => $user->name,
+                    'updated_user_email' => $user->email,
+                    'changes' => $changes,
+                ],
+                'created_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create activity log for user update: ' . $e->getMessage());
         }
         
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
@@ -141,6 +203,13 @@ class AdminUserController extends Controller
         if ($userAuth && $userAuth->id === $user->id) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account.');
         }
+        // Store user info before deletion for activity log
+        $deletedUserId = $user->id;
+        $deletedUserName = $user->name;
+        $deletedUserEmail = $user->email;
+        $deletedUserRole = $user->role;
+        $deletedSignatoryType = $user->signatory_type;
+        
         $wasSignatory = $user->role === 'signatory';
         $user->delete();
         
@@ -150,6 +219,25 @@ class AdminUserController extends Controller
             Cache::forget("signatories_dean_");
             Cache::forget("signatories_center_manager_");
             Cache::forget("signatories_college_dean_");
+        }
+        
+        // Log activity
+        try {
+            \App\Models\ActivityLog::create([
+                'user_id' => Auth::id(),
+                'request_id' => null,
+                'action' => 'user_deleted',
+                'details' => [
+                    'deleted_user_id' => $deletedUserId,
+                    'deleted_user_name' => $deletedUserName,
+                    'deleted_user_email' => $deletedUserEmail,
+                    'deleted_user_role' => $deletedUserRole,
+                    'signatory_type' => $deletedSignatoryType,
+                ],
+                'created_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create activity log for user deletion: ' . $e->getMessage());
         }
         
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
