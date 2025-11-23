@@ -13,12 +13,13 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    libmcrypt-dev \
     fonts-liberation \
     libfontconfig1 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure zip \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip xmlreader xmlwriter
+    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip xmlreader xmlwriter \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
