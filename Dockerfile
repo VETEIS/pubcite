@@ -78,7 +78,9 @@ RUN echo "PHP version: $(php -v | head -1)" && \
     (php -m | grep -q "dom" && echo "✓ dom found" || echo "✗ dom missing") && \
     (php -m | grep -q "xmlreader" && echo "✓ xmlreader found" || echo "✗ xmlreader missing") && \
     (php -m | grep -q "xmlwriter" && echo "✓ xmlwriter found" || echo "✗ xmlwriter missing") && \
-    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 | tail -50
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 | tail -50 && \
+    echo "Verifying autoloader after composer install..." && \
+    php -r "require 'vendor/autoload.php'; echo (class_exists('Illuminate\Foundation\Application') ? '✓ Autoloader OK' : '✗ Autoloader FAILED') . PHP_EOL;"
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
@@ -89,11 +91,17 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
-# Regenerate optimized autoload file and verify it works
-# We need to ensure autoloader is complete before running any artisan commands
-RUN composer dump-autoload --optimize --no-interaction --classmap-authoritative --no-scripts && \
-    php -r "require 'vendor/autoload.php'; echo 'Autoloader verified: ' . class_exists('Illuminate\Foundation\Application') ? 'OK' : 'FAILED';" && \
-    echo "✓ Autoloader generated and verified"
+# After copying app files, regenerate autoloader to include App namespace classes
+# IMPORTANT: composer dump-autoload regenerates the ENTIRE autoloader including vendor
+# The vendor directory from composer install is preserved (not copied due to .dockerignore)
+# We just need to regenerate to include the App namespace from the copied files
+RUN echo "Verifying vendor directory exists..." && \
+    ls -la vendor/ | head -5 && \
+    echo "Regenerating autoloader (this includes vendor + app classes)..." && \
+    composer dump-autoload --optimize --no-interaction --no-scripts && \
+    echo "Verifying autoloader includes Laravel..." && \
+    php -r "require 'vendor/autoload.php'; echo (class_exists('Illuminate\Foundation\Application') ? '✓ Laravel classes found' : '✗ Laravel classes missing') . PHP_EOL;" && \
+    echo "✓ Autoloader ready"
 
 # Build assets with verbose output
 RUN echo "Building Vite assets..." && npm run build

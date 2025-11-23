@@ -37,17 +37,61 @@ fi
 
 print_banner "🔧  LARAVEL BOOTSTRAP VERIFICATION"
 echo "Verifying Laravel can bootstrap before database checks..."
-if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
-    echo "⚠️  Laravel cannot bootstrap - regenerating autoloader..."
-    composer dump-autoload --optimize --no-interaction --no-scripts
-    if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
-        echo "❌ Laravel still cannot bootstrap after regenerating autoloader"
-        echo "   This is a critical error - check vendor directory and Laravel installation"
+
+# First check if vendor/autoload.php exists
+if [ ! -f "vendor/autoload.php" ]; then
+    echo "❌ vendor/autoload.php not found - critical error"
+    echo "   This means composer install didn't complete properly"
+    exit 1
+fi
+
+# Check if Laravel framework is installed
+if [ ! -d "vendor/laravel/framework" ]; then
+    echo "❌ Laravel framework not found in vendor directory"
+    echo "   This means composer install didn't complete properly"
+    echo "   Attempting to reinstall dependencies..."
+    composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+fi
+
+# Try to bootstrap Laravel
+if php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
+    echo "✅ Laravel bootstrap verified"
+else
+    echo "⚠️  Laravel cannot bootstrap - investigating..."
+    
+    # Check if Application class file exists
+    if [ ! -f "vendor/laravel/framework/src/Illuminate/Foundation/Application.php" ]; then
+        echo "❌ Application.php not found - vendor directory is incomplete"
+        echo "   Reinstalling Laravel framework..."
+        composer require laravel/framework --no-interaction --no-scripts || true
+        composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+    fi
+    
+    # Check if vendor directory exists and is complete
+    echo "   Checking vendor directory..."
+    if [ ! -d "vendor/laravel/framework" ]; then
+        echo "   ❌ vendor/laravel/framework not found - reinstalling dependencies..."
+        composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+    else
+        echo "   ✓ vendor/laravel/framework exists"
+        echo "   Checking vendor/laravel/framework size..."
+        du -sh vendor/laravel/framework 2>/dev/null || echo "   Could not check size"
+    fi
+    
+    # Try regenerating autoloader (this should include vendor classes)
+    echo "   Regenerating autoloader (this should include all vendor classes)..."
+    composer dump-autoload --optimize --no-interaction --no-scripts 2>&1 | grep -E "Generated|classes" || echo "   Autoloader regenerated"
+    
+    # Try again
+    if php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
+        echo "✅ Laravel bootstrap verified after autoloader regeneration"
+    else
+        echo "❌ Laravel still cannot bootstrap"
+        echo "   Debug: Testing if Application class can be loaded..."
+        php -r "require 'vendor/autoload.php'; var_dump(class_exists('Illuminate\Foundation\Application'));" 2>&1
+        echo "   This is a critical error - deployment cannot continue"
         exit 1
     fi
-    echo "✅ Laravel bootstrap verified after autoloader regeneration"
-else
-    echo "✅ Laravel bootstrap verified"
 fi
 
 print_banner "🗄️   DATABASE CONNECTION CHECK"
