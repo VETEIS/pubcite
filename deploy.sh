@@ -36,39 +36,45 @@ max_attempts=30
 attempt=1
 
 while [ $attempt -le $max_attempts ]; do
-    # Try a simpler connection test using php directly
-    if php -r "
-        try {
-            require 'vendor/autoload.php';
-            \$app = require_once 'bootstrap/app.php';
-            \$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-            \$pdo = DB::connection()->getPdo();
-            echo 'connected';
-            exit(0);
-        } catch (Exception \$e) {
-            exit(1);
-        }
-    " > /dev/null 2>&1; then
+    # Use artisan db:show or a simple connection test
+    if php artisan db:show > /dev/null 2>&1; then
         echo "✅ Database connection established"
+        break
+    elif php artisan migrate:status > /dev/null 2>&1; then
+        echo "✅ Database connection established (via migrate:status)"
         break
     else
         echo "Attempt $attempt/$max_attempts: Database not ready yet..."
         if [ $attempt -eq 5 ] || [ $attempt -eq 15 ] || [ $attempt -eq 25 ]; then
-            echo "   Debug: Checking database configuration..."
-            php -r "
-                try {
-                    require 'vendor/autoload.php';
-                    \$app = require_once 'bootstrap/app.php';
-                    \$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-                    \$config = config('database.connections.' . config('database.default'));
-                    echo '   DB Config: ' . config('database.default') . PHP_EOL;
-                    echo '   Host: ' . (\$config['host'] ?? 'not set') . PHP_EOL;
-                    echo '   Port: ' . (\$config['port'] ?? 'not set') . PHP_EOL;
-                    echo '   Database: ' . (\$config['database'] ?? 'not set') . PHP_EOL;
-                } catch (Exception \$e) {
-                    echo '   Error: ' . \$e->getMessage() . PHP_EOL;
-                }
-            " 2>&1 || echo "   Could not load Laravel configuration"
+            echo "   Debug: Testing basic database connectivity..."
+            # Test basic PostgreSQL connectivity without Laravel
+            if command -v psql >/dev/null 2>&1; then
+                PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME}" -d "${DB_DATABASE}" -c "SELECT 1;" > /dev/null 2>&1 && \
+                    echo "   ✓ Direct PostgreSQL connection successful" || \
+                    echo "   ✗ Direct PostgreSQL connection failed"
+            else
+                # Use PHP PDO directly without Laravel
+                php -r "
+                    try {
+                        \$host = getenv('DB_HOST');
+                        \$port = getenv('DB_PORT') ?: '5432';
+                        \$db = getenv('DB_DATABASE');
+                        \$user = getenv('DB_USERNAME');
+                        \$pass = getenv('DB_PASSWORD');
+                        if (\$host && \$db && \$user) {
+                            \$dsn = \"pgsql:host=\$host;port=\$port;dbname=\$db\";
+                            \$pdo = new PDO(\$dsn, \$user, \$pass);
+                            \$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                            \$pdo->query('SELECT 1');
+                            echo '   ✓ Direct PDO connection successful' . PHP_EOL;
+                        } else {
+                            echo '   ✗ Database credentials incomplete' . PHP_EOL;
+                        }
+                    } catch (Exception \$e) {
+                        echo '   ✗ Connection failed: ' . \$e->getMessage() . PHP_EOL;
+                    }
+                " 2>&1 || echo "   Could not test database connection"
+            fi
         fi
         sleep 2
         attempt=$((attempt + 1))
@@ -76,8 +82,8 @@ while [ $attempt -le $max_attempts ]; do
 done
 
 if [ $attempt -gt $max_attempts ]; then
-    echo "❌ Failed to connect to database after $max_attempts attempts"
-    echo "⚠️  Continuing anyway - database may not be available yet"
+    echo "⚠️  Could not verify database connection after $max_attempts attempts"
+    echo "   Continuing anyway - database may not be available yet"
     echo "   The application will retry database connections on first request"
     # Don't exit - allow the app to start and handle DB connection errors gracefully
 fi
