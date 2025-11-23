@@ -3,10 +3,22 @@
 # Exit on any error
 set -e
 
-echo "Starting deployment process..."
+# ASCII Art Banner Function
+print_banner() {
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║                                                              ║"
+    echo "║  $1"
+    echo "║                                                              ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo ""
+}
+
+print_banner "🚀  STARTING DEPLOYMENT PROCESS"
 
 # Check if we're in a production environment
 if [ "$APP_ENV" = "production" ]; then
+    print_banner "📦  BUILDING PRODUCTION ASSETS"
     echo "Production environment detected"
     
     # Build Vite assets for production
@@ -23,20 +35,8 @@ if [ "$APP_ENV" = "production" ]; then
     fi
 fi
 
-# Wait for database to be ready
-echo "Waiting for database connection..."
-echo "Database config check:"
-echo "  DB_CONNECTION: ${DB_CONNECTION:-not set}"
-echo "  DB_HOST: ${DB_HOST:-not set}"
-echo "  DB_PORT: ${DB_PORT:-not set}"
-echo "  DB_DATABASE: ${DB_DATABASE:-not set}"
-echo "  DB_USERNAME: ${DB_USERNAME:-not set}"
-
-max_attempts=30
-attempt=1
-
-# First, verify Laravel can bootstrap before testing database
-echo "Verifying Laravel can bootstrap..."
+print_banner "🔧  LARAVEL BOOTSTRAP VERIFICATION"
+echo "Verifying Laravel can bootstrap before database checks..."
 if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php';" > /dev/null 2>&1; then
     echo "⚠️  Laravel cannot bootstrap - regenerating autoloader..."
     composer dump-autoload --optimize --no-interaction --no-scripts
@@ -50,8 +50,20 @@ else
     echo "✅ Laravel bootstrap verified"
 fi
 
+print_banner "🗄️   DATABASE CONNECTION CHECK"
+echo "Waiting for database connection..."
+echo "Database config check:"
+echo "  DB_CONNECTION: ${DB_CONNECTION:-not set}"
+echo "  DB_HOST: ${DB_HOST:-not set}"
+echo "  DB_PORT: ${DB_PORT:-not set}"
+echo "  DB_DATABASE: ${DB_DATABASE:-not set}"
+echo "  DB_USERNAME: ${DB_USERNAME:-not set}"
+
+max_attempts=30
+attempt=1
+
 while [ $attempt -le $max_attempts ]; do
-    # Now test database connection using artisan
+    # Test database connection using artisan (Laravel is now bootstrapped)
     if php artisan db:show > /dev/null 2>&1; then
         echo "✅ Database connection established"
         break
@@ -103,27 +115,14 @@ if [ $attempt -gt $max_attempts ]; then
     # Don't exit - allow the app to start and handle DB connection errors gracefully
 fi
 
-# Verify Laravel can bootstrap before running artisan commands
-echo "Verifying Laravel bootstrap..."
-if php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; echo 'OK';" 2>/dev/null; then
-    echo "✅ Laravel bootstrap verified"
-else
-    echo "⚠️  Laravel bootstrap check failed - regenerating autoloader..."
-    composer dump-autoload --optimize --no-interaction --no-scripts
-    if ! php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; echo 'OK';" 2>/dev/null; then
-        echo "❌ Laravel still cannot bootstrap - check vendor directory and autoloader"
-        exit 1
-    fi
-fi
-
-# Clear all caches first (only if Laravel can bootstrap)
+print_banner "🧹  CLEARING APPLICATION CACHES"
 echo "Clearing application caches..."
 php artisan cache:clear 2>&1 || echo "⚠️  cache:clear failed (non-critical)"
 php artisan config:clear 2>&1 || echo "⚠️  config:clear failed (non-critical)"
 php artisan route:clear 2>&1 || echo "⚠️  route:clear failed (non-critical)"
 php artisan view:clear 2>&1 || echo "⚠️  view:clear failed (non-critical)"
 
-# Run database migrations (only if database is available)
+print_banner "📊  DATABASE MIGRATIONS"
 echo "Running database migrations..."
 if php artisan migrate --force 2>&1; then
     echo "✅ Database migrations completed successfully"
@@ -135,22 +134,23 @@ fi
 
 # Seed the database if needed
 if [ "$SEED_DATABASE" = "true" ]; then
+    print_banner "🌱  DATABASE SEEDING"
     echo "Seeding database..."
     php artisan db:seed --force
     echo "✅ Database seeded successfully"
 fi
 
-# Optimize the application
+print_banner "⚡  OPTIMIZING APPLICATION"
 echo "Optimizing application..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Create storage link for public files
+print_banner "🔗  CREATING STORAGE LINKS"
 echo "Creating storage link..."
 php artisan storage:link
 
-# Verify LibreOffice installation
+print_banner "📄  VERIFYING LIBREOFFICE"
 echo "Verifying LibreOffice installation..."
 if command -v libreoffice >/dev/null 2>&1; then
     echo "✅ LibreOffice found: $(libreoffice --version 2>&1 | head -n1)"
@@ -162,14 +162,15 @@ else
     which -a libreoffice soffice 2>/dev/null || echo "No LibreOffice commands found"
 fi
 
-# Set proper permissions
+print_banner "🔐  SETTING FILE PERMISSIONS"
 echo "Setting file permissions..."
 chmod -R 755 storage bootstrap/cache public/build
 chown -R www-data:www-data storage bootstrap/cache
 
-echo "✅ Deployment completed successfully!"
+print_banner "✅  DEPLOYMENT COMPLETED SUCCESSFULLY"
 
 # Start the queue worker in the background
+print_banner "🔄  STARTING QUEUE WORKER"
 echo "Starting queue worker..."
 # Create logs directory if it doesn't exist
 mkdir -p storage/logs
@@ -188,6 +189,6 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# Start the web server
+print_banner "🌐  STARTING WEB SERVER"
 echo "Starting web server..."
 php -S 0.0.0.0:10000 -t public 
