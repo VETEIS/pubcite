@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure zip \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath gd zip xmlreader xmlwriter
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
@@ -51,7 +51,8 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies without running scripts
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+# Increase memory limit for composer install
+RUN COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
