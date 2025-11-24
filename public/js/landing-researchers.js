@@ -109,8 +109,8 @@ class LandingResearchers {
     
     createResearcherCard(researcher, index) {
         const card = document.createElement('div');
-        // Fixed width (w-64 = 256px) - height is controlled by CSS min-height
-        card.className = 'flex-shrink-0 w-64 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 overflow-hidden researcher-card';
+        // Compact width (w-52 = 208px) - more compact card design
+        card.className = 'flex-shrink-0 w-52 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 hover:border-maroon-300 hover:-translate-y-1 overflow-hidden researcher-card';
         card.setAttribute('data-name', researcher.name || '');
         card.setAttribute('data-tags', (researcher.research_areas || []).join(' '));
         
@@ -118,38 +118,41 @@ class LandingResearchers {
         const bgClasses = this.getBackgroundClasses(researcher.background_color || 'maroon');
         const statusBadgeClasses = this.getStatusBadgeClasses(researcher.status_badge || 'Active');
         
-        // Create research areas HTML
-        const researchAreasHtml = this.createResearchAreasHtml(researcher.research_areas || []);
+        // Create research areas HTML (show only first one with counter if more exist)
+        const allResearchAreas = researcher.research_areas || [];
+        const researchAreasHtml = this.createResearchAreaCardHtml(allResearchAreas);
         
-        // Create top area (full-width image or fallback background with icon)
-        // Fixed height container (192px) to ensure consistent card sizing
+        // Create top area (compact image or fallback background with icon)
+        // Reduced height (120px) for more compact design
         const topAreaHtml = researcher.photo_path
-            ? `<div class="h-48 w-full overflow-hidden bg-gray-100 flex-shrink-0">
+            ? `<div class="h-[120px] w-full overflow-hidden bg-gray-100 flex-shrink-0">
                     <img src="/storage/${researcher.photo_path}" alt="${this.escapeHtml(researcher.name || '')}" class="w-full h-full object-cover object-center">
                </div>`
-            : `<div class="h-48 ${bgClasses.background} w-full flex items-center justify-center flex-shrink-0">
-                    <svg class="w-16 h-16 ${bgClasses.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            : `<div class="h-[120px] ${bgClasses.background} w-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-12 h-12 ${bgClasses.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                </div>`;
         
+        // Truncate bio properly with CSS
+        const bio = researcher.bio || '';
+        const truncatedBio = bio.length > 100 ? bio.substring(0, 100) + '...' : bio;
+        
         card.innerHTML = `
             <div class="relative">
                 ${topAreaHtml}
-                <div class="absolute top-4 right-4">
-                    <span class="${statusBadgeClasses} text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">${this.escapeHtml(researcher.status_badge || 'Active')}</span>
+                <div class="absolute top-2 right-2">
+                    <span class="${statusBadgeClasses} text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">${this.escapeHtml(researcher.status_badge || 'Active')}</span>
                 </div>
             </div>
-            <div class="p-6 flex flex-col flex-1">
-                <div class="flex-1">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">${this.escapeHtml(researcher.name || '')}</h3>
-                    <p class="text-sm text-gray-600 mb-3">${this.escapeHtml(researcher.title || '')}</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        ${researchAreasHtml}
-                    </div>
-                    <p class="text-sm text-gray-600 leading-relaxed line-clamp-3 overflow-hidden">${this.escapeHtml(researcher.bio || '')}</p>
+            <div class="p-4 flex flex-col flex-1">
+                <div class="flex-1 min-h-0">
+                    <h3 class="text-base font-semibold text-gray-900 mb-1 line-clamp-1" title="${this.escapeHtml((researcher.prefix ? researcher.prefix + ' ' : '') + (researcher.name || ''))}">${this.escapeHtml(this.formatCardName(researcher))}</h3>
+                    <p class="text-xs text-gray-500 mb-2 line-clamp-1">${this.escapeHtml(researcher.title || '')}</p>
+                    ${researchAreasHtml ? `<div class="flex flex-wrap gap-1.5 mb-3">${researchAreasHtml}</div>` : ''}
+                    <p class="text-xs text-gray-600 leading-relaxed line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(truncatedBio)}</p>
                 </div>
-                <button type="button" onclick="openResearcherModal(this)" data-researcher="${JSON.stringify(researcher).replace(/"/g, '&quot;')}" class="inline-flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-semibold rounded-lg bg-maroon-600 text-white hover:bg-maroon-700 transition">View Profile</button>
+                <button type="button" onclick="openResearcherModal(this)" data-researcher="${JSON.stringify(researcher).replace(/"/g, '&quot;')}" class="inline-flex items-center justify-center w-full px-3 py-2 mt-3 text-xs font-medium rounded-md bg-maroon-600 text-white hover:bg-maroon-700 transition-colors">View Profile</button>
             </div>
         `;
         
@@ -211,6 +214,43 @@ class LandingResearchers {
         return statusMap[status] || 'bg-green-500';
     }
     
+    // Create research area HTML for card display (first one only with counter)
+    createResearchAreaCardHtml(researchAreas) {
+        if (!Array.isArray(researchAreas) || researchAreas.length === 0) {
+            return '';
+        }
+        
+        const firstArea = researchAreas[0];
+        const remainingCount = researchAreas.length - 1;
+        
+        const colorClasses = [
+            'bg-blue-100 text-blue-800',
+            'bg-green-100 text-green-800',
+            'bg-purple-100 text-purple-800',
+            'bg-orange-100 text-orange-800',
+            'bg-red-100 text-red-800',
+            'bg-teal-100 text-teal-800',
+            'bg-indigo-100 text-indigo-800',
+            'bg-pink-100 text-pink-800',
+            'bg-yellow-100 text-yellow-800',
+            'bg-cyan-100 text-cyan-800',
+            'bg-emerald-100 text-emerald-800',
+            'bg-violet-100 text-violet-800'
+        ];
+        
+        const colorClass = colorClasses[0];
+        const displayArea = firstArea.length > 20 ? firstArea.substring(0, 20) + '...' : firstArea;
+        
+        let html = `<span class="${colorClass} text-xs px-1.5 py-0.5 rounded-full" title="${this.escapeHtml(firstArea)}">${this.escapeHtml(displayArea)}</span>`;
+        
+        // Add counter badge if there are more research areas
+        if (remainingCount > 0) {
+            html += ` <span class="bg-gray-100 text-gray-700 text-xs px-1.5 py-0.5 rounded-full font-medium">(+${remainingCount})</span>`;
+        }
+        
+        return html;
+    }
+    
     createResearchAreasHtml(researchAreas) {
         if (!Array.isArray(researchAreas) || researchAreas.length === 0) {
             return '';
@@ -233,8 +273,144 @@ class LandingResearchers {
         
         return researchAreas.map((area, index) => {
             const colorClass = colorClasses[index % colorClasses.length];
-            return `<span class="${colorClass} text-xs px-2 py-1 rounded-full">${this.escapeHtml(area)}</span>`;
+            // Truncate long research area names
+            const displayArea = area.length > 15 ? area.substring(0, 15) + '...' : area;
+            return `<span class="${colorClass} text-xs px-1.5 py-0.5 rounded-full" title="${this.escapeHtml(area)}">${this.escapeHtml(displayArea)}</span>`;
         }).join('');
+    }
+    
+    // Format name for landing page cards: prefix + surname only
+    formatCardName(researcher) {
+        const prefix = researcher.prefix ? researcher.prefix.trim() + ' ' : '';
+        const name = researcher.name || '';
+        
+        if (!name) {
+            return '';
+        }
+        
+        // Split name into parts
+        const nameParts = name.trim().split(/\s+/).filter(part => part.length > 0);
+        
+        if (nameParts.length === 0) {
+            return '';
+        }
+        
+        // Get surname (last name)
+        const surname = nameParts[nameParts.length - 1];
+        
+        // Return prefix + surname
+        return prefix + surname;
+    }
+    
+    formatDisplayName(researcher, maxLength = 30) {
+        const prefix = researcher.prefix ? researcher.prefix.trim() + ' ' : '';
+        const name = researcher.name || '';
+        
+        if (!name) {
+            return '';
+        }
+        
+        // Split name into parts
+        const nameParts = name.trim().split(/\s+/).filter(part => part.length > 0);
+        
+        if (nameParts.length === 0) {
+            return '';
+        }
+        
+        // If only one word, return prefix + name
+        if (nameParts.length === 1) {
+            const result = prefix + nameParts[0];
+            return result.length <= maxLength ? result : result.substring(0, maxLength - 3) + '...';
+        }
+        
+        // Get first name, middle names, and last name
+        const firstName = nameParts[0];
+        const lastName = nameParts[nameParts.length - 1];
+        const middleParts = nameParts.slice(1, -1);
+        
+        // Build middle initial(s) - take first character of each middle name
+        let middleInitials = '';
+        if (middleParts.length > 0) {
+            middleInitials = ' ' + middleParts.map(part => {
+                // If part already ends with a period (like "T."), keep it as is
+                if (part.endsWith('.')) {
+                    return part;
+                }
+                // Otherwise, take first character and add period
+                return part.charAt(0).toUpperCase() + '.';
+            }).join(' ');
+        }
+        
+        // Build formatted name: prefix + first name + middle initial(s) + last name
+        const formattedName = `${prefix}${firstName}${middleInitials} ${lastName}`;
+        
+        // If it fits, return it
+        if (formattedName.length <= maxLength) {
+            return formattedName;
+        }
+        
+        // If too long, try without middle initials
+        const withoutMiddle = `${prefix}${firstName} ${lastName}`;
+        if (withoutMiddle.length <= maxLength) {
+            return withoutMiddle;
+        }
+        
+        // If still too long, truncate first name
+        const availableForFirst = maxLength - prefix.length - lastName.length - 1; // 1 for space
+        if (availableForFirst > 0) {
+            return `${prefix}${firstName.substring(0, availableForFirst)} ${lastName}`;
+        }
+        
+        // If even last name is too long, truncate it
+        const availableForLast = maxLength - prefix.length - 3; // 3 for "..."
+        if (availableForLast > 0) {
+            return prefix + lastName.substring(0, availableForLast) + '...';
+        }
+        
+        // Fallback
+        return prefix || name.substring(0, maxLength - 3) + '...';
+    }
+    
+    truncateName(name, maxLength = 20) {
+        if (!name || typeof name !== 'string') {
+            return '';
+        }
+        
+        const trimmed = name.trim();
+        if (trimmed.length <= maxLength) {
+            return trimmed;
+        }
+        
+        const parts = trimmed.split(/\s+/);
+        
+        // If only one word, truncate normally
+        if (parts.length === 1) {
+            return trimmed.substring(0, maxLength - 3) + '...';
+        }
+        
+        // Get first name and last name
+        const firstName = parts[0];
+        const lastName = parts[parts.length - 1];
+        
+        // If first + last name fits, use that
+        const firstLast = `${firstName} ${lastName}`;
+        if (firstLast.length <= maxLength) {
+            // If there are middle names, add an ellipsis
+            if (parts.length > 2) {
+                return `${firstName}...${lastName}`;
+            }
+            return firstLast;
+        }
+        
+        // If first + last is too long, truncate the first name
+        const availableForFirstName = maxLength - lastName.length - 4; // 4 for "... "
+        if (availableForFirstName > 0) {
+            const truncatedFirst = firstName.substring(0, availableForFirstName);
+            return `${truncatedFirst}...${lastName}`;
+        }
+        
+        // If even last name is too long, truncate it
+        return lastName.substring(0, maxLength - 3) + '...';
     }
     
     escapeHtml(text) {
@@ -261,7 +437,13 @@ window.openResearcherModal = function(button) {
     const modal = document.getElementById('researcherProfileModal');
     const modalPhoto = document.getElementById('modal-researcher-photo');
     const modalName = document.getElementById('modal-researcher-name');
-    const emailBtn = document.getElementById('modal-email-btn');
+    const modalStatus = document.getElementById('modal-researcher-status');
+    const modalEmailHeader = document.getElementById('modal-researcher-email-header');
+    const modalEmailText = document.getElementById('modal-researcher-email-text');
+    const modalBio = document.getElementById('modal-researcher-bio');
+    const modalBioSection = document.getElementById('modal-researcher-bio-section');
+    const modalNameStatusSeparator = document.getElementById('modal-researcher-separator');
+    const modalAreasHeader = document.getElementById('modal-researcher-areas-header');
     const scopusBtn = document.getElementById('modal-scopus-btn');
     const orcidBtn = document.getElementById('modal-orcid-btn');
     const wosBtn = document.getElementById('modal-wos-btn');
@@ -269,79 +451,183 @@ window.openResearcherModal = function(button) {
     
     if (!modal) return;
     
-    // Set photo
+    // Helper function to escape HTML
+    const escapeHtml = (text) => {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    };
+    
+    // Helper function to format name with prefix
+    const formatFullName = (prefix, name) => {
+        if (!name) return '';
+        return prefix ? `${prefix} ${name}` : name;
+    };
+    
+    // Set photo (smaller size for compact header)
     if (researcherData.photo_path) {
-        modalPhoto.innerHTML = `<img src="/storage/${researcherData.photo_path}" alt="${researcherData.name || ''}" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">`;
+        modalPhoto.innerHTML = `<img src="/storage/${researcherData.photo_path}" alt="${escapeHtml(researcherData.name || '')}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-white shadow-md">`;
     } else {
-        modalPhoto.innerHTML = `<div class="w-32 h-32 rounded-full border-4 border-gray-200 bg-gray-200 flex items-center justify-center">
-            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        modalPhoto.innerHTML = `<div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-white bg-white/20 flex items-center justify-center shadow-md">
+            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 0 18 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
         </div>`;
     }
     
-    // Set name
-    modalName.textContent = researcherData.name || '';
+    // Set name with prefix
+    const fullName = formatFullName(researcherData.prefix || '', researcherData.name || '');
+    modalName.textContent = fullName;
     
-    // Set button links (hide if no link or empty string)
-    // Helper function to check if a link is valid (not null, undefined, or empty string)
-    const hasValidLink = (link) => {
-        return link && typeof link === 'string' && link.trim().length > 0;
-    };
+    // Set status badge
+    let hasBadge = false;
+    if (researcherData.status_badge) {
+        const statusBadgeClasses = {
+            'Active': 'bg-green-500',
+            'Research': 'bg-blue-500',
+            'Innovation': 'bg-purple-500',
+            'Leadership': 'bg-orange-500',
+            'Collaboration': 'bg-teal-500',
+            'Excellence': 'bg-rose-500'
+        };
+        const badgeClass = statusBadgeClasses[researcherData.status_badge] || 'bg-green-500';
+        modalStatus.className = `${badgeClass} px-2 py-0.5 text-xs font-semibold text-white rounded-full`;
+        modalStatus.textContent = researcherData.status_badge;
+        modalStatus.classList.remove('hidden');
+        hasBadge = true;
+    } else {
+        modalStatus.classList.add('hidden');
+    }
     
-    // Helper function to check if an email is valid
+    // Set email in header
     const isValidEmail = (email) => {
         if (!email || typeof email !== 'string') return false;
         const trimmed = email.trim();
         if (trimmed.length === 0) return false;
-        // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(trimmed);
     };
     
-    // Set email button (first button, uses profile_link field which now stores email)
     if (isValidEmail(researcherData.profile_link)) {
-        emailBtn.href = `mailto:${researcherData.profile_link.trim()}`;
-        emailBtn.classList.remove('hidden');
+        modalEmailHeader.href = `mailto:${researcherData.profile_link.trim()}`;
+        modalEmailText.textContent = researcherData.profile_link.trim();
+        modalEmailHeader.classList.remove('opacity-50', 'cursor-not-allowed');
+        modalEmailHeader.onclick = null;
     } else {
-        emailBtn.classList.add('hidden');
+        modalEmailHeader.href = '#';
+        modalEmailText.textContent = 'No email available';
+        modalEmailHeader.classList.add('opacity-50', 'cursor-not-allowed');
+        modalEmailHeader.onclick = (e) => e.preventDefault();
     }
     
-    if (hasValidLink(researcherData.scopus_link)) {
-        scopusBtn.href = researcherData.scopus_link.trim();
-        scopusBtn.target = '_blank';
-        scopusBtn.classList.remove('hidden');
+    // Set biography
+    if (researcherData.bio && researcherData.bio.trim()) {
+        modalBio.textContent = researcherData.bio;
+        modalBioSection.classList.remove('hidden');
     } else {
-        scopusBtn.classList.add('hidden');
+        modalBioSection.classList.add('hidden');
+    }
+    
+    // Set research areas in header
+    const researchAreas = Array.isArray(researcherData.research_areas) ? researcherData.research_areas : [];
+    if (researchAreas.length > 0) {
+        modalAreasHeader.innerHTML = researchAreas.map((area) => {
+            return `<span class="text-xs text-white/90 px-2 py-0.5 bg-white/10 rounded border border-white/20">${escapeHtml(area)}</span>`;
+        }).join('');
+    } else {
+        modalAreasHeader.innerHTML = '';
+    }
+    
+    // Show separator if there's a badge or research areas
+    if (hasBadge || researchAreas.length > 0) {
+        modalNameStatusSeparator.classList.remove('hidden');
+    } else {
+        modalNameStatusSeparator.classList.add('hidden');
+    }
+    
+    // Helper function to check if a link is valid
+    const hasValidLink = (link) => {
+        return link && typeof link === 'string' && link.trim().length > 0;
+    };
+    
+    // Helper function to set button state
+    const setButtonState = (button, isValid, link) => {
+        const img = button.querySelector('img');
+        if (isValid && link) {
+            button.href = link;
+            button.removeAttribute('disabled');
+            button.onclick = null;
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
+            button.style.filter = 'none';
+            if (img) img.style.filter = 'none';
+        } else {
+            button.href = '#';
+            button.setAttribute('disabled', 'disabled');
+            button.onclick = (e) => e.preventDefault();
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.style.filter = 'grayscale(100%)';
+            if (img) img.style.filter = 'grayscale(100%)';
+        }
+    };
+    
+    // Set link buttons - always show, disable if no valid link
+    if (hasValidLink(researcherData.scopus_link)) {
+        scopusBtn.target = '_blank';
+        setButtonState(scopusBtn, true, researcherData.scopus_link.trim());
+    } else {
+        scopusBtn.removeAttribute('target');
+        setButtonState(scopusBtn, false);
     }
     
     if (hasValidLink(researcherData.orcid_link)) {
-        orcidBtn.href = researcherData.orcid_link.trim();
         orcidBtn.target = '_blank';
-        orcidBtn.classList.remove('hidden');
+        setButtonState(orcidBtn, true, researcherData.orcid_link.trim());
     } else {
-        orcidBtn.classList.add('hidden');
+        orcidBtn.removeAttribute('target');
+        setButtonState(orcidBtn, false);
     }
     
     if (hasValidLink(researcherData.wos_link)) {
-        wosBtn.href = researcherData.wos_link.trim();
         wosBtn.target = '_blank';
-        wosBtn.classList.remove('hidden');
+        setButtonState(wosBtn, true, researcherData.wos_link.trim());
     } else {
-        wosBtn.classList.add('hidden');
+        wosBtn.removeAttribute('target');
+        setButtonState(wosBtn, false);
     }
     
     if (hasValidLink(researcherData.google_scholar_link)) {
-        googleScholarBtn.href = researcherData.google_scholar_link.trim();
         googleScholarBtn.target = '_blank';
-        googleScholarBtn.classList.remove('hidden');
+        setButtonState(googleScholarBtn, true, researcherData.google_scholar_link.trim());
     } else {
-        googleScholarBtn.classList.add('hidden');
+        googleScholarBtn.removeAttribute('target');
+        setButtonState(googleScholarBtn, false);
+    }
+    
+    // Save current scroll position BEFORE any DOM changes
+    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Hide scroll hint if it exists
+    const scrollHint = document.getElementById('scrollHint');
+    if (scrollHint) {
+        scrollHint.classList.remove('show');
     }
     
     // Show modal
     modal.classList.remove('hidden');
+    
+    // Prevent body scroll using fixed positioning
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
+    
+    // Prevent interaction with page behind modal
+    document.body.style.pointerEvents = 'none';
+    // Ensure modal backdrop and content remain interactive
+    modal.style.pointerEvents = 'auto';
+    
+    // Store scroll position for restoration
+    modal.dataset.scrollY = scrollY;
 };
 
 // Close modal function
@@ -349,7 +635,39 @@ window.closeResearcherModal = function() {
     const modal = document.getElementById('researcherProfileModal');
     if (modal) {
         modal.classList.add('hidden');
+        
+        // Get stored scroll position
+        const scrollY = parseInt(modal.dataset.scrollY || '0', 10);
+        
+        // Restore body styles first
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
         document.body.style.overflow = '';
+        
+        // Restore interaction
+        document.body.style.pointerEvents = '';
+        modal.style.pointerEvents = '';
+        
+        // Restore scroll position immediately without smooth scrolling
+        // Use requestAnimationFrame to ensure DOM is updated first
+        requestAnimationFrame(() => {
+            // Temporarily disable smooth scrolling
+            const html = document.documentElement;
+            const originalScrollBehavior = html.style.scrollBehavior;
+            html.style.scrollBehavior = 'auto';
+            
+            // Restore scroll position
+            window.scrollTo(0, scrollY);
+            
+            // Re-enable smooth scrolling after a brief delay
+            requestAnimationFrame(() => {
+                html.style.scrollBehavior = originalScrollBehavior;
+            });
+        });
+        
+        // Clean up
+        delete modal.dataset.scrollY;
     }
 };
 
@@ -375,3 +693,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Make it globally available for Turbo
 window.LandingResearchers = LandingResearchers;
+

@@ -240,16 +240,17 @@
         
         .researcher-card {
             margin: 0.5rem;
-            /* Ensure consistent card sizing */
-            width: 16rem; /* 256px - matches w-64 */
-            min-height: 480px;
+            /* Compact card sizing */
+            width: 13rem; /* 208px - matches w-52 */
+            min-height: 320px;
+            max-height: 360px;
             display: flex;
             flex-direction: column;
         }
         
         /* Ensure image container has fixed height */
         .researcher-card > div:first-child {
-            height: 192px; /* h-48 = 12rem = 192px */
+            height: 120px; /* h-30 = 7.5rem = 120px */
             flex-shrink: 0;
             overflow: hidden;
         }
@@ -259,6 +260,23 @@
             height: 100%;
             object-fit: cover;
             object-position: center;
+        }
+        
+        /* Ensure proper text truncation */
+        .researcher-card .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .researcher-card .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
 
@@ -1901,6 +1919,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToTop = document.getElementById('backToTop');
     const scrollHint = document.getElementById('scrollHint');
     const onScroll = () => {
+        // Don't update scroll indicators if modal is open
+        const modal = document.getElementById('researcherProfileModal');
+        if (modal && !modal.classList.contains('hidden')) {
+            return;
+        }
+        
         if (window.scrollY > 300) {
             backToTop.classList.add('show');
         } else {
@@ -2019,87 +2043,93 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="{{ asset('js/landing-researchers.js') }}"></script>
 
 <!-- Researcher Profile Modal -->
-<div id="researcherProfileModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm">
-    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
-        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
-            <!-- Close button -->
-            <button onclick="closeResearcherModal()" class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            
-            <!-- Modal content -->
-            <div class="p-8 pt-10">
-                <!-- Profile picture -->
-                <div id="modal-researcher-photo" class="flex justify-center mb-6">
+<div id="researcherProfileModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 hidden backdrop-blur-sm flex items-center justify-center p-4" style="overflow-y: auto;">
+    <div class="relative w-full max-w-3xl max-h-[85vh] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+        <!-- Modal Header with Gradient Background -->
+        <div class="bg-gradient-to-r from-maroon-600 to-red-600 px-6 py-4 sm:px-8 sm:py-5 flex-shrink-0">
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <!-- Profile Picture -->
+                <div id="modal-researcher-photo" class="flex-shrink-0">
                     <!-- Photo will be inserted here by JavaScript -->
                 </div>
                 
-                <!-- Full name -->
-                <h2 id="modal-researcher-name" class="text-2xl font-bold text-gray-900 mb-8 text-center"></h2>
-                
-                <!-- Buttons -->
-                <div class="flex flex-col gap-3">
-                    <!-- Email Button - Maroon (#800020) -->
-                    <a id="modal-email-btn" href="#" 
-                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
-                       style="background: linear-gradient(135deg, #800020 0%, #600018 100%);"
-                       onmouseover="this.style.background='linear-gradient(135deg, #A00028 0%, #800020 100%)'"
-                       onmouseout="this.style.background='linear-gradient(135deg, #800020 0%, #600018 100%)'">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Name, Email, Badge, and Research Areas Section -->
+                <div class="flex-1 text-center sm:text-left">
+                    <!-- Full Name -->
+                    <h2 id="modal-researcher-name" class="text-xl sm:text-2xl font-bold text-white mb-2"></h2>
+                    
+                    <!-- Email -->
+                    <a id="modal-researcher-email-header" href="#" class="inline-flex items-center gap-1.5 text-sm text-white hover:text-maroon-100 transition-colors mb-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        Email
+                        <span id="modal-researcher-email-text">No email available</span>
                     </a>
                     
-                    <!-- SCOPUS Button - Orange (#E9710C) -->
-                    <a id="modal-scopus-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
-                       style="background: linear-gradient(135deg, #E9710C 0%, #D65A00 100%);"
-                       onmouseover="this.style.background='linear-gradient(135deg, #F08020 0%, #E9710C 100%)'"
-                       onmouseout="this.style.background='linear-gradient(135deg, #E9710C 0%, #D65A00 100%)'">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    <!-- Badge (separator) Research Areas -->
+                    <div class="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                        <span id="modal-researcher-status" class="hidden px-2 py-0.5 text-xs font-semibold text-white rounded-full"></span>
+                        <span id="modal-researcher-separator" class="hidden text-white/40">|</span>
+                        <div id="modal-researcher-areas-header" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Body - Scrollable -->
+        <div class="flex-1 overflow-y-auto p-6 sm:p-8">
+                <!-- Biography Section -->
+                <div id="modal-researcher-bio-section" class="mb-6 hidden">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        SCOPUS
-                    </a>
-                    
-                    <!-- ORCID Button - Lime Green (#A6CE39) -->
-                    <a id="modal-orcid-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
-                       style="background: linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%);"
-                       onmouseover="this.style.background='linear-gradient(135deg, #B8D94A 0%, #A6CE39 100%)'"
-                       onmouseout="this.style.background='linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%)'">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm.34 5.577c1.939 0 3.511 1.57 3.511 3.511 0 1.939-1.572 3.511-3.511 3.511-1.939 0-3.511-1.572-3.511-3.511 0-1.941 1.572-3.511 3.511-3.511zm-4.988 13.5c.5-.75 1.5-1.5 2.5-1.5s2 .75 2.5 1.5h-5zm9.988 0c.5-.75 1.5-1.5 2.5-1.5s2 .75 2.5 1.5h-5z"/>
+                        Biography
+                    </h3>
+                    <p id="modal-researcher-bio" class="text-gray-700 leading-relaxed text-justify indent-8"></p>
+                </div>
+                
+                <!-- Links Section -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
-                        ORCID
-                    </a>
-                    
-                    <!-- WOS Button - Blue (#0066CC) -->
-                    <a id="modal-wos-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
-                       style="background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);"
-                       onmouseover="this.style.background='linear-gradient(135deg, #1A7AE6 0%, #0066CC 100%)'"
-                       onmouseout="this.style.background='linear-gradient(135deg, #0066CC 0%, #0052A3 100%)'">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                        </svg>
-                        Web of Science
-                    </a>
-                    
-                    <!-- Google Scholar Button - Google Blue (#4285F4) -->
-                    <a id="modal-google-scholar-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="hidden w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-white font-semibold text-sm uppercase tracking-widest rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out"
-                       style="background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);"
-                       onmouseover="this.style.background='linear-gradient(135deg, #5A95F5 0%, #4285F4 100%)'"
-                       onmouseout="this.style.background='linear-gradient(135deg, #4285F4 0%, #3367D6 100%)'">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/>
-                        </svg>
-                        Google Scholar
-                    </a>
+                        Links
+                    </h3>
+                    <div class="flex flex-wrap gap-3">
+                        <!-- SCOPUS Button -->
+                        <a id="modal-scopus-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                           class="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-sm min-w-0"
+                           style="background: linear-gradient(135deg, #E9710C 0%, #D65A00 100%);">
+                            <img id="modal-scopus-img" src="/images/scopus.webp" alt="SCOPUS" class="w-8 h-8 object-contain rounded-full bg-white p-1 flex-shrink-0">
+                            <span class="truncate">SCOPUS</span>
+                        </a>
+                        
+                        <!-- ORCID Button -->
+                        <a id="modal-orcid-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                           class="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-sm min-w-0"
+                           style="background: linear-gradient(135deg, #A6CE39 0%, #8FB82E 100%);">
+                            <img id="modal-orcid-img" src="/images/orcid.webp" alt="ORCID" class="w-8 h-8 object-contain rounded-full bg-white p-1 flex-shrink-0">
+                            <span class="truncate">ORCID</span>
+                        </a>
+                        
+                        <!-- WOS Button -->
+                        <a id="modal-wos-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                           class="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-sm min-w-0"
+                           style="background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);">
+                            <img id="modal-wos-img" src="/images/wos.webp" alt="Web of Science" class="w-8 h-8 object-contain rounded-full bg-white p-1 flex-shrink-0">
+                            <span class="truncate">Web of Science</span>
+                        </a>
+                        
+                        <!-- Google Scholar Button -->
+                        <a id="modal-google-scholar-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                           class="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-sm min-w-0"
+                           style="background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);">
+                            <img id="modal-google-scholar-img" src="/images/scholar.webp" alt="Google Scholar" class="w-8 h-8 object-contain rounded-full bg-white p-1 flex-shrink-0">
+                            <span class="truncate">Google Scholar</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ResearcherProfile extends Model
 {
     protected $fillable = [
+        'prefix',
         'name',
         'title',
         'research_areas',
