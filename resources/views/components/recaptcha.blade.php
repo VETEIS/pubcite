@@ -176,10 +176,9 @@
                                     window.location.href = response.url;
                                     return;
                                 } else {
-                                    // No redirect info - try to navigate to dashboard routes
-                                    log('No redirect info, attempting to navigate to dashboard');
-                                    // Try admin dashboard first (Laravel will redirect if not admin)
-                                    window.location.href = '/admin/dashboard';
+                                    // No redirect info - navigate to generic dashboard and let server handle role-based redirect
+                                    log('No redirect info, navigating to dashboard (server will handle role-based redirect)');
+                                    window.location.href = '/dashboard';
                                     return;
                                 }
                             }
@@ -188,8 +187,8 @@
                             // When status is 0, login was likely successful - try to navigate to dashboard
                             if (response.status === 0 || response.type === 'opaqueredirect') {
                                 log('Status 0 detected, attempting to navigate to dashboard');
-                                // Try admin dashboard first (Laravel will redirect if not admin)
-                                window.location.href = '/admin/dashboard';
+                                // Navigate to generic dashboard and let server handle role-based redirect
+                                window.location.href = '/dashboard';
                                 return;
                             }
                             
@@ -212,19 +211,19 @@
                                     } else {
                                         // Success - login was successful, navigate to dashboard
                                         log('Success response detected, navigating to dashboard');
-                                        // Try admin dashboard first (Laravel will redirect if not admin)
-                                        window.location.href = '/admin/dashboard';
+                                        // Navigate to generic dashboard and let server handle role-based redirect
+                                        window.location.href = '/dashboard';
                                     }
                                 }).catch(function(error) {
                                     logError('Error parsing response', error);
                                     // On error parsing, assume success and navigate to dashboard
-                                    window.location.href = '/admin/dashboard';
+                                    window.location.href = '/dashboard';
                                 });
                             } else {
                                 // Non-200 status - might be error, but try dashboard anyway
                                 log('Non-200 status received', response.status);
-                                // Try dashboard - if login failed, Laravel will redirect back to login
-                                window.location.href = '/admin/dashboard';
+                                // Navigate to generic dashboard - if login failed, Laravel will redirect back to login
+                                window.location.href = '/dashboard';
                             }
                         })
                         .catch(function(error) {
