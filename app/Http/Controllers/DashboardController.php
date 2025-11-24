@@ -29,9 +29,20 @@ class DashboardController extends Controller
             'user_role' => $user->role
         ]);
         
+        // Only allow 'user' role to access this dashboard
         if ($user->role === 'admin') {
-            Log::info('Redirecting admin user to admin dashboard', ['user_id' => $user->id]);
+            Log::info('Admin user attempted to access user dashboard, redirecting', ['user_id' => $user->id]);
             return redirect()->route('admin.dashboard');
+        }
+        
+        if ($user->role === 'signatory') {
+            Log::info('Signatory user attempted to access user dashboard, redirecting', ['user_id' => $user->id]);
+            return redirect()->route('signing.index');
+        }
+        
+        // Ensure only 'user' role can access
+        if ($user->role !== 'user') {
+            abort(403, 'Access denied. User privileges required.');
         }
         
         Log::info('Routing to user dashboard', ['user_id' => $user->id]);

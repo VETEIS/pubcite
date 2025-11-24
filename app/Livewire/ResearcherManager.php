@@ -254,7 +254,6 @@ class ResearcherManager extends Component
             $rules["researchers.{$index}.bio"] = 'nullable|string|max:1000';
             $rules["researchers.{$index}.research_areas"] = 'required|string|max:500';
             $rules["researchers.{$index}.status_badge"] = 'nullable|string|max:50';
-            $rules["researchers.{$index}.background_color"] = 'nullable|string|max:50';
             $rules["researchers.{$index}.profile_link"] = 'nullable|string|max:255';
             $rules["researchers.{$index}.scopus_link"] = 'nullable|string|max:500';
             $rules["researchers.{$index}.orcid_link"] = 'nullable|string|max:500';

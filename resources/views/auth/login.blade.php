@@ -5,8 +5,7 @@
         </x-slot>
 
         <div class="text-center mb-4">
-            <h1 class="text-3xl font-bold text-gray-900 mb-1">Welcome Back!</h1>
-            <p class="text-gray-600">Sign in to your account to continue</p>
+            <h1 class="text-3xl font-bold text-gray-900 mb-1">Sign in to your account</h1>
         </div>
 
         <x-validation-errors class="mb-3" />
@@ -17,9 +16,10 @@
             </div>
         @endsession
 
-        <form method="POST" action="{{ route('login') }}" id="login-form">
+        <form method="POST" action="{{ route('login') }}" id="login-form" data-turbo="false">
             @csrf
             <input type="hidden" name="privacy_accepted" value="true">
+            <button type="submit" id="hidden-submit-btn" style="display: none;" aria-hidden="true"></button>
 
             <div>
                 <x-label for="email" value="{{ __('Email') }}" class="text-base text-gray-900 font-medium drop-shadow-sm" />
@@ -31,21 +31,15 @@
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
             </div>
 
-            <div class="flex items-center justify-between mt-3">
+            <div class="flex items-center mt-3">
                 <label class="flex items-center">
                     <input type="checkbox" class="form-checkbox rounded text-maroon-800 shadow-sm focus:ring-maroon-800" name="remember">
                     <span class="ml-2 text-gray-900 font-medium text-sm">Remember me</span>
                 </label>
             </div>
 
-            <div class="mt-4 space-y-3">
+            <div class="mt-4">
                 <x-recaptcha />
-                <x-button class="justify-center items-center" style="width: 256px; margin: 0 auto; display: flex; box-sizing: border-box; border-top-left-radius: 0; border-top-right-radius: 0;">
-                    <svg class="mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 1em; height: 1em; vertical-align: middle;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span style="line-height: 1;">{{ __('Sign in') }}</span>
-                </x-button>
             </div>
 
             <div class="flex items-center justify-center mt-4">
@@ -55,9 +49,9 @@
             </div>
 
             <div class="flex justify-center mt-3">
-                <button type="button" id="google-login-btn" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
-                    <img src="/images/google-logo.png" alt="Google logo" class="w-5 h-5 mr-2">
-                    Sign in with Google
+                <button type="button" id="google-login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-maroon-700 border border-transparent rounded-full shadow-sm text-sm font-medium text-white hover:bg-maroon-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500">
+                    <img src="/images/google-logo.webp" alt="Google logo" class="w-5 h-5 mr-2">
+                    Sign in with your USeP Google account
                 </button>
             </div>
 

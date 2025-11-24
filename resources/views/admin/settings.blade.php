@@ -73,6 +73,449 @@
                         @csrf
                         @method('PUT')
                         
+                        <!-- Landing Page Settings Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6 relative" x-data="{ activeTab: 'calendar' }">
+                                <!-- Header -->
+                            <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">Landing Page Settings</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Manage publication counters, calendar events, and announcements</p>
+                                            </div>
+                                        </div>
+                                    <div class="flex items-center gap-3">
+                                        <!-- Add Event Button (Calendar Tab) -->
+                                        <button type="button" 
+                                                x-show="activeTab === 'calendar'"
+                                                onclick="addMarkRow()" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm shadow-sm transition-colors" 
+                                                title="Add Event"
+                                                style="display: none;">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            Add Event
+                                        </button>
+                                        <!-- Add Announcement Button (Announcements Tab) -->
+                                        <button type="button" 
+                                                x-show="activeTab === 'announcements'"
+                                                onclick="addAnnouncementRow()" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm shadow-sm transition-colors" 
+                                                title="Add Announcement"
+                                                style="display: none;">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            Add Announcement
+                                        </button>
+                                        <button type="submit" name="save_announcements" value="1"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium text-sm shadow-sm"
+                                                    disabled>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Save Changes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            <!-- Tabs Navigation -->
+                            <div class="border-b border-gray-200 bg-gray-50">
+                                <nav class="flex -mb-px" aria-label="Tabs">
+                                    <button type="button" @click="activeTab = 'calendar'" 
+                                            :class="activeTab === 'calendar' ? 'border-amber-500 text-amber-600 bg-amber-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-100/50'"
+                                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 font-medium text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Calendar Events
+                                    </button>
+                                    <button type="button" @click="activeTab = 'announcements'" 
+                                            :class="activeTab === 'announcements' ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-100/50'"
+                                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 font-medium text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Announcements
+                                    </button>
+                                    <button type="button" @click="activeTab = 'counters'" 
+                                            :class="activeTab === 'counters' ? 'border-red-500 text-red-600 bg-red-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-100/50'"
+                                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 font-medium text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        Publication Counters
+                                    </button>
+                                </nav>
+                                        </div>
+                            
+                            <!-- Tab Content -->
+                            <div class="p-6 overflow-y-auto" style="height: 400px;">
+                                @if($errors->any())
+                                    <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-md">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                                </svg>
+                                        </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                                                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                                                    @foreach($errors->all() as $error)
+                                                        <li>{{ $error }}</li>
+                                                    @endforeach
+                                                </ul>
+                                        </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Publication Counters Tab -->
+                                <div x-show="activeTab === 'counters'" style="display: none; height: 100%;" class="flex flex-col justify-center">
+                                    <div class="flex flex-row gap-4 justify-center items-stretch w-full">
+                                        <div class="flex-1 rounded-lg p-4 border-2 border-gray-300 shadow-md">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                                                    <img src="{{ asset('images/scopus.webp') }}" alt="Scopus" class="w-full h-full object-contain">
+                                                </div>
+                                                <label class="block text-sm font-semibold text-gray-900 uppercase tracking-wide">Scopus</label>
+                                            </div>
+                                            <input type="number" name="scopus_publications_count" min="0" step="1" value="{{ old('scopus_publications_count', $scopus_publications_count) }}" 
+                                                   class="w-full border-2 border-gray-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-gray-600 focus:ring-2 focus:ring-gray-500/30 text-center"
+                                                   placeholder="0">
+                                        </div>
+                                        <div class="flex-1 rounded-lg p-4 border-2 border-gray-300 shadow-md">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                                                    <img src="{{ asset('images/wos.webp') }}" alt="Web of Science" class="w-full h-full object-contain">
+                                                </div>
+                                                <label class="block text-sm font-semibold text-gray-900 uppercase tracking-wide">Web of Science</label>
+                                            </div>
+                                            <input type="number" name="wos_publications_count" min="0" step="1" value="{{ old('wos_publications_count', $wos_publications_count) }}" 
+                                                   class="w-full border-2 border-gray-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-gray-600 focus:ring-2 focus:ring-gray-500/30 text-center"
+                                                   placeholder="0">
+                                        </div>
+                                        <div class="flex-1 rounded-lg p-4 border-2 border-gray-300 shadow-md">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                                                    <img src="{{ asset('images/aci.webp') }}" alt="ACI" class="w-full h-full object-contain">
+                                                </div>
+                                                <label class="block text-sm font-semibold text-gray-900 uppercase tracking-wide">ACI</label>
+                                            </div>
+                                            <input type="number" name="aci_publications_count" min="0" step="1" value="{{ old('aci_publications_count', $aci_publications_count) }}" 
+                                                   class="w-full border-2 border-gray-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-gray-600 focus:ring-2 focus:ring-gray-500/30 text-center"
+                                                   placeholder="0">
+                                        </div>
+                                        <div class="flex-1 rounded-lg p-4 border-2 border-gray-300 shadow-md">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                                                    <img src="{{ asset('images/peer.webp') }}" alt="PEER" class="w-full h-full object-contain">
+                                                </div>
+                                                <label class="block text-sm font-semibold text-gray-900 uppercase tracking-wide">PEER</label>
+                                            </div>
+                                            <input type="number" name="peer_publications_count" min="0" step="1" value="{{ old('peer_publications_count', $peer_publications_count) }}" 
+                                                   class="w-full border-2 border-gray-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-gray-600 focus:ring-2 focus:ring-gray-500/30 text-center"
+                                                   placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Calendar Events Tab -->
+                                <div x-show="activeTab === 'calendar'" style="display: none; height: 100%; overflow-y-auto;">
+                                    <div id="marksRepeater" class="space-y-3">
+                                        @php($marks = old('calendar_marks', $calendar_marks ?? []))
+                                        @if(empty($marks))
+                                            @php($marks = [[ 'date' => '', 'note' => '' ]])
+                                        @endif
+                                        @foreach($marks as $idx => $mark)
+                                        <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200 p-4">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Counter -->
+                                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                                                    <span class="text-white font-bold text-lg">{{ $idx + 1 }}</span>
+                                                </div>
+                                                
+                                                <!-- Form Fields -->
+                                                <div class="flex-1 flex gap-4">
+                                                    <div class="w-48">
+                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Event Date</label>
+                                                        <input type="date" name="calendar_marks[{{ $idx }}][date]" value="{{ $mark['date'] ?? '' }}" 
+                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                                                        <input type="text" name="calendar_marks[{{ $idx }}][note]" value="{{ $mark['note'] ?? '' }}" 
+                                                               placeholder="Enter event description..." 
+                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Delete Button -->
+                                                <div class="flex-shrink-0">
+                                                    <button type="button" onclick="removeMarkRow(this)" 
+                                                            class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
+                                                            title="Remove Event">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <!-- Announcements Tab -->
+                                <div x-show="activeTab === 'announcements'" style="display: none; height: 100%; overflow-y-auto;">
+                                    <div id="announcementsRepeater" class="space-y-3">
+                                        @php($announcements = old('announcements', $announcements ?? []))
+                                        @if(empty($announcements))
+                                            @php($announcements = [['title' => '', 'description' => '']])
+                                        @endif
+                                        @foreach($announcements as $idx => $announcement)
+                                        <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200 p-4">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Counter -->
+                                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center shadow-sm">
+                                                    <span class="text-white font-bold text-lg">{{ $idx + 1 }}</span>
+                                                </div>
+                                                
+                                                <!-- Form Fields -->
+                                                <div class="flex-1 flex gap-4">
+                                                    <div class="w-1/3">
+                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+                                                        <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
+                                                               placeholder="Enter announcement title..." 
+                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                                                        <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
+                                                               placeholder="Enter announcement description..." 
+                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Delete Button -->
+                                                <div class="flex-shrink-0">
+                                                    <button type="button" onclick="removeAnnouncementRow(this)" 
+                                                            class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
+                                                            title="Remove Announcement">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+
+                        <!-- USEP Researchers Management Section - Livewire Component -->
+                        @livewire('researcher-manager')
+                        
+                        <!-- Form Dropdowns Management Section -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
+                                @csrf
+                                @method('PUT')
+                                
+                                <!-- Header -->
+                                <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-gray-200">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-gray-900">Form Dropdown Options</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Manage academic ranks and colleges for incentive application forms • Auto-saved</p>
+                                            </div>
+                                        </div>
+                                </div>
+                                
+                                <!-- Confirmation Modal -->
+                                <div id="deleteConfirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm" style="display: none;">
+                                    <div class="relative top-20 mx-auto p-5 w-full max-w-md" onclick="event.stopPropagation()">
+                                        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                                            <div class="p-6">
+                                                <div class="flex items-center gap-4 mb-4">
+                                                    <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <h3 class="text-lg font-semibold text-gray-900">Confirm Removal</h3>
+                                                        <p class="text-sm text-gray-600 mt-1" id="deleteConfirmMessage">Are you sure you want to remove this item?</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex gap-3 justify-end">
+                                                    <button type="button" onclick="window.closeDeleteModal && window.closeDeleteModal()" 
+                                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                        Cancel
+                                                    </button>
+                                                    <button type="button" id="confirmDeleteBtn" onclick="window.confirmDelete && window.confirmDelete()" 
+                                                            class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="p-3 sm:p-4 md:p-6">
+                                    <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                    <!-- Academic Ranks -->
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
+                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Academic Ranks</h4>
+                                                    <span id="ranksCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
+                                                        {{ count(array_filter(old('academic_ranks', $academic_ranks ?? []))) }}
+                                                    </span>
+                                        </div>
+                                            </div>
+                                            <div id="academicRanksContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
+                                            @php($ranks = old('academic_ranks', $academic_ranks ?? []))
+                                                @php($ranks = array_filter($ranks))
+                                            @foreach($ranks as $idx => $rank)
+                                                @if(!empty(trim($rank)))
+                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all max-w-full">
+                                                    <input type="hidden" name="academic_ranks[]" value="{{ $rank }}">
+                                                    <span class="text-xs sm:text-sm truncate">{{ $rank }}</span>
+                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($rank) }}', 'Academic Ranks')" 
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                            <div class="flex flex-col sm:flex-row gap-2">
+                                                <input type="text" id="rankInput" 
+                                                       placeholder="Add rank..." 
+                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all w-full"
+                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addRankTag(); }">
+                                                <button type="button" onclick="addRankTag()" 
+                                                        class="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                                    <span class="hidden sm:inline">Add</span>
+                                                    <span class="sm:hidden">Add Rank</span>
+                                            </button>
+                                        </div>
+                                        </div>
+                                        
+                                        <!-- Colleges -->
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
+                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Colleges</h4>
+                                                    <span id="collegesCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
+                                                        {{ count(array_filter(old('colleges', $colleges ?? []))) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div id="collegesContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
+                                            @php($colleges = old('colleges', $colleges ?? []))
+                                                @php($colleges = array_filter($colleges))
+                                            @foreach($colleges as $idx => $college)
+                                                @if(!empty(trim($college)))
+                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all max-w-full">
+                                                    <input type="hidden" name="colleges[]" value="{{ $college }}">
+                                                    <span class="text-xs sm:text-sm truncate">{{ $college }}</span>
+                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($college) }}', 'Colleges')" 
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                            <div class="flex flex-col sm:flex-row gap-2">
+                                                <input type="text" id="collegeInput" 
+                                                       placeholder="Add college..." 
+                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all w-full"
+                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addCollegeTag(); }">
+                                                <button type="button" onclick="addCollegeTag()" 
+                                                        class="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                                    <span class="hidden sm:inline">Add</span>
+                                                    <span class="sm:hidden">Add College</span>
+                                            </button>
+                                        </div>
+                                        </div>
+                                        
+                                        <!-- Others Indexing Options -->
+                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
+                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Indexing Options</h4>
+                                                    <span id="othersCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 whitespace-nowrap">
+                                                        {{ count(array_filter(old('others_indexing_options', $others_indexing_options ?? []))) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div id="othersIndexingContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
+                                            @php($othersIndexing = old('others_indexing_options', $others_indexing_options ?? []))
+                                                @php($othersIndexing = array_filter($othersIndexing))
+                                            @foreach($othersIndexing as $idx => $option)
+                                                @if(!empty(trim($option)))
+                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-pink-400 hover:bg-pink-50 transition-all max-w-full">
+                                                    <input type="hidden" name="others_indexing_options[]" value="{{ $option }}">
+                                                    <span class="text-xs sm:text-sm truncate">{{ $option }}</span>
+                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($option) }}', 'Indexing Options')" 
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                                @endif
+                                            @endforeach
+                                            </div>
+                                            <div class="flex flex-col sm:flex-row gap-2">
+                                                <input type="text" id="othersInput" 
+                                                       placeholder="Add option..." 
+                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 transition-all w-full"
+                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addOthersIndexingTag(); }">
+                                                <button type="button" onclick="addOthersIndexingTag()" 
+                                                        class="px-3 sm:px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
+                                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    <span class="hidden sm:inline">Add</span>
+                                                    <span class="sm:hidden">Add Option</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        
                         <!-- General Settings Section -->
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
                                 <!-- Header -->
@@ -336,473 +779,7 @@
                             </div>
                         </div>
                         
-                        <!-- Form Dropdowns Management Section -->
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6">
-                                @csrf
-                                @method('PUT')
-                                
-                                <!-- Header -->
-                                <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-gray-200">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <h3 class="text-lg font-semibold text-gray-900">Form Dropdown Options</h3>
-                                            <p class="text-sm text-gray-600 mt-1">Manage academic ranks and colleges for incentive application forms • Auto-saved</p>
-                                            </div>
-                                        </div>
-                                </div>
-                                
-                                <!-- Confirmation Modal -->
-                                <div id="deleteConfirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm" style="display: none;">
-                                    <div class="relative top-20 mx-auto p-5 w-full max-w-md" onclick="event.stopPropagation()">
-                                        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
-                                            <div class="p-6">
-                                                <div class="flex items-center gap-4 mb-4">
-                                                    <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                                                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                        </svg>
-                                                    </div>
-                                                    <div class="flex-1">
-                                                        <h3 class="text-lg font-semibold text-gray-900">Confirm Removal</h3>
-                                                        <p class="text-sm text-gray-600 mt-1" id="deleteConfirmMessage">Are you sure you want to remove this item?</p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex gap-3 justify-end">
-                                                    <button type="button" onclick="window.closeDeleteModal && window.closeDeleteModal()" 
-                                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                                                        Cancel
-                                                    </button>
-                                                    <button type="button" id="confirmDeleteBtn" onclick="window.confirmDelete && window.confirmDelete()" 
-                                                            class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Content -->
-                                <div class="p-3 sm:p-4 md:p-6">
-                                    <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-                                    <!-- Academic Ranks -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
-                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-                                                <div class="flex items-center gap-2 flex-wrap">
-                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Academic Ranks</h4>
-                                                    <span id="ranksCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
-                                                        {{ count(array_filter(old('academic_ranks', $academic_ranks ?? []))) }}
-                                                    </span>
-                                        </div>
-                                            </div>
-                                            <div id="academicRanksContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
-                                            @php($ranks = old('academic_ranks', $academic_ranks ?? []))
-                                                @php($ranks = array_filter($ranks))
-                                            @foreach($ranks as $idx => $rank)
-                                                @if(!empty(trim($rank)))
-                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all max-w-full">
-                                                    <input type="hidden" name="academic_ranks[]" value="{{ $rank }}">
-                                                    <span class="text-xs sm:text-sm truncate">{{ $rank }}</span>
-                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($rank) }}', 'Academic Ranks')" 
-                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
-                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                            <div class="flex flex-col sm:flex-row gap-2">
-                                                <input type="text" id="rankInput" 
-                                                       placeholder="Add rank..." 
-                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all w-full"
-                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addRankTag(); }">
-                                                <button type="button" onclick="addRankTag()" 
-                                                        class="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                                    <span class="hidden sm:inline">Add</span>
-                                                    <span class="sm:hidden">Add Rank</span>
-                                            </button>
-                                        </div>
-                                        </div>
-                                        
-                                        <!-- Colleges -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
-                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-                                                <div class="flex items-center gap-2 flex-wrap">
-                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Colleges</h4>
-                                                    <span id="collegesCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
-                                                        {{ count(array_filter(old('colleges', $colleges ?? []))) }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div id="collegesContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
-                                            @php($colleges = old('colleges', $colleges ?? []))
-                                                @php($colleges = array_filter($colleges))
-                                            @foreach($colleges as $idx => $college)
-                                                @if(!empty(trim($college)))
-                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all max-w-full">
-                                                    <input type="hidden" name="colleges[]" value="{{ $college }}">
-                                                    <span class="text-xs sm:text-sm truncate">{{ $college }}</span>
-                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($college) }}', 'Colleges')" 
-                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
-                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                            <div class="flex flex-col sm:flex-row gap-2">
-                                                <input type="text" id="collegeInput" 
-                                                       placeholder="Add college..." 
-                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all w-full"
-                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addCollegeTag(); }">
-                                                <button type="button" onclick="addCollegeTag()" 
-                                                        class="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                                    <span class="hidden sm:inline">Add</span>
-                                                    <span class="sm:hidden">Add College</span>
-                                            </button>
-                                        </div>
-                                        </div>
-                                        
-                                        <!-- Others Indexing Options -->
-                                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 w-full">
-                                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-                                                <div class="flex items-center gap-2 flex-wrap">
-                                                    <h4 class="text-sm sm:text-base font-semibold text-gray-900">Indexing Options</h4>
-                                                    <span id="othersCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 whitespace-nowrap">
-                                                        {{ count(array_filter(old('others_indexing_options', $others_indexing_options ?? []))) }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div id="othersIndexingContainer" class="flex flex-wrap gap-2 mb-3 min-h-[60px]">
-                                            @php($othersIndexing = old('others_indexing_options', $others_indexing_options ?? []))
-                                                @php($othersIndexing = array_filter($othersIndexing))
-                                            @foreach($othersIndexing as $idx => $option)
-                                                @if(!empty(trim($option)))
-                                                <div class="group relative inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:border-pink-400 hover:bg-pink-50 transition-all max-w-full">
-                                                    <input type="hidden" name="others_indexing_options[]" value="{{ $option }}">
-                                                    <span class="text-xs sm:text-sm truncate">{{ $option }}</span>
-                                                    <button type="button" onclick="window.showDeleteModal && window.showDeleteModal(this, '{{ addslashes($option) }}', 'Indexing Options')" 
-                                                            class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gray-400 hover:text-red-600 focus:outline-none flex-shrink-0">
-                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                                @endif
-                                            @endforeach
-                                            </div>
-                                            <div class="flex flex-col sm:flex-row gap-2">
-                                                <input type="text" id="othersInput" 
-                                                       placeholder="Add option..." 
-                                                       class="flex-1 text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-2 bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 transition-all w-full"
-                                                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); addOthersIndexingTag(); }">
-                                                <button type="button" onclick="addOthersIndexingTag()" 
-                                                        class="px-3 sm:px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto">
-                                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                    </svg>
-                                                    <span class="hidden sm:inline">Add</span>
-                                                    <span class="sm:hidden">Add Option</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                        </div>
-                        
                         <!-- Removed standalone Calendar Settings Section (merged into Landing Page card) -->
-                        </div>
-
-                        <!-- Landing Page Settings Section -->
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 mt-6 relative" x-data="{ activeTab: 'counters' }">
-                                <!-- Header -->
-                            <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                            <h3 class="text-lg font-semibold text-gray-900">Landing Page Settings</h3>
-                                            <p class="text-sm text-gray-600 mt-1">Manage publication counters, calendar events, and announcements</p>
-                                            </div>
-                                        </div>
-                                    <div class="flex items-center gap-3">
-                                        <button type="submit" name="save_announcements" value="1"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium text-sm shadow-sm"
-                                                    disabled>
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                Save Changes
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                            <!-- Tabs Navigation -->
-                            <div class="border-b border-gray-200 bg-gray-50">
-                                <nav class="flex -mb-px" aria-label="Tabs">
-                                    <button type="button" @click="activeTab = 'counters'" 
-                                            :class="activeTab === 'counters' ? 'border-blue-500 text-blue-600 bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-100/50'"
-                                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 font-medium text-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                        </svg>
-                                        Publication Counters
-                                    </button>
-                                    <button type="button" @click="activeTab = 'calendar'" 
-                                            :class="activeTab === 'calendar' ? 'border-amber-500 text-amber-600 bg-amber-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-100/50'"
-                                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 font-medium text-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        Calendar Events
-                                    </button>
-                                    <button type="button" @click="activeTab = 'announcements'" 
-                                            :class="activeTab === 'announcements' ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-100/50'"
-                                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 font-medium text-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Announcements
-                                    </button>
-                                </nav>
-                                        </div>
-                            
-                            <!-- Tab Content -->
-                            <div class="p-6 overflow-y-auto" style="height: 400px;">
-                                @if($errors->any())
-                                    <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-md">
-                                        <div class="flex">
-                                            <div class="flex-shrink-0">
-                                                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                                </svg>
-                                        </div>
-                                            <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
-                                                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
-                                                    @foreach($errors->all() as $error)
-                                                        <li>{{ $error }}</li>
-                                                    @endforeach
-                                                </ul>
-                                        </div>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <!-- Publication Counters Tab -->
-                                <div x-show="activeTab === 'counters'" style="display: none;" class="h-full flex flex-col justify-center">
-                                    <div class="mb-3 text-center">
-                                        <p class="text-sm text-gray-600">Update the publication counts displayed on the landing page hero section</p>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
-                                        <div class="bg-gradient-to-br from-maroon-50 via-red-50 to-red-100 rounded-lg p-4 border-2 border-maroon-300 shadow-md">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <div class="w-8 h-8 bg-maroon-600 rounded-lg flex items-center justify-center shadow-sm">
-                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                    </div>
-                                                <label class="block text-sm font-semibold text-maroon-900 uppercase tracking-wide">Scopus</label>
-                                            </div>
-                                            <input type="number" name="scopus_publications_count" min="0" step="1" value="{{ old('scopus_publications_count', $scopus_publications_count) }}" 
-                                                   class="w-full border-2 border-maroon-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-maroon-600 focus:ring-2 focus:ring-maroon-500/30 text-center"
-                                                   placeholder="0">
-                                        </div>
-                                        <div class="bg-gradient-to-br from-maroon-50 via-red-50 to-red-100 rounded-lg p-4 border-2 border-maroon-300 shadow-md">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <div class="w-8 h-8 bg-maroon-600 rounded-lg flex items-center justify-center shadow-sm">
-                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                </div>
-                                                <label class="block text-sm font-semibold text-maroon-900 uppercase tracking-wide">Web of Science</label>
-                                            </div>
-                                            <input type="number" name="wos_publications_count" min="0" step="1" value="{{ old('wos_publications_count', $wos_publications_count) }}" 
-                                                   class="w-full border-2 border-maroon-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-maroon-600 focus:ring-2 focus:ring-maroon-500/30 text-center"
-                                                   placeholder="0">
-                                        </div>
-                                        <div class="bg-gradient-to-br from-maroon-50 via-red-50 to-red-100 rounded-lg p-4 border-2 border-maroon-300 shadow-md">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <div class="w-8 h-8 bg-maroon-600 rounded-lg flex items-center justify-center shadow-sm">
-                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                </div>
-                                                <label class="block text-sm font-semibold text-maroon-900 uppercase tracking-wide">ACI</label>
-                                            </div>
-                                            <input type="number" name="aci_publications_count" min="0" step="1" value="{{ old('aci_publications_count', $aci_publications_count) }}" 
-                                                   class="w-full border-2 border-maroon-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-maroon-600 focus:ring-2 focus:ring-maroon-500/30 text-center"
-                                                   placeholder="0">
-                                        </div>
-                                        <div class="bg-gradient-to-br from-maroon-50 via-red-50 to-red-100 rounded-lg p-4 border-2 border-maroon-300 shadow-md">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <div class="w-8 h-8 bg-maroon-600 rounded-lg flex items-center justify-center shadow-sm">
-                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                </div>
-                                                <label class="block text-sm font-semibold text-maroon-900 uppercase tracking-wide">PEER</label>
-                                            </div>
-                                            <input type="number" name="peer_publications_count" min="0" step="1" value="{{ old('peer_publications_count', $peer_publications_count) }}" 
-                                                   class="w-full border-2 border-maroon-400 rounded-lg px-4 py-2.5 text-xl font-bold bg-white focus:border-maroon-600 focus:ring-2 focus:ring-maroon-500/30 text-center"
-                                                   placeholder="0">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Calendar Events Tab -->
-                                <div x-show="activeTab === 'calendar'" style="display: none;">
-                                    <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                                            <div class="overflow-x-auto">
-                                                <table class="w-full">
-                                                <thead class="bg-white border-b border-gray-200">
-                                                    <tr>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16"></th>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-48">Event Date</th>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="marksRepeater" class="bg-white divide-y divide-gray-200">
-                                                        @php($marks = old('calendar_marks', $calendar_marks ?? []))
-                                                        @if(empty($marks))
-                                                            @php($marks = [[ 'date' => '', 'note' => '' ]])
-                                                        @endif
-                                                        @foreach($marks as $idx => $mark)
-                                                    <tr class="hover:bg-amber-50/50 transition-colors duration-150">
-                                                        <td class="px-4 py-4 whitespace-nowrap">
-                                                            <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-sm">
-                                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                    </svg>
-                                                                </div>
-                                                            </td>
-                                                        <td class="px-4 py-4 whitespace-nowrap w-48">
-                                                                <input type="date" name="calendar_marks[{{ $idx }}][date]" value="{{ $mark['date'] ?? '' }}" 
-                                                                   class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
-                                                            </td>
-                                                        <td class="px-4 py-4">
-                                                                <input type="text" name="calendar_marks[{{ $idx }}][note]" value="{{ $mark['note'] ?? '' }}" 
-                                                                   placeholder="Enter event description..." 
-                                                                   class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
-                                                            </td>
-                                                        <td class="px-4 py-4 whitespace-nowrap">
-                                                                <button type="button" onclick="removeMarkRow(this)" 
-                                                                    class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors" 
-                                                                        title="Remove Event">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                                    </svg>
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                </div>
-                            </div>
-                        </div>
-
-                                <!-- Announcements Tab -->
-                                <div x-show="activeTab === 'announcements'" style="display: none;">
-                                    <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                                        <div class="overflow-x-auto">
-                                            <table class="w-full">
-                                                <thead class="bg-white border-b border-gray-200">
-                                                    <tr>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16"></th>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Title</th>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
-                                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="announcementsRepeater" class="bg-white divide-y divide-gray-200">
-                                                    @php($announcements = old('announcements', $announcements ?? []))
-                                                    @if(empty($announcements))
-                                                        @php($announcements = [['title' => '', 'description' => '']])
-                                                    @endif
-                                                    @foreach($announcements as $idx => $announcement)
-                                                    <tr class="hover:bg-indigo-50/50 transition-colors duration-150">
-                                                        <td class="px-4 py-4 whitespace-nowrap">
-                                                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-lg flex items-center justify-center shadow-sm">
-                                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                </svg>
-                            </div>
-                                                        </td>
-                                                        <td class="px-4 py-4 whitespace-nowrap">
-                                                            <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
-                                                                   placeholder="Enter announcement title..." 
-                                                                   class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
-                                                        </td>
-                                                        <td class="px-4 py-4">
-                                                            <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
-                                                                   placeholder="Enter announcement description..." 
-                                                                   class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
-                                                        </td>
-                                                        <td class="px-4 py-4 whitespace-nowrap">
-                                                            <button type="button" onclick="removeAnnouncementRow(this)" 
-                                                                    class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors" 
-                                                                    title="Remove Announcement">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Floating Action Buttons -->
-                            <button type="button" 
-                                    x-show="activeTab === 'calendar'"
-                                    onclick="addMarkRow()" 
-                                    class="absolute bottom-6 right-6 w-14 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 shadow-lg hover:shadow-xl flex items-center justify-center z-10" 
-                                    title="Add Event"
-                                    style="display: none;">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                            </button>
-                            <button type="button" 
-                                    x-show="activeTab === 'announcements'"
-                                    onclick="addAnnouncementRow()" 
-                                    class="absolute bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-lg hover:shadow-xl flex items-center justify-center z-10" 
-                                    title="Add Announcement"
-                                    style="display: none;">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- USEP Researchers Management Section - Livewire Component -->
-                        @livewire('researcher-manager')
                         
                     </form>
                 </div>
@@ -1327,39 +1304,49 @@
         function addMarkRow() {
             const container = document.getElementById('marksRepeater');
             if (!container) return;
-            const index = container.querySelectorAll('tr').length;
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-amber-50/50 transition-colors duration-150';
+            const index = container.querySelectorAll('div.group').length;
+            const row = document.createElement('div');
+            row.className = 'group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200 p-4';
             row.innerHTML = `
-                <td class="px-4 py-4 whitespace-nowrap">
-                    <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-sm">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                <div class="flex items-center gap-4">
+                    <!-- Counter -->
+                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                        <span class="text-white font-bold text-lg">${index + 1}</span>
+                    </div>
+                    
+                    <!-- Form Fields -->
+                    <div class="flex-1 flex gap-4">
+                        <div class="w-48">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Event Date</label>
+                            <input type="date" name="calendar_marks[${index}][date]" 
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                            <input type="text" name="calendar_marks[${index}][note]" 
+                                   placeholder="Enter event description..." 
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                        </div>
+                    </div>
+                    
+                    <!-- Delete Button -->
+                    <div class="flex-shrink-0">
+                        <button type="button" onclick="removeMarkRow(this)" 
+                                class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
+                                title="Remove Event">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap w-48">
-                    <input type="date" name="calendar_marks[${index}][date]" 
-                           class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
-                </td>
-                <td class="px-4 py-4">
-                    <input type="text" name="calendar_marks[${index}][note]" 
-                           placeholder="Enter event description..." 
-                           class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap">
-                    <button type="button" onclick="removeMarkRow(this)" 
-                            class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors" 
-                            title="Remove Event">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </td>
             `;
             
             // Append at the bottom
-                container.appendChild(row);
+            container.appendChild(row);
+            
+            // Update all counter numbers
+            updateCalendarCounters();
             
             // Add event listeners to new inputs
             row.querySelectorAll('input').forEach(input => {
@@ -1385,15 +1372,30 @@
                 }, 0);
             }
         }
+        
+        function updateCalendarCounters() {
+            const container = document.getElementById('marksRepeater');
+            if (!container) return;
+            const rows = container.querySelectorAll('div.group');
+            rows.forEach((row, index) => {
+                const counterSpan = row.querySelector('div.flex-shrink-0 span');
+                if (counterSpan) {
+                    counterSpan.textContent = index + 1;
+                }
+            });
+        }
 
         function removeMarkRow(btn) {
-            const row = btn.closest('tr');
+            const row = btn.closest('div.group');
             const container = document.getElementById('marksRepeater');
             if (row && container) {
                 row.remove();
                 
+                // Update all counter numbers after removal
+                updateCalendarCounters();
+                
                 // If no rows left, add an empty entry for consistency
-                if (container.querySelectorAll('tr').length === 0) {
+                if (container.querySelectorAll('div.group').length === 0) {
                     addMarkRow();
                 }
                 
@@ -1409,39 +1411,49 @@
             const container = document.getElementById('announcementsRepeater');
             if (!container) return;
             
-            const index = container.querySelectorAll('tr').length;
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-indigo-50/50 transition-colors duration-150';
+            const index = container.querySelectorAll('div.group').length;
+            const row = document.createElement('div');
+            row.className = 'group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200 p-4';
             row.innerHTML = `
-                <td class="px-4 py-4 whitespace-nowrap">
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-lg flex items-center justify-center shadow-sm">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                <div class="flex items-center gap-4">
+                    <!-- Counter -->
+                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center shadow-sm">
+                        <span class="text-white font-bold text-lg">${index + 1}</span>
                     </div>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap">
-                    <input type="text" name="announcements[${index}][title]" 
-                           placeholder="Enter announcement title..." 
-                           class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
-                </td>
-                <td class="px-4 py-4">
-                    <input type="text" name="announcements[${index}][description]" 
-                           placeholder="Enter announcement description..." 
-                           class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap">
-                    <button type="button" onclick="removeAnnouncementRow(this)" 
-                            class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors" 
-                            title="Remove Announcement">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </td>
+                    
+                    <!-- Form Fields -->
+                    <div class="flex-1 flex gap-4">
+                        <div class="w-1/3">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+                            <input type="text" name="announcements[${index}][title]" 
+                                   placeholder="Enter announcement title..." 
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                            <input type="text" name="announcements[${index}][description]" 
+                                   placeholder="Enter announcement description..." 
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                        </div>
+                    </div>
+                    
+                    <!-- Delete Button -->
+                    <div class="flex-shrink-0">
+                        <button type="button" onclick="removeAnnouncementRow(this)" 
+                                class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
+                                title="Remove Announcement">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             `;
             
             container.appendChild(row);
+            
+            // Update all counter numbers
+            updateAnnouncementCounters();
             
             // Add event listeners to new inputs
             const newInputs = row.querySelectorAll('input');
@@ -1453,6 +1465,18 @@
             if (window.checkAnnouncementsChanges) {
                 window.checkAnnouncementsChanges();
             }
+        }
+        
+        function updateAnnouncementCounters() {
+            const container = document.getElementById('announcementsRepeater');
+            if (!container) return;
+            const rows = container.querySelectorAll('div.group');
+            rows.forEach((row, index) => {
+                const counterSpan = row.querySelector('div.flex-shrink-0 span');
+                if (counterSpan) {
+                    counterSpan.textContent = index + 1;
+                }
+            });
         }
 
         // Auto-save state
@@ -1789,13 +1813,16 @@
         });
         
         function removeAnnouncementRow(btn) {
-            const row = btn.closest('tr');
+            const row = btn.closest('div.group');
             const container = document.getElementById('announcementsRepeater');
             if (row && container) {
                 row.remove();
                 
+                // Update all counter numbers after removal
+                updateAnnouncementCounters();
+                
                 // If no rows left, add an empty entry for consistency
-                if (container.querySelectorAll('tr').length === 0) {
+                if (container.querySelectorAll('div.group').length === 0) {
                     addAnnouncementRow();
                 }
                 

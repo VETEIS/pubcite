@@ -20,6 +20,14 @@ class LoginController extends Controller
 
     public function login(Request $request, RecaptchaService $recaptchaService)
     {
+        Log::info('Login attempt received', [
+            'has_email' => $request->has('email'),
+            'has_password' => $request->has('password'),
+            'has_recaptcha' => $request->has('g-recaptcha-response'),
+            'is_ajax' => $request->ajax(),
+            'user_agent' => $request->userAgent()
+        ]);
+        
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -127,10 +135,13 @@ class LoginController extends Controller
             ]);
         }
 
-        // Redirect admin users to admin dashboard, regular users to user dashboard
+        // Redirect users to their appropriate dashboard based on role
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'signatory') {
+            return redirect()->route('signing.index');
         } else {
+            // Regular user role
             return redirect()->route('dashboard');
         }
     }

@@ -245,7 +245,7 @@ class LandingResearchers {
         
         // Add counter badge if there are more research areas
         if (remainingCount > 0) {
-            html += ` <span class="bg-gray-100 text-gray-700 text-xs px-1.5 py-0.5 rounded-full font-medium">(+${remainingCount})</span>`;
+            html += ` <span class="bg-gray-100 text-gray-700 text-xs px-1.5 py-0.5 rounded-full font-medium">+${remainingCount}</span>`;
         }
         
         return html;

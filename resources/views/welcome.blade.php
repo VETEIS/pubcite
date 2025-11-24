@@ -426,8 +426,7 @@
         .glassmorphism-modal {
             position: fixed; inset: 0; z-index: 9999;
             display: flex; align-items: center; justify-content: center;
-            padding: 1rem; background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            padding: 1rem; background: rgba(107, 114, 128, 0.75);
             opacity: 0; visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
@@ -437,72 +436,53 @@
 
         .glassmorphism-card {
             position: relative; max-width: 60vw; width: 60vw; max-height: 90vh;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            background: linear-gradient(to bottom right, #6f0500, #910600, #b30800);
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
             overflow: hidden;
         }
-
-        .glassmorphism-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 1;
-            animation: liquidFlow 8s ease-in-out infinite;
-            background-size: 200% 200%;
-        }
-
-        .glassmorphism-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            border-radius: 24px;
-            pointer-events: none;
-            z-index: 2;
+        
+        .glassmorphism-card,
+        .glassmorphism-content {
+            border-radius: 1rem;
         }
 
         .glassmorphism-content {
             position: relative;
             z-index: 3;
             padding: 2rem;
-            color: rgba(255, 255, 255, 0.95);
+            color: #ffffff;
             overflow-y: auto;
             max-height: calc(90vh - 4rem);
         }
 
-        .glassmorphism-content h2,
+        .glassmorphism-content h2 {
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
         .glassmorphism-content h3 {
-            color: rgba(255, 255, 255, 0.95);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .glassmorphism-content h4 {
+            color: #ffffff;
+            font-size: 1.125rem;
+            font-weight: 600;
         }
 
         .glassmorphism-content p {
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .glassmorphism-content .bg-white\/20 p {
-            color: inherit;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.875rem;
         }
 
         .glassmorphism-button {
             background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            color: rgba(255, 255, 255, 0.95);
+            color: #ffffff;
             transition: all 0.3s ease;
         }
 
@@ -510,21 +490,6 @@
             background: rgba(255, 255, 255, 0.25);
             border-color: rgba(255, 255, 255, 0.3);
             transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .glassmorphism-button.secondary {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .glassmorphism-button.secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        @keyframes liquidFlow {
-            0%, 100% { background-position: 0% 50%; background-size: 200% 200%; }
-            50% { background-position: 100% 50%; background-size: 200% 200%; }
         }
 
         body.modal-open {
@@ -626,7 +591,7 @@
                 <div class="glassmorphism-card">
                     <div class="glassmorphism-content">
                         <div class="flex items-center justify-between mb-8">
-                            <h2 class="text-2xl sm:text-3xl font-bold">How PubCite Works</h2>
+                            <h2>How PubCite Works</h2>
                             <button onclick="hideHowItWorks()" class="glassmorphism-button p-2 rounded-lg">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -639,8 +604,8 @@
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
                                 <div>
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Sign In with Your USeP Account</h3>
-                                    <p class="text-gray-600">Use your USeP Google account (@usep.edu.ph) to securely access the system. No need to create a separate account!</p>
+                                    <h3 class="mb-2">Sign In with Your USeP Account</h3>
+                                    <p>Use your USeP Google account (@usep.edu.ph) to securely access the system. Google OAuth integration provides seamless login without creating a separate account.</p>
                                 </div>
                             </div>
                             
@@ -648,8 +613,8 @@
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
                                 <div>
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Choose Your Incentive Type</h3>
-                                    <p class="text-gray-600">Select between <strong>Publication Incentives</strong> (for published research papers) or <strong>Citation Incentives</strong> (for citations received).</p>
+                                    <h3 class="mb-2">Choose Your Incentive Type</h3>
+                                    <p>Select between <strong>Publication Incentives</strong> (for published research papers in indexed journals) or <strong>Citation Incentives</strong> (for citations received by other scholars).</p>
                                 </div>
                             </div>
                             
@@ -657,8 +622,8 @@
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">3</div>
                                 <div>
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Upload Your Documents</h3>
-                                    <p class="text-gray-600">Attach your research papers, publication proofs, or citation records. The system securely stores and submit all your documents for review.</p>
+                                    <h3 class="mb-2">Submit Your Application</h3>
+                                    <p>Fill out the application form with your publication or citation details. Upload supporting documents such as research papers, publication proofs, or citation records. You can save drafts and resume later.</p>
                                 </div>
                             </div>
                             
@@ -666,8 +631,8 @@
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">4</div>
                                 <div>
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Track Your Application</h3>
-                                    <p class="text-gray-600">Monitor your application progress in real-time through your dashboard. Get instant updates when your application is reviewed or approved.</p>
+                                    <h3 class="mb-2">Sign Your Documents</h3>
+                                    <p>Download the generated documents, sign them manually, and upload the signed versions. The system uses a 5-stage signature workflow: User → Research Center Manager → College Dean → Deputy Director → RDD Director.</p>
                                 </div>
                             </div>
                             
@@ -675,39 +640,59 @@
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0 w-12 h-12 bg-maroon-600 text-white rounded-full flex items-center justify-center font-bold text-lg">5</div>
                                 <div>
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Receive Your Incentive</h3>
-                                    <p class="text-gray-600">Once approved, download your official documents and receive your publication or citation incentive through the university's standard process.</p>
+                                    <h3 class="mb-2">Track Progress & Receive Incentive</h3>
+                                    <p>Monitor your application progress in real-time through your dashboard. Once all signatures are collected and the request is completed, your request will be marked "Endorsed" and you will receive your incentive through the university's standard process.</p>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mt-8 grid md:grid-cols-2 gap-6">
-                            <div class="p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
-                                <h4 class="text-lg font-semibold text-white mb-2">📚 Publication Incentives</h4>
-                                <p class="text-gray-900 text-sm">For faculty who have published research papers in indexed journals. Submit your publication details and supporting documents.</p>
+                            <div class="p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-sm">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <svg class="w-6 h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                    <h4>Publication Incentives</h4>
+                                </div>
+                                <p>Submit publication incentive requests for research papers published in indexed journals. Include publication details, indexing evidence, and supporting documents.</p>
                             </div>
                             
-                            <div class="p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
-                                <h4 class="text-lg font-semibold text-white mb-2">📊 Citation Incentives</h4>
-                                <p class="text-gray-900 text-sm">For researchers whose work has been cited by other scholars. Provide citation records and impact metrics.</p>
+                            <div class="p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-sm">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <svg class="w-6 h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <h4>Citation Incentives</h4>
+                                </div>
+                                <p>Submit citation incentive requests for research work that has been cited by other scholars. Provide citation records, impact metrics, and indexing evidence.</p>
                             </div>
                         </div>
                         
-                        <div class="mt-6 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
-                            <h4 class="text-lg font-semibold text-white mb-2">✍️ Signatory Feature</h4>
-                            <p class="text-gray-900">For signatories, download documents for external signing and upload the signed versions. You can revert signed documents within 24 hours if needed.</p>
+                        <div class="mt-6 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-sm">
+                            <div class="flex items-center gap-3 mb-2">
+                                <svg class="w-6 h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                <h4>Multi-Stage Signature Workflow</h4>
+                            </div>
+                            <p>Signatories can download documents for external signing and upload the signed versions. The system tracks a 5-stage approval process: User → Research Center Manager → College Dean → Deputy Director → RDD Director. Signatories can revert their signatures within 24 hours if needed.</p>
                         </div>
                         
-                        <div class="mt-6 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
-                            <h4 class="text-lg font-semibold text-white mb-2">🔒 Secure & Private</h4>
-                            <p class="text-gray-900">Your documents are stored securely with encryption, and only authorized personnel can access your applications. All file operations are logged for audit purposes.</p>
+                        <div class="mt-6 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 shadow-sm">
+                            <div class="flex items-center gap-3 mb-2">
+                                <svg class="w-6 h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <h4>Secure & Private</h4>
+                            </div>
+                            <p>Your documents are stored securely with encryption, and only authorized personnel can access your applications. All file operations are logged for audit purposes. The system implements role-based access control and CSRF protection.</p>
                         </div>
                         
                         <div class="mt-8 pt-8 border-t border-white/20">
                             <div class="text-center">
-                                <h3 class="text-xl font-bold mb-4">Ready to Get Started?</h3>
+                                <h3 class="mb-4">Ready to Get Started?</h3>
                                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <a href="{{ route('login') }}" class="inline-flex items-center px-6 py-3 font-semibold rounded-lg bg-maroon-700 hover:bg-maroon-800 text-white transition-colors border border-maroon-500 hover:border-maroon-600 shadow-lg hover:shadow-xl">
+                                    <a href="{{ route('login') }}" class="inline-flex items-center px-6 py-3 font-semibold rounded-xl bg-white text-maroon-600 hover:bg-maroon-50 transition-colors shadow-lg hover:shadow-xl">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                                         </svg>

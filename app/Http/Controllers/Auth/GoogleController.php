@@ -140,12 +140,15 @@ class GoogleController extends Controller
             'user_role' => $user->role,
             'user_email' => $user->email,
             'intended_url' => session('url.intended'),
-            'redirecting_to' => $user->role === 'admin' ? 'admin.dashboard' : 'dashboard'
+            'redirecting_to' => $user->role === 'admin' ? 'admin.dashboard' : ($user->role === 'signatory' ? 'signing.index' : 'dashboard')
         ]);
 
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'signatory') {
+            return redirect()->route('signing.index');
         } else {
+            // Regular user role
             return redirect()->route('dashboard');
         }
     }

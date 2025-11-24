@@ -36,6 +36,16 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    <!-- Add Researcher Button -->
+                    <button type="button"
+                            wire:click="addResearcher"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-maroon-600 text-white rounded-lg hover:bg-maroon-700 font-medium text-sm shadow-sm transition-all duration-200" 
+                            title="Add Researcher">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Researcher
+                    </button>
                     <button type="button"
                             wire:click="save" 
                             wire:loading.attr="disabled"
@@ -57,7 +67,7 @@
         
 
         <!-- Content: Grid View with Fixed Height and Scroll -->
-        <div class="p-6 overflow-y-auto relative" style="height: 400px;">
+        <div class="p-6 overflow-y-auto relative" style="max-height: 400px;">
             @if(empty($researchers))
                 <div class="text-center py-12">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,9 +77,25 @@
                     <p class="mt-1 text-sm text-gray-500">Get started by adding a new researcher profile.</p>
                 </div>
             @else
-                <div class="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+                <div class="grid grid-cols-3 gap-4">
                     @foreach($researchers as $index => $researcher)
-                        <div class="group relative bg-white rounded-xl border border-gray-200 hover:border-maroon-400 hover:shadow-lg shadow-sm transition-all duration-300 overflow-visible transform hover:-translate-y-1">
+                        @php
+                            $fullName = (!empty($researcher['prefix']) ? $researcher['prefix'] . ' ' : '') . (!empty($researcher['name']) ? $researcher['name'] : 'New Researcher');
+                            $email = '';
+                            if (!empty($researcher['profile_link'])) {
+                                $profileLink = trim($researcher['profile_link']);
+                                if (filter_var($profileLink, FILTER_VALIDATE_EMAIL)) {
+                                    $email = $profileLink;
+                                } elseif (str_starts_with($profileLink, 'mailto:')) {
+                                    $email = str_replace('mailto:', '', $profileLink);
+                                }
+                            }
+                            $researchAreas = !empty($researcher['research_areas']) 
+                                ? array_map('trim', explode(',', $researcher['research_areas'])) 
+                                : [];
+                            $statusBadge = $researcher['status_badge'] ?? 'Active';
+                        @endphp
+                        <div class="group relative bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl hover:border-maroon-300 transition-all duration-300 overflow-visible transform hover:-translate-y-1">
                             <!-- Number Badge -->
                             <div class="absolute top-2 left-2 w-6 h-6 bg-gradient-to-br from-maroon-600 to-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold z-10 shadow-md ring-2 ring-white">
                                 {{ $index + 1 }}
@@ -79,36 +105,49 @@
                             <button type="button" 
                                     wire:click="editResearcher({{ $index }})"
                                     wire:loading.attr="disabled"
-                                    class="w-full text-left p-3 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:ring-offset-2 rounded-xl">
-                                <!-- Profile Picture -->
-                                <div class="flex justify-center mb-2.5">
-                                    @if(isset($researcher['photo']) && $researcher['photo'])
-                                        <div class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-maroon-200 shadow-md transition-all duration-300">
-                                            <img src="{{ $researcher['photo']->temporaryUrl() }}" 
-                                                 alt="Profile" 
-                                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
-                                        </div>
-                                    @elseif(!empty($researcher['photo_path']))
-                                        <div class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-maroon-200 shadow-md transition-all duration-300">
-                                            <img src="{{ Storage::disk('public')->url($researcher['photo_path']) }}" 
-                                                 alt="Profile" 
-                                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
-                                        </div>
-                                    @else
-                                        <div class="w-14 h-14 bg-gradient-to-br from-maroon-500 to-red-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-gray-100 group-hover:ring-maroon-200 transition-all duration-300">
-                                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
-                                        </div>
-                                    @endif
-                                </div>
-                                
-                                <!-- Name -->
-                                <div class="text-center">
-                                    <h4 class="text-xs font-semibold text-gray-900 group-hover:text-maroon-600 transition-colors line-clamp-2 leading-tight min-h-[2rem] flex items-center justify-center" 
-                                        title="{{ (!empty($researcher['prefix']) ? $researcher['prefix'] . ' ' : '') . (!empty($researcher['name']) ? $researcher['name'] : 'New Researcher') }}">
-                                        {{ !empty($researcher['name']) ? $this->formatNameAsInitials($researcher['name'], $researcher['prefix'] ?? '') : 'New Researcher' }}
-                                    </h4>
+                                    class="w-full text-left p-4 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:ring-offset-2 rounded-xl">
+                                <div class="flex items-center gap-4">
+                                    <!-- Profile Picture -->
+                                    <div class="flex-shrink-0">
+                                        @if(isset($researcher['photo']) && $researcher['photo'])
+                                            <div class="w-16 h-16 rounded-full overflow-hidden ring-2 ring-gray-200 group-hover:ring-maroon-300 shadow-lg transition-all duration-300">
+                                                <img src="{{ $researcher['photo']->temporaryUrl() }}" 
+                                                     alt="Profile" 
+                                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                            </div>
+                                        @elseif(!empty($researcher['photo_path']))
+                                            <div class="w-16 h-16 rounded-full overflow-hidden ring-2 ring-gray-200 group-hover:ring-maroon-300 shadow-lg transition-all duration-300">
+                                                <img src="{{ Storage::disk('public')->url($researcher['photo_path']) }}" 
+                                                     alt="Profile" 
+                                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                            </div>
+                                        @else
+                                            <div class="w-16 h-16 bg-gradient-to-br from-maroon-500 to-red-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-gray-200 group-hover:ring-maroon-300 transition-all duration-300">
+                                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Name, Email, Badge, and Research Areas -->
+                                    <div class="flex-1 min-w-0">
+                                        <!-- Full Name -->
+                                        <h4 class="text-base font-bold text-gray-900 mb-1 truncate group-hover:text-maroon-600 transition-colors" 
+                                            title="{{ $fullName }}">
+                                            {{ !empty($researcher['name']) ? $this->formatNameAsInitials($researcher['name'], $researcher['prefix'] ?? '') : 'New Researcher' }}
+                                        </h4>
+                                        
+                                        <!-- Email -->
+                                        @if(!empty($email))
+                                            <div class="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-maroon-600 transition-colors">
+                                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                </svg>
+                                                <span class="truncate">{{ $email }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </button>
                             
@@ -119,7 +158,7 @@
                                     class="absolute top-2 right-2 p-1.5 text-red-600 bg-white hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm hover:shadow-md border border-red-100 hover:border-red-200 z-20 pointer-events-auto"
                                     title="Remove Researcher"
                                     style="pointer-events: auto;">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
@@ -129,15 +168,6 @@
             @endif
         </div>
         
-        <!-- Floating Action Button -->
-        <button type="button" 
-                wire:click="addResearcher"
-                class="absolute bottom-6 right-6 w-14 h-14 bg-maroon-600 text-white rounded-full hover:bg-maroon-700 shadow-lg hover:shadow-xl flex items-center justify-center z-10 transition-all duration-200" 
-                title="Add Researcher">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-        </button>
     </div>
 
     <!-- Edit Modal - Always rendered, Alpine controls visibility -->
@@ -420,49 +450,25 @@
                                         </svg>
                                         Research Details
                                     </h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                                Research Areas <span class="text-red-500">*</span>
-                                            </label>
-                                            <div class="relative">
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                                    </svg>
-                                                </div>
-                                                <input type="text" 
-                                                       wire:model.blur="researchers.{{ $editingIndex }}.research_areas"
-                                                       placeholder="AI, Machine Learning, Data Science" 
-                                                       required
-                                                       class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all @error('researchers.' . $editingIndex . '.research_areas') border-red-300 focus:ring-red-500 @enderror">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Research Areas <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                </svg>
                                             </div>
-                                            @error('researchers.' . $editingIndex . '.research_areas')
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                            </div>
+                                            <input type="text" 
+                                                   wire:model.blur="researchers.{{ $editingIndex }}.research_areas"
+                                                   placeholder="AI, Machine Learning, Data Science" 
+                                                   required
+                                                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all @error('researchers.' . $editingIndex . '.research_areas') border-red-300 focus:ring-red-500 @enderror">
                                         </div>
-                                        
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Card Background Color</label>
-                                            <div class="relative">
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                                                    </svg>
-                                                </div>
-                                                <select wire:model.blur="researchers.{{ $editingIndex }}.background_color" 
-                                                        class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23374151%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.5em_1.5em] bg-[right_0.5rem_center] bg-no-repeat">
-                                                    <option value="maroon">Maroon</option>
-                                                    <option value="blue">Blue</option>
-                                                    <option value="green">Green</option>
-                                                    <option value="purple">Purple</option>
-                                                    <option value="orange">Orange</option>
-                                                    <option value="teal">Teal</option>
-                                                    <option value="rose">Rose</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                        @error('researchers.' . $editingIndex . '.research_areas')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
                                     </div>
                                 </div>
                                 
@@ -514,7 +520,7 @@
                                                    class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:border-transparent transition-all">
                                         </div>
                                         
-                                        <div>
+<div>
                                             <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                                                 <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>

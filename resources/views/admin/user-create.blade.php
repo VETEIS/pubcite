@@ -139,7 +139,6 @@
                                 <select name="signatory_type" 
                                         class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 transition-all">
                                     <option value="">Select signatory type</option>
-                    <option value="faculty" {{ old('signatory_type') == 'faculty' ? 'selected' : '' }}>Faculty</option>
                     <option value="center_manager" {{ old('signatory_type') == 'center_manager' ? 'selected' : '' }}>Research Center Manager</option>
                     <option value="college_dean" {{ old('signatory_type') == 'college_dean' ? 'selected' : '' }}>College Dean</option>
                 </select>
