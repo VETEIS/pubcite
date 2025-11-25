@@ -23,9 +23,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install XML extensions required by PhpSpreadsheet
-# dom, xml, libxml are typically always enabled in PHP
-# xmlreader and xmlwriter need to be installed
-RUN docker-php-ext-install -j$(nproc) dom xmlreader xmlwriter && \
+# dom must be installed FIRST because xmlreader and xmlwriter depend on dom headers
+# xml, libxml are typically always enabled in PHP
+RUN docker-php-ext-install -j$(nproc) dom && \
+    echo "✓ dom extension installed" && \
+    docker-php-ext-install -j$(nproc) xmlreader && \
+    echo "✓ xmlreader extension installed" && \
+    docker-php-ext-install -j$(nproc) xmlwriter && \
+    echo "✓ xmlwriter extension installed" && \
     echo "Verifying XML extensions..." && \
     php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" && \
     echo "✓ All XML extensions installed successfully"
