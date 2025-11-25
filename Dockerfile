@@ -29,29 +29,47 @@ RUN set -e; \
     echo "Ensuring PHP source tree is available..."; \
     if [ ! -d "/usr/src/php/ext" ]; then \
         echo "Extracting PHP source..."; \
-        docker-php-source extract || echo "⚠ Source extraction failed or already extracted"; \
+        docker-php-source extract; \
     fi; \
     echo "Checking dom extension source..."; \
     if [ -d "/usr/src/php/ext/dom" ]; then \
         echo "Installing dom extension first (ensures headers are available for xmlreader/xmlwriter)..."; \
-        docker-php-ext-configure dom && \
-        docker-php-ext-install -j$(nproc) dom || (echo "⚠ dom install warning (may already be enabled)" && php -m | grep dom || true); \
-        echo "✓ dom installation attempted"; \
+        if php -m | grep -q "^dom$"; then \
+            echo "✓ dom already enabled"; \
+        else \
+            docker-php-ext-configure dom && \
+            docker-php-ext-install -j$(nproc) dom && \
+            echo "✓ dom installed"; \
+        fi; \
     else \
-        echo "⚠ /usr/src/php/ext/dom not found"; \
+        echo "❌ ERROR: /usr/src/php/ext/dom not found"; \
         echo "Listing available extensions:"; \
         ls -la /usr/src/php/ext/ | head -20; \
+        exit 1; \
     fi; \
     echo "Installing xmlreader (requires dom headers)..."; \
-    docker-php-ext-configure xmlreader && \
-    docker-php-ext-install -j$(nproc) xmlreader && \
-    echo "✓ xmlreader installed" && \
+    if php -m | grep -q "^xmlreader$"; then \
+        echo "✓ xmlreader already enabled"; \
+    else \
+        docker-php-ext-configure xmlreader && \
+        docker-php-ext-install -j$(nproc) xmlreader && \
+        echo "✓ xmlreader installed"; \
+    fi; \
     echo "Installing xmlwriter..."; \
-    docker-php-ext-configure xmlwriter && \
-    docker-php-ext-install -j$(nproc) xmlwriter && \
-    echo "✓ xmlwriter installed" && \
-    echo "Verifying all XML extensions..." && \
-    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" && \
+    if php -m | grep -q "^xmlwriter$"; then \
+        echo "✓ xmlwriter already enabled"; \
+    else \
+        docker-php-ext-configure xmlwriter && \
+        docker-php-ext-install -j$(nproc) xmlwriter && \
+        echo "✓ xmlwriter installed"; \
+    fi; \
+    echo "Verifying all XML extensions..."; \
+    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" || ( \
+        echo "❌ ERROR: XML extensions verification failed"; \
+        echo "Installed extensions:"; \
+        php -m; \
+        exit 1 \
+    ); \
     echo "✓ All XML extensions verified successfully"
 
 # Install LibreOffice using apt-get with dependency resolution
@@ -87,20 +105,36 @@ COPY composer.json composer.lock ./
 # Install PHP dependencies without running scripts
 # Increase memory limit for composer install
 # Show verbose output to debug any extension issues
-RUN echo "PHP version: $(php -v | head -1)" && \
-    echo "Available extensions:" && php -m && \
-    echo "Checking required extensions for PhpSpreadsheet..." && \
-    (php -m | grep -q "dom" && echo "✓ dom found" || echo "✗ dom missing") && \
-    (php -m | grep -q "xmlreader" && echo "✓ xmlreader found" || echo "✗ xmlreader missing") && \
-    (php -m | grep -q "xmlwriter" && echo "✓ xmlwriter found" || echo "✗ xmlwriter missing") && \
-    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 | tail -50 || (echo "❌ Composer install failed - checking error..." && exit 1) && \
-    echo "Verifying autoloader after composer install..." && \
-    if [ -f "vendor/autoload.php" ]; then \
-        php -r "require 'vendor/autoload.php'; echo (class_exists('Illuminate\Foundation\Application') ? '✓ Autoloader OK' : '✗ Autoloader FAILED') . PHP_EOL;"; \
-    else \
+RUN set -e; \
+    echo "PHP version: $(php -v | head -1)"; \
+    echo "Available extensions:"; \
+    php -m; \
+    echo "Checking required extensions for PhpSpreadsheet..."; \
+    MISSING_EXTENSIONS=0; \
+    (php -m | grep -q "^dom$" && echo "✓ dom found" || (echo "✗ dom missing" && MISSING_EXTENSIONS=1)); \
+    (php -m | grep -q "^xmlreader$" && echo "✓ xmlreader found" || (echo "✗ xmlreader missing" && MISSING_EXTENSIONS=1)); \
+    (php -m | grep -q "^xmlwriter$" && echo "✓ xmlwriter found" || (echo "✗ xmlwriter missing" && MISSING_EXTENSIONS=1)); \
+    if [ "$MISSING_EXTENSIONS" -eq 1 ]; then \
+        echo "❌ CRITICAL: Required XML extensions are missing. Build cannot continue."; \
+        echo "Please check the XML extension installation step above."; \
+        exit 1; \
+    fi; \
+    echo "✓ All required extensions are available"; \
+    echo "Running composer install..."; \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --verbose 2>&1 || ( \
+        echo "❌ Composer install failed. Full error output:"; \
+        exit 1 \
+    ); \
+    echo "Verifying autoloader after composer install..."; \
+    if [ ! -f "vendor/autoload.php" ]; then \
         echo "❌ vendor/autoload.php not found - composer install failed"; \
         exit 1; \
-    fi
+    fi; \
+    php -r "require 'vendor/autoload.php'; echo (class_exists('Illuminate\Foundation\Application') ? '✓ Autoloader OK' : '✗ Autoloader FAILED') . PHP_EOL;" || ( \
+        echo "❌ Autoloader verification failed - Laravel classes not found"; \
+        exit 1 \
+    ); \
+    echo "✓ Composer install completed successfully"
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
