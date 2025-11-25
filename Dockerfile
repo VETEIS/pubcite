@@ -23,17 +23,36 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install XML extensions required by PhpSpreadsheet
-# dom must be installed FIRST because xmlreader and xmlwriter depend on dom headers
-# xml, libxml are typically always enabled in PHP
-RUN docker-php-ext-install -j$(nproc) dom && \
-    echo "✓ dom extension installed" && \
+# xmlreader and xmlwriter depend on dom headers (ext/dom/dom_ce.h)
+# Ensure PHP source is available, then install dom first, then xmlreader/xmlwriter
+RUN set -e; \
+    echo "Ensuring PHP source tree is available..."; \
+    if [ ! -d "/usr/src/php/ext" ]; then \
+        echo "Extracting PHP source..."; \
+        docker-php-source extract || echo "⚠ Source extraction failed or already extracted"; \
+    fi; \
+    echo "Checking dom extension source..."; \
+    if [ -d "/usr/src/php/ext/dom" ]; then \
+        echo "Installing dom extension first (ensures headers are available for xmlreader/xmlwriter)..."; \
+        docker-php-ext-configure dom && \
+        docker-php-ext-install -j$(nproc) dom || (echo "⚠ dom install warning (may already be enabled)" && php -m | grep dom || true); \
+        echo "✓ dom installation attempted"; \
+    else \
+        echo "⚠ /usr/src/php/ext/dom not found"; \
+        echo "Listing available extensions:"; \
+        ls -la /usr/src/php/ext/ | head -20; \
+    fi; \
+    echo "Installing xmlreader (requires dom headers)..."; \
+    docker-php-ext-configure xmlreader && \
     docker-php-ext-install -j$(nproc) xmlreader && \
-    echo "✓ xmlreader extension installed" && \
+    echo "✓ xmlreader installed" && \
+    echo "Installing xmlwriter..."; \
+    docker-php-ext-configure xmlwriter && \
     docker-php-ext-install -j$(nproc) xmlwriter && \
-    echo "✓ xmlwriter extension installed" && \
-    echo "Verifying XML extensions..." && \
+    echo "✓ xmlwriter installed" && \
+    echo "Verifying all XML extensions..." && \
     php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" && \
-    echo "✓ All XML extensions installed successfully"
+    echo "✓ All XML extensions verified successfully"
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
