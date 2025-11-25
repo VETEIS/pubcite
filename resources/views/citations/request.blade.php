@@ -817,8 +817,23 @@
                     });
                     
                     // Create stable hash
+                    // btoa() only handles ASCII, so we need to encode Unicode properly
                     const json = JSON.stringify(data);
-                    return btoa(json).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+                    try {
+                        // Convert Unicode string to UTF-8 bytes, then base64 encode
+                        const utf8Bytes = new TextEncoder().encode(json);
+                        const binaryString = String.fromCharCode.apply(null, utf8Bytes);
+                        return btoa(binaryString).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+                    } catch (e) {
+                        // Fallback: use simple hash function that works with Unicode
+                        let hash = 0;
+                        for (let i = 0; i < json.length; i++) {
+                            const char = json.charCodeAt(i);
+                            hash = ((hash << 5) - hash) + char;
+                            hash = hash & hash; // Convert to 32-bit integer
+                        }
+                        return Math.abs(hash).toString(36).substring(0, 16);
+                    }
                 },
                 
                 // Generate PDFs if needed (check hash first)

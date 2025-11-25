@@ -159,8 +159,8 @@ class PublicationsController extends Controller
             $tempFullPath = Storage::disk('local')->path($tempOutputPath);
             
             try {
-                // Save to temp file first
-                $templateProcessor->saveAs($tempFullPath);
+                // Save to temp file first using safe save method
+                $this->docGenService->safeSaveAs($templateProcessor, $tempFullPath);
                 
                 // Verify temp file is valid
                 if (!file_exists($tempFullPath) || filesize($tempFullPath) === 0) {
@@ -254,8 +254,8 @@ class PublicationsController extends Controller
             $tempFullPath = Storage::disk('local')->path($tempOutputPath);
             
             try {
-                // Save to temp file first
-                $templateProcessor->saveAs($tempFullPath);
+                // Save to temp file first using safe save method
+                $this->docGenService->safeSaveAs($templateProcessor, $tempFullPath);
                 
                 // Verify temp file is valid
                 if (!file_exists($tempFullPath) || filesize($tempFullPath) === 0) {
