@@ -24,33 +24,40 @@ RUN apt-get update && apt-get install -y \
 
 # Install XML extensions required by PhpSpreadsheet
 # xmlreader and xmlwriter depend on dom headers (ext/dom/dom_ce.h)
-# Ensure PHP source is available, then install dom first, then xmlreader/xmlwriter
+# In PHP 8.3-cli, dom is typically built-in, but we need the source for headers
 RUN set -e; \
-    echo "Ensuring PHP source tree is available..."; \
-    if [ ! -d "/usr/src/php/ext" ]; then \
-        echo "Extracting PHP source..."; \
-        docker-php-source extract; \
-    fi; \
-    echo "Checking dom extension source..."; \
-    if [ -d "/usr/src/php/ext/dom" ]; then \
-        echo "Installing dom extension first (ensures headers are available for xmlreader/xmlwriter)..."; \
-        if php -m | grep -q "^dom$"; then \
-            echo "✓ dom already enabled"; \
+    echo "Ensuring PHP source tree is available for extension compilation..."; \
+    docker-php-source extract || echo "Source may already be extracted"; \
+    echo "Checking dom extension status..."; \
+    if php -m | grep -q "^dom$"; then \
+        echo "✓ dom is already enabled (built-in)"; \
+        if [ -d "/usr/src/php/ext/dom" ]; then \
+            echo "✓ dom source directory exists (headers available)"; \
         else \
+            echo "⚠ dom source directory not found, but dom is enabled - headers should be in PHP core"; \
+        fi; \
+    else \
+        echo "dom is not enabled, checking if source exists..."; \
+        if [ -d "/usr/src/php/ext/dom" ]; then \
+            echo "Installing dom extension..."; \
             docker-php-ext-configure dom && \
             docker-php-ext-install -j$(nproc) dom && \
             echo "✓ dom installed"; \
+        else \
+            echo "❌ ERROR: dom is not enabled and source directory not found"; \
+            echo "Available extensions in source:"; \
+            ls -la /usr/src/php/ext/ 2>/dev/null | head -20 || echo "Could not list extensions"; \
+            exit 1; \
         fi; \
-    else \
-        echo "❌ ERROR: /usr/src/php/ext/dom not found"; \
-        echo "Listing available extensions:"; \
-        ls -la /usr/src/php/ext/ | head -20; \
-        exit 1; \
     fi; \
     echo "Installing xmlreader (requires dom headers)..."; \
     if php -m | grep -q "^xmlreader$"; then \
         echo "✓ xmlreader already enabled"; \
     else \
+        if [ ! -d "/usr/src/php/ext/xmlreader" ]; then \
+            echo "❌ ERROR: xmlreader source directory not found"; \
+            exit 1; \
+        fi; \
         docker-php-ext-configure xmlreader && \
         docker-php-ext-install -j$(nproc) xmlreader && \
         echo "✓ xmlreader installed"; \
@@ -59,6 +66,10 @@ RUN set -e; \
     if php -m | grep -q "^xmlwriter$"; then \
         echo "✓ xmlwriter already enabled"; \
     else \
+        if [ ! -d "/usr/src/php/ext/xmlwriter" ]; then \
+            echo "❌ ERROR: xmlwriter source directory not found"; \
+            exit 1; \
+        fi; \
         docker-php-ext-configure xmlwriter && \
         docker-php-ext-install -j$(nproc) xmlwriter && \
         echo "✓ xmlwriter installed"; \
