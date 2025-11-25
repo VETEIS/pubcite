@@ -182,7 +182,13 @@
             },
             init() {
                 // Check visibility periodically to catch Livewire updates
-                setInterval(() => this.checkVisibility(), 50);
+                const intervalId = setInterval(() => {
+                    if (document.body.contains(this.$el)) {
+                        this.checkVisibility();
+                    } else {
+                        clearInterval(intervalId);
+                    }
+                }, 50);
                 
                 // Also check on Livewire updates
                 $wire.on('updated', () => {
@@ -204,7 +210,7 @@
             }
          }" 
          x-show="shouldShow" 
-         x-cloak
+         style="display: none;"
          class="fixed inset-0 z-50 overflow-y-auto"
          @keydown.escape.window="close()">
         <!-- Backdrop -->
@@ -228,7 +234,8 @@
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                  class="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:w-full sm:max-w-4xl"
-                 @click.stop>
+                 @click.stop
+                 wire:key="edit-modal-{{ $editingIndex }}">
                 <div class="bg-white">
                     @if($editingIndex !== null && isset($researchers[$editingIndex]))
                         @php($researcher = $researchers[$editingIndex])
@@ -276,17 +283,13 @@
                                                     </div>
                                                 @endif
                                                 
-                                                <!-- Hover Overlay -->
-                                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-xl transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                    <label class="cursor-pointer p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
+                                                <!-- Hover Overlay - Removed duplicate file input to avoid conflicts -->
+                                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-xl transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                                                    <div class="p-2 bg-white rounded-full shadow-lg">
                                                         <svg class="w-5 h-5 text-maroon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
-                                                        <input type="file" 
-                                                               wire:model="researchers.{{ $editingIndex }}.photo"
-                                                               accept="image/*"
-                                                               class="hidden">
-                                                    </label>
+                                                    </div>
                                                 </div>
                                                 
                                                 <!-- Loading Indicator -->
@@ -306,7 +309,7 @@
                                             @if(!empty($researcher['photo_path']))
                                                 <input type="hidden" wire:model="researchers.{{ $editingIndex }}.photo_path">
                                             @endif
-                                            <label class="flex items-center gap-3 w-full px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-white hover:border-maroon-400 hover:bg-maroon-50 transition-all duration-200 group">
+                                            <label for="photo-upload-{{ $editingIndex }}" class="flex items-center gap-3 w-full px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-white hover:border-maroon-400 hover:bg-maroon-50 transition-all duration-200 group">
                                                 <svg class="w-5 h-5 text-gray-400 group-hover:text-maroon-600 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
@@ -316,11 +319,13 @@
                                                     </p>
                                                     <p class="text-xs text-gray-500 mt-0.5">JPG, PNG up to 10MB • Auto-converted to WebP</p>
                                                 </div>
-                                                <input type="file" 
-                                                       wire:model="researchers.{{ $editingIndex }}.photo"
-                                                       accept="image/*"
-                                                       class="hidden">
                                             </label>
+                                            <input type="file" 
+                                                   id="photo-upload-{{ $editingIndex }}"
+                                                   wire:model="researchers.{{ $editingIndex }}.photo"
+                                                   wire:key="photo-input-{{ $editingIndex }}-{{ $researchers[$editingIndex]['photo_path'] ?? 'new' }}"
+                                                   accept="image/*"
+                                                   class="hidden">
                                             @error('researchers.' . $editingIndex . '.photo')
                                                 <p class="text-xs text-red-600 mt-1.5 flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

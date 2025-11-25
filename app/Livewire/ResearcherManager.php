@@ -82,6 +82,36 @@ class ResearcherManager extends Component
     public function updated($propertyName)
     {
         if (str_starts_with($propertyName, 'researchers.')) {
+            // Handle file uploads specifically
+            if (str_contains($propertyName, '.photo')) {
+                $parts = explode('.', $propertyName);
+                if (count($parts) >= 3) {
+                    $index = (int) $parts[1];
+                    if (isset($this->researchers[$index]['photo']) && $this->researchers[$index]['photo']) {
+                        try {
+                            // Validate the uploaded file
+                            $photo = $this->researchers[$index]['photo'];
+                            if ($photo->isValid()) {
+                                Log::info('Photo uploaded successfully', [
+                                    'index' => $index,
+                                    'filename' => $photo->getClientOriginalName(),
+                                    'size' => $photo->getSize(),
+                                ]);
+                            } else {
+                                Log::warning('Photo upload invalid', [
+                                    'index' => $index,
+                                    'error' => $photo->getError(),
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Error handling photo upload', [
+                                'index' => $index,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                }
+            }
             $this->checkForChanges();
         }
     }
