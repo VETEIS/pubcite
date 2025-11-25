@@ -22,23 +22,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify and enable XML extensions required by PhpSpreadsheet
-# In PHP 8.2-cli, these extensions are usually already compiled but may need to be enabled
-# dom, xml, libxml are typically always enabled
-# xmlreader and xmlwriter may need to be enabled
-RUN set -e; \
-    echo "Checking XML extensions..."; \
-    php -m | grep -E "^(dom|xml|libxml)$" && echo "✓ Core XML extensions found" || echo "⚠ Core XML extensions missing"; \
-    if ! php -m | grep -q "^xmlreader$"; then \
-        echo "Attempting to enable xmlreader..."; \
-        docker-php-ext-enable xmlreader 2>&1 || echo "xmlreader not available as extension"; \
-    fi; \
-    if ! php -m | grep -q "^xmlwriter$"; then \
-        echo "Attempting to enable xmlwriter..."; \
-        docker-php-ext-enable xmlwriter 2>&1 || echo "xmlwriter not available as extension"; \
-    fi; \
-    echo "Final extension check:"; \
-    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" || (echo "⚠ Some XML extensions may be missing" && php -m)
+# Install XML extensions required by PhpSpreadsheet
+# dom, xml, libxml are typically always enabled in PHP
+# xmlreader and xmlwriter need to be installed
+RUN docker-php-ext-install -j$(nproc) dom xmlreader xmlwriter && \
+    echo "Verifying XML extensions..." && \
+    php -m | grep -E "^(dom|xml|xmlreader|xmlwriter|libxml)$" && \
+    echo "✓ All XML extensions installed successfully"
 
 # Install LibreOffice using apt-get with dependency resolution
 RUN apt-get update && \
