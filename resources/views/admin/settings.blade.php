@@ -229,95 +229,99 @@
                                 </div>
 
                                 <!-- Calendar Events Tab -->
-                                <div x-show="activeTab === 'calendar'" style="display: none; height: 100%; overflow-y-auto;">
-                                    <div id="marksRepeater" class="space-y-3">
-                                        @php($marks = old('calendar_marks', $calendar_marks ?? []))
-                                        @if(empty($marks))
-                                            @php($marks = [[ 'date' => '', 'note' => '' ]])
-                                        @endif
-                                        @foreach($marks as $idx => $mark)
-                                        <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200 p-4">
-                                            <div class="flex items-center gap-4">
-                                                <!-- Counter -->
-                                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-sm">
-                                                    <span class="text-white font-bold text-lg">{{ $idx + 1 }}</span>
-                                                </div>
-                                                
-                                                <!-- Form Fields -->
-                                                <div class="flex-1 flex gap-4">
-                                                    <div class="w-48">
-                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Event Date</label>
-                                                        <input type="date" name="calendar_marks[{{ $idx }}][date]" value="{{ $mark['date'] ?? '' }}" 
-                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                                <div x-show="activeTab === 'calendar'" style="display: none; height: 100%;">
+                                    <div class="bg-gray-50 rounded-lg border border-gray-200 h-full flex flex-col" style="height: 350px;">
+                                        <div id="marksRepeater" class="space-y-3 overflow-y-auto flex-1 p-3">
+                                            @php($marks = old('calendar_marks', $calendar_marks ?? []))
+                                            @if(empty($marks))
+                                                @php($marks = [[ 'date' => '', 'note' => '' ]])
+                                            @endif
+                                            @foreach($marks as $idx => $mark)
+                                            <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-200 p-4">
+                                                <div class="flex items-center gap-4">
+                                                    <!-- Counter -->
+                                                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                                                        <span class="text-white font-bold text-lg">{{ $idx + 1 }}</span>
                                                     </div>
-                                                    <div class="flex-1">
-                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
-                                                        <input type="text" name="calendar_marks[{{ $idx }}][note]" value="{{ $mark['note'] ?? '' }}" 
-                                                               placeholder="Enter event description..." 
-                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                                                    
+                                                    <!-- Form Fields -->
+                                                    <div class="flex-1 flex gap-4">
+                                                        <div class="w-48">
+                                                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Event Date</label>
+                                                            <input type="date" name="calendar_marks[{{ $idx }}][date]" value="{{ $mark['date'] ?? '' }}" 
+                                                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                                                            <input type="text" name="calendar_marks[{{ $idx }}][note]" value="{{ $mark['note'] ?? '' }}" 
+                                                                   placeholder="Enter event description..." 
+                                                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                
-                                                <!-- Delete Button -->
-                                                <div class="flex-shrink-0">
-                                                    <button type="button" onclick="removeMarkRow(this)" 
-                                                            class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
-                                                            title="Remove Event">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
+                                                    
+                                                    <!-- Delete Button -->
+                                                    <div class="flex-shrink-0">
+                                                        <button type="button" onclick="removeMarkRow(this)" 
+                                                                class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
+                                                                title="Remove Event">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            @endforeach
                                         </div>
-                                        @endforeach
                                     </div>
                                 </div>
 
                                 <!-- Announcements Tab -->
-                                <div x-show="activeTab === 'announcements'" style="display: none; height: 100%; overflow-y-auto;">
-                                    <div id="announcementsRepeater" class="space-y-3">
-                                        @php($announcements = old('announcements', $announcements ?? []))
-                                        @if(empty($announcements))
-                                            @php($announcements = [['title' => '', 'description' => '']])
-                                        @endif
-                                        @foreach($announcements as $idx => $announcement)
-                                        <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200 p-4">
-                                            <div class="flex items-center gap-4">
-                                                <!-- Counter -->
-                                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center shadow-sm">
-                                                    <span class="text-white font-bold text-lg">{{ $idx + 1 }}</span>
-                                                </div>
-                                                
-                                                <!-- Form Fields -->
-                                                <div class="flex-1 flex gap-4">
-                                                    <div class="w-1/3">
-                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
-                                                        <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
-                                                               placeholder="Enter announcement title..." 
-                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                <div x-show="activeTab === 'announcements'" style="display: none; height: 100%;">
+                                    <div class="bg-gray-50 rounded-lg border border-gray-200 h-full flex flex-col" style="height: 350px;">
+                                        <div id="announcementsRepeater" class="space-y-3 overflow-y-auto flex-1 p-3">
+                                            @php($announcements = old('announcements', $announcements ?? []))
+                                            @if(empty($announcements))
+                                                @php($announcements = [['title' => '', 'description' => '']])
+                                            @endif
+                                            @foreach($announcements as $idx => $announcement)
+                                            <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200 p-4">
+                                                <div class="flex items-center gap-4">
+                                                    <!-- Counter -->
+                                                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center shadow-sm">
+                                                        <span class="text-white font-bold text-lg">{{ $idx + 1 }}</span>
                                                     </div>
-                                                    <div class="flex-1">
-                                                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
-                                                        <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
-                                                               placeholder="Enter announcement description..." 
-                                                               class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                                    
+                                                    <!-- Form Fields -->
+                                                    <div class="flex-1 flex gap-4">
+                                                        <div class="w-1/3">
+                                                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Title</label>
+                                                            <input type="text" name="announcements[{{ $idx }}][title]" value="{{ $announcement['title'] ?? '' }}" 
+                                                                   placeholder="Enter announcement title..." 
+                                                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
+                                                            <input type="text" name="announcements[{{ $idx }}][description]" value="{{ $announcement['description'] ?? '' }}" 
+                                                                   placeholder="Enter announcement description..." 
+                                                                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                
-                                                <!-- Delete Button -->
-                                                <div class="flex-shrink-0">
-                                                    <button type="button" onclick="removeAnnouncementRow(this)" 
-                                                            class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
-                                                            title="Remove Announcement">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
+                                                    
+                                                    <!-- Delete Button -->
+                                                    <div class="flex-shrink-0">
+                                                        <button type="button" onclick="removeAnnouncementRow(this)" 
+                                                                class="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" 
+                                                                title="Remove Announcement">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            @endforeach
                                         </div>
-                                        @endforeach
                                     </div>
                                 </div>
                             </div>
