@@ -904,8 +904,8 @@ class DashboardController extends Controller
                 // Get request code
                 $requestCode = $log->userRequest ? $log->userRequest->request_code : ($log->details['request_code'] ?? 'N/A');
 
-                // Format details as JSON string
-                $details = json_encode($log->details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                // Format details as user-friendly text
+                $details = $this->formatDetailsForExport($log->details);
 
                 // Format date
                 $dateTime = $log->created_at->setTimezone('Asia/Manila')->format('Y-m-d H:i:s');
@@ -1039,5 +1039,66 @@ class DashboardController extends Controller
             default:
                 return ucfirst(str_replace('_', ' ', $action));
         }
+    }
+
+    private function formatDetailsForExport($details): string
+    {
+        if (empty($details) || !is_array($details)) {
+            return 'No details available';
+        }
+
+        // Map of common keys to user-friendly labels
+        $labelMap = [
+            'request_code' => 'Request Code',
+            'type' => 'Type',
+            'signatory_role' => 'Signatory Role',
+            'signatory_role_label' => 'Signatory Role Label',
+            'signatory_name' => 'Signatory Name',
+            'workflow_state' => 'Workflow State',
+            'previous_workflow_state' => 'Previous Workflow State',
+            'filename' => 'Filename',
+            'created_user_name' => 'Created User Name',
+            'created_user_role' => 'Created User Role',
+            'updated_user_name' => 'Updated User Name',
+            'deleted_user_name' => 'Deleted User Name',
+            'deleted_user_role' => 'Deleted User Role',
+            'category' => 'Category',
+            'account_type' => 'Account Type',
+            'account_type_label' => 'Account Type Label',
+            'user_name' => 'User Name',
+            'final_signatory_name' => 'Final Signatory Name',
+            'changes' => 'Changes',
+        ];
+
+        $formatted = [];
+        foreach ($details as $key => $value) {
+            // Get user-friendly label
+            $label = $labelMap[$key] ?? ucwords(str_replace('_', ' ', $key));
+            
+            // Format the value
+            if (is_array($value)) {
+                if (isset($value['name']) || isset($value['email']) || isset($value['role'])) {
+                    // Handle nested user data
+                    $value = implode(', ', array_filter([
+                        $value['name'] ?? null,
+                        $value['email'] ?? null,
+                        $value['role'] ?? null,
+                    ]));
+                } else {
+                    // For other arrays, convert to readable format
+                    $value = implode(', ', array_map(function($k, $v) {
+                        return is_numeric($k) ? $v : "$k: $v";
+                    }, array_keys($value), $value));
+                }
+            } elseif (is_bool($value)) {
+                $value = $value ? 'Yes' : 'No';
+            } elseif (is_null($value)) {
+                $value = 'N/A';
+            }
+            
+            $formatted[] = "{$label}: {$value}";
+        }
+
+        return implode("\n", $formatted);
     }
 } 
