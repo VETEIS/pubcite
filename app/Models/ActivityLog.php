@@ -26,7 +26,7 @@ class ActivityLog extends Model
     }
     public function userRequest()
     {
-        return $this->belongsTo(UserRequest::class)->withTrashed();
+        return $this->belongsTo(UserRequest::class, 'request_id')->withTrashed();
     }
     
     public function getRequestDisplayNameAttribute()
