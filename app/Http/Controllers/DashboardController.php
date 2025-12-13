@@ -832,7 +832,9 @@ class DashboardController extends Controller
 
         try {
             // Get all activity logs (not just the 10 shown on dashboard)
-            $activityLogs = ActivityLog::with('user', 'userRequest')
+            // Only eager load 'user' to avoid relationship detection issues
+            // Access 'userRequest' lazily in the loop
+            $activityLogs = ActivityLog::with('user')
                 ->whereNotIn('action', ['created']) // Exclude submission requests
                 ->orderByDesc('created_at')
                 ->get();
