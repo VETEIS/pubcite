@@ -15,9 +15,23 @@ define('LARAVEL_START', microtime(true));
 |
 */
 
+// Suppress PHP 8.5+ deprecation warning for PDO::MYSQL_ATTR_SSL_CA in Laravel's vendor config
+// This is a known issue in Laravel 12.x that will be fixed in a future update
+if (PHP_VERSION_ID >= 80500) {
+    // Suppress E_DEPRECATED warnings before autoloader loads Laravel's config
+    ini_set('display_errors', '0');
+    $originalErrorReporting = error_reporting(E_ALL & ~E_DEPRECATED);
+}
+
 require __DIR__.'/vendor/autoload.php';
 
 $app = require_once __DIR__.'/bootstrap/app.php';
+
+// Restore original error reporting after Laravel bootstraps
+if (PHP_VERSION_ID >= 80500 && isset($originalErrorReporting)) {
+    error_reporting($originalErrorReporting);
+    ini_restore('display_errors');
+}
 
 /*
 |--------------------------------------------------------------------------
